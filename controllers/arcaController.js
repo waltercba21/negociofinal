@@ -7,16 +7,23 @@ const wsfe = require("../services/wsfe");
 
 function getQuery() {
   if (pool.promise && typeof pool.promise === "function") {
-    return (sql, params=[]) => pool.promise().query(sql, params).then(([rows]) => rows);
+    return (sql, params = []) =>
+      pool.promise().query(sql, params).then(([rows]) => rows);
   }
   const q = util.promisify(pool.query).bind(pool);
-  return (sql, params=[]) => q(sql, params);
+  return (sql, params = []) => q(sql, params);
 }
 const query = getQuery();
 
 function round2(n) {
   const x = Number(n);
   return Math.round((x + Number.EPSILON) * 100) / 100;
+}
+
+async function getNext(pto_vta, cbte_tipo) {
+  const ult = await wsfe.FECompUltimoAutorizado(pto_vta, cbte_tipo);
+  const ultimo = Number(ult.ultimo || 0);
+  return { ultimo, next: ultimo + 1 };
 }
 
 /**
@@ -36,7 +43,9 @@ function round2(n) {
 async function emitirDesdeFacturaMostrador(req, res) {
   try {
     const facturaId = Number(req.params.id || 0);
-    if (!facturaId) return res.status(400).json({ error: "facturaId inválido" });
+    if (!Number.isFinite(facturaId) || facturaId <= 0) {
+      return res.status(400).json({ error: "facturaId inválido" });
+    }
 
     // Evitar doble emisión por link
     const existente = await arcaModel.buscarPorFacturaMostradorId(facturaId);
@@ -45,21 +54,46 @@ async function emitirDesdeFacturaMostrador(req, res) {
         error: "Ya existe un comprobante ARCA emitido para esta factura",
         arca_id: existente.id,
         cae: existente.cae,
-        cbte_nro: existente.cbte_nro
+        cbte_nro: existente.cbte_nro,
       });
     }
 
-    const cbte_tipo = Number(req.body.cbte_tipo || 6); // Factura B
+    const cbte_tipo = Number(req.body.cbte_tipo || 6); // Factura B (6)
     const doc_tipo = Number(req.body.doc_tipo);
-    const doc_nro  = Number(req.body.doc_nro);
+    const doc_nro = Number(req.body.doc_nro);
     const receptor_cond_iva_id = Number(req.body.receptor_cond_iva_id || 5);
-    const receptor_nombre = (req.body.receptor_nombre || null);
+    const receptor_nombre = req.body.receptor_nombre || null;
 
-    if (!doc_tipo && doc_tipo !== 0) return res.status(400).json({ error: "Falta doc_tipo" });
-    if (!Number.isFinite(doc_nro)) return res.status(400).json({ error: "doc_nro inválido" });
+    if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) {
+      return res.status(400).json({ error: "cbte_tipo inválido" });
+    }
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) {
+      return res.status(400).json({ error: "doc_tipo inválido" });
+    }
+    if (!Number.isFinite(doc_nro) || doc_nro < 0) {
+      return res.status(400).json({ error: "doc_nro inválido" });
+    }
+    if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
+      return res.status(400).json({ error: "receptor_cond_iva_id inválido" });
+    }
+
+    const pto_vta = Number(process.env.ARCA_PTO_VTA || 0);
+    const cuit_emisor = Number(process.env.ARCA_CUIT || 0);
+    if (!Number.isFinite(pto_vta) || pto_vta <= 0) {
+      return res.status(500).json({ error: "ARCA_PTO_VTA no configurado" });
+    }
+    if (!Number.isFinite(cuit_emisor) || cuit_emisor <= 0) {
+      return res.status(500).json({ error: "ARCA_CUIT no configurado" });
+    }
+
+    const ambiente =
+      String(process.env.ARCA_ENV || "homo").toUpperCase() === "PROD"
+        ? "PROD"
+        : "HOMO";
 
     // Traer factura + items con producto_id
-    const rows = await query(`
+    const rows = await query(
+      `
       SELECT
         fm.id AS factura_id, fm.nombre_cliente, fm.fecha, fm.total, fm.creado_en,
         fi.producto_id, COALESCE(p.nombre,'(sin nombre)') AS descripcion,
@@ -68,23 +102,23 @@ async function emitirDesdeFacturaMostrador(req, res) {
       JOIN factura_items fi ON fm.id = fi.factura_id
       LEFT JOIN productos p ON p.id = fi.producto_id
       WHERE fm.id = ?
-    `, [facturaId]);
+    `,
+      [facturaId]
+    );
 
-    if (!rows.length) return res.status(404).json({ error: "Factura no encontrada o sin items" });
+    if (!rows.length) {
+      return res
+        .status(404)
+        .json({ error: "Factura no encontrada o sin items" });
+    }
 
-    const factura = {
-      id: rows[0].factura_id,
-      fecha: rows[0].fecha,
-      nombre_cliente: rows[0].nombre_cliente,
-    };
-
-    // IVA fijo 21% (MVP)
+    // MVP: IVA fijo 21%
     const alic = 21;
 
-    const itemsCalc = rows.map(r => {
+    const itemsCalc = rows.map((r) => {
       const imp_total = round2(r.subtotal);
-      const imp_neto  = round2(imp_total / (1 + alic/100));
-      const imp_iva   = round2(imp_total - imp_neto);
+      const imp_neto = round2(imp_total / (1 + alic / 100));
+      const imp_iva = round2(imp_total - imp_neto);
       return {
         producto_id: r.producto_id,
         descripcion: r.descripcion,
@@ -94,44 +128,36 @@ async function emitirDesdeFacturaMostrador(req, res) {
         iva_alicuota: round2(alic),
         imp_neto,
         imp_iva,
-        imp_total
+        imp_total,
       };
     });
 
-    const imp_total = round2(itemsCalc.reduce((a,i)=> a + i.imp_total, 0));
-    const imp_neto  = round2(itemsCalc.reduce((a,i)=> a + i.imp_neto,  0));
-    const imp_iva   = round2(itemsCalc.reduce((a,i)=> a + i.imp_iva,   0));
+    const imp_total = round2(itemsCalc.reduce((a, i) => a + i.imp_total, 0));
+    const imp_neto = round2(itemsCalc.reduce((a, i) => a + i.imp_neto, 0));
+    const imp_iva = round2(itemsCalc.reduce((a, i) => a + i.imp_iva, 0));
 
-    const pto_vta = Number(process.env.ARCA_PTO_VTA || 0);
-    const cuit_emisor = Number(process.env.ARCA_CUIT || 0);
-    const ambiente = (process.env.ARCA_ENV || "homo").toUpperCase() === "PROD" ? "PROD" : "HOMO";
+    // Fecha del comprobante: SIEMPRE HOY (AR) en esta etapa para evitar 10016 por fecha vieja
+    const cbte_fch = wsfe.yyyymmddARFromDate(new Date());
 
-    // fecha comprobante: usamos la fecha de la factura (si parsea), si no hoy
-    let cbte_fch;
-    try {
-      cbte_fch = wsfe.yyyymmddARFromDate(factura.fecha);
-    } catch {
-      cbte_fch = wsfe.yyyymmddARFromDate(new Date());
-    }
+    // 1) Obtener próximo número
+    let { next } = await getNext(pto_vta, cbte_tipo);
 
-    // 1) obtener próximo número
-    const ult = await wsfe.FECompUltimoAutorizado(pto_vta, cbte_tipo);
-    const next = Number(ult.ultimo || 0) + 1;
-
-    // 2) insertar cabecera PENDIENTE + items + req_json
-    const req_json = JSON.stringify({
+    // 2) Insertar cabecera PENDIENTE + items + req_json
+    const reqObj = {
       fuente: "facturas_mostrador",
       factura_mostrador_id: facturaId,
       cbte_tipo,
       pto_vta,
       cbte_fch,
+      cbte_nro: next,
       doc_tipo,
       doc_nro,
       receptor_cond_iva_id,
       totales: { imp_total, imp_neto, imp_iva },
       iva_mvp: { alicuota: 21, wsfe_id: 5 },
-      items: itemsCalc
-    }, null, 2);
+      items: itemsCalc,
+    };
+    let req_json = JSON.stringify(reqObj, null, 2);
 
     const arcaId = await arcaModel.crearComprobante({
       factura_mostrador_id: facturaId,
@@ -152,13 +178,13 @@ async function emitirDesdeFacturaMostrador(req, res) {
       mon_id: "PES",
       mon_cotiz: 1,
       req_json,
-      estado: "PENDIENTE"
+      estado: "PENDIENTE",
     });
 
     await arcaModel.insertarItems(arcaId, itemsCalc);
 
-    // 3) solicitar CAE
-    const cae = await wsfe.FECAESolicitar({
+    // 3) Solicitar CAE (1er intento)
+    let cae = await wsfe.FECAESolicitar({
       ptoVta: pto_vta,
       cbteTipo: cbte_tipo,
       docTipo: doc_tipo,
@@ -171,8 +197,39 @@ async function emitirDesdeFacturaMostrador(req, res) {
       impNeto: imp_neto,
       impIVA: imp_iva,
       monId: "PES",
-      monCotiz: "1.000"
+      monCotiz: "1.000",
     });
+
+    // Reintento automático (una vez) si ARCA dice que nro/fecha no corresponde al próximo (10016)
+    if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
+      ({ next } = await getNext(pto_vta, cbte_tipo));
+
+      reqObj.cbte_nro = next;
+      req_json = JSON.stringify(reqObj, null, 2);
+
+      await query(
+        `UPDATE arca_comprobantes SET cbte_nro=?, cbte_fch=?, req_json=?, updated_at=NOW() WHERE id=?`,
+        [next, cbte_fch, req_json, arcaId]
+      );
+
+      const cae2 = await wsfe.FECAESolicitar({
+        ptoVta: pto_vta,
+        cbteTipo: cbte_tipo,
+        docTipo: doc_tipo,
+        docNro: doc_nro,
+        condicionIVAReceptorId: receptor_cond_iva_id,
+        cbteFch: cbte_fch,
+        cbteDesde: next,
+        cbteHasta: next,
+        impTotal: imp_total,
+        impNeto: imp_neto,
+        impIVA: imp_iva,
+        monId: "PES",
+        monCotiz: "1.000",
+      });
+
+      cae = cae2;
+    }
 
     const estado = cae.resultado === "A" ? "EMITIDO" : "RECHAZADO";
 
@@ -183,7 +240,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       obs_code: cae.obsCode || null,
       obs_msg: cae.obsMsg || null,
       resp_xml: cae.raw || null,
-      estado
+      estado,
     });
 
     return res.json({
@@ -194,9 +251,8 @@ async function emitirDesdeFacturaMostrador(req, res) {
       cae: cae.cae || null,
       cae_vto: cae.caeVto || null,
       obs_code: cae.obsCode || null,
-      obs_msg: cae.obsMsg || null
+      obs_msg: cae.obsMsg || null,
     });
-
   } catch (e) {
     console.error("❌ ARCA emitirDesdeFacturaMostrador:", e);
     return res.status(500).json({ error: e.message || "Error interno" });
@@ -206,7 +262,9 @@ async function emitirDesdeFacturaMostrador(req, res) {
 async function statusPorFacturaMostrador(req, res) {
   try {
     const facturaId = Number(req.params.id || 0);
-    if (!facturaId) return res.status(400).json({ error: "facturaId inválido" });
+    if (!Number.isFinite(facturaId) || facturaId <= 0) {
+      return res.status(400).json({ error: "facturaId inválido" });
+    }
 
     const row = await arcaModel.buscarPorFacturaMostradorId(facturaId);
     if (!row) return res.status(404).json({ error: "Sin comprobante ARCA asociado" });
@@ -220,7 +278,7 @@ async function statusPorFacturaMostrador(req, res) {
       cae: row.cae,
       cae_vto: row.cae_vto,
       obs_code: row.obs_code,
-      obs_msg: row.obs_msg
+      obs_msg: row.obs_msg,
     });
   } catch (e) {
     return res.status(500).json({ error: e.message || "Error interno" });
