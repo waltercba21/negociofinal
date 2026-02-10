@@ -678,12 +678,22 @@ async function descargarPDFComprobante(req, res) {
     return res.status(500).send(e.message || "Error generando PDF");
   }
 }
+// controllers/arcaController.js
+// Requiere arriba: const padron = require("../services/padron");
+
 async function buscarReceptor(req, res) {
   try {
     const doc_tipo = Number(req.query.doc_tipo || 0);
-    const doc_nro = Number(req.query.doc_nro || 0);
-    const resolve = String(req.query.resolve || "0") === "1";
-    const debug = String(req.query.debug || "0") === "1";
+    const doc_nro  = Number(req.query.doc_nro  || 0);
+
+    const resolveStr = String(req.query.resolve ?? "").trim().toLowerCase();
+    const resolve = ["1", "true", "on", "si", "yes"].includes(resolveStr);
+
+    const refreshStr = String(req.query.refresh ?? "").trim().toLowerCase();
+    const refresh = ["1", "true", "on", "si", "yes"].includes(refreshStr);
+
+    const debugStr = String(req.query.debug ?? "").trim().toLowerCase();
+    const debug = ["1", "true", "on", "si", "yes"].includes(debugStr);
 
     if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) {
       return res.status(400).json({ error: "doc_tipo inválido" });
@@ -692,18 +702,25 @@ async function buscarReceptor(req, res) {
       return res.status(400).json({ error: "doc_nro inválido" });
     }
 
-    // 1) cache
-    const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-    if (cache) return res.json(cache);
+    if (debug) {
+      console.log("[ARCA][buscarReceptor] query =", req.query);
+      console.log("[ARCA][buscarReceptor] resolve =", resolve, "refresh =", refresh);
+    }
 
-    // 2) si no pide resolver, termina acá
-    if (!resolve) return res.status(404).json({ error: "No encontrado en cache" });
+    // 1) cache (si no forzás refresh)
+    if (!refresh) {
+      const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+      if (cache) return res.json(cache);
+    }
 
-    // 3) resolver contra padrón (solo CUIT por ahora)
+    // 2) si no pide resolve => termina acá
+    if (!resolve) {
+      return res.status(404).json({ error: "No encontrado en cache" });
+    }
+
+    // 3) resolve contra padrón (solo CUIT por ahora)
     if (doc_tipo !== 80) {
-      return res.status(400).json({
-        error: "resolve=1 solo soporta CUIT (doc_tipo=80)"
-      });
+      return res.status(400).json({ error: "resolve=1 solo soporta doc_tipo=80 (CUIT)" });
     }
 
     const cuitRepresentada = Number(process.env.ARCA_CUIT || 0);
@@ -716,36 +733,37 @@ async function buscarReceptor(req, res) {
     if (!out || !out.ok) {
       const payload = {
         error: out?.fault || out?.error || "No se pudo resolver en padrón",
-        service: out?.service || null
+        service: out?.service || null,
       };
       if (debug) payload.raw = out?.raw || null;
       return res.status(out?.fault ? 502 : 404).json(payload);
     }
 
-    // Nota: cond_iva_id no lo infiero del padrón (evita mappings incorrectos)
+    // Guardar en cache
     await arcaModel.upsertReceptorCache({
       doc_tipo,
       doc_nro,
-      nombre: out.data.nombre || null,
-      razon_social: out.data.razon_social || null,
+      nombre: out.data?.nombre || null,
+      razon_social: out.data?.razon_social || out.data?.nombre || null,
       cond_iva_id: null,
-      domicilio: out.data.domicilio || null
+      domicilio: out.data?.domicilio || null,
     });
 
     const saved = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
     return res.json(saved || {
       doc_tipo,
       doc_nro,
-      nombre: out.data.nombre || null,
-      razon_social: out.data.razon_social || null,
+      nombre: out.data?.nombre || null,
+      razon_social: out.data?.razon_social || out.data?.nombre || null,
       cond_iva_id: null,
-      domicilio: out.data.domicilio || null
+      domicilio: out.data?.domicilio || null,
     });
   } catch (e) {
     console.error("❌ ARCA buscarReceptor:", e);
     return res.status(500).json({ error: e.message || "Error receptor" });
   }
 }
+
 
 
 async function paramsCondIvaReceptor(req, res) {
