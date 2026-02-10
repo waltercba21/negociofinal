@@ -91,27 +91,53 @@ async function emitirDesdeFacturaMostrador(req, res) {
         arca_id: existente.id,
         estado: existente.estado,
         cae: existente.cae,
-        cbte_nro: existente.cbte_nro
+        cbte_nro: existente.cbte_nro,
       });
     }
 
-    const cbte_tipo = Number(req.body.cbte_tipo || 6); // Factura B
+    const cbte_tipo = Number(req.body.cbte_tipo || 6); // 6 = Factura B (MVP)
     const doc_tipo = Number(req.body.doc_tipo);
-    const doc_nro = Number(req.body.doc_nro);
+
+    // soporta doc_nro como number o string
+    const doc_nro_str = String(req.body.doc_nro ?? "").trim();
+    if (!/^\d+$/.test(doc_nro_str)) {
+      return res.status(400).json({ error: "doc_nro inválido" });
+    }
+    const doc_nro = Number(doc_nro_str);
+
     const receptor_cond_iva_id = Number(req.body.receptor_cond_iva_id || 5);
-    const receptor_nombre = req.body.receptor_nombre || null;
+    const receptor_nombre = (req.body.receptor_nombre || "").trim() || null;
 
     if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0)
       return res.status(400).json({ error: "cbte_tipo inválido" });
+
     if (!Number.isFinite(doc_tipo) || doc_tipo <= 0)
       return res.status(400).json({ error: "doc_tipo inválido" });
-    if (!Number.isFinite(doc_nro) || doc_nro < 0)
-      return res.status(400).json({ error: "doc_nro inválido" });
+
+    // Validación doc_nro según doc_tipo
+    // 99 = Consumidor Final => doc_nro puede ser 0
+    if (doc_tipo === 99) {
+      if (!Number.isFinite(doc_nro) || doc_nro < 0) {
+        return res.status(400).json({ error: "doc_nro inválido" });
+      }
+    } else {
+      // DNI/CUIT/etc => debe ser > 0
+      if (!Number.isFinite(doc_nro) || doc_nro <= 0) {
+        return res.status(400).json({ error: "doc_nro inválido (debe ser > 0)" });
+      }
+    }
+
+    // 80 = CUIT => 11 dígitos
+    if (doc_tipo === 80 && doc_nro_str.length !== 11) {
+      return res.status(400).json({ error: "CUIT inválido (debe tener 11 dígitos)" });
+    }
+
     if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0)
       return res.status(400).json({ error: "receptor_cond_iva_id inválido" });
 
     const pto_vta = Number(process.env.ARCA_PTO_VTA || 0);
     const cuit_emisor = Number(process.env.ARCA_CUIT || 0);
+
     if (!Number.isFinite(pto_vta) || pto_vta <= 0)
       return res.status(500).json({ error: "ARCA_PTO_VTA no configurado" });
     if (!Number.isFinite(cuit_emisor) || cuit_emisor <= 0)
@@ -131,7 +157,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       JOIN factura_items fi ON fm.id = fi.factura_id
       LEFT JOIN productos p ON p.id = fi.producto_id
       WHERE fm.id = ?
-    `,
+      `,
       [facturaId]
     );
 
@@ -178,6 +204,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       doc_tipo,
       doc_nro,
       receptor_cond_iva_id,
+      receptor_nombre,
       totales: { imp_total, imp_neto, imp_iva },
       iva_mvp: { alicuota: 21, wsfe_id: 5 },
       items: itemsCalc,
@@ -281,6 +308,22 @@ async function emitirDesdeFacturaMostrador(req, res) {
       estado,
     });
 
+    // Cache receptor (solo si tiene doc real > 0)
+    if (doc_nro > 0) {
+      try {
+        await arcaModel.upsertReceptorCache({
+          doc_tipo,
+          doc_nro,
+          razon_social: receptor_nombre || null,
+          nombre: receptor_nombre || null,
+          cond_iva_id: receptor_cond_iva_id || null,
+          domicilio: null,
+        });
+      } catch (e) {
+        console.warn("⚠️ No se pudo cachear receptor:", e.message);
+      }
+    }
+
     return res.json({
       arca_id: arcaId,
       estado,
@@ -298,21 +341,10 @@ async function emitirDesdeFacturaMostrador(req, res) {
     });
   } catch (e) {
     console.error("❌ ARCA emitirDesdeFacturaMostrador:", e);
-    // Cache receptor (si tiene documento real)
-if (doc_nro > 0) {
-  await arcaModel.upsertReceptorCache({
-    doc_tipo,
-    doc_nro,
-    razon_social: receptor_nombre || null,  // para A suele ser razón social
-    nombre: receptor_nombre || null,
-    cond_iva_id: receptor_cond_iva_id || null,
-    domicilio: null
-  });
-}
-
     return res.status(500).json({ error: e.message || "Error interno" });
   }
 }
+
 
 async function statusPorFacturaMostrador(req, res) {
   try {
