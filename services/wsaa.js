@@ -168,7 +168,23 @@ function httpPostSoap(url, xml, soapActionHeaderValue) {
     req.end();
   });
 }
+function decodeXmlEntities(s) {
+  if (!s) return "";
+  return String(s)
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
 
+function extractInnerLoginTicketXml(soapRaw) {
+  const innerEscaped = pickTag(soapRaw, "loginCmsReturn");
+  if (!innerEscaped) return "";
+  return decodeXmlEntities(innerEscaped);
+}
 async function loginCms(service, { debug = false } = {}) {
   const traXml = buildTRA(service);
   const cmsB64 = await signTRAWithOpenSSL(traXml);
@@ -183,17 +199,16 @@ async function loginCms(service, { debug = false } = {}) {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  // Fallback SOAPAction (lo que más suele destrabar)
   const soapActions = ['""', '"loginCms"', '"urn:loginCms"'];
 
   let last = null;
+
   for (const act of soapActions) {
     const out = await httpPostSoap(WSAA_URL, soap, act);
     last = { ...out, usedSoapAction: act };
 
     const fault = pickTag(out.raw, "faultstring");
     if (fault) {
-      // si el fault es por SOAPAction, probamos el siguiente
       if (/no soapaction header/i.test(fault)) continue;
 
       const err = new Error(fault);
@@ -203,9 +218,22 @@ async function loginCms(service, { debug = false } = {}) {
       throw err;
     }
 
-    const token = pickTag(out.raw, "token");
-    const sign = pickTag(out.raw, "sign");
-    const expirationTime = pickTag(out.raw, "expirationTime");
+    // 1) intento directo
+    let token = pickTag(out.raw, "token");
+    let sign = pickTag(out.raw, "sign");
+    let expirationTime = pickTag(out.raw, "expirationTime");
+    let generationTime = pickTag(out.raw, "generationTime") || null;
+
+    // 2) fallback: parsear loginTicketResponse escapado dentro de loginCmsReturn
+    if (!token || !sign) {
+      const innerXml = extractInnerLoginTicketXml(out.raw);
+      if (innerXml) {
+        token = pickTag(innerXml, "token");
+        sign = pickTag(innerXml, "sign");
+        expirationTime = pickTag(innerXml, "expirationTime") || expirationTime;
+        generationTime = pickTag(innerXml, "generationTime") || generationTime;
+      }
+    }
 
     if (!token || !sign) {
       const err = new Error("WSAA: respuesta sin token/sign");
@@ -219,15 +247,13 @@ async function loginCms(service, { debug = false } = {}) {
       token,
       sign,
       expirationTime,
-      generationTime: pickTag(out.raw, "generationTime") || null,
+      generationTime,
       raw: debug ? out.raw : null,
       usedSoapAction: debug ? act : undefined,
     };
   }
 
-  // si llegamos acá: siempre fault “no SOAPAction header!”
-  const msg = "no SOAPAction header!";
-  const err = new Error(msg);
+  const err = new Error("no SOAPAction header!");
   if (debug) err.raw = last?.raw || null;
   err.status = last?.status || null;
   err.usedSoapAction = last?.usedSoapAction || null;
