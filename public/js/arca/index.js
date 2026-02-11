@@ -9,6 +9,21 @@
     selectedId: null,
     search: "",
   };
+    const DRAFT_KEY = "arca_emit_draft_v1";
+
+  function loadDraft() {
+    try {
+      return JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null") || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveDraft(d) {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d || {}));
+    } catch {}
+  }
 
   function money(n) {
     const x = Number(n || 0);
@@ -227,6 +242,28 @@ didOpen: () => {
   const setHint = (t) => { if (hint) hint.textContent = t || ""; };
   const setSt   = (t) => { if (stCache) stCache.textContent = t || ""; };
 
+    // ---- Draft (persistencia al cerrar el modal) ----
+  const draft = loadDraft() || {
+    cbte_tipo: 6,
+    doc_tipo: 99,
+    doc_nro: "0",
+    receptor_cond_iva_id: null,
+    receptor_nombre: "",
+    domicilio: ""
+  };
+
+  const setVal = (el, v) => { if (el && v !== undefined && v !== null) el.value = String(v); };
+
+  function syncDraftFromUI() {
+    draft.cbte_tipo = Number(inpCbte.value || 0) || 6;
+    draft.doc_tipo  = Number(inpTipo.value || 0) || 99;
+    draft.doc_nro   = String(inpNro.value || "").trim() || "0";
+    draft.receptor_cond_iva_id = Number(selCond.value || 0) || null;
+    draft.receptor_nombre = (inpNom.value || "").trim();
+    draft.domicilio = (inpDom.value || "").trim();
+    saveDraft(draft);
+  }
+
   const on = (el, fn) => {
     if (!el) return;
     el.addEventListener("input", fn);
@@ -408,6 +445,20 @@ didOpen: () => {
 
   btnCache.addEventListener("click", guardarCache);
   btnResolve.addEventListener("click", resolverPadron);
+    // Restaurar valores
+  setVal(inpCbte, draft.cbte_tipo);
+  setVal(inpTipo, draft.doc_tipo);
+  setVal(inpNro,  draft.doc_nro);
+  setVal(inpNom,  draft.receptor_nombre);
+  setVal(inpDom,  draft.domicilio);
+
+  // Guardar borrador en cada cambio
+  const hook = (el) => {
+    if (!el) return;
+    el.addEventListener("input", syncDraftFromUI);
+    el.addEventListener("change", syncDraftFromUI);
+  };
+  [inpCbte, inpTipo, inpNro, selCond, inpNom, inpDom].forEach(hook);
 
   on(inpCbte, async () => {
     applyRules();
