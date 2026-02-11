@@ -2,20 +2,21 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  state.selectedArcaId = null;
-
-const wsfeHistEl = $("wsfeHist");
-const wsfeBadgeEl = $("wsfeBadge");
-const btnAuditarWsfe = $("btnAuditarWsfe");
-
   const state = {
     limit: 50,
     offset: 0,
     rows: [],
     selectedId: null,
+    selectedArcaId: null,
     search: "",
   };
-    const DRAFT_KEY = "arca_emit_draft_v1";
+
+  const DRAFT_KEY = "arca_emit_draft_v1";
+
+  // WSFE UI refs
+  const wsfeHistEl = $("wsfeHist");
+  const wsfeBadgeEl = $("wsfeBadge");
+  const btnAuditarWsfe = $("btnAuditarWsfe");
 
   function loadDraft() {
     try {
@@ -123,81 +124,99 @@ const btnAuditarWsfe = $("btnAuditarWsfe");
     renderList();
     renderPager();
   }
+
+  // ---------------- WSFE UI ----------------
   function wsfeBadge(ok) {
-  if (ok === true) return `<span class="badge b-ok">OK</span>`;
-  if (ok === false) return `<span class="badge b-bad">DIF</span>`;
-  return `<span class="badge b-none">—</span>`;
-}
-
-function renderWsfeHistory(rows) {
-  if (!wsfeHistEl) return;
-
-  if (!rows || !rows.length) {
-    wsfeHistEl.innerHTML = `<div class="muted">Sin auditorías WSFE.</div>`;
-    wsfeBadgeEl.style.display = "none";
-    return;
+    if (ok === true) return `<span class="badge b-ok">OK</span>`;
+    if (ok === false) return `<span class="badge b-bad">DIF</span>`;
+    return `<span class="badge b-none">—</span>`;
   }
 
-  const last = rows[0];
-  wsfeBadgeEl.style.display = "inline-flex";
-  wsfeBadgeEl.className = `badge ${last.ok ? "b-ok" : "b-bad"}`;
-  wsfeBadgeEl.textContent = last.ok ? "OK" : "DIF";
+  function renderWsfeHistory(rows) {
+    if (!wsfeHistEl) return;
 
-  wsfeHistEl.innerHTML = rows.map((r) => {
-    const diffsKeys = r.diffs ? Object.keys(r.diffs) : [];
-    const diffsLine = diffsKeys.length
-      ? `<div class="histObs"><b>Diferencias:</b> ${diffsKeys.join(", ")}</div>`
-      : ``;
+    if (!rows || !rows.length) {
+      wsfeHistEl.innerHTML = `<div class="muted">Sin auditorías WSFE.</div>`;
+      if (wsfeBadgeEl) wsfeBadgeEl.style.display = "none";
+      return;
+    }
 
-    return `
-      <div class="histItem">
-        <div class="histTop">
-          <div>${wsfeBadge(r.ok)} <span class="muted">Audit ID ${r.id}</span></div>
-          <div class="histMeta">${r.created_at || ""}</div>
-        </div>
-        ${diffsLine}
-      </div>
-    `;
-  }).join("");
-}
+    const last = rows[0];
+    if (wsfeBadgeEl) {
+      wsfeBadgeEl.style.display = "inline-flex";
+      wsfeBadgeEl.className = `badge ${last.ok ? "b-ok" : "b-bad"}`;
+      wsfeBadgeEl.textContent = last.ok ? "OK" : "DIF";
+    }
 
-async function loadWsfeHistory(arcaId) {
-  if (!wsfeHistEl) return;
-  wsfeHistEl.innerHTML = `<div class="muted">Cargando auditorías WSFE…</div>`;
+    wsfeHistEl.innerHTML = rows
+      .map((r) => {
+        const diffsKeys = r.diffs ? Object.keys(r.diffs) : [];
+        const diffsLine = diffsKeys.length
+          ? `<div class="histObs"><b>Diferencias:</b> ${diffsKeys.join(
+              ", "
+            )}</div>`
+          : ``;
 
-  try {
-    const data = await fetchJSON(`/arca/wsfe/consultas/${arcaId}?limit=20`);
-    renderWsfeHistory(data.rows || []);
-  } catch (e) {
-    wsfeHistEl.innerHTML = `<div class="muted">${e.message || "Error cargando auditorías WSFE"}</div>`;
-    wsfeBadgeEl.style.display = "none";
+        return `
+          <div class="histItem">
+            <div class="histTop">
+              <div>${wsfeBadge(r.ok)} <span class="muted">Audit ID ${
+          r.id
+        }</span></div>
+              <div class="histMeta">${r.created_at || ""}</div>
+            </div>
+            ${diffsLine}
+          </div>
+        `;
+      })
+      .join("");
   }
-}
 
-async function auditarWsfeActual() {
-  const arcaId = state.selectedArcaId;
-  if (!arcaId) return;
+  async function loadWsfeHistory(arcaId) {
+    if (!wsfeHistEl) return;
+    wsfeHistEl.innerHTML = `<div class="muted">Cargando auditorías WSFE…</div>`;
 
-  btnAuditarWsfe.disabled = true;
-  try {
-    await fetchJSON(`/arca/wsfe/consultar/${arcaId}`);
-    await loadWsfeHistory(arcaId);
-
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      timer: 1400,
-      showConfirmButton: false,
-      icon: "success",
-      title: "Auditoría WSFE ejecutada",
-    });
-  } catch (e) {
-    Swal.fire({ icon: "error", title: "WSFE", text: e.message || "Error auditando" });
-  } finally {
-    btnAuditarWsfe.disabled = false;
+    try {
+      const data = await fetchJSON(`/arca/wsfe/consultas/${arcaId}?limit=20`);
+      renderWsfeHistory(data.rows || []);
+    } catch (e) {
+      wsfeHistEl.innerHTML = `<div class="muted">${
+        e.message || "Error cargando auditorías WSFE"
+      }</div>`;
+      if (wsfeBadgeEl) wsfeBadgeEl.style.display = "none";
+    }
   }
-}
 
+  async function auditarWsfeActual() {
+    if (!btnAuditarWsfe) return;
+    const arcaId = state.selectedArcaId;
+    if (!arcaId) return;
+
+    btnAuditarWsfe.disabled = true;
+    try {
+      await fetchJSON(`/arca/wsfe/consultar/${arcaId}`);
+      await loadWsfeHistory(arcaId);
+
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        timer: 1400,
+        showConfirmButton: false,
+        icon: "success",
+        title: "Auditoría WSFE ejecutada",
+      });
+    } catch (e) {
+      Swal.fire({
+        icon: "error",
+        title: "WSFE",
+        text: e.message || "Error auditando",
+      });
+    } finally {
+      btnAuditarWsfe.disabled = false;
+    }
+  }
+
+  // ---------------- Selección / detalle ----------------
   async function onSelect(id) {
     state.selectedId = id;
 
@@ -234,11 +253,17 @@ async function auditarWsfeActual() {
       ? rows
           .map((r) => {
             const caeLine = r.cae ? `CAE ${r.cae} · Vto ${r.cae_vto}` : "";
-            const obsLine = r.obs_code ? `${r.obs_code} — ${r.obs_msg || ""}` : "";
+            const obsLine = r.obs_code
+              ? `${r.obs_code} — ${r.obs_msg || ""}`
+              : "";
             return `
         <div class="histItem">
           <div class="histTop">
-            <div>${badge(r.estado)} <span class="muted">Cbte ${r.cbte_tipo}-${r.cbte_nro} · ${r.cbte_fch}</span></div>
+            <div>${badge(
+              r.estado
+            )} <span class="muted">Cbte ${r.cbte_tipo}-${r.cbte_nro} · ${
+              r.cbte_fch
+            }</span></div>
             <div class="histMeta">${r.created_at || ""}</div>
           </div>
           ${caeLine ? `<div class="histObs">${caeLine}</div>` : ""}
@@ -250,27 +275,28 @@ async function auditarWsfeActual() {
       : `<div class="muted">Sin intentos ARCA.</div>`;
 
     // --- WSFE UI ---
-state.selectedArcaId = null;
-if (btnAuditarWsfe) btnAuditarWsfe.disabled = true;
+    state.selectedArcaId = null;
+    if (btnAuditarWsfe) btnAuditarWsfe.disabled = true;
 
-if (wsfeHistEl) wsfeHistEl.innerHTML = `<div class="muted">Seleccioná un comprobante EMITIDO para auditar.</div>`;
-if (wsfeBadgeEl) wsfeBadgeEl.style.display = "none";
+    if (wsfeHistEl)
+      wsfeHistEl.innerHTML = `<div class="muted">Seleccioná un comprobante EMITIDO para auditar.</div>`;
+    if (wsfeBadgeEl) wsfeBadgeEl.style.display = "none";
 
-// tomamos el último EMITIDO del historial ARCA
-const lastEmitted = (rows || []).find((x) => x.estado === "EMITIDO");
-if (lastEmitted && lastEmitted.id) {
-  state.selectedArcaId = lastEmitted.id;
-  btnAuditarWsfe.disabled = false;
-  await loadWsfeHistory(state.selectedArcaId);
-} else {
-  if (wsfeHistEl) wsfeHistEl.innerHTML = `<div class="muted">No hay comprobante EMITIDO para auditar.</div>`;
-}
-      
+    const lastEmitted = (rows || []).find((x) => x.estado === "EMITIDO");
+    if (lastEmitted && lastEmitted.id) {
+      state.selectedArcaId = lastEmitted.id;
+      if (btnAuditarWsfe) btnAuditarWsfe.disabled = false;
+      await loadWsfeHistory(state.selectedArcaId);
+    } else {
+      if (wsfeHistEl)
+        wsfeHistEl.innerHTML = `<div class="muted">No hay comprobante EMITIDO para auditar.</div>`;
+    }
+
     const pdfBtn = document.getElementById("btnPDF");
     if (pdfBtn) {
       if (rows.length && rows[0].estado === "EMITIDO") {
         pdfBtn.style.display = "inline-flex";
-        pdfBtn.href = `/arca/pdf/${rows[0].id}`; // arca_id más reciente
+        pdfBtn.href = `/arca/pdf/${rows[0].id}`;
       } else {
         pdfBtn.style.display = "none";
         pdfBtn.href = "#";
@@ -278,6 +304,7 @@ if (lastEmitted && lastEmitted.id) {
     }
   }
 
+  // ---------------- Emisión ----------------
   async function emitirSeleccionada() {
     const id = state.selectedId;
     if (!id) return;
@@ -288,7 +315,7 @@ if (lastEmitted && lastEmitted.id) {
       showCancelButton: true,
       cancelButtonText: "Cancelar",
       focusConfirm: false,
-html: `
+      html: `
   <div style="display:grid;gap:10px;text-align:left">
     <label>Cbte tipo (6=B, 1=A)</label>
     <input id="sw_cbte" class="swal2-input" value="6" />
@@ -323,266 +350,315 @@ html: `
     <div id="sw_hint" style="font-size:12px;color:#667085"></div>
   </div>
 `,
-didOpen: () => {
-  const hint = document.getElementById("sw_hint");
-  const inpCbte = document.getElementById("sw_cbte");
-  const inpTipo = document.getElementById("sw_doc_tipo");
-  const inpNro  = document.getElementById("sw_doc_nro");
-  const selCond = document.getElementById("sw_cond");
-  const inpNom  = document.getElementById("sw_nombre");
-  const inpDom  = document.getElementById("sw_dom");
+      didOpen: () => {
+        const hint = document.getElementById("sw_hint");
+        const inpCbte = document.getElementById("sw_cbte");
+        const inpTipo = document.getElementById("sw_doc_tipo");
+        const inpNro = document.getElementById("sw_doc_nro");
+        const selCond = document.getElementById("sw_cond");
+        const inpNom = document.getElementById("sw_nombre");
+        const inpDom = document.getElementById("sw_dom");
 
-  const btnCache   = document.getElementById("sw_cache_btn");
-  const btnResolve = document.getElementById("sw_resolve_btn");
-  const stCache    = document.getElementById("sw_cache_status");
+        const btnCache = document.getElementById("sw_cache_btn");
+        const btnResolve = document.getElementById("sw_resolve_btn");
+        const stCache = document.getElementById("sw_cache_status");
 
-  const setHint = (t) => { if (hint) hint.textContent = t || ""; };
-  const setSt   = (t) => { if (stCache) stCache.textContent = t || ""; };
+        const setHint = (t) => {
+          if (hint) hint.textContent = t || "";
+        };
+        const setSt = (t) => {
+          if (stCache) stCache.textContent = t || "";
+        };
 
-    // ---- Draft (persistencia al cerrar el modal) ----
-  const draft = loadDraft() || {
-    cbte_tipo: 6,
-    doc_tipo: 99,
-    doc_nro: "0",
-    receptor_cond_iva_id: null,
-    receptor_nombre: "",
-    domicilio: ""
-  };
+        const draft =
+          loadDraft() || {
+            cbte_tipo: 6,
+            doc_tipo: 99,
+            doc_nro: "0",
+            receptor_cond_iva_id: null,
+            receptor_nombre: "",
+            domicilio: "",
+          };
 
-  const setVal = (el, v) => { if (el && v !== undefined && v !== null) el.value = String(v); };
+        const setVal = (el, v) => {
+          if (el && v !== undefined && v !== null) el.value = String(v);
+        };
 
-  function syncDraftFromUI() {
-    draft.cbte_tipo = Number(inpCbte.value || 0) || 6;
-    draft.doc_tipo  = Number(inpTipo.value || 0) || 99;
-    draft.doc_nro   = String(inpNro.value || "").trim() || "0";
-    draft.receptor_cond_iva_id = Number(selCond.value || 0) || null;
-    draft.receptor_nombre = (inpNom.value || "").trim();
-    draft.domicilio = (inpDom.value || "").trim();
-    saveDraft(draft);
-  }
-
-  const on = (el, fn) => {
-    if (!el) return;
-    el.addEventListener("input", fn);
-    el.addEventListener("change", fn);
-  };
-
-  function currentDoc() {
-    const doc_tipo = Number(inpTipo.value || 0);
-    const doc_nro_str = String(inpNro.value || "").trim();
-    const doc_nro = Number(doc_nro_str || 0);
-    return { doc_tipo, doc_nro_str, doc_nro };
-  }
-
-  async function loadCondIvaOptions() {
-    const cbteTipo = Number(inpCbte.value || 0);
-    selCond.innerHTML = `<option value="">Cargando...</option>`;
-
-    const r = await fetch(`/arca/params/cond-iva-receptor?cbte_tipo=${cbteTipo}`);
-    const txt = await r.text();
-    let data = {};
-    try { data = txt ? JSON.parse(txt) : {}; } catch { data = {}; }
-
-    const rows = Array.isArray(data.rows) ? data.rows.slice() : [];
-
-    // Para B: agregar Consumidor Final (5) si no viene
-    if (cbteTipo === 6 && !rows.some((x) => Number(x.id) === 5)) {
-      rows.unshift({ id: 5, desc: "Consumidor Final", cmp_clase: "B/C" });
-    }
-
-    selCond.innerHTML = rows.map((o) => `<option value="${o.id}">${o.id} - ${o.desc}</option>`).join("");
-
-    if (cbteTipo === 6 && rows.some((o) => Number(o.id) === 5)) selCond.value = "5";
-    else if (cbteTipo === 1 && rows.some((o) => Number(o.id) === 1)) selCond.value = "1";
-    else selCond.value = rows[0]?.id ? String(rows[0].id) : "";
-  }
-
-  function applyRules() {
-    const cbteTipo = Number(inpCbte.value || 0);
-
-    if (cbteTipo === 1) {
-      inpTipo.value = "80";
-      setHint("Factura A: DocTipo 80 (CUIT) + Cond IVA válida (ej. 1).");
-      return;
-    }
-
-    if (cbteTipo === 6) {
-      setHint("Factura B: recomendado CF (DocTipo 99, DocNro 0, Cond IVA 5).");
-      if (Number(inpTipo.value || 0) === 99) inpNro.value = "0";
-      return;
-    }
-
-    setHint("");
-  }
-
-  function toggleResolveBtn() {
-    const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
-    const show = doc_tipo === 80 && /^\d{11}$/.test(doc_nro_str) && doc_nro > 0;
-    btnResolve.style.display = show ? "inline-flex" : "none";
-  }
-
-  async function buscarReceptorCache() {
-    const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
-
-    setSt("");
-    toggleResolveBtn();
-
-    // No buscar CF o inválidos
-    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return;
-    if (!/^\d+$/.test(doc_nro_str)) return;
-    if (!Number.isFinite(doc_nro) || doc_nro <= 0) { setHint(""); return; }
-    if (doc_tipo === 99 && doc_nro === 0) { setHint(""); return; }
-
-    setHint("Buscando receptor en cache…");
-
-    try {
-      const data = await fetchJSON(`/arca/receptor?doc_tipo=${doc_tipo}&doc_nro=${doc_nro}`);
-
-      const nombre = (data.razon_social || data.nombre || "").trim();
-      if (nombre) inpNom.value = nombre;
-
-      const dom = (data.domicilio || "").trim();
-      if (dom) inpDom.value = dom;
-
-      const cond = Number(data.cond_iva_id || 0);
-      if (cond > 0) {
-        if (![...selCond.options].some((o) => Number(o.value) === cond)) {
-          const opt = document.createElement("option");
-          opt.value = String(cond);
-          opt.textContent = `${cond} - (cache)`;
-          selCond.appendChild(opt);
+        function syncDraftFromUI() {
+          draft.cbte_tipo = Number(inpCbte.value || 0) || 6;
+          draft.doc_tipo = Number(inpTipo.value || 0) || 99;
+          draft.doc_nro = String(inpNro.value || "").trim() || "0";
+          draft.receptor_cond_iva_id = Number(selCond.value || 0) || null;
+          draft.receptor_nombre = (inpNom.value || "").trim();
+          draft.domicilio = (inpDom.value || "").trim();
+          saveDraft(draft);
         }
 
-        // Si estamos en B y cache trae 1 => pasar a A
-        if (Number(inpCbte.value) === 6 && cond === 1) {
-          inpCbte.value = "1";
+        const on = (el, fn) => {
+          if (!el) return;
+          el.addEventListener("input", fn);
+          el.addEventListener("change", fn);
+        };
+
+        function currentDoc() {
+          const doc_tipo = Number(inpTipo.value || 0);
+          const doc_nro_str = String(inpNro.value || "").trim();
+          const doc_nro = Number(doc_nro_str || 0);
+          return { doc_tipo, doc_nro_str, doc_nro };
+        }
+
+        async function loadCondIvaOptions() {
+          const cbteTipo = Number(inpCbte.value || 0);
+          selCond.innerHTML = `<option value="">Cargando...</option>`;
+
+          const r = await fetch(
+            `/arca/params/cond-iva-receptor?cbte_tipo=${cbteTipo}`
+          );
+          const txt = await r.text();
+          let data = {};
+          try {
+            data = txt ? JSON.parse(txt) : {};
+          } catch {
+            data = {};
+          }
+
+          const rows = Array.isArray(data.rows) ? data.rows.slice() : [];
+
+          if (cbteTipo === 6 && !rows.some((x) => Number(x.id) === 5)) {
+            rows.unshift({ id: 5, desc: "Consumidor Final", cmp_clase: "B/C" });
+          }
+
+          selCond.innerHTML = rows
+            .map((o) => `<option value="${o.id}">${o.id} - ${o.desc}</option>`)
+            .join("");
+
+          if (cbteTipo === 6 && rows.some((o) => Number(o.id) === 5))
+            selCond.value = "5";
+          else if (cbteTipo === 1 && rows.some((o) => Number(o.id) === 1))
+            selCond.value = "1";
+          else selCond.value = rows[0]?.id ? String(rows[0].id) : "";
+        }
+
+        function applyRules() {
+          const cbteTipo = Number(inpCbte.value || 0);
+
+          if (cbteTipo === 1) {
+            inpTipo.value = "80";
+            setHint("Factura A: DocTipo 80 (CUIT) + Cond IVA válida (ej. 1).");
+            return;
+          }
+
+          if (cbteTipo === 6) {
+            setHint("Factura B: recomendado CF (DocTipo 99, DocNro 0, Cond IVA 5).");
+            if (Number(inpTipo.value || 0) === 99) inpNro.value = "0";
+            return;
+          }
+
+          setHint("");
+        }
+
+        function toggleResolveBtn() {
+          const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
+          const show =
+            doc_tipo === 80 && /^\d{11}$/.test(doc_nro_str) && doc_nro > 0;
+          if (btnResolve) btnResolve.style.display = show ? "inline-flex" : "none";
+        }
+
+        async function buscarReceptorCache() {
+          const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
+
+          setSt("");
+          toggleResolveBtn();
+
+          if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return;
+          if (!/^\d+$/.test(doc_nro_str)) return;
+          if (!Number.isFinite(doc_nro) || doc_nro <= 0) {
+            setHint("");
+            return;
+          }
+          if (doc_tipo === 99 && doc_nro === 0) {
+            setHint("");
+            return;
+          }
+
+          setHint("Buscando receptor en cache…");
+
+          try {
+            const data = await fetchJSON(
+              `/arca/receptor?doc_tipo=${doc_tipo}&doc_nro=${doc_nro}`
+            );
+
+            const nombre = (data.razon_social || data.nombre || "").trim();
+            if (nombre) inpNom.value = nombre;
+
+            const dom = (data.domicilio || "").trim();
+            if (dom) inpDom.value = dom;
+
+            const cond = Number(data.cond_iva_id || 0);
+            if (cond > 0) {
+              if (![...selCond.options].some((o) => Number(o.value) === cond)) {
+                const opt = document.createElement("option");
+                opt.value = String(cond);
+                opt.textContent = `${cond} - (cache)`;
+                selCond.appendChild(opt);
+              }
+
+              if (Number(inpCbte.value) === 6 && cond === 1) {
+                inpCbte.value = "1";
+                applyRules();
+                await loadCondIvaOptions();
+              }
+
+              selCond.value = String(cond);
+            }
+
+            setHint("Receptor cargado desde cache.");
+          } catch {
+            setHint("Sin cache (podés completar a mano o guardar en cache).");
+          }
+
+          syncDraftFromUI();
+        }
+
+        async function guardarCache() {
+          const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
+          setSt("");
+
+          if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) {
+            setSt("DocTipo inválido");
+            return;
+          }
+          if (!/^\d+$/.test(doc_nro_str)) {
+            setSt("DocNro inválido");
+            return;
+          }
+          if (doc_tipo === 99) {
+            setSt("No se cachea CF");
+            return;
+          }
+          if (!Number.isFinite(doc_nro) || doc_nro <= 0) {
+            setSt("DocNro debe ser > 0");
+            return;
+          }
+          if (doc_tipo === 80 && doc_nro_str.length !== 11) {
+            setSt("CUIT debe tener 11 dígitos");
+            return;
+          }
+
+          const payload = {
+            doc_tipo,
+            doc_nro,
+            nombre: (inpNom.value || "").trim() || null,
+            razon_social: (inpNom.value || "").trim() || null,
+            cond_iva_id: Number(selCond.value || 0) || null,
+            domicilio: (inpDom.value || "").trim() || null,
+          };
+
+          setSt("Guardando…");
+          try {
+            await fetchJSON("/arca/receptor/cache", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            setSt("Guardado.");
+          } catch (e) {
+            setSt(e.message || "Error guardando");
+          }
+
+          syncDraftFromUI();
+        }
+
+        async function resolverPadron() {
+          const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
+          setSt("");
+
+          if (!(doc_tipo === 80 && /^\d{11}$/.test(doc_nro_str) && doc_nro > 0))
+            return;
+
+          setSt("Resolviendo en padrón…");
+          try {
+            const data = await fetchJSON(
+              `/arca/receptor?doc_tipo=80&doc_nro=${doc_nro}&resolve=1&refresh=1`
+            );
+
+            const nombre = (data.razon_social || data.nombre || "").trim();
+            if (nombre) inpNom.value = nombre;
+
+            const dom = (data.domicilio || "").trim();
+            if (dom) inpDom.value = dom;
+
+            const cond = Number(data.cond_iva_id || 0);
+            if (cond > 0) {
+              if (![...selCond.options].some((o) => Number(o.value) === cond)) {
+                const opt = document.createElement("option");
+                opt.value = String(cond);
+                opt.textContent = `${cond} - (padrón)`;
+                selCond.appendChild(opt);
+              }
+              selCond.value = String(cond);
+            }
+
+            setSt("Resuelto.");
+          } catch (e) {
+            setSt(e.message || "No se pudo resolver");
+          }
+
+          syncDraftFromUI();
+        }
+
+        let t = null;
+        function scheduleBuscar() {
+          clearTimeout(t);
+          t = setTimeout(buscarReceptorCache, 350);
+        }
+
+        if (btnCache) btnCache.addEventListener("click", guardarCache);
+        if (btnResolve) btnResolve.addEventListener("click", resolverPadron);
+
+        // Restaurar valores
+        setVal(inpCbte, draft.cbte_tipo);
+        setVal(inpTipo, draft.doc_tipo);
+        setVal(inpNro, draft.doc_nro);
+        setVal(inpNom, draft.receptor_nombre);
+        setVal(inpDom, draft.domicilio);
+
+        // Guardar borrador en cada cambio
+        const hook = (el) => {
+          if (!el) return;
+          el.addEventListener("input", syncDraftFromUI);
+          el.addEventListener("change", syncDraftFromUI);
+        };
+        [inpCbte, inpTipo, inpNro, selCond, inpNom, inpDom].forEach(hook);
+
+        on(inpCbte, async () => {
           applyRules();
           await loadCondIvaOptions();
-        }
+          scheduleBuscar();
+        });
 
-        selCond.value = String(cond);
-      }
+        on(inpTipo, () => {
+          toggleResolveBtn();
+          scheduleBuscar();
+        });
+        on(inpNro, () => {
+          toggleResolveBtn();
+          scheduleBuscar();
+        });
 
-      setHint("Receptor cargado desde cache.");
-    } catch {
-      setHint("Sin cache (podés completar a mano o guardar en cache).");
-    }
-      syncDraftFromUI();
-
-  }
-
-  async function guardarCache() {
-    const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
-    setSt("");
-
-    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) { setSt("DocTipo inválido"); return; }
-    if (!/^\d+$/.test(doc_nro_str)) { setSt("DocNro inválido"); return; }
-    if (doc_tipo === 99) { setSt("No se cachea CF"); return; }
-    if (!Number.isFinite(doc_nro) || doc_nro <= 0) { setSt("DocNro debe ser > 0"); return; }
-    if (doc_tipo === 80 && doc_nro_str.length !== 11) { setSt("CUIT debe tener 11 dígitos"); return; }
-
-    const payload = {
-      doc_tipo,
-      doc_nro,
-      nombre: (inpNom.value || "").trim() || null,
-      razon_social: (inpNom.value || "").trim() || null,
-      cond_iva_id: Number(selCond.value || 0) || null,
-      domicilio: (inpDom.value || "").trim() || null,
-    };
-
-    setSt("Guardando…");
-    try {
-      await fetchJSON("/arca/receptor/cache", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      setSt("Guardado.");
-    } catch (e) {
-      setSt(e.message || "Error guardando");
-    }
-  }
-
-  async function resolverPadron() {
-    const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
-    setSt("");
-
-    if (!(doc_tipo === 80 && /^\d{11}$/.test(doc_nro_str) && doc_nro > 0)) return;
-
-    setSt("Resolviendo en padrón…");
-    try {
-      const data = await fetchJSON(`/arca/receptor?doc_tipo=80&doc_nro=${doc_nro}&resolve=1&refresh=1`);
-
-      const nombre = (data.razon_social || data.nombre || "").trim();
-      if (nombre) inpNom.value = nombre;
-
-      const dom = (data.domicilio || "").trim();
-      if (dom) inpDom.value = dom;
-
-      const cond = Number(data.cond_iva_id || 0);
-      if (cond > 0) {
-        if (![...selCond.options].some((o) => Number(o.value) === cond)) {
-          const opt = document.createElement("option");
-          opt.value = String(cond);
-          opt.textContent = `${cond} - (padrón)`;
-          selCond.appendChild(opt);
-        }
-        selCond.value = String(cond);
-      }
-
-      setSt("Resuelto.");
-    } catch (e) {
-      setSt(e.message || "No se pudo resolver");
-    }
-      syncDraftFromUI();
-
-  }
-
-  let t = null;
-  function scheduleBuscar() {
-    clearTimeout(t);
-    t = setTimeout(buscarReceptorCache, 350);
-  }
-
-  btnCache.addEventListener("click", guardarCache);
-  btnResolve.addEventListener("click", resolverPadron);
-    // Restaurar valores
-  setVal(inpCbte, draft.cbte_tipo);
-  setVal(inpTipo, draft.doc_tipo);
-  setVal(inpNro,  draft.doc_nro);
-  setVal(inpNom,  draft.receptor_nombre);
-  setVal(inpDom,  draft.domicilio);
-
-  // Guardar borrador en cada cambio
-  const hook = (el) => {
-    if (!el) return;
-    el.addEventListener("input", syncDraftFromUI);
-    el.addEventListener("change", syncDraftFromUI);
-  };
-  [inpCbte, inpTipo, inpNro, selCond, inpNom, inpDom].forEach(hook);
-
-  on(inpCbte, async () => {
-    applyRules();
-    await loadCondIvaOptions();
-    scheduleBuscar();
-  });
-
-  on(inpTipo, () => { toggleResolveBtn(); scheduleBuscar(); });
-  on(inpNro,  () => { toggleResolveBtn(); scheduleBuscar(); });
-
-  (async () => {
-    applyRules();
-    await loadCondIvaOptions();
-    scheduleBuscar();
-  })();
-},
-
-
+        (async () => {
+          applyRules();
+          await loadCondIvaOptions();
+          scheduleBuscar();
+        })();
+      },
       preConfirm: () => {
         const cbte_tipo = Number(document.getElementById("sw_cbte").value);
         const doc_tipo = Number(document.getElementById("sw_doc_tipo").value);
         const doc_nro = Number(document.getElementById("sw_doc_nro").value);
-        const receptor_cond_iva_id = Number(document.getElementById("sw_cond").value);
+        const receptor_cond_iva_id = Number(
+          document.getElementById("sw_cond").value
+        );
         const receptor_nombre =
           (document.getElementById("sw_nombre").value || "").trim() || null;
 
@@ -595,24 +671,33 @@ didOpen: () => {
         if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0)
           return Swal.showValidationMessage("condición IVA inválida");
 
-        // Reglas mínimas para evitar errores comunes
         if (cbte_tipo === 1) {
           if (doc_tipo !== 80)
-            return Swal.showValidationMessage("Factura A requiere DocTipo 80 (CUIT)");
+            return Swal.showValidationMessage(
+              "Factura A requiere DocTipo 80 (CUIT)"
+            );
           if (String(doc_nro).length !== 11)
             return Swal.showValidationMessage("CUIT inválido (11 dígitos)");
         }
 
         if (cbte_tipo === 6) {
-          // No permitir RI (1) en B
           if (receptor_cond_iva_id === 1)
-            return Swal.showValidationMessage("Condición IVA 1 (RI) no es válida para Factura B");
-          // Si es CF, debe ser 99/0
+            return Swal.showValidationMessage(
+              "Condición IVA 1 (RI) no es válida para Factura B"
+            );
           if (doc_tipo === 99 && doc_nro !== 0)
-            return Swal.showValidationMessage("Consumidor Final: DocNro debe ser 0");
+            return Swal.showValidationMessage(
+              "Consumidor Final: DocNro debe ser 0"
+            );
         }
 
-        return { cbte_tipo, doc_tipo, doc_nro, receptor_cond_iva_id, receptor_nombre };
+        return {
+          cbte_tipo,
+          doc_tipo,
+          doc_nro,
+          receptor_cond_iva_id,
+          receptor_nombre,
+        };
       },
     });
 
@@ -629,7 +714,9 @@ didOpen: () => {
 
       const extraObs =
         resp.obs_code || resp.obs_msg
-          ? `<div style="margin-top:10px;font-size:12px;color:#667085">${resp.obs_code || ""} ${resp.obs_msg || ""}</div>`
+          ? `<div style="margin-top:10px;font-size:12px;color:#667085">${resp.obs_code || ""} ${
+              resp.obs_msg || ""
+            }</div>`
           : "";
 
       await Swal.fire({
@@ -672,10 +759,10 @@ didOpen: () => {
   });
 
   $("btnEmitir").addEventListener("click", emitirSeleccionada);
+  if (btnAuditarWsfe) btnAuditarWsfe.addEventListener("click", auditarWsfeActual);
 
   // Init
   loadList().catch((err) => {
     $("arcaTbody").innerHTML = `<tr><td colspan="6" class="muted">${err.message}</td></tr>`;
   });
 })();
-if (btnAuditarWsfe) btnAuditarWsfe.addEventListener("click", auditarWsfeActual);
