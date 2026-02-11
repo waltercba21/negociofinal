@@ -181,7 +181,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
     const doc_nro = Number(doc_nro_str);
 
     const receptor_cond_iva_id = Number(req.body.receptor_cond_iva_id || 5);
-    const receptor_nombre = String(req.body.receptor_nombre || "").trim() || null;
+    let receptor_nombre = String(req.body.receptor_nombre || "").trim() || null;
 
     if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) return res.status(400).json({ error: "cbte_tipo inválido" });
     if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return res.status(400).json({ error: "doc_tipo inválido" });
@@ -193,6 +193,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
     if (doc_tipo === 99) {
       if (!Number.isFinite(doc_nro) || doc_nro < 0) return res.status(400).json({ error: "doc_nro inválido" });
       if (doc_nro !== 0) return res.status(400).json({ error: "Consumidor Final: doc_nro debe ser 0" });
+      if (!receptor_nombre) receptor_nombre = "CONSUMIDOR FINAL";
     } else {
       if (!Number.isFinite(doc_nro) || doc_nro <= 0) return res.status(400).json({ error: "doc_nro inválido (debe ser > 0)" });
     }
@@ -239,8 +240,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
         fm.id AS factura_id, fm.nombre_cliente, fm.fecha, fm.total, fm.creado_en,
         fi.producto_id, COALESCE(p.nombre,'(sin nombre)') AS descripcion,
         fi.cantidad, fi.precio_unitario, fi.subtotal,
-p.IVA AS iva_porcentaje
-
+        p.IVA AS iva_porcentaje
       FROM facturas_mostrador fm
       JOIN factura_items fi ON fm.id = fi.factura_id
       LEFT JOIN productos p ON p.id = fi.producto_id
@@ -250,133 +250,204 @@ p.IVA AS iva_porcentaje
     );
     if (!rows.length) return res.status(404).json({ error: "Factura no encontrada o sin items" });
 
-   // Cálculo real (por alícuota) + regla C sin IVA
-let calc;
-try {
-  calc = arcaCalc.calcularDesdeFactura(rows, clase, { defaultPorc: 21 });
-} catch (e) {
-  if (e && e.code === "IVA_UNSUPPORTED") {
-    return res.status(400).json({ error: e.message });
-  }
-  throw e;
-}
-
-const { itemsCalc, totales, ivaAlicuotas, omitirIva } = calc;
-
-const imp_total = totales.imp_total;
-const imp_neto  = totales.imp_neto;
-const imp_iva   = totales.imp_iva;
-
-
-// Nro + fecha coherente + reserva robusta (reintento ante uq_cbte)
-const MAX_ALLOC_TRIES = 5;
-
-let info, next, cbte_fch, reqObj, req_json;
-
-for (let attempt = 1; attempt <= MAX_ALLOC_TRIES; attempt++) {
-  info = await getNextAndDates(pto_vta, cbte_tipo);
-  next = info.next;
-  cbte_fch = info.cbte_fch;
-
-  reqObj = {
-    fuente: "facturas_mostrador",
-    factura_mostrador_id: facturaId,
-    cbte_tipo,
-    pto_vta,
-    cbte_fch,
-    cbte_nro: next,
-    doc_tipo,
-    doc_nro,
-    receptor_cond_iva_id,
-    receptor_nombre,
-    totales: { imp_total, imp_neto, imp_iva },
-    iva: { omitirIva, ivaAlicuotas },
-    items: itemsCalc,
-    debug: { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today, alloc_attempt: attempt },
-  };
-
-  req_json = JSON.stringify(reqObj, null, 2);
-
-  try {
-    arcaId = await arcaModel.crearComprobante({
-      factura_mostrador_id: facturaId,
-      ambiente,
-      cuit_emisor,
-      pto_vta,
-      cbte_tipo,
-      cbte_nro: next,
-      cbte_fch,
-      doc_tipo,
-      doc_nro,
-      receptor_nombre,
-      receptor_cond_iva_id,
-      imp_total,
-      imp_neto,
-      imp_iva,
-      imp_exento: 0,
-      mon_id: "PES",
-      mon_cotiz: 1,
-      req_json,
-      estado: "PENDIENTE",
-    });
-    break; // reservado OK
-  } catch (err) {
-    // si es por factura activa, devolvemos el existente (bloqueante)
-    if (isDupKey(err, "uq_factura_activa")) {
-      const row = await arcaModel.buscarUltimoPorFacturaMostradorId(facturaId);
-      return res.status(409).json({
-        error: `Ya existe un comprobante ARCA en estado ${row?.estado} para esta factura`,
-        arca_id: row?.id || null,
-        estado: row?.estado || null,
-        cae: row?.cae || null,
-        cbte_nro: row?.cbte_nro || null,
-      });
+    // Cálculo real (por alícuota) + regla C sin IVA
+    let calc;
+    try {
+      calc = arcaCalc.calcularDesdeFactura(rows, clase, { defaultPorc: 21 });
+    } catch (e) {
+      if (e && e.code === "IVA_UNSUPPORTED") return res.status(400).json({ error: e.message });
+      throw e;
     }
 
-    // si es choque de numeración (uq_cbte), reintentar
-    if (isDupKey(err, "uq_cbte")) {
-      if (attempt === MAX_ALLOC_TRIES) {
-        throw new Error("No se pudo reservar cbte_nro por choque de numeración (uq_cbte) tras múltiples reintentos");
+    const { itemsCalc, totales, ivaAlicuotas, omitirIva } = calc;
+    const imp_total = totales.imp_total;
+    const imp_neto  = totales.imp_neto;
+    const imp_iva   = totales.imp_iva;
+
+    // --- helpers para reconciliación (FECompConsultar devuelve solo XML crudo) ---
+    const pickBlock = (xml, tag) => {
+      const r = new RegExp(`<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`, "i");
+      const m = String(xml || "").match(r);
+      return m ? m[1] : "";
+    };
+    const pickDate8 = (xml, tags) => {
+      for (const t of tags) {
+        const v = pickTag(xml, t);
+        if (!v) continue;
+        const digits = String(v).replace(/\D/g, "");
+        const m = digits.match(/(20\d{6})/);
+        if (m) return m[1];
       }
-      await sleep(120 * attempt);
-      continue;
+      return null;
+    };
+    const pickFirst = (xml, tags) => {
+      for (const t of tags) {
+        const v = pickTag(xml, t);
+        if (v != null && String(v).trim() !== "") return String(v).trim();
+      }
+      return null;
+    };
+    const reconciliarEnWsfe = async (ptoVta, cbteTipo, cbteNro) => {
+      // 3 intentos cortos por consistencia eventual
+      for (let i = 1; i <= 3; i++) {
+        try {
+          const out = await wsfe.FECompConsultar(ptoVta, cbteTipo, cbteNro);
+          const raw = out?.raw || "";
+
+          const fault = pickTag(raw, "faultstring");
+          if (fault) return { ok: false, fault, raw };
+
+          const resultGetXml = pickBlock(raw, "ResultGet") || raw;
+          const cae = pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]);
+          const cae_vto = pickDate8(resultGetXml, ["FchVto", "CAEFchVto"]);
+          const cbte_fch_wsfe = pickDate8(resultGetXml, ["CbteFch"]);
+
+          if (cae) return { ok: true, cae, cae_vto, cbte_fch: cbte_fch_wsfe, raw };
+          // no hay CAE -> puede no existir todavía / no autorizado
+          await sleep(200 * i);
+        } catch (_) {
+          await sleep(200 * i);
+        }
+      }
+      return { ok: false, cae: null };
+    };
+
+    // Nro + fecha coherente + reserva robusta (reintento ante uq_cbte)
+    const MAX_ALLOC_TRIES = 5;
+    let info, next, cbte_fch, reqObj, req_json;
+
+    for (let attempt = 1; attempt <= MAX_ALLOC_TRIES; attempt++) {
+      info = await getNextAndDates(pto_vta, cbte_tipo);
+      next = info.next;
+      cbte_fch = info.cbte_fch;
+
+      reqObj = {
+        fuente: "facturas_mostrador",
+        factura_mostrador_id: facturaId,
+        cbte_tipo,
+        pto_vta,
+        cbte_fch,
+        cbte_nro: next,
+        doc_tipo,
+        doc_nro,
+        receptor_cond_iva_id,
+        receptor_nombre,
+        totales: { imp_total, imp_neto, imp_iva },
+        iva: { omitirIva, ivaAlicuotas },
+        items: itemsCalc,
+        debug: { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today, alloc_attempt: attempt },
+      };
+
+      req_json = JSON.stringify(reqObj, null, 2);
+
+      try {
+        arcaId = await arcaModel.crearComprobante({
+          factura_mostrador_id: facturaId,
+          ambiente,
+          cuit_emisor,
+          pto_vta,
+          cbte_tipo,
+          cbte_nro: next,
+          cbte_fch,
+          doc_tipo,
+          doc_nro,
+          receptor_nombre,
+          receptor_cond_iva_id,
+          imp_total,
+          imp_neto,
+          imp_iva,
+          imp_exento: 0,
+          mon_id: "PES",
+          mon_cotiz: 1,
+          req_json,
+          estado: "PENDIENTE",
+        });
+        break;
+      } catch (err) {
+        if (isDupKey(err, "uq_factura_activa")) {
+          const row = await arcaModel.buscarUltimoPorFacturaMostradorId(facturaId);
+          return res.status(409).json({
+            error: `Ya existe un comprobante ARCA en estado ${row?.estado} para esta factura`,
+            arca_id: row?.id || null,
+            estado: row?.estado || null,
+            cae: row?.cae || null,
+            cbte_nro: row?.cbte_nro || null,
+          });
+        }
+
+        if (isDupKey(err, "uq_cbte")) {
+          if (attempt === MAX_ALLOC_TRIES) {
+            throw new Error("No se pudo reservar cbte_nro por choque de numeración (uq_cbte) tras múltiples reintentos");
+          }
+          await sleep(120 * attempt);
+          continue;
+        }
+
+        throw err;
+      }
     }
 
-    throw err;
-  }
-}
-
-if (!arcaId) throw new Error("No se pudo crear comprobante PENDIENTE (reserva de numeración fallida)");
-
+    if (!arcaId) throw new Error("No se pudo crear comprobante PENDIENTE (reserva de numeración fallida)");
 
     await arcaModel.insertarItems(arcaId, itemsCalc);
 
-    // WSFE (con manejo de excepción para no dejar PENDIENTE colgado)
+    // WSFE
     let cae;
     try {
       cae = await wsfe.FECAESolicitar({
-  ptoVta: pto_vta,
-  cbteTipo: cbte_tipo,
-  docTipo: doc_tipo,
-  docNro: doc_nro,
-  condicionIVAReceptorId: receptor_cond_iva_id,
-  cbteFch: cbte_fch,
-  cbteDesde: next,
-  cbteHasta: next,
-  impTotal: imp_total,
-  impTotConc: 0,
-  impNeto: imp_neto,
-  impOpEx: 0,
-  impIVA: imp_iva,
-  impTrib: 0,
-  ivaAlicuotas,
-  omitirIva,
-  monId: "PES",
-  monCotiz: "1.000",
-});
-
+        ptoVta: pto_vta,
+        cbteTipo: cbte_tipo,
+        docTipo: doc_tipo,
+        docNro: doc_nro,
+        condicionIVAReceptorId: receptor_cond_iva_id,
+        cbteFch: cbte_fch,
+        cbteDesde: next,
+        cbteHasta: next,
+        impTotal: imp_total,
+        impTotConc: 0,
+        impNeto: imp_neto,
+        impOpEx: 0,
+        impIVA: imp_iva,
+        impTrib: 0,
+        ivaAlicuotas,
+        omitirIva,
+        monId: "PES",
+        monCotiz: "1.000",
+      });
     } catch (err) {
       const msg = err?.message || String(err);
+
+      // Reconciliar: si se autorizó igual, marcar EMITIDO
+      const rec = await reconciliarEnWsfe(pto_vta, cbte_tipo, next);
+      if (rec.ok && rec.cae) {
+        await arcaModel.actualizarRespuesta(arcaId, {
+          resultado: "A",
+          cae: rec.cae,
+          cae_vto: rec.cae_vto || null,
+          obs_code: "RECONCILIADO",
+          obs_msg: "Autorizado en WSFE luego de excepción",
+          resp_xml: rec.raw || null,
+          estado: "EMITIDO",
+        });
+
+        return res.status(200).json({
+          arca_id: arcaId,
+          estado: "EMITIDO",
+          pto_vta,
+          cbte_tipo,
+          cbte_fch: rec.cbte_fch || cbte_fch,
+          cbte_nro: next,
+          ultimo_autorizado: info?.ultimo ?? null,
+          last_cbte_fch: info?.lastCbteFch ?? null,
+          resultado: "A",
+          cae: rec.cae,
+          cae_vto: rec.cae_vto || null,
+          obs_code: "RECONCILIADO",
+          obs_msg: "Autorizado en WSFE luego de excepción",
+        });
+      }
+
+      // No se pudo confirmar: dejar PENDIENTE (no liberar cbte_nro)
       await arcaModel.actualizarRespuesta(arcaId, {
         resultado: null,
         cae: null,
@@ -384,96 +455,142 @@ if (!arcaId) throw new Error("No se pudo crear comprobante PENDIENTE (reserva de
         obs_code: "WSFE_EXC",
         obs_msg: msg.slice(0, 1000),
         resp_xml: null,
-        estado: "RECHAZADO",
+        estado: "PENDIENTE",
       });
-      // liberar numero interno para reintento (evita choque con uq_cbte)
-      await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
-      return res.status(502).json({ error: "Fallo WSFE", detail: msg, arca_id: arcaId });
+
+      return res.status(202).json({
+        arca_id: arcaId,
+        estado: "PENDIENTE",
+        pto_vta,
+        cbte_tipo,
+        cbte_fch,
+        cbte_nro: next,
+        error: "Fallo WSFE (requiere confirmación)",
+        detail: msg,
+      });
     }
 
-// Reintento si 10016 (fecha) + reserva robusta ante uq_cbte
-if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
-  let updated = false;
+    // Reintento si 10016 (fecha) + reserva robusta ante uq_cbte
+    if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
+      let updated = false;
 
-  for (let attempt = 1; attempt <= MAX_ALLOC_TRIES; attempt++) {
-    info = await getNextAndDates(pto_vta, cbte_tipo);
-    next = info.next;
-    cbte_fch = info.cbte_fch;
+      for (let attempt = 1; attempt <= MAX_ALLOC_TRIES; attempt++) {
+        info = await getNextAndDates(pto_vta, cbte_tipo);
+        next = info.next;
+        cbte_fch = info.cbte_fch;
 
-    reqObj.cbte_nro = next;
-    reqObj.cbte_fch = cbte_fch;
-    reqObj.debug = { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today, retry: true, alloc_attempt: attempt };
-    req_json = JSON.stringify(reqObj, null, 2);
+        reqObj.cbte_nro = next;
+        reqObj.cbte_fch = cbte_fch;
+        reqObj.debug = { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today, retry: true, alloc_attempt: attempt };
+        req_json = JSON.stringify(reqObj, null, 2);
 
-    try {
-      await query(
-        `UPDATE arca_comprobantes SET cbte_nro=?, cbte_fch=?, req_json=?, updated_at=NOW() WHERE id=?`,
-        [next, cbte_fch, req_json, arcaId]
-      );
-      updated = true;
-      break;
-    } catch (err) {
-      if (isDupKey(err, "uq_cbte")) {
-        if (attempt === MAX_ALLOC_TRIES) {
-          await arcaModel.actualizarRespuesta(arcaId, {
-            resultado: "R",
-            cae: null,
-            cae_vto: null,
-            obs_code: "DUP_CBTE",
-            obs_msg: "Choque de numeración (uq_cbte) al reintentar por 10016",
-            resp_xml: null,
-            estado: "RECHAZADO",
-          });
-          await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
-          return res.status(409).json({ error: "Choque de numeración al reintentar (uq_cbte)", arca_id: arcaId });
+        try {
+          await query(
+            `UPDATE arca_comprobantes SET cbte_nro=?, cbte_fch=?, req_json=?, updated_at=NOW() WHERE id=?`,
+            [next, cbte_fch, req_json, arcaId]
+          );
+          updated = true;
+          break;
+        } catch (err) {
+          if (isDupKey(err, "uq_cbte")) {
+            if (attempt === MAX_ALLOC_TRIES) {
+              await arcaModel.actualizarRespuesta(arcaId, {
+                resultado: "R",
+                cae: null,
+                cae_vto: null,
+                obs_code: "DUP_CBTE",
+                obs_msg: "Choque de numeración (uq_cbte) al reintentar por 10016",
+                resp_xml: null,
+                estado: "RECHAZADO",
+              });
+              await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+              return res.status(409).json({ error: "Choque de numeración al reintentar (uq_cbte)", arca_id: arcaId });
+            }
+            await sleep(120 * attempt);
+            continue;
+          }
+          throw err;
         }
-        await sleep(120 * attempt);
-        continue;
       }
-      throw err;
+
+      if (!updated) throw new Error("No se pudo reservar numeración en reintento 10016");
+
+      // volver a pedir CAE con el nro reservado
+      try {
+        cae = await wsfe.FECAESolicitar({
+          ptoVta: pto_vta,
+          cbteTipo: cbte_tipo,
+          docTipo: doc_tipo,
+          docNro: doc_nro,
+          condicionIVAReceptorId: receptor_cond_iva_id,
+          cbteFch: cbte_fch,
+          cbteDesde: next,
+          cbteHasta: next,
+          impTotal: imp_total,
+          impTotConc: 0,
+          impNeto: imp_neto,
+          impOpEx: 0,
+          impIVA: imp_iva,
+          impTrib: 0,
+          ivaAlicuotas,
+          omitirIva,
+          monId: "PES",
+          monCotiz: "1.000",
+        });
+      } catch (err) {
+        const msg = err?.message || String(err);
+
+        const rec = await reconciliarEnWsfe(pto_vta, cbte_tipo, next);
+        if (rec.ok && rec.cae) {
+          await arcaModel.actualizarRespuesta(arcaId, {
+            resultado: "A",
+            cae: rec.cae,
+            cae_vto: rec.cae_vto || null,
+            obs_code: "RECONCILIADO",
+            obs_msg: "Autorizado en WSFE luego de excepción (retry)",
+            resp_xml: rec.raw || null,
+            estado: "EMITIDO",
+          });
+
+          return res.status(200).json({
+            arca_id: arcaId,
+            estado: "EMITIDO",
+            pto_vta,
+            cbte_tipo,
+            cbte_fch: rec.cbte_fch || cbte_fch,
+            cbte_nro: next,
+            ultimo_autorizado: info?.ultimo ?? null,
+            last_cbte_fch: info?.lastCbteFch ?? null,
+            resultado: "A",
+            cae: rec.cae,
+            cae_vto: rec.cae_vto || null,
+            obs_code: "RECONCILIADO",
+            obs_msg: "Autorizado en WSFE luego de excepción (retry)",
+          });
+        }
+
+        await arcaModel.actualizarRespuesta(arcaId, {
+          resultado: null,
+          cae: null,
+          cae_vto: null,
+          obs_code: "WSFE_EXC",
+          obs_msg: msg.slice(0, 1000),
+          resp_xml: null,
+          estado: "PENDIENTE",
+        });
+
+        return res.status(202).json({
+          arca_id: arcaId,
+          estado: "PENDIENTE",
+          pto_vta,
+          cbte_tipo,
+          cbte_fch,
+          cbte_nro: next,
+          error: "Fallo WSFE (retry) (requiere confirmación)",
+          detail: msg,
+        });
+      }
     }
-  }
-
-  if (!updated) throw new Error("No se pudo reservar numeración en reintento 10016");
-
-  // volver a pedir CAE con el nro reservado
-  try {
-    cae = await wsfe.FECAESolicitar({
-      ptoVta: pto_vta,
-      cbteTipo: cbte_tipo,
-      docTipo: doc_tipo,
-      docNro: doc_nro,
-      condicionIVAReceptorId: receptor_cond_iva_id,
-      cbteFch: cbte_fch,
-      cbteDesde: next,
-      cbteHasta: next,
-      impTotal: imp_total,
-      impTotConc: 0,
-      impNeto: imp_neto,
-      impOpEx: 0,
-      impIVA: imp_iva,
-      impTrib: 0,
-      ivaAlicuotas,
-      omitirIva,
-      monId: "PES",
-      monCotiz: "1.000",
-    });
-  } catch (err) {
-    const msg = err?.message || String(err);
-    await arcaModel.actualizarRespuesta(arcaId, {
-      resultado: null,
-      cae: null,
-      cae_vto: null,
-      obs_code: "WSFE_EXC",
-      obs_msg: msg.slice(0, 1000),
-      resp_xml: null,
-      estado: "RECHAZADO",
-    });
-    await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
-    return res.status(502).json({ error: "Fallo WSFE (retry)", detail: msg, arca_id: arcaId });
-  }
-}
-
 
     const estado = cae.resultado === "A" ? "EMITIDO" : "RECHAZADO";
 
@@ -514,7 +631,7 @@ if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
       pto_vta,
       cbte_tipo,
       cbte_fch,
-      cbte_nro: next, // nro intentado (aunque en DB se nullée si RECHAZADO)
+      cbte_nro: next,
       ultimo_autorizado: info.ultimo,
       last_cbte_fch: info.lastCbteFch,
       resultado: cae.resultado || null,
@@ -524,7 +641,7 @@ if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
       obs_msg: cae.obsMsg || null,
     });
   } catch (e) {
-    // Si ya creamos el comprobante y algo explotó, no dejarlo PENDIENTE
+    // Si ya creamos el comprobante y algo explotó, no dejarlo PENDIENTE colgado
     if (arcaId) {
       try {
         await arcaModel.actualizarRespuesta(arcaId, {
@@ -544,6 +661,7 @@ if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
     return res.status(500).json({ error: e.message || "Error interno" });
   }
 }
+
 
 
 async function statusPorFacturaMostrador(req, res) {
