@@ -925,14 +925,20 @@ async function guardarReceptorCache(req, res) {
 async function auditarWsfePorArcaId(req, res) {
   try {
     const arcaId = Number(req.params.arcaId || 0);
-    if (!Number.isFinite(arcaId) || arcaId <= 0) return res.status(400).json({ error: "arcaId inválido" });
+    if (!Number.isFinite(arcaId) || arcaId <= 0) {
+      return res.status(400).json({ error: "arcaId inválido" });
+    }
 
     const rows = await query(`SELECT * FROM arca_comprobantes WHERE id=? LIMIT 1`, [arcaId]);
     if (!rows.length) return res.status(404).json({ error: "Comprobante no encontrado" });
 
     const c = rows[0];
     if (c.estado !== "EMITIDO" || !c.cbte_nro) {
-      return res.status(409).json({ error: "Solo audita comprobantes EMITIDO con cbte_nro", estado: c.estado, cbte_nro: c.cbte_nro });
+      return res.status(409).json({
+        error: "Solo audita comprobantes EMITIDO con cbte_nro",
+        estado: c.estado,
+        cbte_nro: c.cbte_nro
+      });
     }
 
     const out = await wsfe.FECompConsultar(c.pto_vta, c.cbte_tipo, c.cbte_nro);
@@ -940,39 +946,76 @@ async function auditarWsfePorArcaId(req, res) {
 
     const fault = pickTag(raw, "faultstring");
     if (fault) {
-      await arcaModel.insertarWsfeConsulta({ arca_comprobante_id: arcaId, ok: 0, parsed_json: { fault }, resp_xml: raw });
+      await arcaModel.insertarWsfeConsulta({
+        arca_comprobante_id: arcaId,
+        ok: 0,
+        parsed_json: { fault },
+        resp_xml: raw,
+      });
       return res.status(502).json({ error: fault });
     }
 
-    // parse básico (ResultGet suele contener los campos)
+    // Helpers de normalización
+    const normStr = (v) => (v == null ? "" : String(v).trim());
+    const normDate8 = (v) => {
+      const d = normStr(v).replace(/\D/g, "").slice(0, 8);
+      return d || null;
+    };
+
+    // CAE/VTO: en FECompConsultar suelen venir como CodAutorizacion / FchVto (fallback)
+    const caeWsfeRaw =
+      pickTag(raw, "CAE") ||
+      pickTag(raw, "CodAutorizacion") ||
+      null;
+
+    const caeVtoWsfeRaw =
+      pickTag(raw, "CAEFchVto") ||
+      pickTag(raw, "FchVto") ||
+      null;
+
+    // Parse básico
     const parsed = {
       cbte_nro: Number(pickTag(raw, "CbteNro") || c.cbte_nro),
-      cbte_fch: pickTag(raw, "CbteFch") || null,
-      cae: pickTag(raw, "CAE") || null,
-      cae_vto: pickTag(raw, "CAEFchVto") || null,
+      cbte_fch: normDate8(pickTag(raw, "CbteFch")) || c.cbte_fch,
+
+      cae: caeWsfeRaw ? String(caeWsfeRaw).trim() : null,
+      cae_vto: normDate8(caeVtoWsfeRaw),
+
       doc_tipo: Number(pickTag(raw, "DocTipo") || c.doc_tipo),
       doc_nro: Number(pickTag(raw, "DocNro") || c.doc_nro),
+
       imp_total: Number(pickTag(raw, "ImpTotal") || c.imp_total),
       imp_neto: Number(pickTag(raw, "ImpNeto") || c.imp_neto),
       imp_iva: Number(pickTag(raw, "ImpIVA") || c.imp_iva),
+
       mon_id: pickTag(raw, "MonId") || c.mon_id,
       mon_cotiz: pickTag(raw, "MonCotiz") || String(c.mon_cotiz),
     };
 
+    // Comparación
     const diffs = {};
-    const eq = (a, b) => String(a ?? "") === String(b ?? "");
+    const normDate8Str = (v) => (String(v ?? "").replace(/\D/g, "").slice(0, 8) || "");
+    const eq = (a, b) => normStr(a) === normStr(b);
+    const eqDate = (a, b) => normDate8Str(a) === normDate8Str(b);
     const eq2 = (a, b) => Math.abs(Number(a || 0) - Number(b || 0)) < 0.01;
 
-    if (!eq(parsed.cae, c.cae)) diffs.cae = { db: c.cae, wsfe: parsed.cae };
-    if (!eq(parsed.cae_vto, c.cae_vto)) diffs.cae_vto = { db: c.cae_vto, wsfe: parsed.cae_vto };
-    if (!eq(parsed.cbte_fch, c.cbte_fch)) diffs.cbte_fch = { db: c.cbte_fch, wsfe: parsed.cbte_fch };
+    if (!eq(parsed.cae, c.cae)) {
+      diffs.cae = { db: normStr(c.cae) || null, wsfe: normStr(parsed.cae) || null };
+    }
+    if (!eqDate(parsed.cae_vto, c.cae_vto)) {
+      diffs.cae_vto = { db: normDate8Str(c.cae_vto) || null, wsfe: normDate8Str(parsed.cae_vto) || null };
+    }
+    if (!eqDate(parsed.cbte_fch, c.cbte_fch)) {
+      diffs.cbte_fch = { db: normDate8Str(c.cbte_fch) || null, wsfe: normDate8Str(parsed.cbte_fch) || null };
+    }
+
     if (!eq2(parsed.imp_total, c.imp_total)) diffs.imp_total = { db: c.imp_total, wsfe: parsed.imp_total };
-    if (!eq2(parsed.imp_neto, c.imp_neto)) diffs.imp_neto = { db: c.imp_neto, wsfe: parsed.imp_neto };
-    if (!eq2(parsed.imp_iva, c.imp_iva)) diffs.imp_iva = { db: c.imp_iva, wsfe: parsed.imp_iva };
+    if (!eq2(parsed.imp_neto,  c.imp_neto))  diffs.imp_neto  = { db: c.imp_neto,  wsfe: parsed.imp_neto  };
+    if (!eq2(parsed.imp_iva,   c.imp_iva))   diffs.imp_iva   = { db: c.imp_iva,   wsfe: parsed.imp_iva   };
 
     const ok = Object.keys(diffs).length === 0;
 
-    const ins = await arcaModel.insertarWsfeConsulta({
+    await arcaModel.insertarWsfeConsulta({
       arca_comprobante_id: arcaId,
       ok,
       parsed_json: { parsed, diffs },
@@ -985,8 +1028,13 @@ async function auditarWsfePorArcaId(req, res) {
       diffs,
       wsfe: parsed,
       db: {
-        cbte_nro: c.cbte_nro, cbte_fch: c.cbte_fch, cae: c.cae, cae_vto: c.cae_vto,
-        imp_total: c.imp_total, imp_neto: c.imp_neto, imp_iva: c.imp_iva
+        cbte_nro: c.cbte_nro,
+        cbte_fch: c.cbte_fch,
+        cae: c.cae,
+        cae_vto: c.cae_vto,
+        imp_total: c.imp_total,
+        imp_neto: c.imp_neto,
+        imp_iva: c.imp_iva
       }
     });
   } catch (e) {

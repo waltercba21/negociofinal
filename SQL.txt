@@ -504,7 +504,17 @@ DESCRIBE arca_receptores_cache;
 | updated_at   | datetime     | NO   |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
 
 
-
+DESCRIBE arca_wsfe_consultas;
++---------------------+------------+------+-----+-------------------+-------------------+
+| Field               | Type       | Null | Key | Default           | Extra             |
++---------------------+------------+------+-----+-------------------+-------------------+
+| id                  | int        | NO   | PRI | NULL              | auto_increment    |
+| arca_comprobante_id | int        | NO   | MUL | NULL              |                   |
+| ok                  | tinyint(1) | NO   |     | 0                 |                   |
+| parsed_json         | json       | YES  |     | NULL              |                   |
+| resp_xml            | longtext   | YES  |     | NULL              |                   |
+| created_at          | datetime   | NO   |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
++---------------------+------------+------+-----+-------------------+-------------------+
 
 
 
