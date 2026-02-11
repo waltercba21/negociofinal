@@ -922,6 +922,7 @@ async function guardarReceptorCache(req, res) {
     return res.status(500).json({ error: e.message || "Error guardando cache" });
   }
 }
+
 async function auditarWsfePorArcaId(req, res) {
   try {
     const arcaId = Number(req.params.arcaId || 0);
@@ -937,7 +938,7 @@ async function auditarWsfePorArcaId(req, res) {
       return res.status(409).json({
         error: "Solo audita comprobantes EMITIDO con cbte_nro",
         estado: c.estado,
-        cbte_nro: c.cbte_nro
+        cbte_nro: c.cbte_nro,
       });
     }
 
@@ -955,70 +956,96 @@ async function auditarWsfePorArcaId(req, res) {
       return res.status(502).json({ error: fault });
     }
 
-    // Helpers de normalización
+    // ---------- helpers ----------
+    const pickBlock = (xml, tag) => {
+      const r = new RegExp(
+        `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+        "i"
+      );
+      const m = String(xml || "").match(r);
+      return m ? m[1] : "";
+    };
+
     const normStr = (v) => (v == null ? "" : String(v).trim());
-    const normDate8 = (v) => {
-      const d = normStr(v).replace(/\D/g, "").slice(0, 8);
-      return d || null;
+
+    // Devuelve YYYYMMDD buscando dentro del valor del tag (solo fechas que empiecen con 20)
+    const pickDate8 = (xml, tags) => {
+      for (const t of tags) {
+        const v = pickTag(xml, t);
+        if (!v) continue;
+        const digits = String(v).replace(/\D/g, "");
+        const m = digits.match(/(20\d{6})/); // 20YYYYMMDD
+        if (m) return m[1];
+      }
+      return null;
     };
 
-    // CAE/VTO: en FECompConsultar suelen venir como CodAutorizacion / FchVto (fallback)
-    const caeWsfeRaw =
-      pickTag(raw, "CAE") ||
-      pickTag(raw, "CodAutorizacion") ||
-      null;
+    const pickFirst = (xml, tags) => {
+      for (const t of tags) {
+        const v = pickTag(xml, t);
+        if (v != null && String(v).trim() !== "") return String(v).trim();
+      }
+      return null;
+    };
 
-    const caeVtoWsfeRaw =
-      pickTag(raw, "CAEFchVto") ||
-      pickTag(raw, "FchVto") ||
-      null;
+    // Tomar preferentemente del bloque ResultGet
+    const resultGetXml = pickBlock(raw, "ResultGet") || raw;
 
-    // Parse básico
+    // ---------- Parse ----------
     const parsed = {
-      cbte_nro: Number(pickTag(raw, "CbteNro") || c.cbte_nro),
-      cbte_fch: normDate8(pickTag(raw, "CbteFch")) || c.cbte_fch,
+      cbte_nro: Number(pickTag(resultGetXml, "CbteNro") || c.cbte_nro),
+      cbte_fch: pickDate8(resultGetXml, ["CbteFch"]) || c.cbte_fch,
 
-      cae: caeWsfeRaw ? String(caeWsfeRaw).trim() : null,
-      cae_vto: normDate8(caeVtoWsfeRaw),
+      // CAE suele venir como CodAutorizacion en FECompConsultar
+      cae: pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]),
 
-      doc_tipo: Number(pickTag(raw, "DocTipo") || c.doc_tipo),
-      doc_nro: Number(pickTag(raw, "DocNro") || c.doc_nro),
+      // Vto: solo aceptar una fecha YYYYMMDD real (20xxxxxx)
+      cae_vto: pickDate8(resultGetXml, ["FchVto", "CAEFchVto"]),
 
-      imp_total: Number(pickTag(raw, "ImpTotal") || c.imp_total),
-      imp_neto: Number(pickTag(raw, "ImpNeto") || c.imp_neto),
-      imp_iva: Number(pickTag(raw, "ImpIVA") || c.imp_iva),
+      doc_tipo: Number(pickTag(resultGetXml, "DocTipo") || c.doc_tipo),
+      doc_nro: Number(pickTag(resultGetXml, "DocNro") || c.doc_nro),
 
-      mon_id: pickTag(raw, "MonId") || c.mon_id,
-      mon_cotiz: pickTag(raw, "MonCotiz") || String(c.mon_cotiz),
+      imp_total: Number(pickTag(resultGetXml, "ImpTotal") || c.imp_total),
+      imp_neto: Number(pickTag(resultGetXml, "ImpNeto") || c.imp_neto),
+      imp_iva: Number(pickTag(resultGetXml, "ImpIVA") || c.imp_iva),
+
+      mon_id: pickTag(resultGetXml, "MonId") || c.mon_id,
+      mon_cotiz: pickTag(resultGetXml, "MonCotiz") || String(c.mon_cotiz),
     };
 
-    // Comparación
+    // ---------- diffs ----------
     const diffs = {};
-    const normDate8Str = (v) => (String(v ?? "").replace(/\D/g, "").slice(0, 8) || "");
+    const normDate8Str = (v) => {
+      const digits = String(v ?? "").replace(/\D/g, "");
+      const m = digits.match(/(20\d{6})/);
+      return m ? m[1] : "";
+    };
+
     const eq = (a, b) => normStr(a) === normStr(b);
     const eqDate = (a, b) => normDate8Str(a) === normDate8Str(b);
     const eq2 = (a, b) => Math.abs(Number(a || 0) - Number(b || 0)) < 0.01;
 
-    if (!eq(parsed.cae, c.cae)) {
-      diffs.cae = { db: normStr(c.cae) || null, wsfe: normStr(parsed.cae) || null };
-    }
-    if (!eqDate(parsed.cae_vto, c.cae_vto)) {
-      diffs.cae_vto = { db: normDate8Str(c.cae_vto) || null, wsfe: normDate8Str(parsed.cae_vto) || null };
-    }
-    if (!eqDate(parsed.cbte_fch, c.cbte_fch)) {
-      diffs.cbte_fch = { db: normDate8Str(c.cbte_fch) || null, wsfe: normDate8Str(parsed.cbte_fch) || null };
-    }
+    if (!eq(parsed.cae, c.cae)) diffs.cae = { db: normStr(c.cae) || null, wsfe: normStr(parsed.cae) || null };
+    if (!eqDate(parsed.cae_vto, c.cae_vto)) diffs.cae_vto = { db: normDate8Str(c.cae_vto) || null, wsfe: normDate8Str(parsed.cae_vto) || null };
+    if (!eqDate(parsed.cbte_fch, c.cbte_fch)) diffs.cbte_fch = { db: normDate8Str(c.cbte_fch) || null, wsfe: normDate8Str(parsed.cbte_fch) || null };
 
     if (!eq2(parsed.imp_total, c.imp_total)) diffs.imp_total = { db: c.imp_total, wsfe: parsed.imp_total };
-    if (!eq2(parsed.imp_neto,  c.imp_neto))  diffs.imp_neto  = { db: c.imp_neto,  wsfe: parsed.imp_neto  };
-    if (!eq2(parsed.imp_iva,   c.imp_iva))   diffs.imp_iva   = { db: c.imp_iva,   wsfe: parsed.imp_iva   };
+    if (!eq2(parsed.imp_neto, c.imp_neto)) diffs.imp_neto = { db: c.imp_neto, wsfe: parsed.imp_neto };
+    if (!eq2(parsed.imp_iva, c.imp_iva)) diffs.imp_iva = { db: c.imp_iva, wsfe: parsed.imp_iva };
 
     const ok = Object.keys(diffs).length === 0;
 
     await arcaModel.insertarWsfeConsulta({
       arca_comprobante_id: arcaId,
       ok,
-      parsed_json: { parsed, diffs },
+      parsed_json: {
+        parsed,
+        diffs,
+        debug: {
+          fchVto_raw: pickTag(resultGetXml, "FchVto") || null,
+          caeFchVto_raw: pickTag(resultGetXml, "CAEFchVto") || null,
+        },
+      },
       resp_xml: raw,
     });
 
@@ -1034,8 +1061,8 @@ async function auditarWsfePorArcaId(req, res) {
         cae_vto: c.cae_vto,
         imp_total: c.imp_total,
         imp_neto: c.imp_neto,
-        imp_iva: c.imp_iva
-      }
+        imp_iva: c.imp_iva,
+      },
     });
   } catch (e) {
     return res.status(500).json({ error: e.message || "Error auditoría WSFE" });
