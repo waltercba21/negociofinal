@@ -176,8 +176,7 @@
       showCancelButton: true,
       cancelButtonText: "Cancelar",
       focusConfirm: false,
-
-      html: `
+html: `
   <div style="display:grid;gap:10px;text-align:left">
     <label>Cbte tipo (6=B, 1=A)</label>
     <input id="sw_cbte" class="swal2-input" value="6" />
@@ -194,145 +193,238 @@
     <label>Receptor (nombre / razón social)</label>
     <input id="sw_nombre" class="swal2-input" placeholder="Opcional / autocompleta si está en cache" />
 
+    <label>Domicilio (para cache / auditoría)</label>
+    <input id="sw_dom" class="swal2-input" placeholder="Opcional" />
+
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+      <button type="button" id="sw_cache_btn" class="swal2-styled" style="margin:0;padding:8px 10px">
+        Guardar en cache
+      </button>
+
+      <button type="button" id="sw_resolve_btn" class="swal2-styled" style="margin:0;padding:8px 10px;display:none">
+        Resolver por padrón
+      </button>
+
+      <span id="sw_cache_status" style="font-size:12px;color:#667085"></span>
+    </div>
+
     <div id="sw_hint" style="font-size:12px;color:#667085"></div>
   </div>
 `,
+didOpen: () => {
+  const hint = document.getElementById("sw_hint");
+  const inpCbte = document.getElementById("sw_cbte");
+  const inpTipo = document.getElementById("sw_doc_tipo");
+  const inpNro  = document.getElementById("sw_doc_nro");
+  const selCond = document.getElementById("sw_cond");
+  const inpNom  = document.getElementById("sw_nombre");
+  const inpDom  = document.getElementById("sw_dom");
 
-      didOpen: () => {
-        const hint = document.getElementById("sw_hint");
-        const inpCbte = document.getElementById("sw_cbte");
-        const inpTipo = document.getElementById("sw_doc_tipo");
-        const inpNro = document.getElementById("sw_doc_nro");
-        const selCond = document.getElementById("sw_cond");
-        const inpNom = document.getElementById("sw_nombre");
+  const btnCache   = document.getElementById("sw_cache_btn");
+  const btnResolve = document.getElementById("sw_resolve_btn");
+  const stCache    = document.getElementById("sw_cache_status");
 
-        const setHint = (t) => {
-          if (hint) hint.textContent = t || "";
-        };
+  const setHint = (t) => { if (hint) hint.textContent = t || ""; };
+  const setSt   = (t) => { if (stCache) stCache.textContent = t || ""; };
 
-        const on = (el, fn) => {
-          if (!el) return;
-          el.addEventListener("input", fn);
-          el.addEventListener("change", fn);
-        };
+  const on = (el, fn) => {
+    if (!el) return;
+    el.addEventListener("input", fn);
+    el.addEventListener("change", fn);
+  };
 
-        async function loadCondIvaOptions() {
-          const cbteTipo = Number(inpCbte.value || 0);
-          selCond.innerHTML = `<option value="">Cargando...</option>`;
+  function currentDoc() {
+    const doc_tipo = Number(inpTipo.value || 0);
+    const doc_nro_str = String(inpNro.value || "").trim();
+    const doc_nro = Number(doc_nro_str || 0);
+    return { doc_tipo, doc_nro_str, doc_nro };
+  }
 
-          const r = await fetch(`/arca/params/cond-iva-receptor?cbte_tipo=${cbteTipo}`);
-          const txt = await r.text();
-          let data = {};
-          try { data = txt ? JSON.parse(txt) : {}; } catch { data = {}; }
+  async function loadCondIvaOptions() {
+    const cbteTipo = Number(inpCbte.value || 0);
+    selCond.innerHTML = `<option value="">Cargando...</option>`;
 
-          const rows = Array.isArray(data.rows) ? data.rows.slice() : [];
+    const r = await fetch(`/arca/params/cond-iva-receptor?cbte_tipo=${cbteTipo}`);
+    const txt = await r.text();
+    let data = {};
+    try { data = txt ? JSON.parse(txt) : {}; } catch { data = {}; }
 
-          // Para B: agregar Consumidor Final (5) si no viene
-          if (cbteTipo === 6 && !rows.some((x) => Number(x.id) === 5)) {
-            rows.unshift({ id: 5, desc: "Consumidor Final", cmp_clase: "B/C" });
-          }
+    const rows = Array.isArray(data.rows) ? data.rows.slice() : [];
 
-          selCond.innerHTML = rows
-            .map((o) => `<option value="${o.id}">${o.id} - ${o.desc}</option>`)
-            .join("");
+    // Para B: agregar Consumidor Final (5) si no viene
+    if (cbteTipo === 6 && !rows.some((x) => Number(x.id) === 5)) {
+      rows.unshift({ id: 5, desc: "Consumidor Final", cmp_clase: "B/C" });
+    }
 
-          if (cbteTipo === 6 && rows.some((o) => Number(o.id) === 5)) selCond.value = "5";
-          else if (cbteTipo === 1 && rows.some((o) => Number(o.id) === 1)) selCond.value = "1";
-          else selCond.value = rows[0]?.id ? String(rows[0].id) : "";
+    selCond.innerHTML = rows.map((o) => `<option value="${o.id}">${o.id} - ${o.desc}</option>`).join("");
+
+    if (cbteTipo === 6 && rows.some((o) => Number(o.id) === 5)) selCond.value = "5";
+    else if (cbteTipo === 1 && rows.some((o) => Number(o.id) === 1)) selCond.value = "1";
+    else selCond.value = rows[0]?.id ? String(rows[0].id) : "";
+  }
+
+  function applyRules() {
+    const cbteTipo = Number(inpCbte.value || 0);
+
+    if (cbteTipo === 1) {
+      inpTipo.value = "80";
+      setHint("Factura A: DocTipo 80 (CUIT) + Cond IVA válida (ej. 1).");
+      return;
+    }
+
+    if (cbteTipo === 6) {
+      setHint("Factura B: recomendado CF (DocTipo 99, DocNro 0, Cond IVA 5).");
+      if (Number(inpTipo.value || 0) === 99) inpNro.value = "0";
+      return;
+    }
+
+    setHint("");
+  }
+
+  function toggleResolveBtn() {
+    const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
+    const show = doc_tipo === 80 && /^\d{11}$/.test(doc_nro_str) && doc_nro > 0;
+    btnResolve.style.display = show ? "inline-flex" : "none";
+  }
+
+  async function buscarReceptorCache() {
+    const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
+
+    setSt("");
+    toggleResolveBtn();
+
+    // No buscar CF o inválidos
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return;
+    if (!/^\d+$/.test(doc_nro_str)) return;
+    if (!Number.isFinite(doc_nro) || doc_nro <= 0) { setHint(""); return; }
+    if (doc_tipo === 99 && doc_nro === 0) { setHint(""); return; }
+
+    setHint("Buscando receptor en cache…");
+
+    try {
+      const data = await fetchJSON(`/arca/receptor?doc_tipo=${doc_tipo}&doc_nro=${doc_nro}`);
+
+      const nombre = (data.razon_social || data.nombre || "").trim();
+      if (nombre) inpNom.value = nombre;
+
+      const dom = (data.domicilio || "").trim();
+      if (dom) inpDom.value = dom;
+
+      const cond = Number(data.cond_iva_id || 0);
+      if (cond > 0) {
+        if (![...selCond.options].some((o) => Number(o.value) === cond)) {
+          const opt = document.createElement("option");
+          opt.value = String(cond);
+          opt.textContent = `${cond} - (cache)`;
+          selCond.appendChild(opt);
         }
 
-        function applyRules() {
-          const cbteTipo = Number(inpCbte.value || 0);
-
-          if (cbteTipo === 1) {
-            inpTipo.value = "80";
-            setHint("Factura A: DocTipo 80 (CUIT) + Cond IVA válida (ej. 1).");
-            return;
-          }
-
-          if (cbteTipo === 6) {
-            setHint("Factura B: recomendado CF (DocTipo 99, DocNro 0, Cond IVA 5).");
-            if (Number(inpTipo.value || 0) === 99) inpNro.value = "0";
-            return;
-          }
-
-          setHint("");
-        }
-
-        let t = null;
-
-        async function buscarReceptorCache() {
-          const doc_tipo = Number(inpTipo.value || 0);
-          const doc_nro = Number(String(inpNro.value || "").trim() || 0);
-
-          // No buscar CF o inválidos
-          if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return;
-          if (!Number.isFinite(doc_nro) || doc_nro <= 0) {
-            setHint("");
-            return;
-          }
-          if (doc_tipo === 99 && doc_nro === 0) {
-            setHint("");
-            return;
-          }
-
-          setHint("Buscando receptor en cache…");
-
-          try {
-            const rr = await fetch(`/arca/receptor?doc_tipo=${doc_tipo}&doc_nro=${doc_nro}`);
-            const ttxt = await rr.text();
-            let data = {};
-            try { data = ttxt ? JSON.parse(ttxt) : {}; } catch { data = {}; }
-
-            if (!rr.ok) throw new Error("no-cache");
-
-            const nombre = (data.razon_social || data.nombre || "").trim();
-            if (nombre) inpNom.value = nombre;
-
-            const cond = Number(data.cond_iva_id || 0);
-            if (cond > 0) {
-              if (![...selCond.options].some((o) => Number(o.value) === cond)) {
-                const opt = document.createElement("option");
-                opt.value = String(cond);
-                opt.textContent = `${cond} - (cache)`;
-                selCond.appendChild(opt);
-              }
-
-              // Si estamos en B y cache trae 1 => pasar a A
-              if (Number(inpCbte.value) === 6 && cond === 1) {
-                inpCbte.value = "1";
-                applyRules();
-                await loadCondIvaOptions();
-              }
-
-              selCond.value = String(cond);
-            }
-
-            setHint("Receptor cargado desde cache.");
-          } catch {
-            setHint("Sin cache (podés completar a mano).");
-          }
-        }
-
-        function scheduleBuscar() {
-          clearTimeout(t);
-          t = setTimeout(buscarReceptorCache, 350);
-        }
-
-        on(inpCbte, async () => {
+        // Si estamos en B y cache trae 1 => pasar a A
+        if (Number(inpCbte.value) === 6 && cond === 1) {
+          inpCbte.value = "1";
           applyRules();
           await loadCondIvaOptions();
-        });
+        }
 
-        on(inpTipo, scheduleBuscar);
-        on(inpNro, scheduleBuscar);
+        selCond.value = String(cond);
+      }
 
-        (async () => {
-          applyRules();
-          await loadCondIvaOptions();
-          scheduleBuscar();
-        })();
-      },
+      setHint("Receptor cargado desde cache.");
+    } catch {
+      setHint("Sin cache (podés completar a mano o guardar en cache).");
+    }
+  }
+
+  async function guardarCache() {
+    const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
+    setSt("");
+
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) { setSt("DocTipo inválido"); return; }
+    if (!/^\d+$/.test(doc_nro_str)) { setSt("DocNro inválido"); return; }
+    if (doc_tipo === 99) { setSt("No se cachea CF"); return; }
+    if (!Number.isFinite(doc_nro) || doc_nro <= 0) { setSt("DocNro debe ser > 0"); return; }
+    if (doc_tipo === 80 && doc_nro_str.length !== 11) { setSt("CUIT debe tener 11 dígitos"); return; }
+
+    const payload = {
+      doc_tipo,
+      doc_nro,
+      nombre: (inpNom.value || "").trim() || null,
+      razon_social: (inpNom.value || "").trim() || null,
+      cond_iva_id: Number(selCond.value || 0) || null,
+      domicilio: (inpDom.value || "").trim() || null,
+    };
+
+    setSt("Guardando…");
+    try {
+      await fetchJSON("/arca/receptor/cache", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      setSt("Guardado.");
+    } catch (e) {
+      setSt(e.message || "Error guardando");
+    }
+  }
+
+  async function resolverPadron() {
+    const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
+    setSt("");
+
+    if (!(doc_tipo === 80 && /^\d{11}$/.test(doc_nro_str) && doc_nro > 0)) return;
+
+    setSt("Resolviendo en padrón…");
+    try {
+      const data = await fetchJSON(`/arca/receptor?doc_tipo=80&doc_nro=${doc_nro}&resolve=1&refresh=1`);
+
+      const nombre = (data.razon_social || data.nombre || "").trim();
+      if (nombre) inpNom.value = nombre;
+
+      const dom = (data.domicilio || "").trim();
+      if (dom) inpDom.value = dom;
+
+      const cond = Number(data.cond_iva_id || 0);
+      if (cond > 0) {
+        if (![...selCond.options].some((o) => Number(o.value) === cond)) {
+          const opt = document.createElement("option");
+          opt.value = String(cond);
+          opt.textContent = `${cond} - (padrón)`;
+          selCond.appendChild(opt);
+        }
+        selCond.value = String(cond);
+      }
+
+      setSt("Resuelto.");
+    } catch (e) {
+      setSt(e.message || "No se pudo resolver");
+    }
+  }
+
+  let t = null;
+  function scheduleBuscar() {
+    clearTimeout(t);
+    t = setTimeout(buscarReceptorCache, 350);
+  }
+
+  btnCache.addEventListener("click", guardarCache);
+  btnResolve.addEventListener("click", resolverPadron);
+
+  on(inpCbte, async () => {
+    applyRules();
+    await loadCondIvaOptions();
+    scheduleBuscar();
+  });
+
+  on(inpTipo, () => { toggleResolveBtn(); scheduleBuscar(); });
+  on(inpNro,  () => { toggleResolveBtn(); scheduleBuscar(); });
+
+  (async () => {
+    applyRules();
+    await loadCondIvaOptions();
+    scheduleBuscar();
+  })();
+},
+
 
       preConfirm: () => {
         const cbte_tipo = Number(document.getElementById("sw_cbte").value);
