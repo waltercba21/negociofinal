@@ -1,5 +1,6 @@
 // controllers/arcaController.js
 require("dotenv").config();
+const arcaCalc = require("../services/arca_calc");
 
 const pool = require("../config/conexion");
 const util = require("util");
@@ -232,7 +233,9 @@ async function emitirDesdeFacturaMostrador(req, res) {
       SELECT
         fm.id AS factura_id, fm.nombre_cliente, fm.fecha, fm.total, fm.creado_en,
         fi.producto_id, COALESCE(p.nombre,'(sin nombre)') AS descripcion,
-        fi.cantidad, fi.precio_unitario, fi.subtotal
+        fi.cantidad, fi.precio_unitario, fi.subtotal,
+p.IVA AS iva_porcentaje
+
       FROM facturas_mostrador fm
       JOIN factura_items fi ON fm.id = fi.factura_id
       LEFT JOIN productos p ON p.id = fi.producto_id
@@ -242,29 +245,23 @@ async function emitirDesdeFacturaMostrador(req, res) {
     );
     if (!rows.length) return res.status(404).json({ error: "Factura no encontrada o sin items" });
 
-    // MVP IVA 21%
-    const alic = 21;
+   // Cálculo real (por alícuota) + regla C sin IVA
+let calc;
+try {
+  calc = arcaCalc.calcularDesdeFactura(rows, clase, { defaultPorc: 21 });
+} catch (e) {
+  if (e && e.code === "IVA_UNSUPPORTED") {
+    return res.status(400).json({ error: e.message });
+  }
+  throw e;
+}
 
-    const itemsCalc = rows.map((r) => {
-      const imp_total = round2(r.subtotal);
-      const imp_neto = round2(imp_total / (1 + alic / 100));
-      const imp_iva = round2(imp_total - imp_neto);
-      return {
-        producto_id: r.producto_id,
-        descripcion: r.descripcion,
-        cantidad: round2(r.cantidad),
-        precio_unitario: round2(r.precio_unitario),
-        bonif: 0,
-        iva_alicuota: round2(alic),
-        imp_neto,
-        imp_iva,
-        imp_total,
-      };
-    });
+const { itemsCalc, totales, ivaAlicuotas, omitirIva } = calc;
 
-    const imp_total = round2(itemsCalc.reduce((a, i) => a + i.imp_total, 0));
-    const imp_neto = round2(itemsCalc.reduce((a, i) => a + i.imp_neto, 0));
-    const imp_iva = round2(itemsCalc.reduce((a, i) => a + i.imp_iva, 0));
+const imp_total = totales.imp_total;
+const imp_neto  = totales.imp_neto;
+const imp_iva   = totales.imp_iva;
+
 
     // Nro + fecha coherente
     let info = await getNextAndDates(pto_vta, cbte_tipo);
@@ -283,8 +280,9 @@ async function emitirDesdeFacturaMostrador(req, res) {
       receptor_cond_iva_id,
       receptor_nombre,
       totales: { imp_total, imp_neto, imp_iva },
-      iva_mvp: { alicuota: 21, wsfe_id: 5 },
-      items: itemsCalc,
+iva: { omitirIva, ivaAlicuotas },
+items: itemsCalc,
+
       debug: { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today },
     };
 
@@ -332,20 +330,26 @@ async function emitirDesdeFacturaMostrador(req, res) {
     let cae;
     try {
       cae = await wsfe.FECAESolicitar({
-        ptoVta: pto_vta,
-        cbteTipo: cbte_tipo,
-        docTipo: doc_tipo,
-        docNro: doc_nro,
-        condicionIVAReceptorId: receptor_cond_iva_id,
-        cbteFch: cbte_fch,
-        cbteDesde: next,
-        cbteHasta: next,
-        impTotal: imp_total,
-        impNeto: imp_neto,
-        impIVA: imp_iva,
-        monId: "PES",
-        monCotiz: "1.000",
-      });
+  ptoVta: pto_vta,
+  cbteTipo: cbte_tipo,
+  docTipo: doc_tipo,
+  docNro: doc_nro,
+  condicionIVAReceptorId: receptor_cond_iva_id,
+  cbteFch: cbte_fch,
+  cbteDesde: next,
+  cbteHasta: next,
+  impTotal: imp_total,
+  impTotConc: 0,
+  impNeto: imp_neto,
+  impOpEx: 0,
+  impIVA: imp_iva,
+  impTrib: 0,
+  ivaAlicuotas,
+  omitirIva,
+  monId: "PES",
+  monCotiz: "1.000",
+});
+
     } catch (err) {
       const msg = err?.message || String(err);
       await arcaModel.actualizarRespuesta(arcaId, {
@@ -396,21 +400,27 @@ async function emitirDesdeFacturaMostrador(req, res) {
       }
 
       try {
-        cae = await wsfe.FECAESolicitar({
-          ptoVta: pto_vta,
-          cbteTipo: cbte_tipo,
-          docTipo: doc_tipo,
-          docNro: doc_nro,
-          condicionIVAReceptorId: receptor_cond_iva_id,
-          cbteFch: cbte_fch,
-          cbteDesde: next,
-          cbteHasta: next,
-          impTotal: imp_total,
-          impNeto: imp_neto,
-          impIVA: imp_iva,
-          monId: "PES",
-          monCotiz: "1.000",
-        });
+       cae = await wsfe.FECAESolicitar({
+  ptoVta: pto_vta,
+  cbteTipo: cbte_tipo,
+  docTipo: doc_tipo,
+  docNro: doc_nro,
+  condicionIVAReceptorId: receptor_cond_iva_id,
+  cbteFch: cbte_fch,
+  cbteDesde: next,
+  cbteHasta: next,
+  impTotal: imp_total,
+  impTotConc: 0,
+  impNeto: imp_neto,
+  impOpEx: 0,
+  impIVA: imp_iva,
+  impTrib: 0,
+  ivaAlicuotas,
+  omitirIva,
+  monId: "PES",
+  monCotiz: "1.000",
+});
+
       } catch (err) {
         const msg = err?.message || String(err);
         await arcaModel.actualizarRespuesta(arcaId, {
