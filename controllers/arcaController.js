@@ -894,11 +894,13 @@ async function guardarReceptorCache(req, res) {
 
     if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return res.status(400).json({ error: "doc_tipo inválido" });
     if (!/^\d+$/.test(doc_nro_str)) return res.status(400).json({ error: "doc_nro inválido" });
-
+    
+    if (doc_tipo === 99) return res.status(400).json({ error: "No se cachea doc_tipo=99 (Consumidor Final)" });
+    
     const doc_nro = Number(doc_nro_str);
     if (!Number.isFinite(doc_nro) || doc_nro <= 0) return res.status(400).json({ error: "doc_nro inválido (debe ser > 0)" });
 
-    if (doc_tipo === 99) return res.status(400).json({ error: "No se cachea doc_tipo=99 (Consumidor Final)" });
+    
     if (doc_tipo === 80 && doc_nro_str.length !== 11) return res.status(400).json({ error: "CUIT inválido (debe tener 11 dígitos)" });
 
     const nombre = String(req.body?.nombre || "").trim() || null;
