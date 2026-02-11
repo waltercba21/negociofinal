@@ -2,6 +2,12 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
+  state.selectedArcaId = null;
+
+const wsfeHistEl = $("wsfeHist");
+const wsfeBadgeEl = $("wsfeBadge");
+const btnAuditarWsfe = $("btnAuditarWsfe");
+
   const state = {
     limit: 50,
     offset: 0,
@@ -117,6 +123,80 @@
     renderList();
     renderPager();
   }
+  function wsfeBadge(ok) {
+  if (ok === true) return `<span class="badge b-ok">OK</span>`;
+  if (ok === false) return `<span class="badge b-bad">DIF</span>`;
+  return `<span class="badge b-none">—</span>`;
+}
+
+function renderWsfeHistory(rows) {
+  if (!wsfeHistEl) return;
+
+  if (!rows || !rows.length) {
+    wsfeHistEl.innerHTML = `<div class="muted">Sin auditorías WSFE.</div>`;
+    wsfeBadgeEl.style.display = "none";
+    return;
+  }
+
+  const last = rows[0];
+  wsfeBadgeEl.style.display = "inline-flex";
+  wsfeBadgeEl.className = `badge ${last.ok ? "b-ok" : "b-bad"}`;
+  wsfeBadgeEl.textContent = last.ok ? "OK" : "DIF";
+
+  wsfeHistEl.innerHTML = rows.map((r) => {
+    const diffsKeys = r.diffs ? Object.keys(r.diffs) : [];
+    const diffsLine = diffsKeys.length
+      ? `<div class="histObs"><b>Diferencias:</b> ${diffsKeys.join(", ")}</div>`
+      : ``;
+
+    return `
+      <div class="histItem">
+        <div class="histTop">
+          <div>${wsfeBadge(r.ok)} <span class="muted">Audit ID ${r.id}</span></div>
+          <div class="histMeta">${r.created_at || ""}</div>
+        </div>
+        ${diffsLine}
+      </div>
+    `;
+  }).join("");
+}
+
+async function loadWsfeHistory(arcaId) {
+  if (!wsfeHistEl) return;
+  wsfeHistEl.innerHTML = `<div class="muted">Cargando auditorías WSFE…</div>`;
+
+  try {
+    const data = await fetchJSON(`/arca/wsfe/consultas/${arcaId}?limit=20`);
+    renderWsfeHistory(data.rows || []);
+  } catch (e) {
+    wsfeHistEl.innerHTML = `<div class="muted">${e.message || "Error cargando auditorías WSFE"}</div>`;
+    wsfeBadgeEl.style.display = "none";
+  }
+}
+
+async function auditarWsfeActual() {
+  const arcaId = state.selectedArcaId;
+  if (!arcaId) return;
+
+  btnAuditarWsfe.disabled = true;
+  try {
+    await fetchJSON(`/arca/wsfe/consultar/${arcaId}`);
+    await loadWsfeHistory(arcaId);
+
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      timer: 1400,
+      showConfirmButton: false,
+      icon: "success",
+      title: "Auditoría WSFE ejecutada",
+    });
+  } catch (e) {
+    Swal.fire({ icon: "error", title: "WSFE", text: e.message || "Error auditando" });
+  } finally {
+    btnAuditarWsfe.disabled = false;
+  }
+}
 
   async function onSelect(id) {
     state.selectedId = id;
@@ -169,6 +249,23 @@
           .join("")
       : `<div class="muted">Sin intentos ARCA.</div>`;
 
+    // --- WSFE UI ---
+state.selectedArcaId = null;
+if (btnAuditarWsfe) btnAuditarWsfe.disabled = true;
+
+if (wsfeHistEl) wsfeHistEl.innerHTML = `<div class="muted">Seleccioná un comprobante EMITIDO para auditar.</div>`;
+if (wsfeBadgeEl) wsfeBadgeEl.style.display = "none";
+
+// tomamos el último EMITIDO del historial ARCA
+const lastEmitted = (rows || []).find((x) => x.estado === "EMITIDO");
+if (lastEmitted && lastEmitted.id) {
+  state.selectedArcaId = lastEmitted.id;
+  btnAuditarWsfe.disabled = false;
+  await loadWsfeHistory(state.selectedArcaId);
+} else {
+  if (wsfeHistEl) wsfeHistEl.innerHTML = `<div class="muted">No hay comprobante EMITIDO para auditar.</div>`;
+}
+      
     const pdfBtn = document.getElementById("btnPDF");
     if (pdfBtn) {
       if (rows.length && rows[0].estado === "EMITIDO") {
@@ -581,3 +678,4 @@ didOpen: () => {
     $("arcaTbody").innerHTML = `<tr><td colspan="6" class="muted">${err.message}</td></tr>`;
   });
 })();
+if (btnAuditarWsfe) btnAuditarWsfe.addEventListener("click", auditarWsfeActual);
