@@ -112,22 +112,78 @@ async function FECompUltimoAutorizado(ptoVta = PTO_VTA_DEFAULT, cbteTipo) {
   const ult = Number(pickTag(resp, "CbteNro") || 0);
   return { ultimo: ult, raw: resp };
 }
-
 /**
- * MVP: 1 registro, IVA 21% (Id=5)
- * det = {
- *  ptoVta, cbteTipo, docTipo, docNro, condicionIVAReceptorId,
- *  cbteFch, cbteDesde, cbteHasta,
- *  impTotal, impNeto, impIVA
- * }
+ * FECAESolicitar extensible:
+ * - Soporta ivaAlicuotas: [{ id, baseImp, importe }, ...]
+ * - Permite omitir IVA: det.omitirIva === true (para comprobantes sin IVA, ej. clase C)
+ * - Backward compatible: si NO pasás ivaAlicuotas y NO omitirIva, usa el IVA MVP 21% (Id=5)
  */
 async function FECAESolicitar(det) {
   const a = await auth();
   const ptoVta = det.ptoVta ?? PTO_VTA_DEFAULT;
 
   const cbteFch = det.cbteFch || yyyymmddARFromDate(new Date());
-  const ivaBase = Number(det.impNeto).toFixed(2);
-  const ivaImp  = Number(det.impIVA).toFixed(2);
+
+  const f2 = (n) => Number(n || 0).toFixed(2);
+  const f3 = (n) => {
+    const x = Number(n || 0);
+    return (Number.isFinite(x) ? x : 1).toFixed(3);
+  };
+
+  const impTotal   = f2(det.impTotal);
+  const impTotConc = f2(det.impTotConc || 0);
+  const impNeto    = f2(det.impNeto || 0);
+  const impOpEx    = f2(det.impOpEx || 0);
+  const impIVA     = f2(det.impIVA || 0);
+  const impTrib    = f2(det.impTrib || 0);
+
+  const monId    = det.monId || "PES";
+  const monCotiz = f3(det.monCotiz || 1);
+
+  // IVA block:
+  // - Si omitirIva => no se envía <Iva>
+  // - Si ivaAlicuotas[] => se envía según totales por alícuota
+  // - Si no se pasa nada => fallback MVP (Id=5) si ImpIVA>0
+  let ivaXml = "";
+  if (!det.omitirIva) {
+    if (Array.isArray(det.ivaAlicuotas) && det.ivaAlicuotas.length) {
+      const alics = det.ivaAlicuotas
+        .map((x) => ({
+          id: Number(x.id || 0),
+          baseImp: f2(x.baseImp),
+          importe: f2(x.importe),
+        }))
+        .filter((x) => x.id > 0);
+
+      if (alics.length) {
+        ivaXml =
+          `<ar:Iva>` +
+          alics
+            .map(
+              (x) => `
+              <ar:AlicIva>
+                <ar:Id>${x.id}</ar:Id>
+                <ar:BaseImp>${x.baseImp}</ar:BaseImp>
+                <ar:Importe>${x.importe}</ar:Importe>
+              </ar:AlicIva>`
+            )
+            .join("") +
+          `</ar:Iva>`;
+      }
+    } else {
+      // Backward compatible MVP 21% (Id=5)
+      if (Number(det.impIVA || 0) > 0) {
+        ivaXml = `
+          <ar:Iva>
+            <ar:AlicIva>
+              <ar:Id>5</ar:Id>
+              <ar:BaseImp>${impNeto}</ar:BaseImp>
+              <ar:Importe>${impIVA}</ar:Importe>
+            </ar:AlicIva>
+          </ar:Iva>`;
+      }
+    }
+  }
 
   const soap = `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
@@ -158,23 +214,17 @@ async function FECAESolicitar(det) {
             <ar:CbteHasta>${det.cbteHasta}</ar:CbteHasta>
             <ar:CbteFch>${cbteFch}</ar:CbteFch>
 
-            <ar:ImpTotal>${Number(det.impTotal).toFixed(2)}</ar:ImpTotal>
-            <ar:ImpTotConc>0.00</ar:ImpTotConc>
-            <ar:ImpNeto>${Number(det.impNeto).toFixed(2)}</ar:ImpNeto>
-            <ar:ImpOpEx>0.00</ar:ImpOpEx>
-            <ar:ImpIVA>${Number(det.impIVA).toFixed(2)}</ar:ImpIVA>
-            <ar:ImpTrib>0.00</ar:ImpTrib>
+            <ar:ImpTotal>${impTotal}</ar:ImpTotal>
+            <ar:ImpTotConc>${impTotConc}</ar:ImpTotConc>
+            <ar:ImpNeto>${impNeto}</ar:ImpNeto>
+            <ar:ImpOpEx>${impOpEx}</ar:ImpOpEx>
+            <ar:ImpIVA>${impIVA}</ar:ImpIVA>
+            <ar:ImpTrib>${impTrib}</ar:ImpTrib>
 
-            <ar:MonId>${det.monId || "PES"}</ar:MonId>
-            <ar:MonCotiz>${det.monCotiz || "1.000"}</ar:MonCotiz>
+            <ar:MonId>${monId}</ar:MonId>
+            <ar:MonCotiz>${monCotiz}</ar:MonCotiz>
 
-            <ar:Iva>
-              <ar:AlicIva>
-                <ar:Id>5</ar:Id>
-                <ar:BaseImp>${ivaBase}</ar:BaseImp>
-                <ar:Importe>${ivaImp}</ar:Importe>
-              </ar:AlicIva>
-            </ar:Iva>
+            ${ivaXml}
 
           </ar:FECAEDetRequest>
         </ar:FeDetReq>
@@ -198,6 +248,7 @@ async function FECAESolicitar(det) {
     raw: resp
   };
 }
+
 
 async function FECompConsultar(ptoVta = PTO_VTA_DEFAULT, cbteTipo, cbteNro) {
   const a = await auth();
