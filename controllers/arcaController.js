@@ -662,8 +662,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
   }
 }
 
-
-
 async function statusPorFacturaMostrador(req, res) {
   try {
     const facturaId = Number(req.params.id || 0);
@@ -1088,41 +1086,41 @@ async function guardarReceptorCache(req, res) {
     return res.status(500).json({ error: e.message || "Error guardando cache" });
   }
 }
-
+// GET /arca/wsfe/consultar/:arcaId
+// - EMITIDO: audita y compara
+// - PENDIENTE + ?reconciliar=1: consulta WSFE y si hay CAE, actualiza a EMITIDO
 async function auditarWsfePorArcaId(req, res) {
   try {
     const arcaId = Number(req.params.arcaId || 0);
-    if (!Number.isFinite(arcaId) || arcaId <= 0) {
-      return res.status(400).json({ error: "arcaId inválido" });
+    if (!arcaId) return res.status(400).json({ error: "arcaId inválido" });
+
+    const reconciliar = String(req.query.reconciliar || "") === "1";
+
+    const cab = await query(`SELECT * FROM arca_comprobantes WHERE id=? LIMIT 1`, [arcaId]);
+    if (!cab.length) return res.status(404).json({ error: "Comprobante ARCA no encontrado" });
+
+    const c = cab[0];
+
+    const permitido =
+      c.estado === "EMITIDO" || (reconciliar && c.estado === "PENDIENTE");
+
+    if (!permitido) {
+      return res.status(409).json({
+        error: "Solo se permite auditar EMITIDO, o reconciliar PENDIENTE con ?reconciliar=1",
+        estado: c.estado,
+      });
     }
 
-    const rows = await query(`SELECT * FROM arca_comprobantes WHERE id=? LIMIT 1`, [arcaId]);
-    if (!rows.length) return res.status(404).json({ error: "Comprobante no encontrado" });
-
-    const c = rows[0];
-    if (c.estado !== "EMITIDO" || !c.cbte_nro) {
+    if (!c.cbte_nro) {
       return res.status(409).json({
-        error: "Solo audita comprobantes EMITIDO con cbte_nro",
+        error: "El comprobante no tiene cbte_nro reservado (no se puede consultar en WSFE)",
         estado: c.estado,
-        cbte_nro: c.cbte_nro,
       });
     }
 
     const out = await wsfe.FECompConsultar(c.pto_vta, c.cbte_tipo, c.cbte_nro);
     const raw = out?.raw || "";
 
-    const fault = pickTag(raw, "faultstring");
-    if (fault) {
-      await arcaModel.insertarWsfeConsulta({
-        arca_comprobante_id: arcaId,
-        ok: 0,
-        parsed_json: { fault },
-        resp_xml: raw,
-      });
-      return res.status(502).json({ error: fault });
-    }
-
-    // ---------- helpers ----------
     const pickBlock = (xml, tag) => {
       const r = new RegExp(
         `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
@@ -1132,15 +1130,12 @@ async function auditarWsfePorArcaId(req, res) {
       return m ? m[1] : "";
     };
 
-    const normStr = (v) => (v == null ? "" : String(v).trim());
-
-    // Devuelve YYYYMMDD buscando dentro del valor del tag (solo fechas que empiecen con 20)
     const pickDate8 = (xml, tags) => {
       for (const t of tags) {
-        const v = pickTag(xml, t);
+        const v = pickTag(String(xml || ""), t);
         if (!v) continue;
         const digits = String(v).replace(/\D/g, "");
-        const m = digits.match(/(20\d{6})/); // 20YYYYMMDD
+        const m = digits.match(/(20\d{6})/);
         if (m) return m[1];
       }
       return null;
@@ -1148,80 +1143,110 @@ async function auditarWsfePorArcaId(req, res) {
 
     const pickFirst = (xml, tags) => {
       for (const t of tags) {
-        const v = pickTag(xml, t);
+        const v = pickTag(String(xml || ""), t);
         if (v != null && String(v).trim() !== "") return String(v).trim();
       }
       return null;
     };
 
-    // Tomar preferentemente del bloque ResultGet
+    const fault = pickTag(raw, "faultstring");
+    if (fault) {
+      const parsed_json = { fault, raw_hint: "faultstring" };
+      await arcaModel.insertarWsfeConsulta({
+        arca_comprobante_id: arcaId,
+        ok: false,
+        parsed_json,
+        resp_xml: raw,
+      });
+
+      return res.status(502).json({
+        arca_id: arcaId,
+        ok: false,
+        diffs: { faultstring: fault },
+        wsfe: { faultstring: fault },
+      });
+    }
+
     const resultGetXml = pickBlock(raw, "ResultGet") || raw;
 
-    // ---------- Parse ----------
     const parsed = {
-      cbte_nro: Number(pickTag(resultGetXml, "CbteNro") || c.cbte_nro),
-      cbte_fch: pickDate8(resultGetXml, ["CbteFch"]) || c.cbte_fch,
-
-      // CAE suele venir como CodAutorizacion en FECompConsultar
+      cbte_nro: Number(pickFirst(resultGetXml, ["CbteDesde", "CbteNro"])) || Number(c.cbte_nro),
+      cbte_fch: pickDate8(resultGetXml, ["CbteFch"]),
       cae: pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]),
-
-      // Vto: solo aceptar una fecha YYYYMMDD real (20xxxxxx)
       cae_vto: pickDate8(resultGetXml, ["FchVto", "CAEFchVto"]),
-
-      doc_tipo: Number(pickTag(resultGetXml, "DocTipo") || c.doc_tipo),
-      doc_nro: Number(pickTag(resultGetXml, "DocNro") || c.doc_nro),
-
-      imp_total: Number(pickTag(resultGetXml, "ImpTotal") || c.imp_total),
-      imp_neto: Number(pickTag(resultGetXml, "ImpNeto") || c.imp_neto),
-      imp_iva: Number(pickTag(resultGetXml, "ImpIVA") || c.imp_iva),
-
-      mon_id: pickTag(resultGetXml, "MonId") || c.mon_id,
-      mon_cotiz: pickTag(resultGetXml, "MonCotiz") || String(c.mon_cotiz),
+      doc_tipo: Number(pickFirst(resultGetXml, ["DocTipo"])) || Number(c.doc_tipo),
+      doc_nro: Number(pickFirst(resultGetXml, ["DocNro"])) || Number(c.doc_nro),
+      imp_total: Number(pickFirst(resultGetXml, ["ImpTotal"])) || 0,
+      imp_neto: Number(pickFirst(resultGetXml, ["ImpNeto"])) || 0,
+      imp_iva: Number(pickFirst(resultGetXml, ["ImpIVA"])) || 0,
+      mon_id: pickFirst(resultGetXml, ["MonId"]) || "PES",
+      mon_cotiz: pickFirst(resultGetXml, ["MonCotiz"]) || "1",
     };
 
-    // ---------- diffs ----------
+    const toNum = (x) => Number(Number(x || 0).toFixed(2));
+
+    // diffs contra DB actual
     const diffs = {};
-    const normDate8Str = (v) => {
-      const digits = String(v ?? "").replace(/\D/g, "");
-      const m = digits.match(/(20\d{6})/);
-      return m ? m[1] : "";
+
+    if (String(parsed.cae || "") !== String(c.cae || "")) diffs.cae = { wsfe: parsed.cae || null, db: c.cae || null };
+    if (String(parsed.cae_vto || "") !== String(c.cae_vto || "")) diffs.cae_vto = { wsfe: parsed.cae_vto || null, db: c.cae_vto || null };
+    if (String(parsed.cbte_fch || "") !== String(c.cbte_fch || "")) diffs.cbte_fch = { wsfe: parsed.cbte_fch || null, db: c.cbte_fch || null };
+
+    if (toNum(parsed.imp_total) !== toNum(c.imp_total)) diffs.imp_total = { wsfe: toNum(parsed.imp_total), db: toNum(c.imp_total) };
+    if (toNum(parsed.imp_neto) !== toNum(c.imp_neto)) diffs.imp_neto = { wsfe: toNum(parsed.imp_neto), db: toNum(c.imp_neto) };
+    if (toNum(parsed.imp_iva) !== toNum(c.imp_iva)) diffs.imp_iva = { wsfe: toNum(parsed.imp_iva), db: toNum(c.imp_iva) };
+
+    let ok = Object.keys(diffs).length === 0;
+    let reconciliado = false;
+
+    // reconciliar PENDIENTE si WSFE trae CAE
+    if (reconciliar && c.estado === "PENDIENTE" && parsed.cae) {
+      await arcaModel.actualizarRespuesta(arcaId, {
+        resultado: "A",
+        cae: parsed.cae,
+        cae_vto: parsed.cae_vto || null,
+        obs_code: "RECONCILIADO",
+        obs_msg: "Autorizado en WSFE luego de confirmación manual",
+        resp_xml: raw,
+        estado: "EMITIDO",
+      });
+
+      reconciliado = true;
+      ok = true;
+
+      // si querés también “alinear” cbte_fch (opcional, pero recomendado)
+      if (parsed.cbte_fch && parsed.cbte_fch !== c.cbte_fch) {
+        await query(`UPDATE arca_comprobantes SET cbte_fch=?, updated_at=NOW() WHERE id=?`, [
+          parsed.cbte_fch,
+          arcaId,
+        ]);
+      }
+    }
+
+    // Guardar auditoría (si se reconcilió, guardamos ok=true y sin diffs)
+    const parsed_json = {
+      reconciliar,
+      reconciliado,
+      ok,
+      diffs: reconciliado ? {} : diffs,
+      parsed,
     };
-
-    const eq = (a, b) => normStr(a) === normStr(b);
-    const eqDate = (a, b) => normDate8Str(a) === normDate8Str(b);
-    const eq2 = (a, b) => Math.abs(Number(a || 0) - Number(b || 0)) < 0.01;
-
-    if (!eq(parsed.cae, c.cae)) diffs.cae = { db: normStr(c.cae) || null, wsfe: normStr(parsed.cae) || null };
-    if (!eqDate(parsed.cae_vto, c.cae_vto)) diffs.cae_vto = { db: normDate8Str(c.cae_vto) || null, wsfe: normDate8Str(parsed.cae_vto) || null };
-    if (!eqDate(parsed.cbte_fch, c.cbte_fch)) diffs.cbte_fch = { db: normDate8Str(c.cbte_fch) || null, wsfe: normDate8Str(parsed.cbte_fch) || null };
-
-    if (!eq2(parsed.imp_total, c.imp_total)) diffs.imp_total = { db: c.imp_total, wsfe: parsed.imp_total };
-    if (!eq2(parsed.imp_neto, c.imp_neto)) diffs.imp_neto = { db: c.imp_neto, wsfe: parsed.imp_neto };
-    if (!eq2(parsed.imp_iva, c.imp_iva)) diffs.imp_iva = { db: c.imp_iva, wsfe: parsed.imp_iva };
-
-    const ok = Object.keys(diffs).length === 0;
 
     await arcaModel.insertarWsfeConsulta({
       arca_comprobante_id: arcaId,
       ok,
-      parsed_json: {
-        parsed,
-        diffs,
-        debug: {
-          fchVto_raw: pickTag(resultGetXml, "FchVto") || null,
-          caeFchVto_raw: pickTag(resultGetXml, "CAEFchVto") || null,
-        },
-      },
+      parsed_json,
       resp_xml: raw,
     });
 
     return res.json({
       arca_id: arcaId,
+      reconciliado,
       ok,
-      diffs,
+      diffs: reconciliado ? {} : diffs,
       wsfe: parsed,
       db: {
-        cbte_nro: c.cbte_nro,
+        cbte_nro: Number(c.cbte_nro),
         cbte_fch: c.cbte_fch,
         cae: c.cae,
         cae_vto: c.cae_vto,
@@ -1231,9 +1256,11 @@ async function auditarWsfePorArcaId(req, res) {
       },
     });
   } catch (e) {
-    return res.status(500).json({ error: e.message || "Error auditoría WSFE" });
+    console.error("❌ auditarWsfePorArcaId:", e);
+    return res.status(500).json({ error: e.message || "Error consultando WSFE" });
   }
 }
+
 async function listarWsfeConsultas(req, res) {
   try {
     const arcaId = Number(req.params.arcaId || 0);

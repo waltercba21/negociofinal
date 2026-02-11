@@ -8,6 +8,7 @@
     rows: [],
     selectedId: null,
     selectedArcaId: null,
+    selectedArcaEstado: null,
     search: "",
   };
 
@@ -186,35 +187,48 @@
       if (wsfeBadgeEl) wsfeBadgeEl.style.display = "none";
     }
   }
+async function auditarWsfeActual() {
+  if (!btnAuditarWsfe) return;
+  const arcaId = state.selectedArcaId;
+  const estado = state.selectedArcaEstado;
+  if (!arcaId) return;
 
-  async function auditarWsfeActual() {
-    if (!btnAuditarWsfe) return;
-    const arcaId = state.selectedArcaId;
-    if (!arcaId) return;
+  btnAuditarWsfe.disabled = true;
 
-    btnAuditarWsfe.disabled = true;
-    try {
-      await fetchJSON(`/arca/wsfe/consultar/${arcaId}`);
-      await loadWsfeHistory(arcaId);
+  try {
+    const url =
+      estado === "PENDIENTE"
+        ? `/arca/wsfe/consultar/${arcaId}?reconciliar=1`
+        : `/arca/wsfe/consultar/${arcaId}`;
 
-      Swal.fire({
-        toast: true,
-        position: "top-end",
-        timer: 1400,
-        showConfirmButton: false,
-        icon: "success",
-        title: "Auditoría WSFE ejecutada",
-      });
-    } catch (e) {
-      Swal.fire({
-        icon: "error",
-        title: "WSFE",
-        text: e.message || "Error auditando",
-      });
-    } finally {
-      btnAuditarWsfe.disabled = false;
-    }
+    const resp = await fetchJSON(url);
+    await loadWsfeHistory(arcaId);
+
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      timer: 1600,
+      showConfirmButton: false,
+      icon: "success",
+      title:
+        estado === "PENDIENTE"
+          ? (resp.reconciliado ? "Confirmado en ARCA" : "Sin confirmación en WSFE")
+          : "Auditoría WSFE ejecutada",
+    });
+
+    // refrescar UI (por si cambió a EMITIDO)
+    await loadList();
+    if (state.selectedId) await onSelect(state.selectedId);
+  } catch (e) {
+    Swal.fire({
+      icon: "error",
+      title: "WSFE",
+      text: e.message || "Error consultando",
+    });
+  } finally {
+    btnAuditarWsfe.disabled = false;
   }
+}
 
   // ---------------- Selección / detalle ----------------
   async function onSelect(id) {
@@ -274,23 +288,35 @@
           .join("")
       : `<div class="muted">Sin intentos ARCA.</div>`;
 
-    // --- WSFE UI ---
-    state.selectedArcaId = null;
-    if (btnAuditarWsfe) btnAuditarWsfe.disabled = true;
+   // --- WSFE UI ---
+state.selectedArcaId = null;
+state.selectedArcaEstado = null;
+if (btnAuditarWsfe) btnAuditarWsfe.disabled = true;
 
-    if (wsfeHistEl)
-      wsfeHistEl.innerHTML = `<div class="muted">Seleccioná un comprobante EMITIDO para auditar.</div>`;
-    if (wsfeBadgeEl) wsfeBadgeEl.style.display = "none";
+if (wsfeHistEl)
+  wsfeHistEl.innerHTML = `<div class="muted">Seleccioná un comprobante EMITIDO o PENDIENTE.</div>`;
+if (wsfeBadgeEl) wsfeBadgeEl.style.display = "none";
 
-    const lastEmitted = (rows || []).find((x) => x.estado === "EMITIDO");
-    if (lastEmitted && lastEmitted.id) {
-      state.selectedArcaId = lastEmitted.id;
-      if (btnAuditarWsfe) btnAuditarWsfe.disabled = false;
-      await loadWsfeHistory(state.selectedArcaId);
-    } else {
-      if (wsfeHistEl)
-        wsfeHistEl.innerHTML = `<div class="muted">No hay comprobante EMITIDO para auditar.</div>`;
-    }
+const lastPending = (rows || []).find((x) => x.estado === "PENDIENTE");
+const lastEmitted = (rows || []).find((x) => x.estado === "EMITIDO");
+const target = lastPending || lastEmitted;
+
+if (target && target.id) {
+  state.selectedArcaId = target.id;
+  state.selectedArcaEstado = target.estado;
+
+  if (btnAuditarWsfe) {
+    btnAuditarWsfe.disabled = false;
+    btnAuditarWsfe.textContent =
+      target.estado === "PENDIENTE" ? "Confirmar en ARCA" : "Auditar WSFE";
+  }
+
+  await loadWsfeHistory(state.selectedArcaId);
+} else {
+  if (wsfeHistEl)
+    wsfeHistEl.innerHTML = `<div class="muted">No hay comprobante EMITIDO ni PENDIENTE.</div>`;
+}
+
 
     const pdfBtn = document.getElementById("btnPDF");
     if (pdfBtn) {

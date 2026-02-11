@@ -228,13 +228,16 @@ async function FECAESolicitar(det) {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
- const resp = await postXml(
+const resp = await postXml(
   WSFE_URL,
   soap,
   "http://ar.gov.afip.dif.FEV1/FECAESolicitar"
 );
 
-if (process.env.ARCA_FORCE_WSFE_THROW_AFTER === "1") {
+if (
+  process.env.ARCA_FORCE_WSFE_THROW_AFTER === "1" &&
+  String(process.env.ARCA_ENV || "").toLowerCase() !== "prod"
+) {
   throw new Error("ARCA_FORCE_WSFE_THROW_AFTER");
 }
 
@@ -246,6 +249,7 @@ return {
   obsMsg: pickTag(resp, "Msg"),
   raw: resp,
 };
+
 
 }
 
