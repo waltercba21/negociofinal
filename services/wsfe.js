@@ -112,12 +112,7 @@ async function FECompUltimoAutorizado(ptoVta = PTO_VTA_DEFAULT, cbteTipo) {
   const ult = Number(pickTag(resp, "CbteNro") || 0);
   return { ultimo: ult, raw: resp };
 }
-/**
- * FECAESolicitar extensible:
- * - Soporta ivaAlicuotas: [{ id, baseImp, importe }, ...]
- * - Permite omitir IVA: det.omitirIva === true (para comprobantes sin IVA, ej. clase C)
- * - Backward compatible: si NO pasás ivaAlicuotas y NO omitirIva, usa el IVA MVP 21% (Id=5)
- */
+
 async function FECAESolicitar(det) {
   const a = await auth();
   const ptoVta = det.ptoVta ?? PTO_VTA_DEFAULT;
@@ -233,20 +228,25 @@ async function FECAESolicitar(det) {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  const resp = await postXml(
-    WSFE_URL,
-    soap,
-    "http://ar.gov.afip.dif.FEV1/FECAESolicitar"
-  );
+ const resp = await postXml(
+  WSFE_URL,
+  soap,
+  "http://ar.gov.afip.dif.FEV1/FECAESolicitar"
+);
 
-  return {
-    resultado: pickTag(resp, "Resultado"),
-    cae: pickTag(resp, "CAE"),
-    caeVto: pickTag(resp, "CAEFchVto"),
-    obsCode: pickTag(resp, "Code"),
-    obsMsg: pickTag(resp, "Msg"),
-    raw: resp
-  };
+if (process.env.ARCA_FORCE_WSFE_THROW_AFTER === "1") {
+  throw new Error("ARCA_FORCE_WSFE_THROW_AFTER");
+}
+
+return {
+  resultado: pickTag(resp, "Resultado"),
+  cae: pickTag(resp, "CAE"),
+  caeVto: pickTag(resp, "CAEFchVto"),
+  obsCode: pickTag(resp, "Code"),
+  obsMsg: pickTag(resp, "Msg"),
+  raw: resp,
+};
+
 }
 
 
