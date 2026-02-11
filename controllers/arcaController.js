@@ -1068,6 +1068,46 @@ async function auditarWsfePorArcaId(req, res) {
     return res.status(500).json({ error: e.message || "Error auditoría WSFE" });
   }
 }
+async function listarWsfeConsultas(req, res) {
+  try {
+    const arcaId = Number(req.params.arcaId || 0);
+    if (!Number.isFinite(arcaId) || arcaId <= 0) {
+      return res.status(400).json({ error: "arcaId inválido" });
+    }
+
+    const limitRaw = Number(req.query.limit || 20);
+    const limit = Math.max(1, Math.min(100, Number.isFinite(limitRaw) ? limitRaw : 20));
+
+    const rows = await arcaModel.listarWsfeConsultas(arcaId, limit);
+
+    const safeJson = (v) => {
+      try {
+        if (v == null) return null;
+        if (typeof v === "string") return JSON.parse(v);
+        return v; // mysql puede devolver objeto si es JSON nativo
+      } catch {
+        return null;
+      }
+    };
+
+    const mapped = rows.map((r) => {
+      const pj = safeJson(r.parsed_json);
+      return {
+        id: r.id,
+        ok: !!r.ok,
+        created_at: r.created_at,
+        diffs: pj?.diffs ?? null,
+        parsed: pj?.parsed ?? null,
+        fault: pj?.fault ?? null,
+        debug: pj?.debug ?? null,
+      };
+    });
+
+    return res.json({ arca_id: arcaId, limit, rows: mapped });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || "Error listando auditorías WSFE" });
+  }
+}
 
 
 module.exports = {
@@ -1082,4 +1122,5 @@ module.exports = {
   paramsCondIvaReceptor,
   guardarReceptorCache,
   auditarWsfePorArcaId,
+  listarWsfeConsultas,
 };
