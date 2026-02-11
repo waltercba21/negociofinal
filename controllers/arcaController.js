@@ -36,6 +36,32 @@ function parseCondIvaFromXml(xml) {
   // fallback por si el tag cambiara (muy raro)
   return out;
 }
+const FALLBACK_COND_IVA_BY_CLASE = {
+  A: [1, 6, 13, 16],
+  B: [4, 5, 7, 8, 9, 10, 15],
+  C: [5, 6, 13, 16],
+};
+
+async function getAllowedCondIvaIdsForCbte(cbte_tipo) {
+  const clase = claseFromCbteTipo(cbte_tipo);
+  if (!clase) return { clase: null, ids: [] };
+
+  try {
+    const all = await getCondIvaReceptorCached();
+    const rows = all.filter((x) => String(x.cmp_clase || "").toUpperCase().includes(clase));
+    const ids = rows.map((x) => Number(x.id || 0)).filter((n) => n > 0);
+    if (clase === "B" && !ids.includes(5)) ids.unshift(5);
+    return { clase, ids };
+  } catch (e) {
+    return {
+      clase,
+      ids: FALLBACK_COND_IVA_BY_CLASE[clase] ? [...FALLBACK_COND_IVA_BY_CLASE[clase]] : [],
+      fallback: true,
+      error: e?.message || String(e),
+    };
+  }
+}
+
 
 async function getCondIvaReceptorCached() {
   const TTL = 6 * 60 * 60 * 1000; // 6 horas
@@ -117,19 +143,19 @@ async function getNextAndDates(pto_vta, cbte_tipo) {
 
   return { ultimo, next, cbte_fch, lastCbteFch, today };
 }
+// Requiere en el mismo archivo (como ya tenés): round2, query, getNextAndDates,
+// getAllowedCondIvaIdsForCbte, wsfe, arcaModel.
 
-/**
- * POST /arca/emitir-desde-factura/:id
- * MVP: FACTURA B, IVA fijo 21%, no toca stock
- */
 async function emitirDesdeFacturaMostrador(req, res) {
+  let arcaId = null;
+
   try {
     const facturaId = Number(req.params.id || 0);
     if (!Number.isFinite(facturaId) || facturaId <= 0) {
       return res.status(400).json({ error: "facturaId inválido" });
     }
 
-    // Bloqueo seguro de duplicados
+    // Anti-duplicado lógico (DB también protege con uq_factura_activa)
     const existente = await arcaModel.buscarUltimoPorFacturaMostradorId(facturaId);
     if (existente && (existente.estado === "PENDIENTE" || existente.estado === "EMITIDO")) {
       return res.status(409).json({
@@ -141,36 +167,28 @@ async function emitirDesdeFacturaMostrador(req, res) {
       });
     }
 
-    const cbte_tipo = Number(req.body.cbte_tipo || 6); // 6 = Factura B (MVP)
+    const cbte_tipo = Number(req.body.cbte_tipo || 6);
     const doc_tipo = Number(req.body.doc_tipo);
 
-    // soporta doc_nro como number o string
     const doc_nro_str = String(req.body.doc_nro ?? "").trim();
-    if (!/^\d+$/.test(doc_nro_str)) {
-      return res.status(400).json({ error: "doc_nro inválido" });
-    }
+    if (!/^\d+$/.test(doc_nro_str)) return res.status(400).json({ error: "doc_nro inválido" });
     const doc_nro = Number(doc_nro_str);
 
     const receptor_cond_iva_id = Number(req.body.receptor_cond_iva_id || 5);
-    const receptor_nombre = (req.body.receptor_nombre || "").trim() || null;
+    const receptor_nombre = String(req.body.receptor_nombre || "").trim() || null;
 
-    if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0)
-      return res.status(400).json({ error: "cbte_tipo inválido" });
-
-    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0)
-      return res.status(400).json({ error: "doc_tipo inválido" });
+    if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) return res.status(400).json({ error: "cbte_tipo inválido" });
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return res.status(400).json({ error: "doc_tipo inválido" });
+    if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
+      return res.status(400).json({ error: "receptor_cond_iva_id inválido" });
+    }
 
     // Validación doc_nro según doc_tipo
-    // 99 = Consumidor Final => doc_nro puede ser 0
     if (doc_tipo === 99) {
-      if (!Number.isFinite(doc_nro) || doc_nro < 0) {
-        return res.status(400).json({ error: "doc_nro inválido" });
-      }
+      if (!Number.isFinite(doc_nro) || doc_nro < 0) return res.status(400).json({ error: "doc_nro inválido" });
+      if (doc_nro !== 0) return res.status(400).json({ error: "Consumidor Final: doc_nro debe ser 0" });
     } else {
-      // DNI/CUIT/etc => debe ser > 0
-      if (!Number.isFinite(doc_nro) || doc_nro <= 0) {
-        return res.status(400).json({ error: "doc_nro inválido (debe ser > 0)" });
-      }
+      if (!Number.isFinite(doc_nro) || doc_nro <= 0) return res.status(400).json({ error: "doc_nro inválido (debe ser > 0)" });
     }
 
     // 80 = CUIT => 11 dígitos
@@ -178,19 +196,35 @@ async function emitirDesdeFacturaMostrador(req, res) {
       return res.status(400).json({ error: "CUIT inválido (debe tener 11 dígitos)" });
     }
 
-    if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0)
-      return res.status(400).json({ error: "receptor_cond_iva_id inválido" });
+    // ===== Reglas de negocio (server-side) =====
+    const { clase, ids: allowedCondIvaIds } = await getAllowedCondIvaIdsForCbte(cbte_tipo);
+    if (!clase) return res.status(400).json({ error: "cbte_tipo no soportado", cbte_tipo });
+
+    if (clase === "A") {
+      if (doc_tipo !== 80) return res.status(400).json({ error: "Clase A requiere doc_tipo=80 (CUIT)" });
+      if (doc_nro_str.length !== 11) return res.status(400).json({ error: "CUIT inválido (debe tener 11 dígitos)" });
+    }
+
+    if (clase === "B" && receptor_cond_iva_id === 1) {
+      return res.status(400).json({ error: "Condición IVA 1 (RI) no es válida para clase B" });
+    }
+
+    if (Array.isArray(allowedCondIvaIds) && allowedCondIvaIds.length && !allowedCondIvaIds.includes(receptor_cond_iva_id)) {
+      return res.status(400).json({
+        error: "Condición IVA receptor no válida para el comprobante",
+        cbte_tipo,
+        clase,
+        receptor_cond_iva_id,
+        allowed: allowedCondIvaIds,
+      });
+    }
 
     const pto_vta = Number(process.env.ARCA_PTO_VTA || 0);
     const cuit_emisor = Number(process.env.ARCA_CUIT || 0);
+    if (!Number.isFinite(pto_vta) || pto_vta <= 0) return res.status(500).json({ error: "ARCA_PTO_VTA no configurado" });
+    if (!Number.isFinite(cuit_emisor) || cuit_emisor <= 0) return res.status(500).json({ error: "ARCA_CUIT no configurado" });
 
-    if (!Number.isFinite(pto_vta) || pto_vta <= 0)
-      return res.status(500).json({ error: "ARCA_PTO_VTA no configurado" });
-    if (!Number.isFinite(cuit_emisor) || cuit_emisor <= 0)
-      return res.status(500).json({ error: "ARCA_CUIT no configurado" });
-
-    const ambiente =
-      String(process.env.ARCA_ENV || "homo").toUpperCase() === "PROD" ? "PROD" : "HOMO";
+    const ambiente = String(process.env.ARCA_ENV || "homo").toUpperCase() === "PROD" ? "PROD" : "HOMO";
 
     // Traer factura + items
     const rows = await query(
@@ -206,10 +240,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       `,
       [facturaId]
     );
-
-    if (!rows.length) {
-      return res.status(404).json({ error: "Factura no encontrada o sin items" });
-    }
+    if (!rows.length) return res.status(404).json({ error: "Factura no encontrada o sin items" });
 
     // MVP IVA 21%
     const alic = 21;
@@ -235,7 +266,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
     const imp_neto = round2(itemsCalc.reduce((a, i) => a + i.imp_neto, 0));
     const imp_iva = round2(itemsCalc.reduce((a, i) => a + i.imp_iva, 0));
 
-    // Obtener nro y fecha coherente con el último emitido
+    // Nro + fecha coherente
     let info = await getNextAndDates(pto_vta, cbte_tipo);
     let next = info.next;
     let cbte_fch = info.cbte_fch;
@@ -254,77 +285,52 @@ async function emitirDesdeFacturaMostrador(req, res) {
       totales: { imp_total, imp_neto, imp_iva },
       iva_mvp: { alicuota: 21, wsfe_id: 5 },
       items: itemsCalc,
-      debug: {
-        ultimo_autorizado: info.ultimo,
-        last_cbte_fch: info.lastCbteFch,
-        today: info.today,
-      },
+      debug: { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today },
     };
 
     let req_json = JSON.stringify(reqObj, null, 2);
 
-    const arcaId = await arcaModel.crearComprobante({
-      factura_mostrador_id: facturaId,
-      ambiente,
-      cuit_emisor,
-      pto_vta,
-      cbte_tipo,
-      cbte_nro: next,
-      cbte_fch,
-      doc_tipo,
-      doc_nro,
-      receptor_nombre,
-      receptor_cond_iva_id,
-      imp_total,
-      imp_neto,
-      imp_iva,
-      imp_exento: 0,
-      mon_id: "PES",
-      mon_cotiz: 1,
-      req_json,
-      estado: "PENDIENTE",
-    });
+    // Crear comprobante (captura duplicado por UNIQUE DB)
+    try {
+      arcaId = await arcaModel.crearComprobante({
+        factura_mostrador_id: facturaId,
+        ambiente,
+        cuit_emisor,
+        pto_vta,
+        cbte_tipo,
+        cbte_nro: next,
+        cbte_fch,
+        doc_tipo,
+        doc_nro,
+        receptor_nombre,
+        receptor_cond_iva_id,
+        imp_total,
+        imp_neto,
+        imp_iva,
+        imp_exento: 0,
+        mon_id: "PES",
+        mon_cotiz: 1,
+        req_json,
+        estado: "PENDIENTE",
+      });
+    } catch (err) {
+      if (err && (err.code === "ER_DUP_ENTRY" || err.errno === 1062)) {
+        const row = await arcaModel.buscarUltimoPorFacturaMostradorId(facturaId);
+        return res.status(409).json({
+          error: "Ya existe un comprobante activo para esta factura (duplicado detectado por DB)",
+          arca_id: row?.id || null,
+          estado: row?.estado || null,
+          detail: err.sqlMessage || err.message,
+        });
+      }
+      throw err;
+    }
 
     await arcaModel.insertarItems(arcaId, itemsCalc);
 
-    // Intento 1
-    let cae = await wsfe.FECAESolicitar({
-      ptoVta: pto_vta,
-      cbteTipo: cbte_tipo,
-      docTipo: doc_tipo,
-      docNro: doc_nro,
-      condicionIVAReceptorId: receptor_cond_iva_id,
-      cbteFch: cbte_fch,
-      cbteDesde: next,
-      cbteHasta: next,
-      impTotal: imp_total,
-      impNeto: imp_neto,
-      impIVA: imp_iva,
-      monId: "PES",
-      monCotiz: "1.000",
-    });
-
-    // Reintento si 10016
-    if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
-      info = await getNextAndDates(pto_vta, cbte_tipo);
-      next = info.next;
-      cbte_fch = info.cbte_fch;
-
-      reqObj.cbte_nro = next;
-      reqObj.cbte_fch = cbte_fch;
-      reqObj.debug = {
-        ultimo_autorizado: info.ultimo,
-        last_cbte_fch: info.lastCbteFch,
-        today: info.today,
-        retry: true,
-      };
-      req_json = JSON.stringify(reqObj, null, 2);
-
-      await query(
-        `UPDATE arca_comprobantes SET cbte_nro=?, cbte_fch=?, req_json=?, updated_at=NOW() WHERE id=?`,
-        [next, cbte_fch, req_json, arcaId]
-      );
-
+    // WSFE (con manejo de excepción para no dejar PENDIENTE colgado)
+    let cae;
+    try {
       cae = await wsfe.FECAESolicitar({
         ptoVta: pto_vta,
         cbteTipo: cbte_tipo,
@@ -340,6 +346,85 @@ async function emitirDesdeFacturaMostrador(req, res) {
         monId: "PES",
         monCotiz: "1.000",
       });
+    } catch (err) {
+      const msg = err?.message || String(err);
+      await arcaModel.actualizarRespuesta(arcaId, {
+        resultado: null,
+        cae: null,
+        cae_vto: null,
+        obs_code: "WSFE_EXC",
+        obs_msg: msg.slice(0, 1000),
+        resp_xml: null,
+        estado: "RECHAZADO",
+      });
+      // liberar numero interno para reintento (evita choque con uq_cbte)
+      await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+      return res.status(502).json({ error: "Fallo WSFE", detail: msg, arca_id: arcaId });
+    }
+
+    // Reintento si 10016
+    if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
+      info = await getNextAndDates(pto_vta, cbte_tipo);
+      next = info.next;
+      cbte_fch = info.cbte_fch;
+
+      reqObj.cbte_nro = next;
+      reqObj.cbte_fch = cbte_fch;
+      reqObj.debug = { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today, retry: true };
+      req_json = JSON.stringify(reqObj, null, 2);
+
+      try {
+        await query(
+          `UPDATE arca_comprobantes SET cbte_nro=?, cbte_fch=?, req_json=?, updated_at=NOW() WHERE id=?`,
+          [next, cbte_fch, req_json, arcaId]
+        );
+      } catch (err) {
+        if (err && (err.code === "ER_DUP_ENTRY" || err.errno === 1062)) {
+          await arcaModel.actualizarRespuesta(arcaId, {
+            resultado: "R",
+            cae: null,
+            cae_vto: null,
+            obs_code: "DUP_CBTE",
+            obs_msg: "Choque de cbte_nro por UNIQUE al reintentar",
+            resp_xml: null,
+            estado: "RECHAZADO",
+          });
+          await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+          return res.status(409).json({ error: "Choque de numeración al reintentar", arca_id: arcaId });
+        }
+        throw err;
+      }
+
+      try {
+        cae = await wsfe.FECAESolicitar({
+          ptoVta: pto_vta,
+          cbteTipo: cbte_tipo,
+          docTipo: doc_tipo,
+          docNro: doc_nro,
+          condicionIVAReceptorId: receptor_cond_iva_id,
+          cbteFch: cbte_fch,
+          cbteDesde: next,
+          cbteHasta: next,
+          impTotal: imp_total,
+          impNeto: imp_neto,
+          impIVA: imp_iva,
+          monId: "PES",
+          monCotiz: "1.000",
+        });
+      } catch (err) {
+        const msg = err?.message || String(err);
+        await arcaModel.actualizarRespuesta(arcaId, {
+          resultado: null,
+          cae: null,
+          cae_vto: null,
+          obs_code: "WSFE_EXC",
+          obs_msg: msg.slice(0, 1000),
+          resp_xml: null,
+          estado: "RECHAZADO",
+        });
+        await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+        return res.status(502).json({ error: "Fallo WSFE (retry)", detail: msg, arca_id: arcaId });
+      }
     }
 
     const estado = cae.resultado === "A" ? "EMITIDO" : "RECHAZADO";
@@ -354,8 +439,13 @@ async function emitirDesdeFacturaMostrador(req, res) {
       estado,
     });
 
-    // Cache receptor (solo si tiene doc real > 0)
-    if (doc_nro > 0) {
+    // Si quedó RECHAZADO, liberar cbte_nro para permitir reintento sin chocar uq_cbte
+    if (estado === "RECHAZADO") {
+      await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+    }
+
+    // Cache receptor (solo si tiene doc real)
+    if (doc_nro > 0 && doc_tipo !== 99) {
       try {
         await arcaModel.upsertReceptorCache({
           doc_tipo,
@@ -376,7 +466,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       pto_vta,
       cbte_tipo,
       cbte_fch,
-      cbte_nro: next,
+      cbte_nro: next, // nro intentado (aunque en DB se nullée si RECHAZADO)
       ultimo_autorizado: info.ultimo,
       last_cbte_fch: info.lastCbteFch,
       resultado: cae.resultado || null,
@@ -386,6 +476,22 @@ async function emitirDesdeFacturaMostrador(req, res) {
       obs_msg: cae.obsMsg || null,
     });
   } catch (e) {
+    // Si ya creamos el comprobante y algo explotó, no dejarlo PENDIENTE
+    if (arcaId) {
+      try {
+        await arcaModel.actualizarRespuesta(arcaId, {
+          resultado: null,
+          cae: null,
+          cae_vto: null,
+          obs_code: "EXC",
+          obs_msg: (e?.message || String(e)).slice(0, 1000),
+          resp_xml: null,
+          estado: "RECHAZADO",
+        });
+        await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+      } catch (_) {}
+    }
+
     console.error("❌ ARCA emitirDesdeFacturaMostrador:", e);
     return res.status(500).json({ error: e.message || "Error interno" });
   }
@@ -730,14 +836,12 @@ async function buscarReceptor(req, res) {
 
     const out = await padron.getPersonaV2({ idPersona: doc_nro, cuitRepresentada });
 
-    if (!out || !out.ok) {
-      const payload = {
-        error: out?.fault || out?.error || "No se pudo resolver en padrón",
-        service: out?.service || null,
-      };
-      if (debug) payload.raw = out?.raw || null;
-      return res.status(out?.fault ? 502 : 404).json(payload);
-    }
+   if (!out || !out.ok) {
+  const msg = String(out?.fault || out?.error || "No se pudo resolver en padrón");
+  const isNotFound = /no existe|no se encuentra|inexistente/i.test(msg);
+  return res.status(isNotFound ? 404 : 502).json({ error: msg, service: out?.service || null });
+}
+
 
     // Guardar en cache
     await arcaModel.upsertReceptorCache({
@@ -783,6 +887,39 @@ async function paramsCondIvaReceptor(req, res) {
     return res.status(500).json({ error: e.message || "Error params" });
   }
 }
+async function guardarReceptorCache(req, res) {
+  try {
+    const doc_tipo = Number(req.body?.doc_tipo || 0);
+    const doc_nro_str = String(req.body?.doc_nro ?? "").trim();
+
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return res.status(400).json({ error: "doc_tipo inválido" });
+    if (!/^\d+$/.test(doc_nro_str)) return res.status(400).json({ error: "doc_nro inválido" });
+
+    const doc_nro = Number(doc_nro_str);
+    if (!Number.isFinite(doc_nro) || doc_nro <= 0) return res.status(400).json({ error: "doc_nro inválido (debe ser > 0)" });
+
+    if (doc_tipo === 99) return res.status(400).json({ error: "No se cachea doc_tipo=99 (Consumidor Final)" });
+    if (doc_tipo === 80 && doc_nro_str.length !== 11) return res.status(400).json({ error: "CUIT inválido (debe tener 11 dígitos)" });
+
+    const nombre = String(req.body?.nombre || "").trim() || null;
+    const razon_social = String(req.body?.razon_social || "").trim() || nombre || null;
+
+    let cond_iva_id = req.body?.cond_iva_id;
+    cond_iva_id = cond_iva_id === "" || cond_iva_id === undefined || cond_iva_id === null ? null : Number(cond_iva_id);
+    if (cond_iva_id !== null && (!Number.isFinite(cond_iva_id) || cond_iva_id <= 0)) {
+      return res.status(400).json({ error: "cond_iva_id inválido" });
+    }
+
+    const domicilio = String(req.body?.domicilio || "").trim() || null;
+
+    await arcaModel.upsertReceptorCache({ doc_tipo, doc_nro, nombre, razon_social, cond_iva_id, domicilio });
+
+    const saved = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+    return res.json(saved || { doc_tipo, doc_nro, nombre, razon_social, cond_iva_id, domicilio });
+  } catch (e) {
+    return res.status(500).json({ error: e.message || "Error guardando cache" });
+  }
+}
 
 
 module.exports = {
@@ -795,4 +932,5 @@ module.exports = {
   descargarPDFComprobante,
   buscarReceptor,
   paramsCondIvaReceptor,
+  guardarReceptorCache,
 };

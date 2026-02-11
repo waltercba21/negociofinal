@@ -412,6 +412,96 @@
 ) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci |
 
 
+DESCRIBE arca_comprobante_items;
++---------------------+---------------+------+-----+---------+----------------+
+| Field               | Type          | Null | Key | Default | Extra          |
++---------------------+---------------+------+-----+---------+----------------+
+| id                  | int           | NO   | PRI | NULL    | auto_increment |
+| arca_comprobante_id | int           | NO   | MUL | NULL    |                |
+| producto_id         | int           | YES  |     | NULL    |                |
+| descripcion         | varchar(255)  | NO   |     | NULL    |                |
+| cantidad            | decimal(12,2) | NO   |     | NULL    |                |
+| precio_unitario     | decimal(12,2) | NO   |     | NULL    |                |
+| bonif               | decimal(12,2) | NO   |     | 0.00    |                |
+| iva_alicuota        | decimal(5,2)  | NO   |     | NULL    |                |
+| imp_neto            | decimal(12,2) | NO   |     | NULL    |                |
+| imp_iva             | decimal(12,2) | NO   |     | NULL    |                |
+| imp_total           | decimal(12,2) | NO   |     | NULL    |                |
++---------------------+---------------+------+-----+---------+----------------+
+
+DESCRIBE arca_comprobantes;
++----------------------+----------------------------------------------------+------+-----+-------------------+-------------------+
+| Field                | Type                                               | Null | Key | Default           | Extra   
+          |
++----------------------+----------------------------------------------------+------+-----+-------------------+-------------------+
+| id                   | int                                                | NO   | PRI | NULL              | auto_increment    |
+| factura_mostrador_id | int                                                | YES  |     | NULL              |
+          |
+| ambiente             | enum('HOMO','PROD')                                | NO   |     | NULL              |
+          |
+| cuit_emisor          | bigint                                             | NO   |     | NULL              |
+          |
+| pto_vta              | int                                                | NO   |     | NULL              |
+          |
+| cbte_tipo            | int                                                | NO   |     | NULL              |
+          |
+| cbte_nro             | bigint                                             | YES  |     | NULL              |
+          |
+| cbte_fch             | char(8)                                            | NO   |     | NULL              |
+          |
+| doc_tipo             | int                                                | NO   |     | NULL              |
+          |
+| doc_nro              | bigint                                             | NO   |     | NULL              |
+          |
+| receptor_nombre      | varchar(255)                                       | YES  |     | NULL              |
+          |
+| receptor_cond_iva_id | int                                                | YES  |     | NULL              |
+          |
+| imp_total            | decimal(12,2)                                      | NO   |     | NULL              |
+          |
+| imp_neto             | decimal(12,2)                                      | NO   |     | NULL              |
+          |
+| imp_iva              | decimal(12,2)                                      | NO   |     | NULL              |
+          |
+| imp_exento           | decimal(12,2)                                      | NO   |     | 0.00              |
+          |
+| mon_id               | varchar(3)                                         | NO   |     | PES               |
+          |
+| mon_cotiz            | decimal(12,6)                                      | NO   |     | 1.000000          |
+          |
+| resultado            | char(1)                                            | YES  |     | NULL              |
+          |
+| cae                  | varchar(20)                                        | YES  |     | NULL              |
+          |
+| cae_vto              | char(8)                                            | YES  |     | NULL              |
+          |
+| obs_code             | varchar(20)                                        | YES  |     | NULL              |
+          |
+| obs_msg              | varchar(1000)                                      | YES  |     | NULL              |
+          |
+| req_json             | longtext                                           | YES  |     | NULL              |
+          |
+| resp_xml             | longtext                                           | YES  |     | NULL              |
+          |
+| estado               | enum('BORRADOR','PENDIENTE','EMITIDO','RECHAZADO') | NO   |     | PENDIENTE         |
+          |
+| created_at           | datetime                                           | NO   |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
+| updated_at           | datetime                                           | YES  |     | NULL              |
+          |
++----------------------+----------------------------------------------------+------+-----+-------------------+-------------------+
+
+DESCRIBE arca_receptores_cache;
++--------------+--------------+------+-----+-------------------+-------------------+
+| Field        | Type         | Null | Key | Default           | Extra             |
++--------------+--------------+------+-----+-------------------+-------------------+
+| id           | int          | NO   | PRI | NULL              | auto_increment    |
+| doc_tipo     | int          | NO   | MUL | NULL              |                   |
+| doc_nro      | bigint       | NO   |     | NULL              |                   |
+| nombre       | varchar(255) | YES  |     | NULL              |                   |
+| razon_social | varchar(255) | YES  |     | NULL              |                   |
+| cond_iva_id  | int          | YES  |     | NULL              |                   |
+| domicilio    | varchar(255) | YES  |     | NULL              |                   |
+| updated_at   | datetime     | NO   |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
 
 
 

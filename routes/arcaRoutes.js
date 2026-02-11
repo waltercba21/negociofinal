@@ -28,7 +28,7 @@ router.get("/", arcaController.vistaArcaIndex);
 
 router.get("/pdf/:arcaId", arcaController.descargarPDFComprobante);
 
-router.get("/receptor", arcaController.buscarReceptor);
+router.post("/receptor/cache", arcaController.guardarReceptorCache);
 
 router.get("/params/cond-iva-receptor", arcaController.paramsCondIvaReceptor);
 
