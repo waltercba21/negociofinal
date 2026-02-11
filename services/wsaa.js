@@ -8,6 +8,7 @@ const { execFile } = require("child_process");
 const { promisify } = require("util");
 
 const execFileAsync = promisify(execFile);
+let lastUniqueId = 0;
 
 const ENV = String(process.env.ARCA_ENV || "homo").toLowerCase();
 
@@ -57,26 +58,28 @@ function isValidTa(ta) {
   if (!ta || !ta.token || !ta.sign || !ta.expirationTime) return false;
   const exp = parseExpiration(ta.expirationTime);
   if (!exp) return false;
-  // margen de 2 minutos
-  return exp.getTime() - Date.now() > 2 * 60 * 1000;
+
+  const marginMs = ENV === "prod" ? 2 * 60 * 1000 : 10 * 60 * 1000;
+  return exp.getTime() - Date.now() > marginMs;
 }
+
 
 function ensureCacheDir() {
   if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
 
 function buildTRA(service) {
-  const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
+  // uniqueId: uint32 (recomendado usar epoch en segundos)
+  let uniqueId = Math.floor(Date.now() / 1000);
+  if (uniqueId <= lastUniqueId) uniqueId = lastUniqueId + 1; // evita repetidos dentro del mismo segundo
+  lastUniqueId = uniqueId;
 
-
-  // WSAA tolera ISO; usamos UTC para evitar líos de TZ
   const now = new Date();
   const gen = new Date(now.getTime() - 60 * 1000);
   const exp = new Date(now.getTime() + 12 * 60 * 60 * 1000);
-
   const toIso = (d) => d.toISOString().replace(".000Z", "Z");
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <loginTicketRequest version="1.0">
   <header>
     <uniqueId>${uniqueId}</uniqueId>
@@ -85,9 +88,8 @@ function buildTRA(service) {
   </header>
   <service>${service}</service>
 </loginTicketRequest>`;
-
-  return xml;
 }
+
 
 async function signTRAWithOpenSSL(traXml) {
   ensureFile(CERT_PATH, "ARCA_CMS_CERT/ARCA_CERT_PATH");
