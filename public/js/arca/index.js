@@ -370,6 +370,8 @@ didOpen: () => {
     } catch {
       setHint("Sin cache (podés completar a mano o guardar en cache).");
     }
+      syncDraftFromUI();
+
   }
 
   async function guardarCache() {
@@ -435,6 +437,8 @@ didOpen: () => {
     } catch (e) {
       setSt(e.message || "No se pudo resolver");
     }
+      syncDraftFromUI();
+
   }
 
   let t = null;
