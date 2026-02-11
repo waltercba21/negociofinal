@@ -16,6 +16,13 @@ const _condIvaCache = {
   rows: null,
   raw: null
 };
+function isDupKey(err, keyName) {
+  const msg = String(err?.sqlMessage || err?.message || "");
+  return (err?.code === "ER_DUP_ENTRY" || err?.errno === 1062) && msg.includes(keyName);
+}
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 function claseFromCbteTipo(cbteTipo) {
   const t = Number(cbteTipo);
@@ -144,8 +151,6 @@ async function getNextAndDates(pto_vta, cbte_tipo) {
 
   return { ultimo, next, cbte_fch, lastCbteFch, today };
 }
-// Requiere en el mismo archivo (como ya tenés): round2, query, getNextAndDates,
-// getAllowedCondIvaIdsForCbte, wsfe, arcaModel.
 
 async function emitirDesdeFacturaMostrador(req, res) {
   let arcaId = null;
@@ -263,66 +268,86 @@ const imp_neto  = totales.imp_neto;
 const imp_iva   = totales.imp_iva;
 
 
-    // Nro + fecha coherente
-    let info = await getNextAndDates(pto_vta, cbte_tipo);
-    let next = info.next;
-    let cbte_fch = info.cbte_fch;
+// Nro + fecha coherente + reserva robusta (reintento ante uq_cbte)
+const MAX_ALLOC_TRIES = 5;
 
-    const reqObj = {
-      fuente: "facturas_mostrador",
+let info, next, cbte_fch, reqObj, req_json;
+
+for (let attempt = 1; attempt <= MAX_ALLOC_TRIES; attempt++) {
+  info = await getNextAndDates(pto_vta, cbte_tipo);
+  next = info.next;
+  cbte_fch = info.cbte_fch;
+
+  reqObj = {
+    fuente: "facturas_mostrador",
+    factura_mostrador_id: facturaId,
+    cbte_tipo,
+    pto_vta,
+    cbte_fch,
+    cbte_nro: next,
+    doc_tipo,
+    doc_nro,
+    receptor_cond_iva_id,
+    receptor_nombre,
+    totales: { imp_total, imp_neto, imp_iva },
+    iva: { omitirIva, ivaAlicuotas },
+    items: itemsCalc,
+    debug: { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today, alloc_attempt: attempt },
+  };
+
+  req_json = JSON.stringify(reqObj, null, 2);
+
+  try {
+    arcaId = await arcaModel.crearComprobante({
       factura_mostrador_id: facturaId,
-      cbte_tipo,
+      ambiente,
+      cuit_emisor,
       pto_vta,
-      cbte_fch,
+      cbte_tipo,
       cbte_nro: next,
+      cbte_fch,
       doc_tipo,
       doc_nro,
-      receptor_cond_iva_id,
       receptor_nombre,
-      totales: { imp_total, imp_neto, imp_iva },
-iva: { omitirIva, ivaAlicuotas },
-items: itemsCalc,
-
-      debug: { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today },
-    };
-
-    let req_json = JSON.stringify(reqObj, null, 2);
-
-    // Crear comprobante (captura duplicado por UNIQUE DB)
-    try {
-      arcaId = await arcaModel.crearComprobante({
-        factura_mostrador_id: facturaId,
-        ambiente,
-        cuit_emisor,
-        pto_vta,
-        cbte_tipo,
-        cbte_nro: next,
-        cbte_fch,
-        doc_tipo,
-        doc_nro,
-        receptor_nombre,
-        receptor_cond_iva_id,
-        imp_total,
-        imp_neto,
-        imp_iva,
-        imp_exento: 0,
-        mon_id: "PES",
-        mon_cotiz: 1,
-        req_json,
-        estado: "PENDIENTE",
+      receptor_cond_iva_id,
+      imp_total,
+      imp_neto,
+      imp_iva,
+      imp_exento: 0,
+      mon_id: "PES",
+      mon_cotiz: 1,
+      req_json,
+      estado: "PENDIENTE",
+    });
+    break; // reservado OK
+  } catch (err) {
+    // si es por factura activa, devolvemos el existente (bloqueante)
+    if (isDupKey(err, "uq_factura_activa")) {
+      const row = await arcaModel.buscarUltimoPorFacturaMostradorId(facturaId);
+      return res.status(409).json({
+        error: `Ya existe un comprobante ARCA en estado ${row?.estado} para esta factura`,
+        arca_id: row?.id || null,
+        estado: row?.estado || null,
+        cae: row?.cae || null,
+        cbte_nro: row?.cbte_nro || null,
       });
-    } catch (err) {
-      if (err && (err.code === "ER_DUP_ENTRY" || err.errno === 1062)) {
-        const row = await arcaModel.buscarUltimoPorFacturaMostradorId(facturaId);
-        return res.status(409).json({
-          error: "Ya existe un comprobante activo para esta factura (duplicado detectado por DB)",
-          arca_id: row?.id || null,
-          estado: row?.estado || null,
-          detail: err.sqlMessage || err.message,
-        });
-      }
-      throw err;
     }
+
+    // si es choque de numeración (uq_cbte), reintentar
+    if (isDupKey(err, "uq_cbte")) {
+      if (attempt === MAX_ALLOC_TRIES) {
+        throw new Error("No se pudo reservar cbte_nro por choque de numeración (uq_cbte) tras múltiples reintentos");
+      }
+      await sleep(120 * attempt);
+      continue;
+    }
+
+    throw err;
+  }
+}
+
+if (!arcaId) throw new Error("No se pudo crear comprobante PENDIENTE (reserva de numeración fallida)");
+
 
     await arcaModel.insertarItems(arcaId, itemsCalc);
 
@@ -366,76 +391,89 @@ items: itemsCalc,
       return res.status(502).json({ error: "Fallo WSFE", detail: msg, arca_id: arcaId });
     }
 
-    // Reintento si 10016
-    if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
-      info = await getNextAndDates(pto_vta, cbte_tipo);
-      next = info.next;
-      cbte_fch = info.cbte_fch;
+// Reintento si 10016 (fecha) + reserva robusta ante uq_cbte
+if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
+  let updated = false;
 
-      reqObj.cbte_nro = next;
-      reqObj.cbte_fch = cbte_fch;
-      reqObj.debug = { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today, retry: true };
-      req_json = JSON.stringify(reqObj, null, 2);
+  for (let attempt = 1; attempt <= MAX_ALLOC_TRIES; attempt++) {
+    info = await getNextAndDates(pto_vta, cbte_tipo);
+    next = info.next;
+    cbte_fch = info.cbte_fch;
 
-      try {
-        await query(
-          `UPDATE arca_comprobantes SET cbte_nro=?, cbte_fch=?, req_json=?, updated_at=NOW() WHERE id=?`,
-          [next, cbte_fch, req_json, arcaId]
-        );
-      } catch (err) {
-        if (err && (err.code === "ER_DUP_ENTRY" || err.errno === 1062)) {
+    reqObj.cbte_nro = next;
+    reqObj.cbte_fch = cbte_fch;
+    reqObj.debug = { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today, retry: true, alloc_attempt: attempt };
+    req_json = JSON.stringify(reqObj, null, 2);
+
+    try {
+      await query(
+        `UPDATE arca_comprobantes SET cbte_nro=?, cbte_fch=?, req_json=?, updated_at=NOW() WHERE id=?`,
+        [next, cbte_fch, req_json, arcaId]
+      );
+      updated = true;
+      break;
+    } catch (err) {
+      if (isDupKey(err, "uq_cbte")) {
+        if (attempt === MAX_ALLOC_TRIES) {
           await arcaModel.actualizarRespuesta(arcaId, {
             resultado: "R",
             cae: null,
             cae_vto: null,
             obs_code: "DUP_CBTE",
-            obs_msg: "Choque de cbte_nro por UNIQUE al reintentar",
+            obs_msg: "Choque de numeración (uq_cbte) al reintentar por 10016",
             resp_xml: null,
             estado: "RECHAZADO",
           });
           await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
-          return res.status(409).json({ error: "Choque de numeración al reintentar", arca_id: arcaId });
+          return res.status(409).json({ error: "Choque de numeración al reintentar (uq_cbte)", arca_id: arcaId });
         }
-        throw err;
+        await sleep(120 * attempt);
+        continue;
       }
-
-      try {
-       cae = await wsfe.FECAESolicitar({
-  ptoVta: pto_vta,
-  cbteTipo: cbte_tipo,
-  docTipo: doc_tipo,
-  docNro: doc_nro,
-  condicionIVAReceptorId: receptor_cond_iva_id,
-  cbteFch: cbte_fch,
-  cbteDesde: next,
-  cbteHasta: next,
-  impTotal: imp_total,
-  impTotConc: 0,
-  impNeto: imp_neto,
-  impOpEx: 0,
-  impIVA: imp_iva,
-  impTrib: 0,
-  ivaAlicuotas,
-  omitirIva,
-  monId: "PES",
-  monCotiz: "1.000",
-});
-
-      } catch (err) {
-        const msg = err?.message || String(err);
-        await arcaModel.actualizarRespuesta(arcaId, {
-          resultado: null,
-          cae: null,
-          cae_vto: null,
-          obs_code: "WSFE_EXC",
-          obs_msg: msg.slice(0, 1000),
-          resp_xml: null,
-          estado: "RECHAZADO",
-        });
-        await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
-        return res.status(502).json({ error: "Fallo WSFE (retry)", detail: msg, arca_id: arcaId });
-      }
+      throw err;
     }
+  }
+
+  if (!updated) throw new Error("No se pudo reservar numeración en reintento 10016");
+
+  // volver a pedir CAE con el nro reservado
+  try {
+    cae = await wsfe.FECAESolicitar({
+      ptoVta: pto_vta,
+      cbteTipo: cbte_tipo,
+      docTipo: doc_tipo,
+      docNro: doc_nro,
+      condicionIVAReceptorId: receptor_cond_iva_id,
+      cbteFch: cbte_fch,
+      cbteDesde: next,
+      cbteHasta: next,
+      impTotal: imp_total,
+      impTotConc: 0,
+      impNeto: imp_neto,
+      impOpEx: 0,
+      impIVA: imp_iva,
+      impTrib: 0,
+      ivaAlicuotas,
+      omitirIva,
+      monId: "PES",
+      monCotiz: "1.000",
+    });
+  } catch (err) {
+    const msg = err?.message || String(err);
+    await arcaModel.actualizarRespuesta(arcaId, {
+      resultado: null,
+      cae: null,
+      cae_vto: null,
+      obs_code: "WSFE_EXC",
+      obs_msg: msg.slice(0, 1000),
+      resp_xml: null,
+      estado: "RECHAZADO",
+    });
+    await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+    return res.status(502).json({ error: "Fallo WSFE (retry)", detail: msg, arca_id: arcaId });
+  }
+}
+
 
     const estado = cae.resultado === "A" ? "EMITIDO" : "RECHAZADO";
 
