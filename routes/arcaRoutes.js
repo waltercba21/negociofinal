@@ -30,9 +30,11 @@ router.get("/pdf/:arcaId", arcaController.descargarPDFComprobante);
 
 router.get("/receptor", arcaController.buscarReceptor);
 
-
 router.post("/receptor/cache", arcaController.guardarReceptorCache);
 
 router.get("/params/cond-iva-receptor", arcaController.paramsCondIvaReceptor);
+
+router.get("/wsfe/consultar/:arcaId", arcaController.auditarWsfePorArcaId);
+
 
 module.exports = router;

@@ -149,6 +149,32 @@ async function upsertReceptorCache(data) {
   ];
   return query(sql, params);
 }
+async function insertarWsfeConsulta({ arca_comprobante_id, ok, parsed_json, resp_xml }) {
+  const sql = `
+    INSERT INTO arca_wsfe_consultas (arca_comprobante_id, ok, parsed_json, resp_xml)
+    VALUES (?, ?, ?, ?)
+  `;
+  const params = [
+    arca_comprobante_id,
+    ok ? 1 : 0,
+    parsed_json ? JSON.stringify(parsed_json) : null,
+    resp_xml || null,
+  ];
+  return query(sql, params);
+}
+
+async function listarWsfeConsultas(arca_comprobante_id, limit = 20) {
+  const sql = `
+    SELECT id, ok, parsed_json, created_at
+    FROM arca_wsfe_consultas
+    WHERE arca_comprobante_id=?
+    ORDER BY id DESC
+    LIMIT ?
+  `;
+  return query(sql, [arca_comprobante_id, Number(limit)]);
+}
+
+
 
 module.exports = {
   crearComprobante,
@@ -158,5 +184,7 @@ module.exports = {
   buscarUltimoPorFacturaMostradorId,
   buscarReceptorCache,
   upsertReceptorCache,
+  insertarWsfeConsulta,
+  listarWsfeConsultas,
 };
 
