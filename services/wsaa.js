@@ -24,6 +24,8 @@ const KEY_PATH = process.env.ARCA_CMS_KEY || process.env.ARCA_KEY_PATH || "";
 const CACHE_DIR =
   process.env.ARCA_WSAA_CACHE_DIR || path.join(process.cwd(), ".cache");
 
+const inflight = new Map(); // key: `${ENV}:${service}` => Promise
+
 const memCache = new Map(); // key: `${ENV}:${service}` => { token, sign, expirationTime, raw? }
 
 function ensureFile(p, label) {
@@ -64,7 +66,8 @@ function ensureCacheDir() {
 }
 
 function buildTRA(service) {
-  const uniqueId = Math.floor(Date.now() / 1000);
+  const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
+
 
   // WSAA tolera ISO; usamos UTC para evitar líos de TZ
   const now = new Date();
@@ -256,7 +259,6 @@ function saveCache(service, ta) {
   ensureCacheDir();
   fs.writeFileSync(cacheFileFor(service), JSON.stringify(ta, null, 2), "utf8");
 }
-
 async function getTokenSign(service, { force = false, debug = false } = {}) {
   if (!service) throw new Error("WSAA: falta service");
 
@@ -268,9 +270,42 @@ async function getTokenSign(service, { force = false, debug = false } = {}) {
     if (isValidTa(cached)) return cached;
   }
 
-  const ta = await loginCms(service, { debug });
-  saveCache(service, ta);
-  return ta;
+  const key = `${ENV}:${service}`;
+
+  if (inflight.has(key)) {
+    return await inflight.get(key);
+  }
+
+  const p = (async () => {
+    try {
+      const ta = await loginCms(service, { debug });
+      saveCache(service, ta);
+      return ta;
+    } catch (e) {
+      const msg = String(e?.message || "");
+
+      // Si WSAA dice que ya hay TA válido, primero intentamos leer cache
+      if (/ya posee un TA valido|alreadyAuthenticated/i.test(msg)) {
+        const cached2 = loadCache(service);
+        if (isValidTa(cached2)) return cached2;
+
+        // Reintento único (con TRA distinto por uniqueId)
+        const ta2 = await loginCms(service, { debug });
+        saveCache(service, ta2);
+        return ta2;
+      }
+
+      throw e;
+    }
+  })();
+
+  inflight.set(key, p);
+  try {
+    return await p;
+  } finally {
+    inflight.delete(key);
+  }
 }
+
 
 module.exports = { getTokenSign, WSAA_URL };
