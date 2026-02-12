@@ -3,11 +3,9 @@ const pool = require("../config/conexion");
 const util = require("util");
 
 function getQuery() {
-  // mysql2
   if (pool.promise && typeof pool.promise === "function") {
     return (sql, params = []) => pool.promise().query(sql, params).then(([rows]) => rows);
   }
-  // mysql (callbacks)
   const q = util.promisify(pool.query).bind(pool);
   return (sql, params = []) => q(sql, params);
 }
@@ -47,7 +45,6 @@ async function crearComprobante(data) {
   const r = await query(sql, params);
   return r.insertId || (r[0] && r[0].insertId);
 }
-
 
 async function insertarItems(arcaId, items) {
   if (!items || !items.length) return 0;
@@ -102,13 +99,21 @@ async function actualizarRespuesta(arcaId, patch) {
   return query(sql, params);
 }
 
-async function buscarPorFacturaMostradorId(facturaId) {
-  const rows = await query(
-    `SELECT * FROM arca_comprobantes WHERE factura_mostrador_id=? ORDER BY id DESC LIMIT 1`,
-    [facturaId]
-  );
+async function buscarPorId(id) {
+  const rows = await query(`SELECT * FROM arca_comprobantes WHERE id=? LIMIT 1`, [id]);
   return rows && rows[0] ? rows[0] : null;
 }
+
+async function listarItemsPorArcaId(arcaId) {
+  return query(
+    `SELECT id, producto_id, descripcion, cantidad, precio_unitario, bonif, iva_alicuota, imp_neto, imp_iva, imp_total
+     FROM arca_comprobante_items
+     WHERE arca_comprobante_id=?
+     ORDER BY id ASC`,
+    [arcaId]
+  );
+}
+
 async function buscarUltimoPorFacturaMostradorId(facturaId) {
   const rows = await query(
     `SELECT * FROM arca_comprobantes WHERE factura_mostrador_id=? ORDER BY id DESC LIMIT 1`,
@@ -116,6 +121,8 @@ async function buscarUltimoPorFacturaMostradorId(facturaId) {
   );
   return rows && rows[0] ? rows[0] : null;
 }
+
+// ---- Receptor cache ----
 async function buscarReceptorCache(doc_tipo, doc_nro) {
   const rows = await query(
     `SELECT doc_tipo, doc_nro, nombre, razon_social, cond_iva_id, domicilio, updated_at
@@ -149,6 +156,45 @@ async function upsertReceptorCache(data) {
   ];
   return query(sql, params);
 }
+
+// ---- Asociaciones (NC/ND) ----
+async function insertarAsocCbte(data) {
+  const sql = `
+    INSERT INTO arca_cbtes_asoc
+      (arca_comprobante_id, asociado_arca_id, asoc_pto_vta, asoc_cbte_tipo, asoc_cbte_nro, asoc_cbte_fch, asoc_cuit)
+    VALUES (?,?,?,?,?,?,?)
+    ON DUPLICATE KEY UPDATE
+      asociado_arca_id=VALUES(asociado_arca_id),
+      asoc_pto_vta=VALUES(asoc_pto_vta),
+      asoc_cbte_tipo=VALUES(asoc_cbte_tipo),
+      asoc_cbte_nro=VALUES(asoc_cbte_nro),
+      asoc_cbte_fch=VALUES(asoc_cbte_fch),
+      asoc_cuit=VALUES(asoc_cuit)
+  `;
+  const params = [
+    data.arca_comprobante_id,
+    data.asociado_arca_id,
+    data.asoc_pto_vta,
+    data.asoc_cbte_tipo,
+    data.asoc_cbte_nro,
+    data.asoc_cbte_fch,
+    data.asoc_cuit,
+  ];
+  return query(sql, params);
+}
+
+async function sumarTotalEmitidoAsociado(asociado_arca_id) {
+  const rows = await query(
+    `SELECT COALESCE(SUM(c.imp_total),0) AS total
+     FROM arca_cbtes_asoc a
+     JOIN arca_comprobantes c ON c.id=a.arca_comprobante_id
+     WHERE a.asociado_arca_id=? AND c.estado='EMITIDO'`,
+    [asociado_arca_id]
+  );
+  return rows && rows[0] ? Number(rows[0].total || 0) : 0;
+}
+
+// ---- Auditoría WSFE ----
 async function insertarWsfeConsulta({ arca_comprobante_id, ok, parsed_json, resp_xml }) {
   const sql = `
     INSERT INTO arca_wsfe_consultas (arca_comprobante_id, ok, parsed_json, resp_xml)
@@ -174,17 +220,22 @@ async function listarWsfeConsultas(arca_comprobante_id, limit = 20) {
   return query(sql, [arca_comprobante_id, Number(limit)]);
 }
 
-
-
 module.exports = {
   crearComprobante,
   insertarItems,
   actualizarRespuesta,
-  buscarPorFacturaMostradorId,
+
+  buscarPorId,
+  listarItemsPorArcaId,
+
   buscarUltimoPorFacturaMostradorId,
+
   buscarReceptorCache,
   upsertReceptorCache,
+
+  insertarAsocCbte,
+  sumarTotalEmitidoAsociado,
+
   insertarWsfeConsulta,
   listarWsfeConsultas,
 };
-

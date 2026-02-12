@@ -134,67 +134,80 @@ async function FECAESolicitar(det) {
 
   const monId    = det.monId || "PES";
   const monCotiz = f3(det.monCotiz || 1);
-  // IVA block robusto:
-  // - Si omitirIva => no se envía <Iva>
-  // - Si hay ivaAlicuotas => se envía tal cual
-  // - Si ImpIVA=0 y no hay alícuotas => enviar Id=3 (0%) para evitar 10018
-  // - Si ImpIVA>0 y no hay alícuotas => fallback MVP 21% (Id=5)
-  let ivaXml = "";
-  if (!det.omitirIva) {
-    const alics = Array.isArray(det.ivaAlicuotas)
-      ? det.ivaAlicuotas
-          .map((x) => ({
-            id: Number(x.id || 0),
-            baseImp: f2(x.baseImp),
-            importe: f2(x.importe),
-          }))
-          .filter((x) => x.id > 0)
-      : [];
 
-    if (alics.length) {
-      ivaXml =
-        `<ar:Iva>` +
-        alics
+  // ---- CbtesAsoc (para NC/ND) ----
+  let cbtesAsocXml = "";
+  if (Array.isArray(det.cbtesAsoc) && det.cbtesAsoc.length) {
+    const asocs = det.cbtesAsoc
+      .map((x) => ({
+        tipo: Number(x.tipo || 0),
+        pto_vta: Number(x.pto_vta || 0),
+        nro: Number(x.nro || 0),
+        cuit: Number(x.cuit || a.cuit || 0),
+        cbte_fch: String(x.cbte_fch || "").trim(),
+      }))
+      .filter((x) => x.tipo > 0 && x.pto_vta > 0 && x.nro > 0 && /^\d{8}$/.test(x.cbte_fch));
+
+    if (asocs.length) {
+      cbtesAsocXml =
+        `<ar:CbtesAsoc>` +
+        asocs
           .map(
             (x) => `
+            <ar:CbteAsoc>
+              <ar:Tipo>${x.tipo}</ar:Tipo>
+              <ar:PtoVta>${x.pto_vta}</ar:PtoVta>
+              <ar:Nro>${x.nro}</ar:Nro>
+              <ar:Cuit>${x.cuit}</ar:Cuit>
+              <ar:CbteFch>${x.cbte_fch}</ar:CbteFch>
+            </ar:CbteAsoc>`
+          )
+          .join("") +
+        `</ar:CbtesAsoc>`;
+    }
+  }
+
+  // ---- IVA ----
+  let ivaXml = "";
+  if (!det.omitirIva) {
+    if (Array.isArray(det.ivaAlicuotas) && det.ivaAlicuotas.length) {
+      const alics = det.ivaAlicuotas
+        .map((x) => ({
+          id: Number(x.id || 0),
+          baseImp: f2(x.baseImp),
+          importe: f2(x.importe),
+        }))
+        .filter((x) => x.id > 0);
+
+      if (alics.length) {
+        ivaXml =
+          `<ar:Iva>` +
+          alics
+            .map(
+              (x) => `
               <ar:AlicIva>
                 <ar:Id>${x.id}</ar:Id>
                 <ar:BaseImp>${x.baseImp}</ar:BaseImp>
                 <ar:Importe>${x.importe}</ar:Importe>
               </ar:AlicIva>`
-          )
-          .join("") +
-        `</ar:Iva>`;
-    } else {
-      const impIVA_num = Number(det.impIVA || 0);
-      const impNeto_num = Number(det.impNeto || 0);
-
-      if (impNeto_num > 0) {
-        if (impIVA_num === 0) {
-          // 0% para cumplir el requisito cuando ImpIVA=0
-          ivaXml = `
-            <ar:Iva>
-              <ar:AlicIva>
-                <ar:Id>3</ar:Id>
-                <ar:BaseImp>${impNeto}</ar:BaseImp>
-                <ar:Importe>0.00</ar:Importe>
-              </ar:AlicIva>
-            </ar:Iva>`;
-        } else {
-          // Backward compatible MVP 21% (Id=5)
-          ivaXml = `
-            <ar:Iva>
-              <ar:AlicIva>
-                <ar:Id>5</ar:Id>
-                <ar:BaseImp>${impNeto}</ar:BaseImp>
-                <ar:Importe>${impIVA}</ar:Importe>
-              </ar:AlicIva>
-            </ar:Iva>`;
-        }
+            )
+            .join("") +
+          `</ar:Iva>`;
       }
     }
-  }
 
+    // Fallback: si ImpIVA=0 pero hay neto, igual enviamos alícuota 0% (Id=3) para evitar 10018
+    if (!ivaXml && Number(det.impNeto || 0) > 0) {
+      ivaXml = `
+        <ar:Iva>
+          <ar:AlicIva>
+            <ar:Id>3</ar:Id>
+            <ar:BaseImp>${impNeto}</ar:BaseImp>
+            <ar:Importe>0.00</ar:Importe>
+          </ar:AlicIva>
+        </ar:Iva>`;
+    }
+  }
 
   const soap = `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
@@ -225,6 +238,8 @@ async function FECAESolicitar(det) {
             <ar:CbteHasta>${det.cbteHasta}</ar:CbteHasta>
             <ar:CbteFch>${cbteFch}</ar:CbteFch>
 
+            ${cbtesAsocXml}
+
             <ar:ImpTotal>${impTotal}</ar:ImpTotal>
             <ar:ImpTotConc>${impTotConc}</ar:ImpTotConc>
             <ar:ImpNeto>${impNeto}</ar:ImpNeto>
@@ -244,27 +259,24 @@ async function FECAESolicitar(det) {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-const resp = await postXml(
-  WSFE_URL,
-  soap,
-  "http://ar.gov.afip.dif.FEV1/FECAESolicitar"
-);
+  const resp = await postXml(
+    WSFE_URL,
+    soap,
+    "http://ar.gov.afip.dif.FEV1/FECAESolicitar"
+  );
 
-if (process.env.ARCA_FORCE_WSFE_THROW_AFTER === "1") {
-  throw new Error("ARCA_FORCE_WSFE_THROW_AFTER");
-}
+  if (process.env.ARCA_FORCE_WSFE_THROW_AFTER === "1") {
+    throw new Error("ARCA_FORCE_WSFE_THROW_AFTER");
+  }
 
-return {
-  resultado: pickTag(resp, "Resultado"),
-  cae: pickTag(resp, "CAE"),
-  caeVto: pickTag(resp, "CAEFchVto"),
-  obsCode: pickTag(resp, "Code"),
-  obsMsg: pickTag(resp, "Msg"),
-  raw: resp,
-};
-
-
-
+  return {
+    resultado: pickTag(resp, "Resultado"),
+    cae: pickTag(resp, "CAE"),
+    caeVto: pickTag(resp, "CAEFchVto"),
+    obsCode: pickTag(resp, "Code"),
+    obsMsg: pickTag(resp, "Msg"),
+    raw: resp,
+  };
 }
 
 

@@ -37,4 +37,6 @@ router.get("/params/cond-iva-receptor", arcaController.paramsCondIvaReceptor);
 router.get("/wsfe/consultar/:arcaId", arcaController.auditarWsfePorArcaId);
 router.get("/wsfe/consultas/:arcaId", arcaController.listarWsfeConsultas);
 
+router.post("/emitir-nc/:arcaIdOrigen", arcaController.emitirNotaCreditoPorArcaId);
+
 module.exports = router;
