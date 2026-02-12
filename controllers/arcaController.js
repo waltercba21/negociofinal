@@ -349,34 +349,35 @@ async function emitirDesdeFacturaMostrador(req, res) {
       const m = String(xml || "").match(r);
       return m ? m[1] : "";
     };
-    const isValidYMD = (yyyymmdd) => {
-      if (!/^\d{8}$/.test(yyyymmdd)) return false;
-      const y = Number(yyyymmdd.slice(0, 4));
-      const m = Number(yyyymmdd.slice(4, 6));
-      const d = Number(yyyymmdd.slice(6, 8));
-      if (m < 1 || m > 12) return false;
-      const dt = new Date(Date.UTC(y, m - 1, d));
-      return (
-        dt.getUTCFullYear() === y &&
-        dt.getUTCMonth() === m - 1 &&
-        dt.getUTCDate() === d
-      );
-    };
+ const isValidYMD = (yyyymmdd) => {
+  if (!/^\d{8}$/.test(yyyymmdd)) return false;
+  const y = Number(yyyymmdd.slice(0, 4));
+  const m = Number(yyyymmdd.slice(4, 6));
+  const d = Number(yyyymmdd.slice(6, 8));
+  if (m < 1 || m > 12) return false;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+};
 
-    const pickDate8 = (xml, tags) => {
-      for (const t of tags) {
-        const v = pickTag(String(xml || ""), t);
-        if (!v) continue;
+const pickDate8 = (xml, tags, mode = "first") => {
+  for (const t of tags) {
+    const v = pickTag(String(xml || ""), t);
+    if (!v) continue;
 
-        const digits = String(v).replace(/\D/g, "");
-        const candidates = digits.match(/20\d{6}/g) || [];
+    const digits = String(v).replace(/\D/g, "");
+    const candidates = digits.match(/20\d{6}/g) || [];
 
-        for (const c of candidates) {
-          if (isValidYMD(c)) return c;
-        }
-      }
-      return null;
-    };
+    let best = null;
+    for (const c of candidates) {
+      if (!isValidYMD(c)) continue;
+      if (mode === "max") best = best ? (c > best ? c : best) : c;
+      else return c; // first válido
+    }
+    if (best) return best;
+  }
+  return null;
+};
+
 
     const pickFirst = (xml, tags) => {
       for (const t of tags) {
@@ -396,8 +397,8 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
           const resultGetXml = pickBlock(raw, "ResultGet") || raw;
           const cae = pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]);
-          const cae_vto = pickDate8(resultGetXml, ["FchVto", "CAEFchVto"]);
-          const cbte_fch_wsfe = pickDate8(resultGetXml, ["CbteFch"]);
+          const cae_vto = pickDate8(resultGetXml, ["FchVto", "CAEFchVto"], "max");
+          const cbte_fch_wsfe = pickDate8(resultGetXml, ["CbteFch"], "first");
 
           if (cae) return { ok: true, cae, cae_vto, cbte_fch: cbte_fch_wsfe, raw };
           await sleep(200 * i);
@@ -1577,34 +1578,34 @@ async function auditarWsfePorArcaId(req, res) {
       return m ? m[1] : "";
     };
 
-    const isValidYMD = (yyyymmdd) => {
-      if (!/^\d{8}$/.test(yyyymmdd)) return false;
-      const y = Number(yyyymmdd.slice(0, 4));
-      const m = Number(yyyymmdd.slice(4, 6));
-      const d = Number(yyyymmdd.slice(6, 8));
-      if (m < 1 || m > 12) return false;
-      const dt = new Date(Date.UTC(y, m - 1, d));
-      return (
-        dt.getUTCFullYear() === y &&
-        dt.getUTCMonth() === m - 1 &&
-        dt.getUTCDate() === d
-      );
-    };
+const isValidYMD = (yyyymmdd) => {
+  if (!/^\d{8}$/.test(yyyymmdd)) return false;
+  const y = Number(yyyymmdd.slice(0, 4));
+  const m = Number(yyyymmdd.slice(4, 6));
+  const d = Number(yyyymmdd.slice(6, 8));
+  if (m < 1 || m > 12) return false;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+};
 
-    const pickDate8 = (xml, tags) => {
-      for (const t of tags) {
-        const v = pickTag(String(xml || ""), t);
-        if (!v) continue;
+const pickDate8 = (xml, tags, mode = "first") => {
+  for (const t of tags) {
+    const v = pickTag(String(xml || ""), t);
+    if (!v) continue;
 
-        const digits = String(v).replace(/\D/g, "");
-        const candidates = digits.match(/20\d{6}/g) || [];
+    const digits = String(v).replace(/\D/g, "");
+    const candidates = digits.match(/20\d{6}/g) || [];
 
-        for (const c of candidates) {
-          if (isValidYMD(c)) return c;
-        }
-      }
-      return null;
-    };
+    let best = null;
+    for (const c of candidates) {
+      if (!isValidYMD(c)) continue;
+      if (mode === "max") best = best ? (c > best ? c : best) : c;
+      else return c; // first válido
+    }
+    if (best) return best;
+  }
+  return null;
+};
 
 
     const pickFirst = (xml, tags) => {
@@ -1637,9 +1638,9 @@ async function auditarWsfePorArcaId(req, res) {
 
     const parsed = {
       cbte_nro: Number(pickFirst(resultGetXml, ["CbteDesde", "CbteNro"])) || Number(c.cbte_nro),
-      cbte_fch: pickDate8(resultGetXml, ["CbteFch"]),
+      cbte_fch: pickDate8(resultGetXml, ["CbteFch"], "first"),
       cae: pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]),
-      cae_vto: pickDate8(resultGetXml, ["FchVto", "CAEFchVto"]),
+      cae_vto:  pickDate8(resultGetXml, ["FchVto", "CAEFchVto"], "max"),
       doc_tipo: Number(pickFirst(resultGetXml, ["DocTipo"])) || Number(c.doc_tipo),
       doc_nro: Number(pickFirst(resultGetXml, ["DocNro"])) || Number(c.doc_nro),
       imp_total: Number(pickFirst(resultGetXml, ["ImpTotal"])) || 0,
