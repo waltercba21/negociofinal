@@ -1005,6 +1005,13 @@ async function buscarReceptor(req, res) {
   const isNotFound = /no existe|no se encuentra|inexistente/i.test(msg);
   return res.status(isNotFound ? 404 : 502).json({ error: msg, service: out?.service || null });
 }
+// Si el servicio respondió "OK" pero sin datos, lo tratamos como NO ENCONTRADO
+if (!out.data) {
+  return res.status(404).json({
+    error: "La Clave (CUIT/CUIL) consultada es inexistente",
+    service: out?.service || "ws_sr_padron_a13",
+  });
+}
 
 
     // Guardar en cache
