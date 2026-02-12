@@ -8,8 +8,8 @@ const ENV = String(process.env.ARCA_ENV || "HOMO").toUpperCase();
 const PADRON_URL =
   process.env.ARCA_PADRON_URL ||
   (ENV === "PROD"
-    ? "https://aws.afip.gov.ar/sr-padron/webservices/personaServiceA5"
-    : "https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA5");
+    ? "https://aws.arca.gov.ar/sr-padron/webservices/personaServiceA13"
+    : "https://awshomo.arca.gov.ar/sr-padron/webservices/personaServiceA13");
 
 function pickTag(xml, tag) {
   const r = new RegExp(

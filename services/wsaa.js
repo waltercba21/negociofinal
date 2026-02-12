@@ -15,8 +15,8 @@ const ENV = String(process.env.ARCA_ENV || "homo").toLowerCase();
 const WSAA_URL =
   process.env.ARCA_WSAA_URL ||
   (ENV === "prod"
-    ? "https://wsaa.afip.gov.ar/ws/services/LoginCms"
-    : "https://wsaahomo.afip.gov.ar/ws/services/LoginCms");
+    ? "https://wsaa.arca.gov.ar/ws/services/LoginCms"
+    : "https://wsaahomo.arca.gov.ar/ws/services/LoginCms");
 
 // Compat: acepto ambos nombres (los “viejos” y los “nuevos”)
 const CERT_PATH = process.env.ARCA_CMS_CERT || process.env.ARCA_CERT_PATH || "";
