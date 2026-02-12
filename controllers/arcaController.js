@@ -176,18 +176,21 @@ async function emitirDesdeFacturaMostrador(req, res) {
     const cbte_tipo = Number(req.body.cbte_tipo || 6);
     const doc_tipo = Number(req.body.doc_tipo);
 
-    const doc_nro_str = String(req.body.doc_nro ?? "").trim();
+    if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) return res.status(400).json({ error: "cbte_tipo inválido" });
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return res.status(400).json({ error: "doc_tipo inválido" });
+
+    // doc_nro: permitir vacío solo si doc_tipo=99 (CF) => default 0
+    let doc_nro_str = String(req.body.doc_nro ?? "").trim();
+    if (doc_tipo === 99 && doc_nro_str === "") doc_nro_str = "0";
     if (!/^\d+$/.test(doc_nro_str)) return res.status(400).json({ error: "doc_nro inválido" });
     const doc_nro = Number(doc_nro_str);
 
     const receptor_cond_iva_id = Number(req.body.receptor_cond_iva_id || 5);
-    let receptor_nombre = String(req.body.receptor_nombre || "").trim() || null;
-
-    if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) return res.status(400).json({ error: "cbte_tipo inválido" });
-    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return res.status(400).json({ error: "doc_tipo inválido" });
     if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
       return res.status(400).json({ error: "receptor_cond_iva_id inválido" });
     }
+
+    let receptor_nombre = String(req.body.receptor_nombre || "").trim() || null;
 
     // Validación doc_nro según doc_tipo
     if (doc_tipo === 99) {
@@ -233,6 +236,57 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
     const ambiente = String(process.env.ARCA_ENV || "homo").toUpperCase() === "PROD" ? "PROD" : "HOMO";
 
+    // ===== Resolver receptor_nombre robusto (cache y/o padrón opcional) =====
+    let receptor_domicilio = null;
+
+    if (doc_tipo !== 99) {
+      // 1) cache local
+      const rc = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro).catch(() => null);
+      if (rc) {
+        if (!receptor_nombre) receptor_nombre = (rc.razon_social || rc.nombre || "").trim() || null;
+        receptor_domicilio = String(rc.domicilio || "").trim() || null;
+      }
+
+      // 2) padrón (solo si lo pedís explícitamente, para no meter latencia siempre)
+      const resolveReceptor =
+        String(req.body.resolve_receptor ?? req.query.resolve_receptor ?? "").trim() === "1";
+
+      if (!receptor_nombre && resolveReceptor && doc_tipo === 80) {
+        try {
+          const out = await padron.getPersonaV2({
+            idPersona: doc_nro,
+            cuitRepresentada: cuit_emisor,
+            debug: false,
+          });
+
+          if (out?.ok && out?.data) {
+            receptor_nombre =
+              String(out.data.razon_social || out.data.nombre || "").trim() || null;
+            receptor_domicilio = String(out.data.domicilio || "").trim() || null;
+
+            // cachear SOLO si hay data; NO pisar cond_iva_id con null (ya lo protegiste en SQL)
+            await arcaModel.upsertReceptorCache({
+              doc_tipo,
+              doc_nro,
+              razon_social: out.data.razon_social || receptor_nombre || null,
+              nombre: out.data.nombre || receptor_nombre || null,
+              cond_iva_id: null,
+              domicilio: receptor_domicilio || null,
+            });
+          }
+        } catch (_) {
+          // si padrón falla, no bloqueamos acá; exigimos nombre manual/cache
+        }
+      }
+
+      // 3) regla final: si no es CF, debe haber nombre
+      if (!receptor_nombre) {
+        return res.status(400).json({
+          error: "receptor_nombre requerido (cargalo o resolvelo por padrón/cache)",
+        });
+      }
+    }
+
     // Traer factura + items
     const rows = await query(
       `
@@ -261,8 +315,8 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
     const { itemsCalc, totales, ivaAlicuotas, omitirIva } = calc;
     const imp_total = totales.imp_total;
-    const imp_neto  = totales.imp_neto;
-    const imp_iva   = totales.imp_iva;
+    const imp_neto = totales.imp_neto;
+    const imp_iva = totales.imp_iva;
 
     // --- helpers para reconciliación (FECompConsultar devuelve solo XML crudo) ---
     const pickBlock = (xml, tag) => {
@@ -288,7 +342,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
       return null;
     };
     const reconciliarEnWsfe = async (ptoVta, cbteTipo, cbteNro) => {
-      // 3 intentos cortos por consistencia eventual
       for (let i = 1; i <= 3; i++) {
         try {
           const out = await wsfe.FECompConsultar(ptoVta, cbteTipo, cbteNro);
@@ -303,7 +356,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
           const cbte_fch_wsfe = pickDate8(resultGetXml, ["CbteFch"]);
 
           if (cae) return { ok: true, cae, cae_vto, cbte_fch: cbte_fch_wsfe, raw };
-          // no hay CAE -> puede no existir todavía / no autorizado
           await sleep(200 * i);
         } catch (_) {
           await sleep(200 * i);
@@ -609,8 +661,8 @@ async function emitirDesdeFacturaMostrador(req, res) {
       await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
     }
 
-    // Cache receptor (solo si tiene doc real)
-    if (doc_nro > 0 && doc_tipo !== 99) {
+    // Cache receptor (solo si tiene doc real y NO es CF)
+    if (doc_tipo !== 99 && doc_nro > 0) {
       try {
         await arcaModel.upsertReceptorCache({
           doc_tipo,
@@ -618,7 +670,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
           razon_social: receptor_nombre || null,
           nombre: receptor_nombre || null,
           cond_iva_id: receptor_cond_iva_id || null,
-          domicilio: null,
+          domicilio: receptor_domicilio || null,
         });
       } catch (e) {
         console.warn("⚠️ No se pudo cachear receptor:", e.message);
@@ -661,6 +713,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
     return res.status(500).json({ error: e.message || "Error interno" });
   }
 }
+
 
 async function statusPorFacturaMostrador(req, res) {
   try {
@@ -852,11 +905,14 @@ async function descargarPDFComprobante(req, res) {
     const arcaId = Number(req.params.arcaId || 0);
     if (!arcaId) return res.status(400).send("arcaId inválido");
 
-    const cab = await query(
-      `SELECT * FROM arca_comprobantes WHERE id=? LIMIT 1`,
-      [arcaId]
-    );
-    if (!cab.length) return res.status(404).send("Comprobante no encontrado");
+   const cab = await query(
+  `SELECT c.*, rc.domicilio AS receptor_domicilio
+   FROM arca_comprobantes c
+   LEFT JOIN arca_receptores_cache rc
+     ON rc.doc_tipo=c.doc_tipo AND rc.doc_nro=c.doc_nro
+   WHERE c.id=? LIMIT 1`,
+  [arcaId]
+);
 
     const c = cab[0];
 
@@ -903,6 +959,7 @@ async function descargarPDFComprobante(req, res) {
     doc.fontSize(10).text(`DocTipo: ${c.doc_tipo}  |  DocNro: ${c.doc_nro}`);
     if (c.receptor_nombre) doc.text(`Nombre / Razón social: ${c.receptor_nombre}`);
     if (c.receptor_cond_iva_id) doc.text(`Cond. IVA ID: ${c.receptor_cond_iva_id}`);
+    if (c.receptor_domicilio) doc.text(`Domicilio: ${c.receptor_domicilio}`);
 
     doc.moveDown(0.8);
     doc.fontSize(11).text("Items", { underline: true });
