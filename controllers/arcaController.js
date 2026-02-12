@@ -151,9 +151,10 @@ async function getNextAndDates(pto_vta, cbte_tipo) {
 
   return { ultimo, next, cbte_fch, lastCbteFch, today };
 }
-
 async function emitirDesdeFacturaMostrador(req, res) {
   let arcaId = null;
+
+  const qBool = (v) => ["1", "true", "yes", "on"].includes(String(v || "").toLowerCase());
 
   try {
     const facturaId = Number(req.params.id || 0);
@@ -180,8 +181,12 @@ async function emitirDesdeFacturaMostrador(req, res) {
     if (!/^\d+$/.test(doc_nro_str)) return res.status(400).json({ error: "doc_nro inválido" });
     const doc_nro = Number(doc_nro_str);
 
-    const receptor_cond_iva_id = Number(req.body.receptor_cond_iva_id || 5);
+    // IMPORTANTE: si el front no lo manda, recién ahí usamos defaults / cache
+    const receptorCondIvaInput = req.body.receptor_cond_iva_id;
+    let receptor_cond_iva_id = receptorCondIvaInput != null ? Number(receptorCondIvaInput) : 5;
+
     let receptor_nombre = String(req.body.receptor_nombre || "").trim() || null;
+    let receptor_domicilio = null;
 
     if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) return res.status(400).json({ error: "cbte_tipo inválido" });
     if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return res.status(400).json({ error: "doc_tipo inválido" });
@@ -201,6 +206,66 @@ async function emitirDesdeFacturaMostrador(req, res) {
     // 80 = CUIT => 11 dígitos
     if (doc_tipo === 80 && doc_nro_str.length !== 11) {
       return res.status(400).json({ error: "CUIT inválido (debe tener 11 dígitos)" });
+    }
+
+    // Config ARCA
+    const pto_vta = Number(process.env.ARCA_PTO_VTA || 0);
+    const cuit_emisor = Number(process.env.ARCA_CUIT || 0);
+    if (!Number.isFinite(pto_vta) || pto_vta <= 0) return res.status(500).json({ error: "ARCA_PTO_VTA no configurado" });
+    if (!Number.isFinite(cuit_emisor) || cuit_emisor <= 0) return res.status(500).json({ error: "ARCA_CUIT no configurado" });
+    const ambiente = String(process.env.ARCA_ENV || "homo").toUpperCase() === "PROD" ? "PROD" : "HOMO";
+
+    // ===== Resolver receptor (cache/padrón) si se pidió =====
+    const resolveReceptor = qBool(req.query.resolve_receptor);
+    const refreshReceptor = qBool(req.query.refresh_receptor);
+
+    if (resolveReceptor && doc_tipo === 80 && doc_nro > 0) {
+      try {
+        let cached = null;
+
+        if (!refreshReceptor) {
+          cached = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+          if (cached) {
+            if (!receptor_nombre) receptor_nombre = cached.razon_social || cached.nombre || receptor_nombre;
+            receptor_domicilio = cached.domicilio || receptor_domicilio;
+
+            // solo si el front NO mandó receptor_cond_iva_id
+            if (receptorCondIvaInput == null && cached.cond_iva_id) {
+              const c = Number(cached.cond_iva_id);
+              if (Number.isFinite(c) && c > 0) receptor_cond_iva_id = c;
+            }
+          }
+        }
+
+        if (refreshReceptor || !cached || !receptor_nombre) {
+          const out = await padron.getPersonaV2({
+            idPersona: doc_nro,
+            cuitRepresentada: cuit_emisor,
+            debug: false,
+          });
+
+          if (out?.ok && !out?.notFound && out?.data) {
+            receptor_nombre = receptor_nombre || out.data.razon_social || out.data.nombre || receptor_nombre;
+            receptor_domicilio = receptor_domicilio || out.data.domicilio || null;
+
+            // cachear (si falla, no corta emisión)
+            try {
+              await arcaModel.upsertReceptorCache({
+                doc_tipo,
+                doc_nro,
+                razon_social: receptor_nombre || null,
+                nombre: receptor_nombre || null,
+                cond_iva_id: receptor_cond_iva_id || null,
+                domicilio: receptor_domicilio,
+              });
+            } catch (e) {
+              console.warn("⚠️ No se pudo upsert receptor cache:", e.message);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("⚠️ Resolver receptor falló (no bloqueante):", e.message);
+      }
     }
 
     // ===== Reglas de negocio (server-side) =====
@@ -224,54 +289,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
         receptor_cond_iva_id,
         allowed: allowedCondIvaIds,
       });
-    }
-
-    const pto_vta = Number(process.env.ARCA_PTO_VTA || 0);
-    const cuit_emisor = Number(process.env.ARCA_CUIT || 0);
-    if (!Number.isFinite(pto_vta) || pto_vta <= 0) return res.status(500).json({ error: "ARCA_PTO_VTA no configurado" });
-    if (!Number.isFinite(cuit_emisor) || cuit_emisor <= 0) return res.status(500).json({ error: "ARCA_CUIT no configurado" });
-
-    const ambiente = String(process.env.ARCA_ENV || "homo").toUpperCase() === "PROD" ? "PROD" : "HOMO";
-
-    // === Resolver receptor por padrón (opcional) ===
-    const resolveReceptor =
-      String(req.query.resolve_receptor || req.query.resolve || "0") === "1";
-    const refreshReceptor =
-      String(req.query.refresh_receptor || req.query.refresh || "0") === "1";
-
-    let receptor_domicilio = null;
-
-    if (resolveReceptor && doc_tipo === 80 && doc_nro > 0) {
-      try {
-        // si no pedís refresh, primero cache
-        let cached = null;
-        if (!refreshReceptor) {
-          cached = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-        }
-
-        if (cached?.razon_social || cached?.nombre) {
-          receptor_nombre = receptor_nombre || cached.razon_social || cached.nombre || null;
-          receptor_domicilio = cached.domicilio || null;
-        } else {
-          const r = await padron.getPersonaV2(doc_nro);
-          if (r.ok && r.data) {
-            receptor_nombre = receptor_nombre || r.data.razon_social || r.data.nombre || null;
-            receptor_domicilio = r.data.domicilio || null;
-
-            // cachear lo básico (cond_iva_id lo dejamos como el que venga del body)
-            await arcaModel.upsertReceptorCache({
-              doc_tipo,
-              doc_nro,
-              razon_social: receptor_nombre,
-              nombre: receptor_nombre,
-              cond_iva_id: receptor_cond_iva_id || null,
-              domicilio: receptor_domicilio,
-            });
-          }
-        }
-      } catch (_) {
-        // no bloqueante: si falla padrón, sigue con los datos del request
-      }
     }
 
     // Traer factura + items
@@ -300,20 +317,30 @@ async function emitirDesdeFacturaMostrador(req, res) {
       throw e;
     }
 
-    let { itemsCalc, totales, ivaAlicuotas, omitirIva } = calc;
+    const { itemsCalc, totales, ivaAlicuotas, omitirIva } = calc;
     const imp_total = totales.imp_total;
     const imp_neto  = totales.imp_neto;
     const imp_iva   = totales.imp_iva;
 
-    // === FIX WSFE 10018: si ImpIVA=0 y NO es C, WSFE exige Iva/AlicIva con Id=3 (IVA 0) ===
-    if (!omitirIva && Number(imp_iva) === 0) {
-      const only3 = Array.isArray(ivaAlicuotas)
-        ? ivaAlicuotas.filter((a) => Number(a.id) === 3)
-        : [];
-
-      ivaAlicuotas = (only3.length ? only3 : [{ id: 3, baseImp: imp_neto, importe: 0 }]);
-
-      // Nota: si esto te pasa “siempre”, revisá productos.IVA (están quedando en 0).
+    // ===== Blindaje IVA=0 para clase A/B (evita emitir mal por IVA mal cargado en productos) =====
+    const allowIvaZero = qBool(req.query.allow_iva_0);
+    if (clase !== "C" && !omitirIva && Number(imp_iva) === 0 && !allowIvaZero) {
+      const detalle = (itemsCalc || []).map(x => ({
+        producto_id: x.producto_id,
+        descripcion: x.descripcion,
+        iva_porc: x.iva_porc,
+        base_imp: x.base_imp,
+        imp_iva: x.imp_iva,
+      }));
+      return res.status(400).json({
+        error: "IVA calculado = 0 en comprobante con IVA. Revisá productos.IVA / items. Para forzar: ?allow_iva_0=1",
+        clase,
+        cbte_tipo,
+        imp_total,
+        imp_neto,
+        imp_iva,
+        detalle_items: detalle,
+      });
     }
 
     // --- helpers para reconciliación (FECompConsultar devuelve solo XML crudo) ---
@@ -327,7 +354,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
         const v = pickTag(xml, t);
         if (!v) continue;
         const digits = String(v).replace(/\D/g, "");
-        const m = digits.match(/(20\d{6})/);
+        const m = digits.match(/(20\\d{6})/);
         if (m) return m[1];
       }
       return null;
@@ -382,10 +409,16 @@ async function emitirDesdeFacturaMostrador(req, res) {
         doc_nro,
         receptor_cond_iva_id,
         receptor_nombre,
+        receptor_domicilio,
         totales: { imp_total, imp_neto, imp_iva },
         iva: { omitirIva, ivaAlicuotas },
         items: itemsCalc,
-        debug: { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today, alloc_attempt: attempt },
+        debug: {
+          ultimo_autorizado: info.ultimo,
+          last_cbte_fch: info.lastCbteFch,
+          today: info.today,
+          alloc_attempt: attempt
+        },
       };
 
       req_json = JSON.stringify(reqObj, null, 2);
@@ -467,6 +500,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
     } catch (err) {
       const msg = err?.message || String(err);
 
+      // Reconciliar: si se autorizó igual, marcar EMITIDO
       const rec = await reconciliarEnWsfe(pto_vta, cbte_tipo, next);
       if (rec.ok && rec.cae) {
         await arcaModel.actualizarRespuesta(arcaId, {
@@ -496,6 +530,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
         });
       }
 
+      // No se pudo confirmar: dejar PENDIENTE
       await arcaModel.actualizarRespuesta(arcaId, {
         resultado: null,
         cae: null,
@@ -529,7 +564,13 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
         reqObj.cbte_nro = next;
         reqObj.cbte_fch = cbte_fch;
-        reqObj.debug = { ultimo_autorizado: info.ultimo, last_cbte_fch: info.lastCbteFch, today: info.today, retry: true, alloc_attempt: attempt };
+        reqObj.debug = {
+          ultimo_autorizado: info.ultimo,
+          last_cbte_fch: info.lastCbteFch,
+          today: info.today,
+          retry: true,
+          alloc_attempt: attempt
+        };
         req_json = JSON.stringify(reqObj, null, 2);
 
         try {
@@ -563,6 +604,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
       if (!updated) throw new Error("No se pudo reservar numeración en reintento 10016");
 
+      // volver a pedir CAE con el nro reservado
       try {
         cae = await wsfe.FECAESolicitar({
           ptoVta: pto_vta,
@@ -665,7 +707,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
           razon_social: receptor_nombre || null,
           nombre: receptor_nombre || null,
           cond_iva_id: receptor_cond_iva_id || null,
-          domicilio: receptor_domicilio || null,
+          domicilio: receptor_domicilio,
         });
       } catch (e) {
         console.warn("⚠️ No se pudo cachear receptor:", e.message);
@@ -688,6 +730,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       obs_msg: cae.obsMsg || null,
     });
   } catch (e) {
+    // Si ya creamos el comprobante y algo explotó, no dejarlo colgado
     if (arcaId) {
       try {
         await arcaModel.actualizarRespuesta(arcaId, {
@@ -707,9 +750,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
     return res.status(500).json({ error: e.message || "Error interno" });
   }
 }
-
-
-
 
 async function statusPorFacturaMostrador(req, res) {
   try {
