@@ -349,16 +349,35 @@ async function emitirDesdeFacturaMostrador(req, res) {
       const m = String(xml || "").match(r);
       return m ? m[1] : "";
     };
+    const isValidYMD = (yyyymmdd) => {
+      if (!/^\d{8}$/.test(yyyymmdd)) return false;
+      const y = Number(yyyymmdd.slice(0, 4));
+      const m = Number(yyyymmdd.slice(4, 6));
+      const d = Number(yyyymmdd.slice(6, 8));
+      if (m < 1 || m > 12) return false;
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      return (
+        dt.getUTCFullYear() === y &&
+        dt.getUTCMonth() === m - 1 &&
+        dt.getUTCDate() === d
+      );
+    };
+
     const pickDate8 = (xml, tags) => {
       for (const t of tags) {
-        const v = pickTag(xml, t);
+        const v = pickTag(String(xml || ""), t);
         if (!v) continue;
+
         const digits = String(v).replace(/\D/g, "");
-        const m = digits.match(/(20\\d{6})/);
-        if (m) return m[1];
+        const candidates = digits.match(/20\d{6}/g) || [];
+
+        for (const c of candidates) {
+          if (isValidYMD(c)) return c;
+        }
       }
       return null;
     };
+
     const pickFirst = (xml, tags) => {
       for (const t of tags) {
         const v = pickTag(xml, t);
@@ -1236,16 +1255,35 @@ async function auditarWsfePorArcaId(req, res) {
       return m ? m[1] : "";
     };
 
+    const isValidYMD = (yyyymmdd) => {
+      if (!/^\d{8}$/.test(yyyymmdd)) return false;
+      const y = Number(yyyymmdd.slice(0, 4));
+      const m = Number(yyyymmdd.slice(4, 6));
+      const d = Number(yyyymmdd.slice(6, 8));
+      if (m < 1 || m > 12) return false;
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      return (
+        dt.getUTCFullYear() === y &&
+        dt.getUTCMonth() === m - 1 &&
+        dt.getUTCDate() === d
+      );
+    };
+
     const pickDate8 = (xml, tags) => {
       for (const t of tags) {
         const v = pickTag(String(xml || ""), t);
         if (!v) continue;
+
         const digits = String(v).replace(/\D/g, "");
-        const m = digits.match(/(20\d{6})/);
-        if (m) return m[1];
+        const candidates = digits.match(/20\d{6}/g) || [];
+
+        for (const c of candidates) {
+          if (isValidYMD(c)) return c;
+        }
       }
       return null;
     };
+
 
     const pickFirst = (xml, tags) => {
       for (const t of tags) {
