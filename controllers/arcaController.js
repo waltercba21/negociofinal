@@ -397,8 +397,9 @@ const pickDate8 = (xml, tags, mode = "first") => {
 
           const resultGetXml = pickBlock(raw, "ResultGet") || raw;
           const cae = pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]);
-          const cae_vto = pickDate8(resultGetXml, ["FchVto", "CAEFchVto"], "max");
-          const cbte_fch_wsfe = pickDate8(resultGetXml, ["CbteFch"], "first");
+         const cae_vto = pickDateTagsStrict(resultGetXml, ["CAEFchVto", "FchVto"]);
+const cbte_fch_wsfe = pickDateTagsStrict(resultGetXml, ["CbteFch"]);
+
 
           if (cae) return { ok: true, cae, cae_vto, cbte_fch: cbte_fch_wsfe, raw };
           await sleep(200 * i);
@@ -1577,7 +1578,6 @@ async function auditarWsfePorArcaId(req, res) {
       const m = String(xml || "").match(r);
       return m ? m[1] : "";
     };
-
 const isValidYMD = (yyyymmdd) => {
   if (!/^\d{8}$/.test(yyyymmdd)) return false;
   const y = Number(yyyymmdd.slice(0, 4));
@@ -1588,19 +1588,22 @@ const isValidYMD = (yyyymmdd) => {
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 };
 
-const pickDate8 = (xml, tags, mode = "first") => {
-  for (const t of tags) {
-    const v = pickTag(String(xml || ""), t);
-    if (!v) continue;
+const pickDateTagsStrict = (xml, tags) => {
+  const s = String(xml || "");
+  for (const tag of tags) {
+    const r = new RegExp(
+      `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+      "i"
+    );
+    const m = s.match(r);
+    if (!m) continue;
 
-    const digits = String(v).replace(/\D/g, "");
+    const digits = String(m[1]).replace(/\D/g, "");
     const candidates = digits.match(/20\d{6}/g) || [];
-
     let best = null;
     for (const c of candidates) {
       if (!isValidYMD(c)) continue;
-      if (mode === "max") best = best ? (c > best ? c : best) : c;
-      else return c; // first válido
+      best = best ? (c > best ? c : best) : c; // max
     }
     if (best) return best;
   }
@@ -1638,9 +1641,9 @@ const pickDate8 = (xml, tags, mode = "first") => {
 
     const parsed = {
       cbte_nro: Number(pickFirst(resultGetXml, ["CbteDesde", "CbteNro"])) || Number(c.cbte_nro),
-      cbte_fch: pickDate8(resultGetXml, ["CbteFch"], "first"),
+      cbte_fch: pickDateTagsStrict(resultGetXml, ["CbteFch"]),
       cae: pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]),
-      cae_vto:  pickDate8(resultGetXml, ["FchVto", "CAEFchVto"], "max"),
+      cae_vto:  pickDateTagsStrict(resultGetXml, ["CAEFchVto", "FchVto"]),
       doc_tipo: Number(pickFirst(resultGetXml, ["DocTipo"])) || Number(c.doc_tipo),
       doc_nro: Number(pickFirst(resultGetXml, ["DocNro"])) || Number(c.doc_nro),
       imp_total: Number(pickFirst(resultGetXml, ["ImpTotal"])) || 0,
