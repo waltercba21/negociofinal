@@ -176,9 +176,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
     const cbte_tipo = Number(req.body.cbte_tipo || 6);
     const doc_tipo = Number(req.body.doc_tipo);
 
-    // doc_nro: permitir vacío sólo si doc_tipo=99 (lo normalizamos a 0)
-    let doc_nro_str = String(req.body.doc_nro ?? "").trim();
-    if (doc_tipo === 99 && doc_nro_str === "") doc_nro_str = "0";
+    const doc_nro_str = String(req.body.doc_nro ?? "").trim();
     if (!/^\d+$/.test(doc_nro_str)) return res.status(400).json({ error: "doc_nro inválido" });
     const doc_nro = Number(doc_nro_str);
 
@@ -235,65 +233,44 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
     const ambiente = String(process.env.ARCA_ENV || "homo").toUpperCase() === "PROD" ? "PROD" : "HOMO";
 
-    // ===== Resolver receptor (cache/padrón) si falta nombre =====
-    const resolveStr = String(req.body.resolve_receptor ?? req.query.resolve_receptor ?? "").trim().toLowerCase();
-    const resolve_receptor = ["1", "true", "on", "si", "yes"].includes(resolveStr);
-
-    const refreshStr = String(req.body.refresh_receptor ?? req.query.refresh_receptor ?? "").trim().toLowerCase();
-    const refresh_receptor = ["1", "true", "on", "si", "yes"].includes(refreshStr);
+    // === Resolver receptor por padrón (opcional) ===
+    const resolveReceptor =
+      String(req.query.resolve_receptor || req.query.resolve || "0") === "1";
+    const refreshReceptor =
+      String(req.query.refresh_receptor || req.query.refresh || "0") === "1";
 
     let receptor_domicilio = null;
 
-    if (doc_tipo !== 99) {
-      if (!refresh_receptor) {
-        const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-        if (cache) {
-          receptor_nombre = receptor_nombre || cache.razon_social || cache.nombre || null;
-          receptor_domicilio = cache.domicilio || null;
-        }
-      }
-
-      if (!receptor_nombre && resolve_receptor) {
-        if (doc_tipo !== 80) {
-          return res.status(400).json({ error: "resolve_receptor=1 solo soporta doc_tipo=80 (CUIT)" });
+    if (resolveReceptor && doc_tipo === 80 && doc_nro > 0) {
+      try {
+        // si no pedís refresh, primero cache
+        let cached = null;
+        if (!refreshReceptor) {
+          cached = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
         }
 
-        const out = await padron.getPersonaV2({ idPersona: doc_nro, cuitRepresentada: cuit_emisor });
+        if (cached?.razon_social || cached?.nombre) {
+          receptor_nombre = receptor_nombre || cached.razon_social || cached.nombre || null;
+          receptor_domicilio = cached.domicilio || null;
+        } else {
+          const r = await padron.getPersonaV2(doc_nro);
+          if (r.ok && r.data) {
+            receptor_nombre = receptor_nombre || r.data.razon_social || r.data.nombre || null;
+            receptor_domicilio = r.data.domicilio || null;
 
-        if (out?.notFound || !out?.data) {
-          return res.status(404).json({
-            error: "No encontrado en padrón",
-            service: out?.service || "ws_sr_padron_a13",
-          });
+            // cachear lo básico (cond_iva_id lo dejamos como el que venga del body)
+            await arcaModel.upsertReceptorCache({
+              doc_tipo,
+              doc_nro,
+              razon_social: receptor_nombre,
+              nombre: receptor_nombre,
+              cond_iva_id: receptor_cond_iva_id || null,
+              domicilio: receptor_domicilio,
+            });
+          }
         }
-
-        if (!out?.ok) {
-          const msg = String(out?.fault || out?.error || "No se pudo resolver en padrón");
-          const isNotFound = /no existe|no se encuentra|inexistente/i.test(msg);
-          return res.status(isNotFound ? 404 : 502).json({ error: msg, service: out?.service || null });
-        }
-
-        receptor_nombre = out.data?.razon_social || out.data?.nombre || receptor_nombre || null;
-        receptor_domicilio = out.data?.domicilio || receptor_domicilio || null;
-
-        // Guardar en cache (sin pisar cond_iva_id si viene null)
-        try {
-          await arcaModel.upsertReceptorCache({
-            doc_tipo,
-            doc_nro,
-            nombre: out.data?.nombre || null,
-            razon_social: out.data?.razon_social || out.data?.nombre || null,
-            cond_iva_id: null,
-            domicilio: receptor_domicilio || null,
-          });
-        } catch (_) {}
-      }
-
-      if (!receptor_nombre) {
-        return res.status(400).json({
-          error: "receptor_nombre requerido (o usar cache / resolve_receptor=1)",
-          hint: "Ej: GET /arca/receptor?doc_tipo=80&doc_nro=XXXXXXXXXXX&resolve=1",
-        });
+      } catch (_) {
+        // no bloqueante: si falla padrón, sigue con los datos del request
       }
     }
 
@@ -323,10 +300,21 @@ async function emitirDesdeFacturaMostrador(req, res) {
       throw e;
     }
 
-    const { itemsCalc, totales, ivaAlicuotas, omitirIva } = calc;
+    let { itemsCalc, totales, ivaAlicuotas, omitirIva } = calc;
     const imp_total = totales.imp_total;
     const imp_neto  = totales.imp_neto;
     const imp_iva   = totales.imp_iva;
+
+    // === FIX WSFE 10018: si ImpIVA=0 y NO es C, WSFE exige Iva/AlicIva con Id=3 (IVA 0) ===
+    if (!omitirIva && Number(imp_iva) === 0) {
+      const only3 = Array.isArray(ivaAlicuotas)
+        ? ivaAlicuotas.filter((a) => Number(a.id) === 3)
+        : [];
+
+      ivaAlicuotas = (only3.length ? only3 : [{ id: 3, baseImp: imp_neto, importe: 0 }]);
+
+      // Nota: si esto te pasa “siempre”, revisá productos.IVA (están quedando en 0).
+    }
 
     // --- helpers para reconciliación (FECompConsultar devuelve solo XML crudo) ---
     const pickBlock = (xml, tag) => {
@@ -339,7 +327,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
         const v = pickTag(xml, t);
         if (!v) continue;
         const digits = String(v).replace(/\D/g, "");
-        const m = digits.match(/(20\\d{6})/);
+        const m = digits.match(/(20\d{6})/);
         if (m) return m[1];
       }
       return null;
@@ -352,7 +340,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
       return null;
     };
     const reconciliarEnWsfe = async (ptoVta, cbteTipo, cbteNro) => {
-      // 3 intentos cortos por consistencia eventual
       for (let i = 1; i <= 3; i++) {
         try {
           const out = await wsfe.FECompConsultar(ptoVta, cbteTipo, cbteNro);
@@ -395,7 +382,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
         doc_nro,
         receptor_cond_iva_id,
         receptor_nombre,
-        receptor_domicilio,
         totales: { imp_total, imp_neto, imp_iva },
         iva: { omitirIva, ivaAlicuotas },
         items: itemsCalc,
@@ -481,7 +467,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
     } catch (err) {
       const msg = err?.message || String(err);
 
-      // Reconciliar: si se autorizó igual, marcar EMITIDO
       const rec = await reconciliarEnWsfe(pto_vta, cbte_tipo, next);
       if (rec.ok && rec.cae) {
         await arcaModel.actualizarRespuesta(arcaId, {
@@ -511,7 +496,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
         });
       }
 
-      // No se pudo confirmar: dejar PENDIENTE (no liberar cbte_nro)
       await arcaModel.actualizarRespuesta(arcaId, {
         resultado: null,
         cae: null,
@@ -579,7 +563,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
       if (!updated) throw new Error("No se pudo reservar numeración en reintento 10016");
 
-      // volver a pedir CAE con el nro reservado
       try {
         cae = await wsfe.FECAESolicitar({
           ptoVta: pto_vta,
@@ -705,7 +688,6 @@ async function emitirDesdeFacturaMostrador(req, res) {
       obs_msg: cae.obsMsg || null,
     });
   } catch (e) {
-    // Si ya creamos el comprobante y algo explotó, no dejarlo PENDIENTE colgado
     if (arcaId) {
       try {
         await arcaModel.actualizarRespuesta(arcaId, {
@@ -725,6 +707,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
     return res.status(500).json({ error: e.message || "Error interno" });
   }
 }
+
 
 
 
