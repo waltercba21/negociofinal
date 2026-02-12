@@ -9,9 +9,15 @@ const CUIT = String(process.env.ARCA_CUIT || "").trim();
 const PTO_VTA_DEFAULT = Number(process.env.ARCA_PTO_VTA || 0);
 
 const WSFE_URL =
-  ENV === "prod"
+  process.env.ARCA_WSFE_URL ||
+  (ENV === "prod"
     ? "https://servicios1.afip.gov.ar/wsfev1/service.asmx"
-    : "https://wswhomo.afip.gov.ar/wsfev1/service.asmx";
+    : "https://wswhomo.afip.gov.ar/wsfev1/service.asmx");
+
+if (ENV === "prod" && /homo/i.test(WSFE_URL)) {
+  throw new Error(`[ARCA][PROD] ARCA_WSFE_URL apunta a HOMO: ${WSFE_URL}`);
+}
+
 
 function postXml(url, xml, soapAction) {
   return new Promise((resolve, reject) => {

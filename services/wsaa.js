@@ -15,8 +15,13 @@ const ENV = String(process.env.ARCA_ENV || "homo").toLowerCase();
 const WSAA_URL =
   process.env.ARCA_WSAA_URL ||
   (ENV === "prod"
-    ? "https://wsaa.arca.gov.ar/ws/services/LoginCms"
-    : "https://wsaahomo.arca.gov.ar/ws/services/LoginCms");
+    ? "https://wsaa.afip.gov.ar/ws/services/LoginCms"
+    : "https://wsaahomo.afip.gov.ar/ws/services/LoginCms");
+
+if (ENV === "prod" && /homo/i.test(WSAA_URL)) {
+  throw new Error(`[ARCA][PROD] ARCA_WSAA_URL apunta a HOMO: ${WSAA_URL}`);
+}
+
 
 // Compat: acepto ambos nombres (los “viejos” y los “nuevos”)
 const CERT_PATH = process.env.ARCA_CMS_CERT || process.env.ARCA_CERT_PATH || "";
