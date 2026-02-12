@@ -44,7 +44,7 @@ function isValidYMD(yyyymmdd) {
 function pickAllTagContents(xml, tag) {
   const s = String(xml || "");
   const r = new RegExp(
-    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+    `<(?:(?:\\w+):)?${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
     "gi"
   );
   const out = [];
@@ -1640,7 +1640,7 @@ const pickDateTagsStrict = (xml, tags) => {
   const s = String(xml || "");
   for (const tag of tags) {
     const r = new RegExp(
-      `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+      `<(?:(?:\\w+):)?${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
       "i"
     );
     const m = s.match(r);
