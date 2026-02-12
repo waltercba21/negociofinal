@@ -134,51 +134,67 @@ async function FECAESolicitar(det) {
 
   const monId    = det.monId || "PES";
   const monCotiz = f3(det.monCotiz || 1);
-
-  // IVA block:
+  // IVA block robusto:
   // - Si omitirIva => no se envía <Iva>
-  // - Si ivaAlicuotas[] => se envía según totales por alícuota
-  // - Si no se pasa nada => fallback MVP (Id=5) si ImpIVA>0
+  // - Si hay ivaAlicuotas => se envía tal cual
+  // - Si ImpIVA=0 y no hay alícuotas => enviar Id=3 (0%) para evitar 10018
+  // - Si ImpIVA>0 y no hay alícuotas => fallback MVP 21% (Id=5)
   let ivaXml = "";
   if (!det.omitirIva) {
-    if (Array.isArray(det.ivaAlicuotas) && det.ivaAlicuotas.length) {
-      const alics = det.ivaAlicuotas
-        .map((x) => ({
-          id: Number(x.id || 0),
-          baseImp: f2(x.baseImp),
-          importe: f2(x.importe),
-        }))
-        .filter((x) => x.id > 0);
+    const alics = Array.isArray(det.ivaAlicuotas)
+      ? det.ivaAlicuotas
+          .map((x) => ({
+            id: Number(x.id || 0),
+            baseImp: f2(x.baseImp),
+            importe: f2(x.importe),
+          }))
+          .filter((x) => x.id > 0)
+      : [];
 
-      if (alics.length) {
-        ivaXml =
-          `<ar:Iva>` +
-          alics
-            .map(
-              (x) => `
+    if (alics.length) {
+      ivaXml =
+        `<ar:Iva>` +
+        alics
+          .map(
+            (x) => `
               <ar:AlicIva>
                 <ar:Id>${x.id}</ar:Id>
                 <ar:BaseImp>${x.baseImp}</ar:BaseImp>
                 <ar:Importe>${x.importe}</ar:Importe>
               </ar:AlicIva>`
-            )
-            .join("") +
-          `</ar:Iva>`;
-      }
+          )
+          .join("") +
+        `</ar:Iva>`;
     } else {
-      // Backward compatible MVP 21% (Id=5)
-      if (Number(det.impIVA || 0) > 0) {
-        ivaXml = `
-          <ar:Iva>
-            <ar:AlicIva>
-              <ar:Id>5</ar:Id>
-              <ar:BaseImp>${impNeto}</ar:BaseImp>
-              <ar:Importe>${impIVA}</ar:Importe>
-            </ar:AlicIva>
-          </ar:Iva>`;
+      const impIVA_num = Number(det.impIVA || 0);
+      const impNeto_num = Number(det.impNeto || 0);
+
+      if (impNeto_num > 0) {
+        if (impIVA_num === 0) {
+          // 0% para cumplir el requisito cuando ImpIVA=0
+          ivaXml = `
+            <ar:Iva>
+              <ar:AlicIva>
+                <ar:Id>3</ar:Id>
+                <ar:BaseImp>${impNeto}</ar:BaseImp>
+                <ar:Importe>0.00</ar:Importe>
+              </ar:AlicIva>
+            </ar:Iva>`;
+        } else {
+          // Backward compatible MVP 21% (Id=5)
+          ivaXml = `
+            <ar:Iva>
+              <ar:AlicIva>
+                <ar:Id>5</ar:Id>
+                <ar:BaseImp>${impNeto}</ar:BaseImp>
+                <ar:Importe>${impIVA}</ar:Importe>
+              </ar:AlicIva>
+            </ar:Iva>`;
+        }
       }
     }
   }
+
 
   const soap = `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
