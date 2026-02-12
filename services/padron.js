@@ -5,11 +5,12 @@ const wsaa = require("./wsaa");
 
 const ENV = String(process.env.ARCA_ENV || "HOMO").toUpperCase();
 
+// Default correcto: A13 (no A5)
 const PADRON_URL =
   process.env.ARCA_PADRON_URL ||
   (ENV === "PROD"
-    ? "https://aws.arca.gov.ar/sr-padron/webservices/personaServiceA13"
-    : "https://awshomo.arca.gov.ar/sr-padron/webservices/personaServiceA13");
+    ? "https://aws.afip.gov.ar/sr-padron/webservices/personaServiceA13"
+    : "https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA13");
 
 function pickTag(xml, tag) {
   const r = new RegExp(
@@ -31,18 +32,30 @@ function pickBlock(xml, tag) {
 
 function formatDomicilio(domXml) {
   if (!domXml) return null;
+
   const calle = pickTag(domXml, "calle") || "";
   const nro = pickTag(domXml, "numero") || "";
   const piso = pickTag(domXml, "piso") || "";
-  const dpto = pickTag(domXml, "depto") || "";
+  const dpto =
+    pickTag(domXml, "depto") ||
+    pickTag(domXml, "oficinaDptoLocal") ||
+    "";
   const localidad =
-    pickTag(domXml, "localidad") || pickTag(domXml, "descripcionLocalidad") || "";
+    pickTag(domXml, "localidad") ||
+    pickTag(domXml, "descripcionLocalidad") ||
+    "";
   const provincia =
-    pickTag(domXml, "descripcionProvincia") || pickTag(domXml, "provincia") || "";
-  const cp = pickTag(domXml, "codPostal") || pickTag(domXml, "codigoPostal") || "";
+    pickTag(domXml, "descripcionProvincia") ||
+    pickTag(domXml, "provincia") ||
+    "";
+  const cp =
+    pickTag(domXml, "codigoPostal") ||
+    pickTag(domXml, "codPostal") ||
+    pickTag(domXml, "codPostal") ||
+    "";
 
   const linea1 = [calle, nro].filter(Boolean).join(" ").trim();
-  const linea2 = [piso ? `Piso ${piso}` : "", dpto ? `Dto ${dpto}` : ""]
+  const linea2 = [piso ? `Piso ${piso}` : "", dpto ? `Dto/Of ${dpto}` : ""]
     .filter(Boolean)
     .join(" ")
     .trim();
@@ -58,8 +71,6 @@ async function postXml(url, xml, soapActionValue) {
     "Content-Type": "text/xml; charset=utf-8",
     Accept: "text/xml",
   };
-
-  // si soapActionValue es "" => manda SOAPAction: ""
   if (soapActionValue !== undefined) {
     const act = String(soapActionValue);
     headers["SOAPAction"] = act.startsWith('"') ? act : `"${act}"`;
@@ -96,16 +107,17 @@ async function dummy() {
   return { status: out.status, fault: fault || null };
 }
 
+// Mantenemos el nombre para no romper imports/scripts, pero A13 usa getPersona
 async function getPersonaV2({ idPersona, cuitRepresentada, debug = false }) {
   const serviceHint = String(process.env.ARCA_PADRON_SERVICE || "").trim();
-  const servicesToTry = [serviceHint || 'ws_sr_padron_a13'];
+  const servicesToTry = [serviceHint || "ws_sr_padron_a13"];
 
-
+  // A13 -> getPersona :contentReference[oaicite:1]{index=1}
   const soapActions = [
     "",
-    "getPersona_v2",
-    "urn:getPersona_v2",
-    "http://a13.soap.ws.server.puc.sr/getPersona_v2",
+    "getPersona",
+    "urn:getPersona",
+    "http://a13.soap.ws.server.puc.sr/getPersona",
   ];
 
   let last = null;
@@ -115,52 +127,61 @@ async function getPersonaV2({ idPersona, cuitRepresentada, debug = false }) {
       const ts = await wsaa.getTokenSign(svc, { debug });
 
       const soap = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="http://a13.soap.ws.server.puc.sr/">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a13="http://a13.soap.ws.server.puc.sr/">
   <soapenv:Header/>
   <soapenv:Body>
-    <urn:getPersona_v2>
+    <a13:getPersona>
       <token>${ts.token}</token>
       <sign>${ts.sign}</sign>
       <cuitRepresentada>${Number(cuitRepresentada || 0)}</cuitRepresentada>
       <idPersona>${Number(idPersona || 0)}</idPersona>
-    </urn:getPersona_v2>
+    </a13:getPersona>
   </soapenv:Body>
 </soapenv:Envelope>`;
 
       const out = await postXmlWithSoapActionFallback(PADRON_URL, soap, soapActions);
 
-      const fault = pickTag(out.raw, "faultstring");
-      if (fault) {
-        last = { ok: false, error: fault, raw: debug ? out.raw : null, service: svc, status: out.status };
+    const fault = pickTag(out.raw, "faultstring");
+if (fault) {
+  const msg = String(fault || "").toLowerCase();
+
+  // Padrón HOMO: CUIT inexistente -> tratar como "no encontrado"
+  if (msg.includes("consultada es inexistente")) {
+    return {
+      ok: true,
+      notFound: true,
+      data: null,
+      service: svc,
+      status: out.status,
+      error: null,
+      raw: debug ? out.raw : null,
+    };
+  }
+
+  last = { ok: false, error: fault, raw: debug ? out.raw : null, service: svc, status: out.status };
+  continue;
+}
+
+
+      // A13: personaReturn -> persona :contentReference[oaicite:2]{index=2}
+      const personaReturn = pickBlock(out.raw, "personaReturn");
+      const persona = personaReturn ? pickBlock(personaReturn, "persona") : "";
+      if (!persona) {
+        last = { ok: false, error: "Respuesta sin personaReturn/persona", raw: debug ? out.raw : null, service: svc, status: out.status };
         continue;
       }
 
-      const personaReturn = pickBlock(out.raw, "getPersona_v2Return");
-      if (!personaReturn) {
-        last = { ok: false, error: "Respuesta sin getPersona_v2Return", raw: debug ? out.raw : null, service: svc, status: out.status };
-        continue;
-      }
+      const razonSocial = pickTag(persona, "razonSocial") || null;
+      const nombre = pickTag(persona, "nombre") || null;
+      const apellido = pickTag(persona, "apellido") || null;
 
-      const errConst = pickBlock(personaReturn, "errorConstancia");
-      const errMsg = pickTag(errConst, "error");
-      if (errMsg) {
-        last = { ok: false, error: errMsg, raw: debug ? out.raw : null, service: svc, status: out.status };
-        continue;
-      }
+      const nombreCompleto =
+        razonSocial ||
+        [apellido, nombre].filter(Boolean).join(" ").trim() ||
+        null;
 
-      const dg = pickBlock(personaReturn, "datosGenerales");
-      if (!dg) {
-        last = { ok: false, error: "Respuesta sin datosGenerales", raw: debug ? out.raw : null, service: svc, status: out.status };
-        continue;
-      }
-
-      const razonSocial = pickTag(dg, "razonSocial") || null;
-      const nombre = pickTag(dg, "nombre") || null;
-      const apellido = pickTag(dg, "apellido") || null;
-
-      const nombreCompleto = razonSocial || [apellido, nombre].filter(Boolean).join(" ").trim() || null;
-
-      const dom = pickBlock(dg, "domicilioFiscal") || pickBlock(dg, "domicilio");
+      // domicilio puede venir como <domicilio> ... </domicilio>
+      const dom = pickBlock(persona, "domicilio") || pickBlock(persona, "domicilioFiscal");
       const domicilio = formatDomicilio(dom);
 
       return {
