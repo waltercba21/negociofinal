@@ -349,7 +349,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       const m = String(xml || "").match(r);
       return m ? m[1] : "";
     };
- const isValidYMD = (yyyymmdd) => {
+const isValidYMD = (yyyymmdd) => {
   if (!/^\d{8}$/.test(yyyymmdd)) return false;
   const y = Number(yyyymmdd.slice(0, 4));
   const m = Number(yyyymmdd.slice(4, 6));
@@ -359,24 +359,35 @@ async function emitirDesdeFacturaMostrador(req, res) {
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 };
 
-const pickDate8 = (xml, tags, mode = "first") => {
-  for (const t of tags) {
-    const v = pickTag(String(xml || ""), t);
-    if (!v) continue;
-
-    const digits = String(v).replace(/\D/g, "");
-    const candidates = digits.match(/20\d{6}/g) || [];
-
-    let best = null;
-    for (const c of candidates) {
-      if (!isValidYMD(c)) continue;
-      if (mode === "max") best = best ? (c > best ? c : best) : c;
-      else return c; // first válido
-    }
-    if (best) return best;
-  }
-  return null;
+const pickAllTagContents = (xml, tag) => {
+  const s = String(xml || "");
+  const r = new RegExp(
+    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+    "gi"
+  );
+  const out = [];
+  let m;
+  while ((m = r.exec(s)) !== null) out.push(m[1]);
+  return out;
 };
+
+const pickDate8MaxFromTags = (xml, tags) => {
+  let best = null;
+  for (const t of tags) {
+    const contents = pickAllTagContents(xml, t);
+    for (const v of contents) {
+      const digits = String(v).replace(/\D/g, "");
+      const candidates = digits.match(/20\d{6}/g) || [];
+      for (const c of candidates) {
+        if (!isValidYMD(c)) continue;
+        best = best ? (c > best ? c : best) : c;
+      }
+    }
+  }
+  return best;
+};
+
+
 
 
     const pickFirst = (xml, tags) => {
@@ -397,8 +408,8 @@ const pickDate8 = (xml, tags, mode = "first") => {
 
           const resultGetXml = pickBlock(raw, "ResultGet") || raw;
           const cae = pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]);
-         const cae_vto = pickDateTagsStrict(resultGetXml, ["CAEFchVto", "FchVto"]);
-const cbte_fch_wsfe = pickDateTagsStrict(resultGetXml, ["CbteFch"]);
+         const cae_vto = pickDate8MaxFromTags(resultGetXml, ["CAEFchVto", "FchVto"]);
+const cbte_fch_wsfe = pickDate8MaxFromTags(resultGetXml, ["CbteFch"]);
 
 
           if (cae) return { ok: true, cae, cae_vto, cbte_fch: cbte_fch_wsfe, raw };
@@ -1641,9 +1652,9 @@ const pickDateTagsStrict = (xml, tags) => {
 
     const parsed = {
       cbte_nro: Number(pickFirst(resultGetXml, ["CbteDesde", "CbteNro"])) || Number(c.cbte_nro),
-      cbte_fch: pickDateTagsStrict(resultGetXml, ["CbteFch"]),
+      cbte_fch: pickDate8MaxFromTags(resultGetXml, ["CbteFch"]),
       cae: pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]),
-      cae_vto:  pickDateTagsStrict(resultGetXml, ["CAEFchVto", "FchVto"]),
+      cae_vto:  pickDate8MaxFromTags(resultGetXml, ["CAEFchVto", "FchVto"]),
       doc_tipo: Number(pickFirst(resultGetXml, ["DocTipo"])) || Number(c.doc_tipo),
       doc_nro: Number(pickFirst(resultGetXml, ["DocNro"])) || Number(c.doc_nro),
       imp_total: Number(pickFirst(resultGetXml, ["ImpTotal"])) || 0,
