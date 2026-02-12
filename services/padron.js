@@ -98,7 +98,8 @@ async function dummy() {
 
 async function getPersonaV2({ idPersona, cuitRepresentada, debug = false }) {
   const serviceHint = String(process.env.ARCA_PADRON_SERVICE || "").trim();
-  const servicesToTry = [serviceHint, "ws_sr_padron_a13", "ws_sr_constancia_inscripcion"].filter(Boolean);
+  const servicesToTry = [serviceHint || 'ws_sr_padron_a13'];
+
 
   const soapActions = [
     "",
