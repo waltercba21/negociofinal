@@ -31,6 +31,43 @@ function claseFromCbteTipo(cbteTipo) {
   if ([11,12,13,14,15].includes(t)) return "C"; // Fact C / ND C / NC C / ...
   return null;
 }
+function isValidYMD(yyyymmdd) {
+  if (!/^\d{8}$/.test(yyyymmdd)) return false;
+  const y = Number(yyyymmdd.slice(0, 4));
+  const m = Number(yyyymmdd.slice(4, 6));
+  const d = Number(yyyymmdd.slice(6, 8));
+  if (m < 1 || m > 12) return false;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
+function pickAllTagContents(xml, tag) {
+  const s = String(xml || "");
+  const r = new RegExp(
+    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+    "gi"
+  );
+  const out = [];
+  let m;
+  while ((m = r.exec(s)) !== null) out.push(m[1]);
+  return out;
+}
+
+function pickDate8MaxFromTags(xml, tags) {
+  let best = null;
+  for (const t of tags) {
+    const contents = pickAllTagContents(xml, t);
+    for (const v of contents) {
+      const digits = String(v).replace(/\D/g, "");
+      const candidates = digits.match(/20\d{6}/g) || [];
+      for (const c of candidates) {
+        if (!isValidYMD(c)) continue;
+        best = best ? (c > best ? c : best) : c;
+      }
+    }
+  }
+  return best;
+}
 
 function parseCondIvaFromXml(xml) {
   const blocks = String(xml || "").match(/<CondicionIvaReceptor>([\s\S]*?)<\/CondicionIvaReceptor>/gi) || [];
@@ -408,8 +445,8 @@ const pickDate8MaxFromTags = (xml, tags) => {
 
           const resultGetXml = pickBlock(raw, "ResultGet") || raw;
           const cae = pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]);
-         const cae_vto = pickDate8MaxFromTags(resultGetXml, ["CAEFchVto", "FchVto"]);
-const cbte_fch_wsfe = pickDate8MaxFromTags(resultGetXml, ["CbteFch"]);
+          const cae_vto = pickDate8MaxFromTags(resultGetXml, ["CAEFchVto", "FchVto"]);
+          const cbte_fch_wsfe = pickDate8MaxFromTags(resultGetXml, ["CbteFch"]);
 
 
           if (cae) return { ok: true, cae, cae_vto, cbte_fch: cbte_fch_wsfe, raw };
