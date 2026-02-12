@@ -145,21 +145,18 @@ async function getPersonaV2({ idPersona, cuitRepresentada, debug = false }) {
 if (fault) {
   const msg = String(fault || "").toLowerCase();
 
-  // Padrón HOMO: CUIT inexistente -> tratar como "no encontrado"
 if (msg.includes("consultada es inexistente")) {
   return {
     ok: true,
     notFound: true,
     data: null,
     service: svc,
-    status: 200,               // status lógico de tu wrapper
-    upstreamStatus: out.status, // 500 real del SOAP
+    status: 200,                 // status lógico
+    upstreamStatus: out.status,   // 500 real del SOAP
     error: null,
     raw: debug ? out.raw : null,
   };
 }
-
-
 
   last = { ok: false, error: fault, raw: debug ? out.raw : null, service: svc, status: out.status };
   continue;
