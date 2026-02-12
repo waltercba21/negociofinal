@@ -84,10 +84,10 @@ async function postXmlWithSoapActionFallback(url, xml, actions) {
 
 async function dummy() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a5="http://a5.soap.ws.server.puc.sr/">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a13="http://a13.soap.ws.server.puc.sr/">
   <soapenv:Header/>
   <soapenv:Body>
-    <a5:dummy/>
+    <a13:dummy/>
   </soapenv:Body>
 </soapenv:Envelope>`;
 
@@ -98,13 +98,13 @@ async function dummy() {
 
 async function getPersonaV2({ idPersona, cuitRepresentada, debug = false }) {
   const serviceHint = String(process.env.ARCA_PADRON_SERVICE || "").trim();
-  const servicesToTry = [serviceHint, "ws_sr_padron_a5", "ws_sr_constancia_inscripcion"].filter(Boolean);
+  const servicesToTry = [serviceHint, "ws_sr_padron_a13", "ws_sr_constancia_inscripcion"].filter(Boolean);
 
   const soapActions = [
     "",
     "getPersona_v2",
     "urn:getPersona_v2",
-    "http://a5.soap.ws.server.puc.sr/getPersona_v2",
+    "http://a13.soap.ws.server.puc.sr/getPersona_v2",
   ];
 
   let last = null;
@@ -114,7 +114,7 @@ async function getPersonaV2({ idPersona, cuitRepresentada, debug = false }) {
       const ts = await wsaa.getTokenSign(svc, { debug });
 
       const soap = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="http://a5.soap.ws.server.puc.sr/">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="http://a13.soap.ws.server.puc.sr/">
   <soapenv:Header/>
   <soapenv:Body>
     <urn:getPersona_v2>
