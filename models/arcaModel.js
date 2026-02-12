@@ -135,7 +135,7 @@ async function upsertReceptorCache(data) {
     ON DUPLICATE KEY UPDATE
       nombre=VALUES(nombre),
       razon_social=VALUES(razon_social),
-      cond_iva_id=VALUES(cond_iva_id),
+      cond_iva_id = IFNULL(VALUES(cond_iva_id), cond_iva_id)
       domicilio=VALUES(domicilio),
       updated_at=NOW()
   `;
