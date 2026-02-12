@@ -24,11 +24,14 @@ const padron = require("../services/padron");
     debug: true,
   });
 
-  console.log("getPersonaV2:", {
-    ok: r.ok,
-    service: r.service,
-    status: r.status,
-    error: r.error || null,
-    data: r.data || null,
-  });
+console.log("getPersonaV2:", {
+  ok: r.ok,
+  notFound: !!r.notFound,
+  upstreamStatus: r.upstreamStatus ?? null,
+  service: r.service,
+  status: r.status,
+  error: r.error || null,
+  data: r.data || null,
+});
+
 })();
