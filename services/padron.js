@@ -152,12 +152,13 @@ if (msg.includes("consultada es inexistente")) {
     notFound: true,
     data: null,
     service: svc,
-    status: 200,               // status "lógico" de tu wrapper
+    status: 200,               // status lógico de tu wrapper
     upstreamStatus: out.status, // 500 real del SOAP
     error: null,
     raw: debug ? out.raw : null,
   };
 }
+
 
 
   last = { ok: false, error: fault, raw: debug ? out.raw : null, service: svc, status: out.status };

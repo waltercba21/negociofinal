@@ -999,6 +999,12 @@ async function buscarReceptor(req, res) {
     }
 
     const out = await padron.getPersonaV2({ idPersona: doc_nro, cuitRepresentada });
+if (out?.notFound || !out?.data) {
+  return res.status(404).json({
+    error: "No encontrado en padrón",
+    service: out?.service || "ws_sr_padron_a13",
+  });
+}
 
    if (!out || !out.ok) {
   const msg = String(out?.fault || out?.error || "No se pudo resolver en padrón");
