@@ -2,3 +2,11 @@
 node_modules/
 
 .codegpt
+# ARCA / secretos / runtime
+.env
+.env.*
+.cache/
+*.key
+*.pem
+*.crt
+*.csr
