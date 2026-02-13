@@ -149,6 +149,64 @@
         </div>
       </aside>
     </div>
+    <div class="card" style="margin-top:14px;">
+  <div class="section-title">
+    <div class="kicker">Control</div>
+    <h2>Reportes y cierres</h2>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>Desde</label>
+      <input type="date" id="repDesde">
+    </div>
+    <div class="field">
+      <label>Hasta</label>
+      <input type="date" id="repHasta">
+    </div>
+    <div class="field">
+      <label>Tipo</label>
+      <select id="repTipo">
+        <option value="">Todos</option>
+        <option value="1">Factura A (1)</option>
+        <option value="6">Factura B (6)</option>
+        <option value="3">Nota de Crédito A (3)</option>
+        <option value="8">Nota de Crédito B (8)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Estado</label>
+      <select id="repEstado">
+        <option value="">Todos</option>
+        <option value="EMITIDO">EMITIDO</option>
+        <option value="ERROR">ERROR</option>
+        <option value="PENDIENTE">PENDIENTE</option>
+      </select>
+    </div>
+    <div class="actions">
+      <button class="btn secondary" id="btnRepResumen">Ver resumen</button>
+      <button class="btn" id="btnRepListar">Listar comprobantes</button>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:10px;">
+    <div class="field">
+      <label>Fecha de cierre</label>
+      <input type="date" id="cierreFecha">
+    </div>
+    <div class="actions">
+      <button class="btn danger" id="btnCierre">Crear cierre diario</button>
+    </div>
+  </div>
+
+  <div class="hint">
+    El cierre diario guarda un snapshot interno (no se informa a ARCA). Sirve para control y conciliación.
+  </div>
+
+  <div class="table" id="tblResumen"></div>
+  <div class="table" id="tblComprobantes" style="margin-top:10px;"></div>
+</div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

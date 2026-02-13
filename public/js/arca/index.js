@@ -792,3 +792,219 @@ if (target && target.id) {
     $("arcaTbody").innerHTML = `<tr><td colspan="6" class="muted">${err.message}</td></tr>`;
   });
 })();
+(function reportesInit(){
+  const $ = (s) => document.querySelector(s);
+
+  function todayISO(){
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  const repDesde = $("#repDesde");
+  const repHasta = $("#repHasta");
+  const repTipo = $("#repTipo");
+  const repEstado = $("#repEstado");
+  const cierreFecha = $("#cierreFecha");
+
+  if (repDesde && repHasta && cierreFecha) {
+    repDesde.value = todayISO();
+    repHasta.value = todayISO();
+    cierreFecha.value = todayISO();
+  }
+
+  async function getJSON(url){
+    const r = await fetch(url, { headers: { "Accept":"application/json" } });
+    const j = await r.json().catch(()=>null);
+    if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
+    return j;
+  }
+
+  function money(n){
+    const x = Number(n || 0);
+    return x.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderResumen(items){
+    const wrap = $("#tblResumen");
+    if (!wrap) return;
+
+    if (!items?.length) {
+      wrap.innerHTML = `<div class="hint">Sin datos en el rango.</div>`;
+      return;
+    }
+
+    const rows = items.map(r => `
+      <div class="tr">
+        <div>${r.fecha}</div>
+        <div>$ ${money(r.total_facturas)}</div>
+        <div>$ ${money(r.total_nc)}</div>
+        <div><b>$ ${money(r.total_neto_ventas)}</b></div>
+        <div><button class="btn secondary" data-ver-dia="${r.fecha}">Ver día</button></div>
+      </div>
+    `).join("");
+
+    wrap.innerHTML = `
+      <div class="thead">
+        <div>Fecha</div><div>Facturas</div><div>NC</div><div>Neto ventas</div><div>Acción</div>
+      </div>
+      ${rows}
+    `;
+
+    wrap.querySelectorAll("[data-ver-dia]").forEach(btn=>{
+      btn.addEventListener("click", ()=> {
+        const f = btn.getAttribute("data-ver-dia");
+        repDesde.value = f;
+        repHasta.value = f;
+        listarComprobantes();
+      });
+    });
+  }
+
+  function tipoLabel(t){
+    const n = Number(t);
+    if (n===1) return "Factura A";
+    if (n===6) return "Factura B";
+    if (n===3) return "NC A";
+    if (n===8) return "NC B";
+    return `Tipo ${t}`;
+  }
+
+  function renderComprobantes(items){
+    const wrap = $("#tblComprobantes");
+    if (!wrap) return;
+
+    if (!items?.length) {
+      wrap.innerHTML = `<div class="hint">Sin comprobantes para el filtro.</div>`;
+      return;
+    }
+
+    const rows = items.map(it => `
+      <div class="tr">
+        <div>#${it.id}</div>
+        <div>${tipoLabel(it.cbte_tipo)}</div>
+        <div>${it.pto_vta}-${it.cbte_nro}</div>
+        <div>${String(it.cbte_fch).slice(0,4)}-${String(it.cbte_fch).slice(4,6)}-${String(it.cbte_fch).slice(6,8)}</div>
+        <div>${it.estado}</div>
+        <div>$ ${money(it.imp_total)}</div>
+        <div class="actions" style="justify-content:flex-end;">
+          <a class="btn secondary" href="/arca/pdf/${it.id}" target="_blank">PDF</a>
+          <a class="btn secondary" href="/arca/wsfe/consultar/${it.id}?audit=1" target="_blank">Auditar</a>
+          ${[1,6].includes(Number(it.cbte_tipo)) ? `<button class="btn danger" data-nc="${it.id}">NC</button>` : ``}
+        </div>
+      </div>
+    `).join("");
+
+    wrap.innerHTML = `
+      <div class="thead">
+        <div>ID</div><div>Tipo</div><div>Número</div><div>Fecha</div><div>Estado</div><div>Total</div><div></div>
+      </div>
+      ${rows}
+    `;
+
+    wrap.querySelectorAll("[data-nc]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const arcaId = btn.getAttribute("data-nc");
+        const ok = await Swal.fire({
+          icon: "warning",
+          title: "Emitir Nota de Crédito",
+          text: `Se emitirá una NC asociada al comprobante ARCA #${arcaId}.`,
+          showCancelButton: true,
+          confirmButtonText: "Emitir NC",
+          cancelButtonText: "Cancelar"
+        });
+        if (!ok.isConfirmed) return;
+
+        try{
+          const r = await fetch(`/arca/emitir-nc/${arcaId}`, {
+            method:"POST",
+            headers: { "Content-Type":"application/json", "Accept":"application/json" },
+            body: "{}"
+          });
+          const j = await r.json();
+          if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
+          await Swal.fire({ icon:"success", title:"NC emitida", text:`ARCA #${j.arca_id} - CAE ${j.cae}` });
+          listarComprobantes();
+        }catch(e){
+          Swal.fire({ icon:"error", title:"Error", text: String(e.message || e) });
+        }
+      });
+    });
+  }
+
+  async function verResumen(){
+    try{
+      const d = repDesde.value;
+      const h = repHasta.value;
+      const j = await getJSON(`/arca/reportes/resumen?desde=${encodeURIComponent(d)}&hasta=${encodeURIComponent(h)}`);
+      renderResumen(j.resumen);
+    }catch(e){
+      Swal.fire({ icon:"error", title:"Error", text: String(e.message || e) });
+    }
+  }
+
+  async function listarComprobantes(){
+    try{
+      const d = repDesde.value;
+      const h = repHasta.value;
+      const tipo = repTipo.value;
+      const estado = repEstado.value;
+
+      const qs = new URLSearchParams({ desde:d, hasta:h });
+      if (tipo) qs.set("tipo", tipo);
+      if (estado) qs.set("estado", estado);
+
+      const j = await getJSON(`/arca/reportes/comprobantes?${qs.toString()}`);
+      renderComprobantes(j.items);
+    }catch(e){
+      Swal.fire({ icon:"error", title:"Error", text: String(e.message || e) });
+    }
+  }
+
+  async function crearCierre(){
+    try{
+      const f = cierreFecha.value;
+      const ok = await Swal.fire({
+        icon:"question",
+        title:"Crear cierre diario",
+        text:`Se guardará el snapshot del día ${f}.`,
+        showCancelButton:true,
+        confirmButtonText:"Crear cierre",
+        cancelButtonText:"Cancelar"
+      });
+      if (!ok.isConfirmed) return;
+
+      const r = await fetch("/arca/cierre-diario", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "Accept":"application/json" },
+        body: JSON.stringify({ fecha: f })
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
+
+      const c = j.cierre;
+      await Swal.fire({
+        icon:"success",
+        title: j.existente ? "Cierre ya existía" : "Cierre creado",
+        html: `
+          <div style="text-align:left">
+            <div><b>Fecha:</b> ${c.fecha}</div>
+            <div><b>Facturado:</b> $ ${money(c.total_facturado)}</div>
+            <div><b>NC:</b> $ ${money(c.total_nc)}</div>
+            <div><b>Neto ventas:</b> $ ${money(c.total_neto_ventas)}</div>
+            <div><b>Comprobantes:</b> ${c.cant_comprobantes}</div>
+          </div>`
+      });
+
+      verResumen();
+    }catch(e){
+      Swal.fire({ icon:"error", title:"Error", text: String(e.message || e) });
+    }
+  }
+
+  $("#btnRepResumen")?.addEventListener("click", verResumen);
+  $("#btnRepListar")?.addEventListener("click", listarComprobantes);
+  $("#btnCierre")?.addEventListener("click", crearCierre);
+})();
