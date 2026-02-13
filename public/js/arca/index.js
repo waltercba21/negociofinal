@@ -90,6 +90,8 @@
     tbody.innerHTML = rows
       .map(
         (r) => `
+        <tr class="row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
+
       <tr class="row" data-id="${r.id}">
         <td><strong>#${r.id}</strong></td>
         <td class="muted">${r.fecha || "-"}</td>
@@ -976,7 +978,7 @@ if (target && target.id) {
       });
       if (!ok.isConfirmed) return;
 
-      const r = await fetch("/arca/cierre-diario", {
+      const r = await fetch("/arca/cierres-diarios", {
         method:"POST",
         headers:{ "Content-Type":"application/json", "Accept":"application/json" },
         body: JSON.stringify({ fecha: f })
