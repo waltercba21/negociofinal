@@ -44,20 +44,20 @@ const ARCA_SWAL = (() => {
   const wsfeBadgeEl = $("wsfeBadge");
   const btnAuditarWsfe = $("btnAuditarWsfe");
 
-  function loadDraft() {
-    try {
-      return JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null") || null;
-    } catch {
-      return null;
-    }
-  }
+function draftKeyForFactura(facturaId){
+  return `${DRAFT_PREFIX}${Number(facturaId)}`;
+}
 
-  function saveDraft(d) {
-    try {
-      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d || {}));
-    } catch {}
-  }
+function loadDraft(draftKey)
+ {
+  try { return JSON.parse(sessionStorage.getItem(key) || "null") || null; }
+  catch { return null; }
+}
 
+function saveDraft(key, d) {
+  try { sessionStorage.setItem(key, JSON.stringify(d || {})); }
+  catch {}
+}
   function money(n) {
     const x = Number(n || 0);
     return x.toLocaleString("es-AR", {
@@ -379,6 +379,7 @@ if (target && target.id) {
       showCancelButton: true,
       cancelButtonText: "Cancelar",
       focusConfirm: false,
+      allowEnterKey: false,
 html: `
   <div class="arca-swal-form">
 
@@ -434,6 +435,10 @@ html: `
         const inpCbte = document.getElementById("sw_cbte");
         const inpTipo = document.getElementById("sw_doc_tipo");
         const inpNro = document.getElementById("sw_doc_nro");
+        inpNro.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); }
+});
+
         const selCond = document.getElementById("sw_cond");
         const inpNom = document.getElementById("sw_nombre");
         const inpDom = document.getElementById("sw_dom");
@@ -441,6 +446,7 @@ html: `
         const btnCache = document.getElementById("sw_cache_btn");
         const btnResolve = document.getElementById("sw_resolve_btn");
         const stCache = document.getElementById("sw_cache_status");
+        const draftKey = draftKeyForFactura(id);
 
         const setHint = (t) => {
           if (hint) hint.textContent = t || "";
@@ -470,7 +476,8 @@ html: `
           draft.receptor_cond_iva_id = Number(selCond.value || 0) || null;
           draft.receptor_nombre = (inpNom.value || "").trim();
           draft.domicilio = (inpDom.value || "").trim();
-          saveDraft(draft);
+          saveDraft(draftKey, draft);
+
         }
 
         const on = (el, fn) => {
@@ -542,12 +549,15 @@ html: `
             doc_tipo === 80 && /^\d{11}$/.test(doc_nro_str) && doc_nro > 0;
           if (btnResolve) btnResolve.style.display = show ? "inline-flex" : "none";
         }
+        let lookupSeq = 0;
 
         async function buscarReceptorCache() {
           const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
+          const key = `${doc_tipo}:${doc_nro_str}`;
+          const seq = ++lookupSeq;
 
-          setSt("");
-          toggleResolveBtn();
+           setSt("");
+           toggleResolveBtn();
 
           if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return;
           if (!/^\d+$/.test(doc_nro_str)) return;
@@ -566,6 +576,9 @@ html: `
             const data = await fetchJSON(
               `/arca/receptor?doc_tipo=${doc_tipo}&doc_nro=${doc_nro}`
             );
+            const now = currentDoc();
+if (seq !== lookupSeq) return;
+if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
 
             const nombre = (data.razon_social || data.nombre || "").trim();
             if (nombre) inpNom.value = nombre;
@@ -595,7 +608,8 @@ html: `
           } catch {
             setHint("Sin cache (podés completar a mano o guardar en cache).");
           }
-
+          inpNom.value = "";
+          inpDom.value = "";
           syncDraftFromUI();
         }
 
@@ -644,13 +658,7 @@ html: `
           } catch (e) {
             setSt(e.message || "Error guardando");
           }
-          ARCA_SWAL.toast.fire({ icon: "success", title: "Guardado en cache" });
-// ...
-ARCA_SWAL.toast.fire({ icon: "error", title: "Error guardando" });
-// ...
-ARCA_SWAL.toast.fire({ icon: "success", title: "Datos actualizados desde padrón" });
-// ...
-ARCA_SWAL.toast.fire({ icon: "error", title: "No se pudo resolver" });
+        
 
           syncDraftFromUI();
         }
@@ -667,7 +675,7 @@ ARCA_SWAL.toast.fire({ icon: "error", title: "No se pudo resolver" });
             const data = await fetchJSON(
               `/arca/receptor?doc_tipo=80&doc_nro=${doc_nro}&resolve=1&refresh=1`
             );
-
+            
             const nombre = (data.razon_social || data.nombre || "").trim();
             if (nombre) inpNom.value = nombre;
 
@@ -689,13 +697,6 @@ ARCA_SWAL.toast.fire({ icon: "error", title: "No se pudo resolver" });
           } catch (e) {
             setSt(e.message || "No se pudo resolver");
           }
-          ARCA_SWAL.toast.fire({ icon: "success", title: "Guardado en cache" });
-// ...
-ARCA_SWAL.toast.fire({ icon: "error", title: "Error guardando" });
-// ...
-ARCA_SWAL.toast.fire({ icon: "success", title: "Datos actualizados desde padrón" });
-// ...
-ARCA_SWAL.toast.fire({ icon: "error", title: "No se pudo resolver" });
 
           syncDraftFromUI();
         }
