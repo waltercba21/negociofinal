@@ -1821,6 +1821,156 @@ async function listarWsfeConsultas(req, res) {
     return res.status(500).json({ error: e.message || "Error listando auditorías WSFE" });
   }
 }
+function isoToYmd8(iso) {
+  // iso: YYYY-MM-DD
+  return String(iso || "").replace(/-/g, "");
+}
+function ymd8ToIso(ymd8) {
+  return `${ymd8.slice(0,4)}-${ymd8.slice(4,6)}-${ymd8.slice(6,8)}`;
+}
+
+function todayIsoAR() {
+  // evita UTC (Argentina)
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Argentina/Cordoba" }).format(new Date());
+}
+
+async function reportesResumen(req, res) {
+  try {
+    const desde = req.query.desde;
+    const hasta = req.query.hasta;
+    if (!desde || !hasta) return res.status(400).json({ error: "Faltan parametros: desde, hasta" });
+
+    const desdeYmd = isoToYmd8(desde);
+    const hastaYmd = isoToYmd8(hasta);
+    if (!isValidYMD(desdeYmd) || !isValidYMD(hastaYmd)) {
+      return res.status(400).json({ error: "Formato invalido. Use YYYY-MM-DD" });
+    }
+
+    const ambiente = process.env.ARCA_ENV || "homo";
+    const cuit_emisor = process.env.ARCA_CUIT || process.env.CUIT || "30718763718";
+    const pto_vta = Number(process.env.ARCA_PTO_VTA || 2);
+
+    const estado = (req.query.estado ?? "EMITIDO"); // "" => todos
+    const rows = await arcaModel.reportesResumen(pool, { ambiente, cuit_emisor, pto_vta, desdeYmd, hastaYmd, estado: estado || null });
+
+    // Totales generales (en JS)
+    const tot = rows.reduce((acc, r) => {
+      acc.cant_facturas += Number(r.cant_facturas || 0);
+      acc.cant_nc += Number(r.cant_nc || 0);
+      acc.total_facturas += Number(r.total_facturas || 0);
+      acc.total_nc += Number(r.total_nc || 0);
+      acc.ventas_netas += Number(r.ventas_netas || 0);
+      return acc;
+    }, { cant_facturas:0, cant_nc:0, total_facturas:0, total_nc:0, ventas_netas:0 });
+
+    return res.json({ desde, hasta, estado: estado || null, dias: rows.map(d => ({ ...d, fecha: ymd8ToIso(d.fecha_ymd) })), totales: tot });
+  } catch (e) {
+    console.error("[ARCA][reportesResumen]", e);
+    return res.status(500).json({ error: "Error interno en reportesResumen" });
+  }
+}
+
+async function reportesComprobantes(req, res) {
+  try {
+    const desde = req.query.desde;
+    const hasta = req.query.hasta;
+    if (!desde || !hasta) return res.status(400).json({ error: "Faltan parametros: desde, hasta" });
+
+    const desdeYmd = isoToYmd8(desde);
+    const hastaYmd = isoToYmd8(hasta);
+    if (!isValidYMD(desdeYmd) || !isValidYMD(hastaYmd)) {
+      return res.status(400).json({ error: "Formato invalido. Use YYYY-MM-DD" });
+    }
+
+    const ambiente = process.env.ARCA_ENV || "homo";
+    const cuit_emisor = process.env.ARCA_CUIT || process.env.CUIT || "30718763718";
+    const pto_vta = Number(process.env.ARCA_PTO_VTA || 2);
+
+    const estado = (req.query.estado ?? "EMITIDO"); // "" => todos
+    const cbte_tipo = req.query.cbte_tipo ? Number(req.query.cbte_tipo) : null;
+
+    const rows = await arcaModel.reportesComprobantes(pool, {
+      ambiente, cuit_emisor, pto_vta,
+      desdeYmd, hastaYmd,
+      estado: estado || null,
+      cbte_tipo
+    });
+
+    return res.json({ desde, hasta, estado: estado || null, cbte_tipo, comprobantes: rows });
+  } catch (e) {
+    console.error("[ARCA][reportesComprobantes]", e);
+    return res.status(500).json({ error: "Error interno en reportesComprobantes" });
+  }
+}
+
+async function crearCierreDiario(req, res) {
+  try {
+    const fechaIso = req.body?.fecha || req.query?.fecha || todayIsoAR();
+    const fechaYmd = isoToYmd8(fechaIso);
+    if (!isValidYMD(fechaYmd)) return res.status(400).json({ error: "Fecha invalida. Use YYYY-MM-DD" });
+
+    const ambiente = process.env.ARCA_ENV || "homo";
+    const cuit_emisor = process.env.ARCA_CUIT || process.env.CUIT || "30718763718";
+    const pto_vta = Number(process.env.ARCA_PTO_VTA || 2);
+
+    const usuario_email = req.session?.usuario?.email || null;
+
+    const r = await arcaModel.crearCierreDiario(pool, {
+      ambiente, cuit_emisor, pto_vta,
+      fechaYmd,
+      usuario_email
+    });
+
+    return res.json({ ok: true, fecha: fechaIso, ...r });
+  } catch (e) {
+    // duplicate key
+    if (String(e?.code) === "ER_DUP_ENTRY") {
+      return res.status(409).json({ error: "Ya existe cierre diario para esa fecha" });
+    }
+    console.error("[ARCA][crearCierreDiario]", e);
+    return res.status(500).json({ error: "Error interno en crearCierreDiario" });
+  }
+}
+
+async function listarCierresDiarios(req, res) {
+  try {
+    const desde = req.query.desde || todayIsoAR();
+    const hasta = req.query.hasta || todayIsoAR();
+    const desdeYmd = isoToYmd8(desde);
+    const hastaYmd = isoToYmd8(hasta);
+    if (!isValidYMD(desdeYmd) || !isValidYMD(hastaYmd)) return res.status(400).json({ error: "Formato invalido. Use YYYY-MM-DD" });
+
+    const ambiente = process.env.ARCA_ENV || "homo";
+    const cuit_emisor = process.env.ARCA_CUIT || process.env.CUIT || "30718763718";
+    const pto_vta = Number(process.env.ARCA_PTO_VTA || 2);
+
+    const rows = await arcaModel.listarCierresDiarios(pool, { ambiente, cuit_emisor, pto_vta, desdeYmd, hastaYmd });
+    return res.json({ desde, hasta, cierres: rows.map(r => ({ ...r, fecha: ymd8ToIso(r.fecha) })) });
+  } catch (e) {
+    console.error("[ARCA][listarCierresDiarios]", e);
+    return res.status(500).json({ error: "Error interno en listarCierresDiarios" });
+  }
+}
+
+async function detalleCierreDiario(req, res) {
+  try {
+    const fechaParam = req.params.fecha; // acepta YYYY-MM-DD o YYYYMMDD
+    const fechaYmd = String(fechaParam).includes("-") ? isoToYmd8(fechaParam) : String(fechaParam);
+    if (!isValidYMD(fechaYmd)) return res.status(400).json({ error: "Fecha invalida" });
+
+    const ambiente = process.env.ARCA_ENV || "homo";
+    const cuit_emisor = process.env.ARCA_CUIT || process.env.CUIT || "30718763718";
+    const pto_vta = Number(process.env.ARCA_PTO_VTA || 2);
+
+    const row = await arcaModel.detalleCierreDiario(pool, { ambiente, cuit_emisor, pto_vta, fechaYmd });
+    if (!row) return res.status(404).json({ error: "Cierre no encontrado" });
+
+    return res.json({ ok: true, cierre: row });
+  } catch (e) {
+    console.error("[ARCA][detalleCierreDiario]", e);
+    return res.status(500).json({ error: "Error interno en detalleCierreDiario" });
+  }
+}
 
 
 module.exports = {
@@ -1837,5 +1987,9 @@ module.exports = {
   auditarWsfePorArcaId,
   listarWsfeConsultas,
   emitirNotaCreditoPorArcaId,
-
+  reportesResumen,
+reportesComprobantes,
+crearCierreDiario,
+listarCierresDiarios,
+detalleCierreDiario,
 };

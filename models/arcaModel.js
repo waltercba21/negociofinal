@@ -1,7 +1,10 @@
 // models/arcaModel.js
 const pool = require("../config/conexion");
 const util = require("util");
+const crypto = require("crypto");
 
+const FACT_TIPOS = [1, 6, 11];   // Factura A/B/C
+const NC_TIPOS   = [3, 8, 13];   // Nota de Crédito A/B/C
 function getQuery() {
   if (pool.promise && typeof pool.promise === "function") {
     return (sql, params = []) => pool.promise().query(sql, params).then(([rows]) => rows);
@@ -219,7 +222,214 @@ async function listarWsfeConsultas(arca_comprobante_id, limit = 20) {
   `;
   return query(sql, [arca_comprobante_id, Number(limit)]);
 }
+async function reportesComprobantes(pool, {
+  ambiente,
+  cuit_emisor,
+  pto_vta,
+  desdeYmd,
+  hastaYmd,
+  estado = "EMITIDO",
+  cbte_tipo = null
+}) {
+  const q = query(pool);
 
+  let sql = `
+    SELECT
+      id, estado, ambiente, cuit_emisor, pto_vta,
+      cbte_tipo, cbte_nro, cbte_fch, cae, cae_vto,
+      doc_tipo, doc_nro, receptor_nombre,
+      imp_total, imp_neto, imp_iva, created_at
+    FROM arca_comprobantes
+    WHERE ambiente=? AND cuit_emisor=? AND pto_vta=?
+      AND cbte_fch BETWEEN ? AND ?
+  `;
+  const params = [ambiente, cuit_emisor, Number(pto_vta), desdeYmd, hastaYmd];
+
+  if (estado) { sql += ` AND estado=?`; params.push(estado); }
+  if (cbte_tipo) { sql += ` AND cbte_tipo=?`; params.push(Number(cbte_tipo)); }
+
+  sql += ` ORDER BY cbte_fch DESC, cbte_tipo ASC, cbte_nro ASC`;
+
+  return await q(sql, params);
+}
+
+async function reportesResumen(pool, {
+  ambiente,
+  cuit_emisor,
+  pto_vta,
+  desdeYmd,
+  hastaYmd,
+  estado = "EMITIDO",
+}) {
+  const q = query(pool);
+
+  const factList = FACT_TIPOS.join(",");
+  const ncList   = NC_TIPOS.join(",");
+
+  let sql = `
+    SELECT
+      cbte_fch AS fecha_ymd,
+      SUM(CASE WHEN cbte_tipo IN (${factList}) THEN 1 ELSE 0 END) AS cant_facturas,
+      SUM(CASE WHEN cbte_tipo IN (${ncList})   THEN 1 ELSE 0 END) AS cant_nc,
+
+      COALESCE(SUM(CASE WHEN cbte_tipo IN (${factList}) THEN imp_total ELSE 0 END),0) AS total_facturas,
+      COALESCE(SUM(CASE WHEN cbte_tipo IN (${ncList})   THEN imp_total ELSE 0 END),0) AS total_nc,
+      (COALESCE(SUM(CASE WHEN cbte_tipo IN (${factList}) THEN imp_total ELSE 0 END),0) -
+       COALESCE(SUM(CASE WHEN cbte_tipo IN (${ncList})   THEN imp_total ELSE 0 END),0)) AS ventas_netas,
+
+      COALESCE(SUM(CASE WHEN cbte_tipo IN (${factList}) THEN imp_neto ELSE 0 END),0) AS neto_facturas,
+      COALESCE(SUM(CASE WHEN cbte_tipo IN (${ncList})   THEN imp_neto ELSE 0 END),0) AS neto_nc,
+      (COALESCE(SUM(CASE WHEN cbte_tipo IN (${factList}) THEN imp_neto ELSE 0 END),0) -
+       COALESCE(SUM(CASE WHEN cbte_tipo IN (${ncList})   THEN imp_neto ELSE 0 END),0)) AS neto_neto,
+
+      COALESCE(SUM(CASE WHEN cbte_tipo IN (${factList}) THEN imp_iva ELSE 0 END),0) AS iva_facturas,
+      COALESCE(SUM(CASE WHEN cbte_tipo IN (${ncList})   THEN imp_iva ELSE 0 END),0) AS iva_nc,
+      (COALESCE(SUM(CASE WHEN cbte_tipo IN (${factList}) THEN imp_iva ELSE 0 END),0) -
+       COALESCE(SUM(CASE WHEN cbte_tipo IN (${ncList})   THEN imp_iva ELSE 0 END),0)) AS iva_neto
+
+    FROM arca_comprobantes
+    WHERE ambiente=? AND cuit_emisor=? AND pto_vta=?
+      AND cbte_fch BETWEEN ? AND ?
+  `;
+  const params = [ambiente, cuit_emisor, Number(pto_vta), desdeYmd, hastaYmd];
+
+  if (estado) { sql += ` AND estado=?`; params.push(estado); }
+
+  sql += ` GROUP BY cbte_fch ORDER BY cbte_fch ASC`;
+
+  return await q(sql, params);
+}
+
+async function crearCierreDiario(pool, {
+  ambiente,
+  cuit_emisor,
+  pto_vta,
+  fechaYmd,
+  usuario_email = null,
+}) {
+  const q = query(pool);
+
+  // 1) Tomamos snapshot del día (emitidos)
+  const resumenArr = await reportesResumen(pool, {
+    ambiente, cuit_emisor, pto_vta,
+    desdeYmd: fechaYmd, hastaYmd: fechaYmd,
+    estado: "EMITIDO",
+  });
+
+  const resumen = resumenArr[0] || {
+    fecha_ymd: fechaYmd,
+    cant_facturas: 0, cant_nc: 0,
+    total_facturas: 0, total_nc: 0, ventas_netas: 0,
+    neto_facturas: 0, neto_nc: 0, neto_neto: 0,
+    iva_facturas: 0, iva_nc: 0, iva_neto: 0,
+  };
+
+  const comprobantes = await reportesComprobantes(pool, {
+    ambiente, cuit_emisor, pto_vta,
+    desdeYmd: fechaYmd, hastaYmd: fechaYmd,
+    estado: "EMITIDO",
+  });
+
+  const snapshot = {
+    fechaYmd,
+    ambiente,
+    cuit_emisor,
+    pto_vta: Number(pto_vta),
+    resumen,
+    comprobantes,
+  };
+
+  const snapshotStr = JSON.stringify(snapshot);
+  const sha256 = crypto.createHash("sha256").update(snapshotStr).digest("hex");
+
+  // 2) Insert (con UNIQUE: si existe, MySQL tirará duplicate)
+  const sql = `
+    INSERT INTO arca_cierres_diarios (
+      ambiente, cuit_emisor, pto_vta, fecha, usuario_email,
+      cant_facturas, cant_nc,
+      total_facturas, total_nc, ventas_netas,
+      neto_facturas, neto_nc, neto_neto,
+      iva_facturas, iva_nc, iva_neto,
+      snapshot_json, snapshot_sha256
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `;
+
+  const params = [
+    ambiente, cuit_emisor, Number(pto_vta), fechaYmd, usuario_email,
+
+    Number(resumen.cant_facturas || 0),
+    Number(resumen.cant_nc || 0),
+
+    Number(resumen.total_facturas || 0),
+    Number(resumen.total_nc || 0),
+    Number(resumen.ventas_netas || 0),
+
+    Number(resumen.neto_facturas || 0),
+    Number(resumen.neto_nc || 0),
+    Number(resumen.neto_neto || 0),
+
+    Number(resumen.iva_facturas || 0),
+    Number(resumen.iva_nc || 0),
+    Number(resumen.iva_neto || 0),
+
+    snapshotStr,
+    sha256
+  ];
+
+  const r = await q(sql, params);
+  return { id: r.insertId, sha256, resumen, cant_cbtes: comprobantes.length };
+}
+
+async function listarCierresDiarios(pool, {
+  ambiente,
+  cuit_emisor,
+  pto_vta,
+  desdeYmd,
+  hastaYmd,
+}) {
+  const q = query(pool);
+
+  const sql = `
+    SELECT
+      id, ambiente, cuit_emisor, pto_vta, fecha, created_at, usuario_email,
+      cant_facturas, cant_nc,
+      total_facturas, total_nc, ventas_netas
+    FROM arca_cierres_diarios
+    WHERE ambiente=? AND cuit_emisor=? AND pto_vta=?
+      AND fecha BETWEEN ? AND ?
+    ORDER BY fecha DESC
+  `;
+  return await q(sql, [ambiente, cuit_emisor, Number(pto_vta), desdeYmd, hastaYmd]);
+}
+
+async function detalleCierreDiario(pool, {
+  ambiente,
+  cuit_emisor,
+  pto_vta,
+  fechaYmd,
+}) {
+  const q = query(pool);
+
+  const rows = await q(`
+    SELECT *
+    FROM arca_cierres_diarios
+    WHERE ambiente=? AND cuit_emisor=? AND pto_vta=? AND fecha=?
+    LIMIT 1
+  `, [ambiente, cuit_emisor, Number(pto_vta), fechaYmd]);
+
+  if (!rows || !rows[0]) return null;
+
+  const row = rows[0];
+  // mysql puede devolver JSON como string
+  try {
+    row.snapshot = (typeof row.snapshot_json === "string")
+      ? JSON.parse(row.snapshot_json)
+      : row.snapshot_json;
+  } catch {
+    row.snapshot = null;
+  }
+  return row;
+}
 module.exports = {
   crearComprobante,
   insertarItems,
@@ -238,4 +448,10 @@ module.exports = {
 
   insertarWsfeConsulta,
   listarWsfeConsultas,
+
+  reportesComprobantes,
+  reportesResumen,
+  crearCierreDiario,
+  listarCierresDiarios,
+  detalleCierreDiario,
 };

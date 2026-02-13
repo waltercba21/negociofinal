@@ -208,6 +208,39 @@
 </div>
 
   </div>
+  <section class="card" style="margin-top:16px;padding:16px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.06);border:1px solid #eee;">
+  <h2 style="margin:0 0 10px 0;">Reportes / Cierre diario</h2>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;">
+    <div>
+      <label style="display:block;font-size:12px;color:#666;">Desde</label>
+      <input type="date" id="repDesde" />
+    </div>
+    <div>
+      <label style="display:block;font-size:12px;color:#666;">Hasta</label>
+      <input type="date" id="repHasta" />
+    </div>
+    <div>
+      <label style="display:block;font-size:12px;color:#666;">Estado</label>
+      <select id="repEstado">
+        <option value="EMITIDO" selected>EMITIDO</option>
+        <option value="">TODOS</option>
+      </select>
+    </div>
+
+    <button id="btnRepBuscar" class="btn btn-primary">Buscar</button>
+
+    <div style="margin-left:auto;">
+      <label style="display:block;font-size:12px;color:#666;">Cierre fecha</label>
+      <div style="display:flex;gap:8px;">
+        <input type="date" id="cierreFecha" />
+        <button id="btnCierreCrear" class="btn btn-success">Crear cierre</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="repOut" style="margin-top:12px;"></div>
+</section>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="/js/arca/index.js"></script>
