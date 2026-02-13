@@ -115,7 +115,7 @@ function renderList() {
   tbody.innerHTML = rows
     .map(
       (r) => `
-        <tr class="row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
+        <tr class="arca-row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
           <td><strong>#${r.id}</strong></td>
           <td class="muted">${r.fecha || "-"}</td>
           <td>${(r.nombre_cliente || "").toUpperCase()}</td>
