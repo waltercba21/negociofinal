@@ -224,6 +224,35 @@
     }
     .arca-page .swal2-actions{gap:8px}
     .arca-page .swal2-styled{border-radius:var(--radiusSm) !important;font-weight:900 !important}
+
+    /* Forzar que el layout del sitio NO achique el módulo ARCA */
+.arca-page main{
+  display:block !important;
+  width:100% !important;
+}
+
+/* Si main es flex en el CSS global, esto evita el shrink-to-fit */
+.arca-page .wrap{
+  width:100% !important;
+  max-width:1440px;
+  margin:0 auto;
+  padding:18px;
+  align-self:stretch;
+  flex:1 1 auto;
+}
+
+/* Asegurar que las tarjetas ocupen ancho disponible */
+.arca-page .card{ width:100% !important; }
+
+/* Reportes: evitar que 5 columnas aplasten los labels */
+.arca-page .repRow{
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+}
+.arca-page .repRow .actions{
+  grid-column: 1 / -1;
+  justify-content:flex-end;
+}
+
 </style>
 f
 </head>
