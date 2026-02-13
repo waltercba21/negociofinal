@@ -379,38 +379,39 @@ if (target && target.id) {
       showCancelButton: true,
       cancelButtonText: "Cancelar",
       focusConfirm: false,
-     html: `
+html: `
   <div class="arca-swal-form">
+
     <div class="f">
-      <label>Tipo De Comprobante</label>
+      <label>Tipo de comprobante</label>
       <select id="sw_cbte" class="swal2-input">
-        <option value="6">Factura B </option>
-        <option value="1">Factura A </option>
+        <option value="1">Factura A (1)</option>
+        <option value="6">Factura B (6)</option>
       </select>
     </div>
 
     <div class="f">
       <label>Tipo de documento</label>
       <select id="sw_doc_tipo" class="swal2-input">
-        <option value="99">Consumidor Final</option>
-        <option value="96">DNI</option>
-        <option value="80">CUIT</option>
+        <option value="80">CUIT (80)</option>
+        <option value="96">DNI (96)</option>
+        <option value="99">Consumidor Final (99)</option>
       </select>
     </div>
 
     <div class="f">
-      <label> Numero Documento </label>
+      <label>Número Documento</label>
       <input id="sw_doc_nro" class="swal2-input" value="0" />
     </div>
 
     <div class="f">
-      <label>Condición IVA </label>
+      <label>Condición IVA</label>
       <select id="sw_cond" class="swal2-input"></select>
     </div>
 
     <div class="f">
-      <label>Nombre Cliente / Razón Social)</label>
-      <input id="sw_nombre" class="swal2-input" placeholder="Autocompleta si está en cache" />
+      <label>Nombre Cliente / Razón Social</label>
+      <input id="sw_nombre" class="swal2-input" placeholder="Opcional / autocompleta si está en cache" />
     </div>
 
     <div class="f">
@@ -418,15 +419,15 @@ if (target && target.id) {
       <input id="sw_dom" class="swal2-input" placeholder="Opcional" />
     </div>
 
-    <div class="full" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px">
+    <div class="full" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:2px">
       <button type="button" id="sw_cache_btn" class="btn secondary" style="margin:0">Guardar en cache</button>
       <button type="button" id="sw_resolve_btn" class="btn secondary" style="margin:0;display:none">Resolver por padrón</button>
-      <span id="sw_cache_status" style="font-size:12px;color:#667085"></span>
+      <span id="sw_cache_status" style="font-size:12px;color:#475467;font-weight:800"></span>
     </div>
 
-    <div id="sw_hint" class="full" style="font-size:12px;color:#667085"></div>
   </div>
 `,
+
 
       didOpen: () => {
         const hint = document.getElementById("sw_hint");

@@ -410,6 +410,32 @@
   color: #475467 !important;
   font-weight: 800 !important;
 }
+/* Modal: sin scroll interno (y sin barra horizontal) */
+.arca-page .swal2-html-container{
+  overflow: visible !important;
+  overflow-x: hidden !important;
+  max-height: none !important;
+}
+
+/* Grid: que todo estire al ancho de su celda */
+.arca-page .arca-swal-form{
+  width: 100% !important;
+  justify-items: stretch !important;
+}
+
+.arca-page .arca-swal-form .f{
+  width: 100% !important;
+  align-items: stretch !important;
+  min-width: 0 !important;
+}
+
+/* SweetAlert mete margins por defecto: sacarlos y forzar 100% */
+.arca-page .swal2-input,
+.arca-page .swal2-select{
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
 
 </style>
 f
