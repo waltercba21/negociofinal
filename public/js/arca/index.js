@@ -222,7 +222,7 @@ async function auditarWsfeActual() {
     const ok = await ARCA_SWAL.confirm.fire({
   icon: "warning",
   title: "Confirmar en ARCA",
-  text: `Se consultará WSFE y puede reconciliar si corresponde.`,
+  text: `Se consultará WSFE y puede reconciliar si corresponde`,
   showCancelButton: true,
   confirmButtonText: "Crear cierre",
   cancelButtonText: "Cancelar"
