@@ -253,6 +253,78 @@
   grid-column: 1 / -1;
   justify-content:flex-end;
 }
+/* ================= SweetAlert2 — Modal emisión (compacto) ================= */
+.arca-page .swal2-popup{
+  width: 760px !important;
+  max-width: 92vw !important;
+  border-radius: 18px !important;
+  box-shadow: var(--shadowMd) !important;
+  padding: 14px 16px 12px !important;
+}
+
+.arca-page .swal2-title{
+  letter-spacing: -.2px;
+  font-size: 22px;
+  margin: 4px 0 6px !important;
+}
+
+.arca-page .swal2-html-container{
+  margin: 10px 0 0 !important;
+  padding: 0 !important;
+  color: var(--text);
+}
+
+/* Form en 2 columnas */
+.arca-page .arca-swal-form{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  text-align: left;
+}
+
+.arca-page .arca-swal-form .f{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.arca-page .arca-swal-form .full{
+  grid-column: 1 / -1;
+}
+
+.arca-page .arca-swal-form label{
+  font-weight: 900;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Inputs sin borde y sin sombra, distinguibles por fondo */
+.arca-page .swal2-input,
+.arca-page .swal2-select,
+.arca-page .swal2-textarea{
+  height: 40px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: #f2f4f7 !important;
+  border-radius: var(--radiusSm) !important;
+  font-weight: 900 !important;
+}
+
+.arca-page .swal2-input:focus,
+.arca-page .swal2-select:focus,
+.arca-page .swal2-textarea:focus{
+  outline: none !important;
+  box-shadow: var(--ring) !important;
+  background: #eef4ff !important;
+}
+
+.arca-page .swal2-actions{ gap: 8px; }
+
+/* En pantallas chicas: 1 columna */
+@media (max-width: 720px){
+  .arca-page .arca-swal-form{ grid-template-columns: 1fr; }
+}
 
 </style>
 f

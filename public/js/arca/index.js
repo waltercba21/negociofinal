@@ -383,32 +383,32 @@ if (target && target.id) {
   <div style="display:grid;gap:10px;text-align:left">
     <label>Tipo de comprobante</label>
 <select id="sw_cbte" class="swal2-input">
-  <option value="6">Factura B (6)</option>
-  <option value="1">Factura A (1)</option>
+  <option value="6">Factura B </option>
+  <option value="1">Factura A </option>
 </select>
 
     <label>Tipo de documento</label>
 <select id="sw_doc_tipo" class="swal2-input">
-  <option value="99">Consumidor Final (99)</option>
-  <option value="96">DNI (96)</option>
-  <option value="80">CUIT (80)</option>
+  <option value="99">Consumidor Final</option>
+  <option value="96">DNI</option>
+  <option value="80">CUIT</option>
 </select>
 
-    <label>Doc nro (CF=0)</label>
+    <label>Numero Documento</label>
     <input id="sw_doc_nro" class="swal2-input" value="0" />
 
-    <label>Cond IVA receptor</label>
+    <label>Condición IVA</label>
     <select id="sw_cond" class="swal2-input"></select>
 
-    <label>Receptor (nombre / razón social)</label>
-    <input id="sw_nombre" class="swal2-input" placeholder="Opcional / autocompleta si está en cache" />
+    <label> Nombre Cliente - Razón Social)</label>
+    <input id="sw_nombre" class="swal2-input" placeholder="Autocompleta" />
 
-    <label>Domicilio (para cache / auditoría)</label>
+    <label>Domicilio </label>
     <input id="sw_dom" class="swal2-input" placeholder="Opcional" />
 
   <div style="display:flex;gap:8px;align-items:center;margin-top:4px;flex-wrap:wrap">
   <button type="button" id="sw_cache_btn" class="btn secondary" style="margin:0">
-    Guardar en cache
+    Guardar
   </button>
 
   <button type="button" id="sw_resolve_btn" class="btn secondary" style="margin:0;display:none">
