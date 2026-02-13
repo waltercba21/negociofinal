@@ -325,6 +325,26 @@
 @media (max-width: 720px){
   .arca-page .arca-swal-form{ grid-template-columns: 1fr; }
 }
+/* Modal: que nunca se salga del viewport */
+.arca-page .swal2-popup{
+  max-height: 90vh !important;
+  overflow: hidden !important;
+  width: 720px !important;
+  max-width: 92vw !important;
+  padding: 12px 14px 10px !important;
+}
+
+.arca-page .swal2-title{
+  font-size: 20px !important;
+  margin: 2px 0 6px !important;
+}
+
+/* Scroll SOLO del contenido */
+.arca-page .swal2-html-container{
+  max-height: calc(90vh - 150px) !important; /* title + actions */
+  overflow: auto !important;
+  padding: 0 4px 0 0 !important;
+}
 
 </style>
 f

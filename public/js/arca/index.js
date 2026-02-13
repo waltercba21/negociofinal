@@ -379,49 +379,55 @@ if (target && target.id) {
       showCancelButton: true,
       cancelButtonText: "Cancelar",
       focusConfirm: false,
-      html: `
-  <div style="display:grid;gap:10px;text-align:left">
-    <label>Tipo de comprobante</label>
-<select id="sw_cbte" class="swal2-input">
-  <option value="6">Factura B </option>
-  <option value="1">Factura A </option>
-</select>
+     html: `
+  <div class="arca-swal-form">
+    <div class="f">
+      <label>Tipo de comprobante</label>
+      <select id="sw_cbte" class="swal2-input">
+        <option value="6">Factura B (6)</option>
+        <option value="1">Factura A (1)</option>
+      </select>
+    </div>
 
-    <label>Tipo de documento</label>
-<select id="sw_doc_tipo" class="swal2-input">
-  <option value="99">Consumidor Final</option>
-  <option value="96">DNI</option>
-  <option value="80">CUIT</option>
-</select>
+    <div class="f">
+      <label>Tipo de documento</label>
+      <select id="sw_doc_tipo" class="swal2-input">
+        <option value="99">Consumidor Final (99)</option>
+        <option value="96">DNI (96)</option>
+        <option value="80">CUIT (80)</option>
+      </select>
+    </div>
 
-    <label>Numero Documento</label>
-    <input id="sw_doc_nro" class="swal2-input" value="0" />
+    <div class="f">
+      <label>Doc nro (CF=0)</label>
+      <input id="sw_doc_nro" class="swal2-input" value="0" />
+    </div>
 
-    <label>Condición IVA</label>
-    <select id="sw_cond" class="swal2-input"></select>
+    <div class="f">
+      <label>Cond IVA receptor</label>
+      <select id="sw_cond" class="swal2-input"></select>
+    </div>
 
-    <label> Nombre Cliente - Razón Social)</label>
-    <input id="sw_nombre" class="swal2-input" placeholder="Autocompleta" />
+    <div class="f">
+      <label>Receptor (nombre / razón social)</label>
+      <input id="sw_nombre" class="swal2-input" placeholder="Opcional / autocompleta si está en cache" />
+    </div>
 
-    <label>Domicilio </label>
-    <input id="sw_dom" class="swal2-input" placeholder="Opcional" />
+    <div class="f">
+      <label>Domicilio (para cache / auditoría)</label>
+      <input id="sw_dom" class="swal2-input" placeholder="Opcional" />
+    </div>
 
-  <div style="display:flex;gap:8px;align-items:center;margin-top:4px;flex-wrap:wrap">
-  <button type="button" id="sw_cache_btn" class="btn secondary" style="margin:0">
-    Guardar
-  </button>
+    <div class="full" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px">
+      <button type="button" id="sw_cache_btn" class="btn secondary" style="margin:0">Guardar en cache</button>
+      <button type="button" id="sw_resolve_btn" class="btn secondary" style="margin:0;display:none">Resolver por padrón</button>
+      <span id="sw_cache_status" style="font-size:12px;color:#667085"></span>
+    </div>
 
-  <button type="button" id="sw_resolve_btn" class="btn secondary" style="margin:0;display:none">
-    Resolver por padrón
-  </button>
-
-  <span id="sw_cache_status" style="font-size:12px;color:#667085"></span>
-</div>
-
-
-    <div id="sw_hint" style="font-size:12px;color:#667085"></div>
+    <div id="sw_hint" class="full" style="font-size:12px;color:#667085"></div>
   </div>
 `,
+
       didOpen: () => {
         const hint = document.getElementById("sw_hint");
         const inpCbte = document.getElementById("sw_cbte");
