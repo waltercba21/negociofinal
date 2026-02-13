@@ -78,43 +78,41 @@
     );
   }
 
-  function renderList() {
-    const tbody = $("arcaTbody");
-    const rows = applySearch(state.rows);
+function renderList() {
+  const tbody = $("arcaTbody");
+  const rows = applySearch(state.rows);
 
-    if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="muted">Sin resultados</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = rows
-      .map(
-        (r) => `
-        <tr class="row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
-
-      <tr class="row" data-id="${r.id}">
-        <td><strong>#${r.id}</strong></td>
-        <td class="muted">${r.fecha || "-"}</td>
-        <td>${(r.nombre_cliente || "").toUpperCase()}</td>
-        <td><strong>${money(r.total)}</strong></td>
-        <td class="muted">${r.metodos_pago || "-"}</td>
-        <td>
-          ${badge(r.arca_estado)}
-          ${
-            r.arca_cae
-              ? `<div class="muted" style="margin-top:4px;font-size:12px">CAE ${r.arca_cae}</div>`
-              : ""
-          }
-        </td>
-      </tr>
-    `
-      )
-      .join("");
-
-    tbody.querySelectorAll("tr[data-id]").forEach((tr) => {
-      tr.addEventListener("click", () => onSelect(Number(tr.dataset.id)));
-    });
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="muted">Sin resultados</td></tr>`;
+    return;
   }
+
+  tbody.innerHTML = rows
+    .map(
+      (r) => `
+        <tr class="row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
+          <td><strong>#${r.id}</strong></td>
+          <td class="muted">${r.fecha || "-"}</td>
+          <td>${(r.nombre_cliente || "").toUpperCase()}</td>
+          <td><strong>${money(r.total)}</strong></td>
+          <td class="muted">${r.metodos_pago || "-"}</td>
+          <td>
+            ${badge(r.arca_estado)}
+            ${
+              r.arca_cae
+                ? `<div class="muted" style="margin-top:4px;font-size:12px">CAE ${r.arca_cae}</div>`
+                : ""
+            }
+          </td>
+        </tr>
+      `
+    )
+    .join("");
+
+  tbody.querySelectorAll("tr[data-id]").forEach((tr) => {
+    tr.addEventListener("click", () => onSelect(Number(tr.dataset.id)));
+  });
+}
 
   async function loadList() {
     $("arcaTbody").innerHTML = `<tr><td colspan="6" class="muted">Cargando…</td></tr>`;
