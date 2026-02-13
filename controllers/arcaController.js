@@ -1714,8 +1714,9 @@ const pickDateTagsStrict = (xml, tags) => {
     if (toNum(parsed.imp_neto) !== toNum(c.imp_neto)) diffs.imp_neto = { wsfe: toNum(parsed.imp_neto), db: toNum(c.imp_neto) };
     if (toNum(parsed.imp_iva) !== toNum(c.imp_iva)) diffs.imp_iva = { wsfe: toNum(parsed.imp_iva), db: toNum(c.imp_iva) };
 
-    let ok = Object.keys(diffs).length === 0;
-    let reconciliado = false;
+    const ok = Object.keys(diffs).length === 0;
+    const reconciliado = ok;
+
 
     // reconciliar PENDIENTE si WSFE trae CAE
     if (reconciliar && c.estado === "PENDIENTE" && parsed.cae) {
