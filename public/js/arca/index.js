@@ -224,7 +224,7 @@ async function auditarWsfeActual() {
   title: "Confirmar en ARCA",
   text: `Se consultará WSFE y puede reconciliar si corresponde`,
   showCancelButton: true,
-  confirmButtonText: "Crear cierre",
+  confirmButtonText: "Confirmar",
   cancelButtonText: "Cancelar"
 });
 
