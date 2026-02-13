@@ -37,19 +37,16 @@ const ARCA_SWAL = (() => {
     search: "",
   };
 
-  const DRAFT_KEY = "arca_emit_draft_v1";
+ const DRAFT_PREFIX = "arca_emit_draft_v1:";
+const wsfeHistEl = $("wsfeHist");
+const wsfeBadgeEl = $("wsfeBadge");
+const btnAuditarWsfe = $("btnAuditarWsfe");
 
-  // WSFE UI refs
-  const wsfeHistEl = $("wsfeHist");
-  const wsfeBadgeEl = $("wsfeBadge");
-  const btnAuditarWsfe = $("btnAuditarWsfe");
-
-function draftKeyForFactura(facturaId){
+function draftKeyForFactura(facturaId) {
   return `${DRAFT_PREFIX}${Number(facturaId)}`;
 }
 
-function loadDraft(draftKey)
- {
+function loadDraft(key) {
   try { return JSON.parse(sessionStorage.getItem(key) || "null") || null; }
   catch { return null; }
 }
@@ -224,8 +221,8 @@ async function auditarWsfeActual() {
   if (estado === "PENDIENTE") {
     const ok = await ARCA_SWAL.confirm.fire({
   icon: "warning",
-  title: "Crear cierre diario",
-  text: `Se guardará el snapshot del día ${f} (solo interno, no se informa a ARCA).`,
+  title: "Confirmar en ARCA",
+  text: `Se consultará WSFE y puede reconciliar si corresponde.`,
   showCancelButton: true,
   confirmButtonText: "Crear cierre",
   cancelButtonText: "Cancelar"
@@ -458,7 +455,7 @@ html: `
         };
 
         const draft =
-          loadDraft() || {
+         loadDraft(draftKey) || {
             cbte_tipo: 6,
             doc_tipo: 99,
             doc_nro: "0",
@@ -573,7 +570,8 @@ html: `
           }
 
           setHint("Buscando receptor en cache…");
-
+           inpNom.value = "";
+          inpDom.value = "";
           try {
             const data = await fetchJSON(
               `/arca/receptor?doc_tipo=${doc_tipo}&doc_nro=${doc_nro}`
@@ -581,6 +579,7 @@ html: `
             const now = currentDoc();
 if (seq !== lookupSeq) return;
 if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
+
 
             const nombre = (data.razon_social || data.nombre || "").trim();
             if (nombre) inpNom.value = nombre;
@@ -610,8 +609,7 @@ if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
           } catch {
             setHint("Sin cache (podés completar a mano o guardar en cache).");
           }
-          inpNom.value = "";
-          inpDom.value = "";
+         
           syncDraftFromUI();
         }
 
