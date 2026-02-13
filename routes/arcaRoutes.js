@@ -3,7 +3,9 @@ const express = require("express");
 const router = express.Router();
 
 const arcaController = require("../controllers/arcaController");
+const adminMiddleware = require("../middleware/adminMiddleware");
 
+router.use(adminMiddleware);
 // ===== API (JSON) =====
 
 // Emitir ARCA desde una factura existente del mostrador
