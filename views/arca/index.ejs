@@ -107,12 +107,162 @@
   <%- include('../layouts/header') %>
 
   <main>
-    <div class="wrap">
-      <!-- ACÁ VA TU HTML ACTUAL (todo lo que ya tenías dentro de .wrap) -->
-
-      <!-- (pegá tu contenido actual sin cambiarlo) -->
-
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>ARCA — Emisión desde facturas del mostrador</h1>
+        <p class="sub">Módulo paralelo: emite y audita en arca_* (no toca stock).</p>
+      </div>
+      <div class="controls">
+        <input id="arcaSearch" class="inp" placeholder="Buscar por ID o vendedor..." />
+        <button id="arcaReload" class="btn">Recargar</button>
+      </div>
     </div>
+
+    <div class="grid">
+      <!-- LISTA -->
+      <section class="card">
+        <div class="hd">
+          <strong>Últimas facturas</strong>
+          <div class="controls">
+            <button id="arcaPrev" class="btn">‹</button>
+            <span id="arcaPage" class="muted">0–0</span>
+            <button id="arcaNext" class="btn">›</button>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:86px">ID</th>
+                <th style="width:110px">Fecha</th>
+                <th>Vendedor</th>
+                <th style="width:110px">Total</th>
+                <th style="width:120px">Pago</th>
+                <th style="width:150px">ARCA</th>
+              </tr>
+            </thead>
+            <tbody id="arcaTbody">
+              <tr><td colspan="6" class="muted">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- DETALLE -->
+      <aside class="card">
+        <div class="hd">
+  <strong>Detalle</strong>
+  <div class="controls">
+    <a id="btnPDF" class="btn" href="#" target="_blank" style="display:none">PDF</a>
+    <button id="btnEmitir" class="btn btnP" disabled>Emitir ARCA</button>
+  </div>
+</div>
+
+        <div class="bd">
+          <div id="arcaEmpty" class="muted">Seleccioná una factura del listado.</div>
+
+          <div id="arcaDetail" style="display:none">
+            <div class="kv">
+              <div class="k">Factura ID</div><div class="v" id="dId">-</div>
+              <div class="k">Fecha</div><div class="v" id="dFecha">-</div>
+              <div class="k">Vendedor</div><div class="v" id="dVend">-</div>
+              <div class="k">Pago</div><div class="v" id="dPago">-</div>
+              <div class="k">Total</div><div class="v" id="dTotal">-</div>
+            </div>
+
+            <div class="hr"></div>
+
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+  <strong style="font-size:13px">Auditoría WSFE</strong>
+  <div class="controls">
+    <span id="wsfeBadge" class="badge b-none" style="display:none">—</span>
+    <button id="btnAuditarWsfe" class="btn" disabled>Auditar WSFE</button>
+  </div>
+</div>
+
+<div id="wsfeHist" class="hist" style="margin-top:8px"></div>
+            <strong style="font-size:13px">Items</strong>
+            <table class="items" style="width:100%;margin-top:8px">
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th style="width:70px">Cant.</th>
+                  <th style="width:90px">P.Unit</th>
+                  <th style="width:90px">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody id="itemsTbody"></tbody>
+            </table>
+
+            <div class="hr"></div>
+
+            <strong style="font-size:13px">Historial ARCA</strong>
+            <div id="arcaHist" class="hist" style="margin-top:8px"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <div class="card" style="margin-top:14px;">
+  <div class="section-title">
+    <div class="kicker">Control</div>
+    <h2>Reportes y cierres</h2>
+  </div>
+
+  <div class="repRow">
+    <div class="field">
+      <label>Desde</label>
+      <input type="date" id="repDesde">
+    </div>
+    <div class="field">
+      <label>Hasta</label>
+      <input type="date" id="repHasta">
+    </div>
+    <div class="field">
+      <label>Tipo</label>
+      <select id="repTipo">
+        <option value="">Todos</option>
+        <option value="1">Factura A (1)</option>
+        <option value="6">Factura B (6)</option>
+        <option value="3">Nota de Crédito A (3)</option>
+        <option value="8">Nota de Crédito B (8)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Estado</label>
+      <select id="repEstado">
+        <option value="">Todos</option>
+        <option value="EMITIDO">EMITIDO</option>
+        <option value="RECHAZADO">RECHAZADO</option>
+        <option value="PENDIENTE">PENDIENTE</option>
+      </select>
+    </div>
+    <div class="actions">
+      <button class="btn secondary" id="btnRepResumen">Ver resumen</button>
+      <button class="btn" id="btnRepListar">Listar comprobantes</button>
+    </div>
+  </div>
+
+  <div class="repRow" style="margin-top:10px;">
+    <div class="field">
+      <label>Fecha de cierre</label>
+      <input type="date" id="cierreFecha">
+    </div>
+    <div class="actions">
+      <button class="btn danger" id="btnCierre">Crear cierre diario</button>
+    </div>
+  </div>
+
+  <div class="hint">
+    El cierre diario guarda un snapshot interno (no se informa a ARCA). Sirve para control y conciliación.
+  </div>
+
+  <div class="table" id="tblResumen"></div>
+  <div class="table" id="tblComprobantes" style="margin-top:10px;"></div>
+</div>
+
+  </div>
   </main>
 
   <%- include('../layouts/footer') %>
