@@ -345,11 +345,18 @@ if (target && target.id) {
       focusConfirm: false,
       html: `
   <div style="display:grid;gap:10px;text-align:left">
-    <label>Cbte tipo (6=B, 1=A)</label>
-    <input id="sw_cbte" class="swal2-input" value="6" />
+    <label>Tipo de comprobante</label>
+<select id="sw_cbte" class="swal2-input">
+  <option value="6">Factura B (6)</option>
+  <option value="1">Factura A (1)</option>
+</select>
 
-    <label>Doc tipo (99=CF, 80=CUIT, 96=DNI)</label>
-    <input id="sw_doc_tipo" class="swal2-input" value="99" />
+    <label>Tipo de documento</label>
+<select id="sw_doc_tipo" class="swal2-input">
+  <option value="99">Consumidor Final (99)</option>
+  <option value="96">DNI (96)</option>
+  <option value="80">CUIT (80)</option>
+</select>
 
     <label>Doc nro (CF=0)</label>
     <input id="sw_doc_nro" class="swal2-input" value="0" />
