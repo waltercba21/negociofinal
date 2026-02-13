@@ -1,259 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <%- include('../layouts/head', { pageCss: null }) %>
 
-
-<body> 
-  <%- include('../layouts/header') %>
   <style>
-  :root{
-    --bg:#f6f7fb;
-    --card:#ffffff;
-    --text:#101828;
-    --muted:#667085;
-    --line:#e6eaf2;
-    --line2:#eef2f8;
-    --primary:#2563eb;
-    --primary2:#1d4ed8;
-    --danger:#dc2626;
-    --ok:#067647;
-    --warn:#b54708;
-    --shadow: 0 10px 28px rgba(16,24,40,.08);
-    --radius:16px;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
-  .wrap{max-width:1440px;margin:0 auto;padding:18px}
+    /* Scope para no pisar header/footer del sitio */
+    body.arca-page{
+      margin:0;
+      background:#f6f7fb;
+      color:#101828;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    }
 
-  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:12px}
-  h1{margin:0;font-size:20px;letter-spacing:-.2px}
-  .sub{margin:6px 0 0;color:var(--muted);font-size:13px}
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#101828;
+      --muted:#667085;
+      --line:#e6eaf2;
+      --line2:#eef2f8;
+      --primary:#2563eb;
+      --primary2:#1d4ed8;
+      --danger:#dc2626;
+      --ok:#067647;
+      --warn:#b54708;
+      --shadow: 0 10px 28px rgba(16,24,40,.08);
+      --radius:16px;
+    }
 
-  .grid{display:grid;grid-template-columns:1fr 460px;gap:14px;align-items:start}
-  @media (max-width:1100px){ .grid{grid-template-columns:1fr} }
+    .arca-page *{box-sizing:border-box}
+    .arca-page .wrap{max-width:1440px;margin:0 auto;padding:18px}
 
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-  .hd{padding:12px 14px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;gap:10px}
-  .bd{padding:12px 14px}
+    .arca-page .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:12px}
+    .arca-page h1{margin:0;font-size:20px;letter-spacing:-.2px}
+    .arca-page .sub{margin:6px 0 0;color:var(--muted);font-size:13px}
 
-  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .inp, input[type="date"], select{
-    height:38px;border:1px solid var(--line);border-radius:12px;padding:0 10px;outline:none;background:#fff;color:var(--text);
-  }
+    .arca-page .grid{display:grid;grid-template-columns:1fr 460px;gap:14px;align-items:start}
+    @media (max-width:1100px){ .arca-page .grid{grid-template-columns:1fr} }
 
-  .btn{
-    height:38px;border:1px solid var(--line);border-radius:12px;background:#fff;
-    padding:0 12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
-  }
-  .btn:hover{border-color:#d7dceb}
-  .btn:disabled{opacity:.6;cursor:not-allowed}
+    .arca-page .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .arca-page .hd{padding:12px 14px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .arca-page .bd{padding:12px 14px}
 
-  /* compat: el template usa btnP */
-  .btnP, .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-  .btnP:hover, .btn.primary:hover{background:var(--primary2);border-color:var(--primary2)}
-  .btn.secondary{background:#f8fafc}
-  .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+    .arca-page .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .arca-page .inp, .arca-page input[type="date"], .arca-page select{
+      height:38px;border:1px solid var(--line);border-radius:12px;padding:0 10px;outline:none;background:#fff;color:var(--text);
+    }
 
-  .tableWrap{max-height:72vh;overflow:auto;border-radius:14px}
-  table{width:100%;border-collapse:separate;border-spacing:0}
-  th,td{padding:10px 12px;border-bottom:1px solid var(--line2);font-size:13px;vertical-align:top}
-  th{position:sticky;top:0;background:#fbfcff;z-index:1;text-align:left;color:var(--muted);font-weight:900}
-  tr.row{cursor:pointer}
-  tr.row:hover td{background:#fbfdff}
-  tr.row.is-selected td{background:#eef4ff}
-  .muted{color:var(--muted)}
+    .arca-page .btn{
+      height:38px;border:1px solid var(--line);border-radius:12px;background:#fff;
+      padding:0 12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+    }
+    .arca-page .btn:hover{border-color:#d7dceb}
+    .arca-page .btn:disabled{opacity:.6;cursor:not-allowed}
+    .arca-page .btnP, .arca-page .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .arca-page .btnP:hover, .arca-page .btn.primary:hover{background:var(--primary2);border-color:var(--primary2)}
+    .arca-page .btn.secondary{background:#f8fafc}
+    .arca-page .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
 
-  .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid var(--line)}
-  .b-ok{background:#ecfdf3;border-color:#abefc6;color:var(--ok)}
-  .b-bad{background:#fef3f2;border-color:#fecdca;color:#b42318}
-  .b-pend{background:#fffaeb;border-color:#fedf89;color:var(--warn)}
-  .b-none{background:#f2f4f7;border-color:#e4e7ec;color:#344054}
+    .arca-page .tableWrap{max-height:72vh;overflow:auto;border-radius:14px}
+    .arca-page table{width:100%;border-collapse:separate;border-spacing:0}
+    .arca-page th,.arca-page td{padding:10px 12px;border-bottom:1px solid var(--line2);font-size:13px;vertical-align:top}
+    .arca-page th{position:sticky;top:0;background:#fbfcff;z-index:1;text-align:left;color:var(--muted);font-weight:900}
+    .arca-page tr.row{cursor:pointer}
+    .arca-page tr.row:hover td{background:#fbfdff}
+    .arca-page tr.row.is-selected td{background:#eef4ff}
+    .arca-page .muted{color:var(--muted)}
 
-  .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px}
-  .k{color:var(--muted);font-weight:900}
-  .v{color:var(--text);font-weight:800}
-  .hr{height:1px;background:var(--line2);margin:12px 0}
+    .arca-page .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid var(--line)}
+    .arca-page .b-ok{background:#ecfdf3;border-color:#abefc6;color:var(--ok)}
+    .arca-page .b-bad{background:#fef3f2;border-color:#fecdca;color:#b42318}
+    .arca-page .b-pend{background:#fffaeb;border-color:#fedf89;color:var(--warn)}
+    .arca-page .b-none{background:#f2f4f7;border-color:#e4e7ec;color:#344054}
 
-  .items th,.items td{font-size:12.5px;padding:8px}
-  .hist{display:flex;flex-direction:column;gap:8px}
-  .histItem{border:1px solid var(--line2);border-radius:14px;padding:10px}
-  .histTop{display:flex;justify-content:space-between;gap:10px;align-items:center}
-  .histMeta{font-size:12.5px;color:var(--muted)}
-  .histObs{margin-top:6px;font-size:12.5px;color:#344054}
+    .arca-page .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px}
+    .arca-page .k{color:var(--muted);font-weight:900}
+    .arca-page .v{color:var(--text);font-weight:800}
+    .arca-page .hr{height:1px;background:var(--line2);margin:12px 0}
 
-  /* Reportes */
-  .section-title{padding:14px 14px 0}
-  .kicker{color:var(--muted);font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
-  .section-title h2{margin:6px 0 0;font-size:18px}
-  .repRow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;padding:14px}
-@media (max-width:1100px){ .repRow{grid-template-columns:1fr 1fr; } }
-  .field label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin-bottom:6px}
-  .actions{display:flex;gap:8px;align-items:flex-end;justify-content:flex-end}
-  .hint{padding:0 14px 14px;color:var(--muted);font-size:13px}
+    .arca-page .items th,.arca-page .items td{font-size:12.5px;padding:8px}
+    .arca-page .hist{display:flex;flex-direction:column;gap:8px}
+    .arca-page .histItem{border:1px solid var(--line2);border-radius:14px;padding:10px}
+    .arca-page .histTop{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .arca-page .histMeta{font-size:12.5px;color:var(--muted)}
+    .arca-page .histObs{margin-top:6px;font-size:12.5px;color:#344054}
 
-  .table{padding:0 14px 14px}
-  .thead, .tr{display:grid;grid-template-columns:120px 1fr 1fr 1fr 120px;gap:10px;align-items:center}
-  .thead{padding:10px;border:1px solid var(--line2);border-radius:14px;background:#fbfcff;color:var(--muted);font-weight:900}
-  .tr{padding:10px;border:1px solid var(--line2);border-radius:14px;background:#fff;margin-top:8px}
-  .tr .actions{grid-column:5/6}
-</style>
+    /* Reportes: OJO, no usar .row porque choca con tr.row */
+    .arca-page .section-title{padding:14px 14px 0}
+    .arca-page .kicker{color:var(--muted);font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+    .arca-page .section-title h2{margin:6px 0 0;font-size:18px}
+    .arca-page .repRow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;padding:14px}
+    @media (max-width:1100px){ .arca-page .repRow{grid-template-columns:1fr 1fr;} }
+    .arca-page .field label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin-bottom:6px}
+    .arca-page .actions{display:flex;gap:8px;align-items:flex-end;justify-content:flex-end}
+    .arca-page .hint{padding:0 14px 14px;color:var(--muted);font-size:13px}
 
+    .arca-page .table{padding:0 14px 14px}
+    .arca-page .thead, .arca-page .tr{display:grid;grid-template-columns:120px 1fr 1fr 1fr 120px;gap:10px;align-items:center}
+    .arca-page .thead{padding:10px;border:1px solid var(--line2);border-radius:14px;background:#fbfcff;color:var(--muted);font-weight:900}
+    .arca-page .tr{padding:10px;border:1px solid var(--line2);border-radius:14px;background:#fff;margin-top:8px}
+    .arca-page .tr .actions{grid-column:5/6}
+  </style>
+</head>
 
-  <div class="wrap">
-    <div class="top">
-      <div>
-        <h1>ARCA — Emisión desde facturas del mostrador</h1>
-        <p class="sub">Módulo paralelo: emite y audita en arca_* (no toca stock).</p>
-      </div>
-      <div class="controls">
-        <input id="arcaSearch" class="inp" placeholder="Buscar por ID o vendedor..." />
-        <button id="arcaReload" class="btn">Recargar</button>
-      </div>
+<body class="arca-page">
+  <%- include('../layouts/header') %>
+
+  <main>
+    <div class="wrap">
+      <!-- ACÁ VA TU HTML ACTUAL (todo lo que ya tenías dentro de .wrap) -->
+
+      <!-- (pegá tu contenido actual sin cambiarlo) -->
+
     </div>
+  </main>
 
-    <div class="grid">
-      <!-- LISTA -->
-      <section class="card">
-        <div class="hd">
-          <strong>Últimas facturas</strong>
-          <div class="controls">
-            <button id="arcaPrev" class="btn">‹</button>
-            <span id="arcaPage" class="muted">0–0</span>
-            <button id="arcaNext" class="btn">›</button>
-          </div>
-        </div>
+  <%- include('../layouts/footer') %>
 
-        <div class="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:86px">ID</th>
-                <th style="width:110px">Fecha</th>
-                <th>Vendedor</th>
-                <th style="width:110px">Total</th>
-                <th style="width:120px">Pago</th>
-                <th style="width:150px">ARCA</th>
-              </tr>
-            </thead>
-            <tbody id="arcaTbody">
-              <tr><td colspan="6" class="muted">Cargando…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- DETALLE -->
-      <aside class="card">
-        <div class="hd">
-  <strong>Detalle</strong>
-  <div class="controls">
-    <a id="btnPDF" class="btn" href="#" target="_blank" style="display:none">PDF</a>
-    <button id="btnEmitir" class="btn btnP" disabled>Emitir ARCA</button>
-  </div>
-</div>
-
-        <div class="bd">
-          <div id="arcaEmpty" class="muted">Seleccioná una factura del listado.</div>
-
-          <div id="arcaDetail" style="display:none">
-            <div class="kv">
-              <div class="k">Factura ID</div><div class="v" id="dId">-</div>
-              <div class="k">Fecha</div><div class="v" id="dFecha">-</div>
-              <div class="k">Vendedor</div><div class="v" id="dVend">-</div>
-              <div class="k">Pago</div><div class="v" id="dPago">-</div>
-              <div class="k">Total</div><div class="v" id="dTotal">-</div>
-            </div>
-
-            <div class="hr"></div>
-
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-  <strong style="font-size:13px">Auditoría WSFE</strong>
-  <div class="controls">
-    <span id="wsfeBadge" class="badge b-none" style="display:none">—</span>
-    <button id="btnAuditarWsfe" class="btn" disabled>Auditar WSFE</button>
-  </div>
-</div>
-
-<div id="wsfeHist" class="hist" style="margin-top:8px"></div>
-            <strong style="font-size:13px">Items</strong>
-            <table class="items" style="width:100%;margin-top:8px">
-              <thead>
-                <tr>
-                  <th>Descripción</th>
-                  <th style="width:70px">Cant.</th>
-                  <th style="width:90px">P.Unit</th>
-                  <th style="width:90px">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody id="itemsTbody"></tbody>
-            </table>
-
-            <div class="hr"></div>
-
-            <strong style="font-size:13px">Historial ARCA</strong>
-            <div id="arcaHist" class="hist" style="margin-top:8px"></div>
-          </div>
-        </div>
-      </aside>
-    </div>
-    <div class="card" style="margin-top:14px;">
-  <div class="section-title">
-    <div class="kicker">Control</div>
-    <h2>Reportes y cierres</h2>
-  </div>
-
-  <div class="repRow">
-    <div class="field">
-      <label>Desde</label>
-      <input type="date" id="repDesde">
-    </div>
-    <div class="field">
-      <label>Hasta</label>
-      <input type="date" id="repHasta">
-    </div>
-    <div class="field">
-      <label>Tipo</label>
-      <select id="repTipo">
-        <option value="">Todos</option>
-        <option value="1">Factura A (1)</option>
-        <option value="6">Factura B (6)</option>
-        <option value="3">Nota de Crédito A (3)</option>
-        <option value="8">Nota de Crédito B (8)</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Estado</label>
-      <select id="repEstado">
-        <option value="">Todos</option>
-        <option value="EMITIDO">EMITIDO</option>
-        <option value="RECHAZADO">RECHAZADO</option>
-        <option value="PENDIENTE">PENDIENTE</option>
-      </select>
-    </div>
-    <div class="actions">
-      <button class="btn secondary" id="btnRepResumen">Ver resumen</button>
-      <button class="btn" id="btnRepListar">Listar comprobantes</button>
-    </div>
-  </div>
-
-  <div class="repRow" style="margin-top:10px;">
-    <div class="field">
-      <label>Fecha de cierre</label>
-      <input type="date" id="cierreFecha">
-    </div>
-    <div class="actions">
-      <button class="btn danger" id="btnCierre">Crear cierre diario</button>
-    </div>
-  </div>
-
-  <div class="hint">
-    El cierre diario guarda un snapshot interno (no se informa a ARCA). Sirve para control y conciliación.
-  </div>
-
-  <div class="table" id="tblResumen"></div>
-  <div class="table" id="tblComprobantes" style="margin-top:10px;"></div>
-</div>
-
-  </div>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="/js/arca/index.js"></script>
+  <script src="/js/arca/index.js?v=20260213_5"></script>
 </body>
 </html>
-<%- include('../layouts/footer') %>
