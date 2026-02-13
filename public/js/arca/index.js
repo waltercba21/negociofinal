@@ -1,3 +1,28 @@
+
+// SweetAlert2: estilos/acciones consistentes (usa las clases .btn del CSS de la página)
+const ARCA_SWAL = (() => {
+  const confirm = Swal.mixin({
+    buttonsStyling: false,
+    reverseButtons: true,
+    focusCancel: true,
+    customClass: {
+      confirmButton: "btn primary",
+      cancelButton: "btn secondary",
+      denyButton: "btn danger",
+    },
+  });
+
+  const toast = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    timer: 1800,
+    timerProgressBar: true,
+    showConfirmButton: false,
+    buttonsStyling: false,
+  });
+
+  return { confirm, toast };
+})();
 // public/js/arca/index.js
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -193,6 +218,20 @@ async function auditarWsfeActual() {
   const estado = state.selectedArcaEstado;
   if (!arcaId) return;
 
+  // Acción sensible: si está PENDIENTE, se consulta y puede reconciliar.
+  if (estado === "PENDIENTE") {
+    const ok = await ARCA_SWAL.confirm.fire({
+  icon: "warning",
+  title: "Crear cierre diario",
+  text: `Se guardará el snapshot del día ${f} (solo interno, no se informa a ARCA).`,
+  showCancelButton: true,
+  confirmButtonText: "Crear cierre",
+  cancelButtonText: "Cancelar"
+});
+
+    if (!ok.isConfirmed) return;
+  }
+
   btnAuditarWsfe.disabled = true;
 
   try {
@@ -204,11 +243,7 @@ async function auditarWsfeActual() {
     const resp = await fetchJSON(url);
     await loadWsfeHistory(arcaId);
 
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      timer: 1600,
-      showConfirmButton: false,
+    ARCA_SWAL.toast.fire({
       icon: "success",
       title:
         estado === "PENDIENTE"
@@ -216,11 +251,10 @@ async function auditarWsfeActual() {
           : "Auditoría WSFE ejecutada",
     });
 
-    // refrescar UI (por si cambió a EMITIDO)
     await loadList();
     if (state.selectedId) await onSelect(state.selectedId);
   } catch (e) {
-    Swal.fire({
+    ARCA_SWAL.confirm.fire({
       icon: "error",
       title: "WSFE",
       text: e.message || "Error consultando",
@@ -229,6 +263,7 @@ async function auditarWsfeActual() {
     btnAuditarWsfe.disabled = false;
   }
 }
+
 
   // ---------------- Selección / detalle ----------------
   async function onSelect(id) {
@@ -306,10 +341,13 @@ if (target && target.id) {
   state.selectedArcaEstado = target.estado;
 
   if (btnAuditarWsfe) {
-    btnAuditarWsfe.disabled = false;
-    btnAuditarWsfe.textContent =
-      target.estado === "PENDIENTE" ? "Confirmar en ARCA" : "Auditar WSFE";
-  }
+  btnAuditarWsfe.disabled = false;
+  btnAuditarWsfe.classList.toggle("warn", target.estado === "PENDIENTE");
+  btnAuditarWsfe.classList.toggle("secondary", target.estado !== "PENDIENTE");
+  btnAuditarWsfe.textContent =
+    target.estado === "PENDIENTE" ? "Confirmar en ARCA" : "Auditar WSFE";
+}
+
 
   await loadWsfeHistory(state.selectedArcaId);
 } else {
@@ -368,17 +406,18 @@ if (target && target.id) {
     <label>Domicilio (para cache / auditoría)</label>
     <input id="sw_dom" class="swal2-input" placeholder="Opcional" />
 
-    <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
-      <button type="button" id="sw_cache_btn" class="swal2-styled" style="margin:0;padding:8px 10px">
-        Guardar en cache
-      </button>
+  <div style="display:flex;gap:8px;align-items:center;margin-top:4px;flex-wrap:wrap">
+  <button type="button" id="sw_cache_btn" class="btn secondary" style="margin:0">
+    Guardar en cache
+  </button>
 
-      <button type="button" id="sw_resolve_btn" class="swal2-styled" style="margin:0;padding:8px 10px;display:none">
-        Resolver por padrón
-      </button>
+  <button type="button" id="sw_resolve_btn" class="btn secondary" style="margin:0;display:none">
+    Resolver por padrón
+  </button>
 
-      <span id="sw_cache_status" style="font-size:12px;color:#667085"></span>
-    </div>
+  <span id="sw_cache_status" style="font-size:12px;color:#667085"></span>
+</div>
+
 
     <div id="sw_hint" style="font-size:12px;color:#667085"></div>
   </div>
@@ -598,6 +637,13 @@ if (target && target.id) {
           } catch (e) {
             setSt(e.message || "Error guardando");
           }
+          ARCA_SWAL.toast.fire({ icon: "success", title: "Guardado en cache" });
+// ...
+ARCA_SWAL.toast.fire({ icon: "error", title: "Error guardando" });
+// ...
+ARCA_SWAL.toast.fire({ icon: "success", title: "Datos actualizados desde padrón" });
+// ...
+ARCA_SWAL.toast.fire({ icon: "error", title: "No se pudo resolver" });
 
           syncDraftFromUI();
         }
@@ -636,6 +682,13 @@ if (target && target.id) {
           } catch (e) {
             setSt(e.message || "No se pudo resolver");
           }
+          ARCA_SWAL.toast.fire({ icon: "success", title: "Guardado en cache" });
+// ...
+ARCA_SWAL.toast.fire({ icon: "error", title: "Error guardando" });
+// ...
+ARCA_SWAL.toast.fire({ icon: "success", title: "Datos actualizados desde padrón" });
+// ...
+ARCA_SWAL.toast.fire({ icon: "error", title: "No se pudo resolver" });
 
           syncDraftFromUI();
         }
@@ -853,12 +906,13 @@ if (target && target.id) {
       </div>
     `).join("");
 
-    wrap.innerHTML = `
-      <div class="thead">
-        <div>Fecha</div><div>Facturas</div><div>NC</div><div>Neto ventas</div><div>Acción</div>
-      </div>
-      ${rows}
-    `;
+   wrap.innerHTML = `
+  <div class="gtable" style="--cols: 140px 1fr 1fr 1fr 140px">
+    <div class="thead">...</div>
+    ${rows}
+  </div>
+`;
+
 
     wrap.querySelectorAll("[data-ver-dia]").forEach(btn=>{
       btn.addEventListener("click", ()=> {
@@ -904,12 +958,14 @@ if (target && target.id) {
       </div>
     `).join("");
 
-    wrap.innerHTML = `
-      <div class="thead">
-        <div>ID</div><div>Tipo</div><div>Número</div><div>Fecha</div><div>Estado</div><div>Total</div><div></div>
-      </div>
-      ${rows}
-    `;
+  wrap.innerHTML = `
+  <div class="gtable" style="--cols: 90px 160px 160px 140px 120px 140px minmax(240px, 1fr)">
+    <div class="thead">...</div>
+    ${rows}
+  </div>
+`;
+
+
 
     wrap.querySelectorAll("[data-nc]").forEach(btn=>{
       btn.addEventListener("click", async ()=>{

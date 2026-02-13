@@ -2,105 +2,230 @@
 <html lang="es">
 <head>
   <%- include('../layouts/head', { pageCss: null }) %>
+<style>
+    /* =========================
+       ARCA UI — Moderno/Prolijo
+       - Scoped: solo aplica en esta página
+       - Colores por tipo de acción (primaria / warning / peligrosa)
+       ========================= */
 
-  <style>
+    :root{
+      --bg:#f7f8fc;
+      --surface:#ffffff;
+      --surface2:#fbfcff;
+
+      --text:#0b1220;
+      --muted:#475467;
+      --muted2:#667085;
+
+      --border:#e4e7ec;
+      --border2:#eef2f6;
+
+      --primary:#2563eb;
+      --primaryHover:#1d4ed8;
+      --danger:#dc2626;
+      --dangerHover:#b91c1c;
+      --warn:#d97706;
+      --warnHover:#b45309;
+      --ok:#067647;
+
+      --shadowSm: 0 1px 2px rgba(16,24,40,.06);
+      --shadowMd: 0 12px 28px rgba(16,24,40,.12);
+      --radius:16px;
+      --radiusSm:12px;
+      --ring: 0 0 0 4px rgba(37,99,235,.18);
+    }
+
     /* Scope para no pisar header/footer del sitio */
     body.arca-page{
       margin:0;
-      background:#f6f7fb;
-      color:#101828;
+      background:
+        radial-gradient(1100px 520px at 10% -10%, rgba(37,99,235,.10), transparent 55%),
+        radial-gradient(900px 520px at 110% 0%, rgba(6,118,71,.08), transparent 55%),
+        var(--bg);
+      color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-    }
-
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --text:#101828;
-      --muted:#667085;
-      --line:#e6eaf2;
-      --line2:#eef2f8;
-      --primary:#2563eb;
-      --primary2:#1d4ed8;
-      --danger:#dc2626;
-      --ok:#067647;
-      --warn:#b54708;
-      --shadow: 0 10px 28px rgba(16,24,40,.08);
-      --radius:16px;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
     }
 
     .arca-page *{box-sizing:border-box}
-    .arca-page .wrap{max-width:1440px;margin:0 auto;padding:18px}
+    .arca-page a{color:var(--primary);text-decoration:none}
+    .arca-page a:hover{text-decoration:underline}
+    .arca-page .wrap{max-width:1480px;margin:0 auto;padding:18px}
 
     .arca-page .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:12px}
-    .arca-page h1{margin:0;font-size:20px;letter-spacing:-.2px}
-    .arca-page .sub{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .arca-page h1{margin:0;font-size:20px;letter-spacing:-.3px}
+    .arca-page .sub{margin:6px 0 0;color:var(--muted2);font-size:13px}
 
-    .arca-page .grid{display:grid;grid-template-columns:1fr 460px;gap:14px;align-items:start}
-    @media (max-width:1100px){ .arca-page .grid{grid-template-columns:1fr} }
+    .arca-page .grid{display:grid;grid-template-columns:1fr 480px;gap:14px;align-items:start}
+    @media (max-width:1150px){ .arca-page .grid{grid-template-columns:1fr} }
 
-    .arca-page .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .arca-page .hd{padding:12px 14px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .arca-page .card{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadowSm);
+      overflow:hidden;
+    }
+    .arca-page .hd{
+      padding:12px 14px;
+      border-bottom:1px solid var(--border2);
+      background:linear-gradient(180deg,var(--surface2),var(--surface));
+      display:flex;justify-content:space-between;align-items:center;gap:10px
+    }
     .arca-page .bd{padding:12px 14px}
 
     .arca-page .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .arca-page .inp, .arca-page input[type="date"], .arca-page select{
-      height:38px;border:1px solid var(--line);border-radius:12px;padding:0 10px;outline:none;background:#fff;color:var(--text);
+
+    .arca-page .inp,
+    .arca-page input[type="date"],
+    .arca-page select{
+      height:40px;
+      border:1px solid var(--border);
+      border-radius:var(--radiusSm);
+      padding:0 12px;
+      outline:none;
+      background:var(--surface);
+      color:var(--text);
+      box-shadow:var(--shadowSm);
     }
+    .arca-page .inp::placeholder{color:#98a2b3}
+    .arca-page .inp:focus,
+    .arca-page input[type="date"]:focus,
+    .arca-page select:focus{border-color:rgba(37,99,235,.45);box-shadow:var(--ring),var(--shadowSm)}
+    .arca-page .inp:focus-visible,
+    .arca-page input[type="date"]:focus-visible,
+    .arca-page select:focus-visible{outline:none}
 
     .arca-page .btn{
-      height:38px;border:1px solid var(--line);border-radius:12px;background:#fff;
-      padding:0 12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+      height:40px;
+      border:1px solid var(--border);
+      border-radius:var(--radiusSm);
+      background:var(--surface);
+      padding:0 14px;
+      font-weight:900;
+      letter-spacing:-.2px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      box-shadow:var(--shadowSm);
+      user-select:none;
     }
-    .arca-page .btn:hover{border-color:#d7dceb}
-    .arca-page .btn:disabled{opacity:.6;cursor:not-allowed}
+    .arca-page .btn:hover{border-color:#d0d5dd}
+    .arca-page .btn:active{transform:translateY(1px)}
+    .arca-page .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+    .arca-page .btn:focus-visible{outline:none;box-shadow:var(--ring),var(--shadowSm);border-color:rgba(37,99,235,.45)}
+
     .arca-page .btnP, .arca-page .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-    .arca-page .btnP:hover, .arca-page .btn.primary:hover{background:var(--primary2);border-color:var(--primary2)}
-    .arca-page .btn.secondary{background:#f8fafc}
+    .arca-page .btnP:hover, .arca-page .btn.primary:hover{background:var(--primaryHover);border-color:var(--primaryHover)}
+
+    .arca-page .btn.secondary{background:#f2f4f7}
+    .arca-page .btn.warn{background:var(--warn);border-color:var(--warn);color:#fff}
+    .arca-page .btn.warn:hover{background:var(--warnHover);border-color:var(--warnHover)}
     .arca-page .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+    .arca-page .btn.danger:hover{background:var(--dangerHover);border-color:var(--dangerHover)}
 
-    .arca-page .tableWrap{max-height:72vh;overflow:auto;border-radius:14px}
+    /* Botones compactos (prev/next) */
+    .arca-page #arcaPrev, .arca-page #arcaNext{width:42px;padding:0}
+
+    /* Tabla listado */
+    .arca-page .tableWrap{max-height:72vh;overflow:auto;border-top:1px solid var(--border2)}
     .arca-page table{width:100%;border-collapse:separate;border-spacing:0}
-    .arca-page th,.arca-page td{padding:10px 12px;border-bottom:1px solid var(--line2);font-size:13px;vertical-align:top}
-    .arca-page th{position:sticky;top:0;background:#fbfcff;z-index:1;text-align:left;color:var(--muted);font-weight:900}
-    .arca-page tr.row{cursor:pointer}
-    .arca-page tr.row:hover td{background:#fbfdff}
-    .arca-page tr.row.is-selected td{background:#eef4ff}
-    .arca-page .muted{color:var(--muted)}
+    .arca-page th,.arca-page td{padding:10px 12px;border-bottom:1px solid var(--border2);font-size:13px;vertical-align:top}
+    .arca-page th{position:sticky;top:0;background:var(--surface2);z-index:1;text-align:left;color:var(--muted);font-weight:900}
+    .arca-page tbody tr.row{cursor:pointer}
+    .arca-page tbody tr.row:nth-child(even) td{background:#fcfdff}
+    .arca-page tbody tr.row:hover td{background:#f5f8ff}
+    .arca-page tbody tr.row.is-selected td{background:rgba(37,99,235,.10)}
+    .arca-page tbody tr.row.is-selected td:first-child{box-shadow:inset 4px 0 0 var(--primary)}
 
-    .arca-page .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid var(--line)}
+    .arca-page .muted{color:var(--muted2)}
+
+    .arca-page .badge{
+      display:inline-flex;align-items:center;
+      padding:4px 10px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:12px;
+      border:1px solid var(--border);
+      gap:8px;
+    }
+    .arca-page .badge::before{content:"";width:8px;height:8px;border-radius:999px;background:currentColor;opacity:.9}
     .arca-page .b-ok{background:#ecfdf3;border-color:#abefc6;color:var(--ok)}
     .arca-page .b-bad{background:#fef3f2;border-color:#fecdca;color:#b42318}
     .arca-page .b-pend{background:#fffaeb;border-color:#fedf89;color:var(--warn)}
     .arca-page .b-none{background:#f2f4f7;border-color:#e4e7ec;color:#344054}
 
+    /* Detalle */
     .arca-page .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px}
     .arca-page .k{color:var(--muted);font-weight:900}
-    .arca-page .v{color:var(--text);font-weight:800}
-    .arca-page .hr{height:1px;background:var(--line2);margin:12px 0}
+    .arca-page .v{color:var(--text);font-weight:900}
+    .arca-page .hr{height:1px;background:var(--border2);margin:12px 0}
 
     .arca-page .items th,.arca-page .items td{font-size:12.5px;padding:8px}
     .arca-page .hist{display:flex;flex-direction:column;gap:8px}
-    .arca-page .histItem{border:1px solid var(--line2);border-radius:14px;padding:10px}
+    .arca-page .histItem{border:1px solid var(--border2);border-radius:14px;padding:10px;background:var(--surface)}
     .arca-page .histTop{display:flex;justify-content:space-between;gap:10px;align-items:center}
-    .arca-page .histMeta{font-size:12.5px;color:var(--muted)}
+    .arca-page .histMeta{font-size:12.5px;color:var(--muted2)}
     .arca-page .histObs{margin-top:6px;font-size:12.5px;color:#344054}
 
-    /* Reportes: OJO, no usar .row porque choca con tr.row */
+    /* Reportes */
     .arca-page .section-title{padding:14px 14px 0}
     .arca-page .kicker{color:var(--muted);font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
-    .arca-page .section-title h2{margin:6px 0 0;font-size:18px}
+    .arca-page .section-title h2{margin:6px 0 0;font-size:18px;letter-spacing:-.2px}
     .arca-page .repRow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;padding:14px}
-    @media (max-width:1100px){ .arca-page .repRow{grid-template-columns:1fr 1fr;} }
+    @media (max-width:1150px){ .arca-page .repRow{grid-template-columns:1fr 1fr;} }
     .arca-page .field label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin-bottom:6px}
     .arca-page .actions{display:flex;gap:8px;align-items:flex-end;justify-content:flex-end}
-    .arca-page .hint{padding:0 14px 14px;color:var(--muted);font-size:13px}
+    .arca-page .hint{padding:0 14px 14px;color:var(--muted2);font-size:13px}
 
-    .arca-page .table{padding:0 14px 14px}
-    .arca-page .thead, .arca-page .tr{display:grid;grid-template-columns:120px 1fr 1fr 1fr 120px;gap:10px;align-items:center}
-    .arca-page .thead{padding:10px;border:1px solid var(--line2);border-radius:14px;background:#fbfcff;color:var(--muted);font-weight:900}
-    .arca-page .tr{padding:10px;border:1px solid var(--line2);border-radius:14px;background:#fff;margin-top:8px}
-    .arca-page .tr .actions{grid-column:5/6}
-  </style>
+    .arca-page .dangerZone{border-top:1px solid var(--border2);background:rgba(220,38,38,.04)}
+
+    /* Grillas (render por JS) */
+    .arca-page .gtable{padding:0 14px 14px;overflow:auto}
+    .arca-page .gtable .thead, .arca-page .gtable .tr{
+      display:grid;
+      grid-template-columns:var(--cols);
+      gap:12px;
+      align-items:center;
+      min-width:980px; /* fuerza scroll horizontal si hace falta */
+    }
+    .arca-page .gtable .thead{
+      padding:10px;
+      border:1px solid var(--border2);
+      border-radius:14px;
+      background:var(--surface2);
+      color:var(--muted);
+      font-weight:900;
+    }
+    .arca-page .gtable .tr{
+      padding:10px;
+      border:1px solid var(--border2);
+      border-radius:14px;
+      background:var(--surface);
+      margin-top:8px;
+    }
+
+    /* SweetAlert2 (mismo look que la UI) */
+    .arca-page .swal2-popup{border-radius:18px !important;box-shadow:var(--shadowMd) !important}
+    .arca-page .swal2-title{letter-spacing:-.2px}
+    .arca-page .swal2-html-container{color:var(--text)}
+    .arca-page .swal2-input,
+    .arca-page .swal2-select,
+    .arca-page .swal2-textarea{
+      border-radius:var(--radiusSm) !important;
+      border:1px solid var(--border) !important;
+      box-shadow:var(--shadowSm) !important;
+      height:40px !important;
+      padding:0 12px !important;
+    }
+    .arca-page .swal2-actions{gap:8px}
+    .arca-page .swal2-styled{border-radius:var(--radiusSm) !important;font-weight:900 !important}
+</style>
+f
 </head>
 
 <body class="arca-page">
@@ -204,21 +329,24 @@
         </div>
       </aside>
     </div>
-    <div class="card" style="margin-top:14px;">
+<div class="card" style="margin-top:14px;">
   <div class="section-title">
     <div class="kicker">Control</div>
     <h2>Reportes y cierres</h2>
   </div>
 
+  <!-- FILA 1 (normal): reportes -->
   <div class="repRow">
     <div class="field">
       <label>Desde</label>
       <input type="date" id="repDesde">
     </div>
+
     <div class="field">
       <label>Hasta</label>
       <input type="date" id="repHasta">
     </div>
+
     <div class="field">
       <label>Tipo</label>
       <select id="repTipo">
@@ -229,6 +357,7 @@
         <option value="8">Nota de Crédito B (8)</option>
       </select>
     </div>
+
     <div class="field">
       <label>Estado</label>
       <select id="repEstado">
@@ -238,13 +367,15 @@
         <option value="PENDIENTE">PENDIENTE</option>
       </select>
     </div>
+
     <div class="actions">
       <button class="btn secondary" id="btnRepResumen">Ver resumen</button>
-      <button class="btn" id="btnRepListar">Listar comprobantes</button>
+      <button class="btn primary" id="btnRepListar">Listar comprobantes</button>
     </div>
   </div>
 
-  <div class="repRow" style="margin-top:10px;">
+  <!-- FILA 2 (SENSIBLE): cierre -->
+  <div class="repRow dangerZone" style="margin-top:10px;">
     <div class="field">
       <label>Fecha de cierre</label>
       <input type="date" id="cierreFecha">
@@ -262,7 +393,6 @@
   <div class="table" id="tblComprobantes" style="margin-top:10px;"></div>
 </div>
 
-  </div>
   </main>
 
   <%- include('../layouts/footer') %>
