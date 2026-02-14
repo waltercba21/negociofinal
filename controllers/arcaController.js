@@ -1191,60 +1191,77 @@ async function listarFacturasMostrador(req, res) {
   try {
     const limit = Math.min(parseInt(req.query.limit || "50", 10), 200);
     const offset = Math.max(parseInt(req.query.offset || "0", 10), 0);
-
-    const rows = await query(
+const rows = await query(
   `
-SELECT
-  fm.id,
+  SELECT
+    fm.id,
 
-  -- vendedor (nuevo) + fallback históricos
-  COALESCE(
-    NULLIF(fm.vendedor, ''),
-    CASE WHEN fm.nombre_cliente <> 'MOSTRADOR' THEN fm.nombre_cliente ELSE NULL END
-  ) AS vendedor,
+    -- vendedor (nuevo) + fallback para históricos
+    COALESCE(
+      NULLIF(fm.vendedor, ''),
+      CASE
+        WHEN fm.nombre_cliente <> 'MOSTRADOR' THEN fm.nombre_cliente
+        ELSE NULL
+      END
+    ) AS vendedor,
 
-  -- cliente (solo desde ARCA; si no hay ARCA aún, MOSTRADOR)
-  CASE
-    WHEN ac.id IS NULL THEN 'MOSTRADOR'
-    WHEN ac.doc_tipo = 99 AND ac.doc_nro = 0 THEN 'CONSUMIDOR FINAL'
-    ELSE COALESCE(ac.receptor_nombre, '—')
-  END AS cliente,
+    -- cliente (solo desde ARCA; si no hay ARCA aún, MOSTRADOR)
+    CASE
+      WHEN ac.id IS NULL THEN 'MOSTRADOR'
+      WHEN ac.doc_tipo = 99 AND ac.doc_nro = 0 THEN 'CONSUMIDOR FINAL'
+      ELSE COALESCE(ac.receptor_nombre, '-')
+    END AS cliente,
 
-  -- tipo de comprobante (según cbte_tipo)
-  CASE
-    WHEN ac.cbte_tipo = 1 THEN 'A'
-    WHEN ac.cbte_tipo = 6 THEN 'B'
-    WHEN ac.cbte_tipo = 3 THEN 'NC A'
-    WHEN ac.cbte_tipo = 8 THEN 'NC B'
-    ELSE NULL
-  END AS tipo,
+    -- tipo según cbte_tipo
+    CASE
+      WHEN ac.cbte_tipo = 1 THEN 'A'
+      WHEN ac.cbte_tipo = 6 THEN 'B'
+      WHEN ac.cbte_tipo = 3 THEN 'NC A'
+      WHEN ac.cbte_tipo = 8 THEN 'NC B'
+      ELSE NULL
+    END AS tipo,
 
-  DATE_FORMAT(fm.fecha, '%Y-%m-%d') AS fecha,
-  fm.total,
-  fm.metodos_pago,
-  DATE_FORMAT(fm.creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en,
+    DATE_FORMAT(fm.fecha, '%Y-%m-%d') AS fecha,
+    fm.total,
+    fm.metodos_pago,
+    DATE_FORMAT(fm.creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en,
 
-  ac.estado      AS arca_estado,
-  ac.resultado   AS arca_resultado,
-  ac.cae         AS arca_cae,
-  ac.cae_vto     AS arca_cae_vto,
-  ac.cbte_tipo   AS arca_cbte_tipo,
-  ac.cbte_nro    AS arca_cbte_nro,
-  ac.doc_tipo    AS arca_doc_tipo,
-  ac.doc_nro     AS arca_doc_nro,
-  ac.receptor_nombre        AS arca_receptor_nombre,
-  ac.receptor_cond_iva_id   AS arca_receptor_cond_iva_id,
-  ac.obs_code    AS arca_obs_code,
-  ac.obs_msg     AS arca_obs_msg
-FROM facturas_mostrador fm
-LEFT JOIN ( ... tu subquery del “último comprobante” ... ) ac
-  ON ac.factura_mostrador_id = fm.id
-ORDER BY fm.id DESC
-LIMIT ? OFFSET ?
+    ac.estado    AS arca_estado,
+    ac.resultado AS arca_resultado,
+    ac.cae       AS arca_cae,
+    ac.cae_vto   AS arca_cae_vto,
+    ac.cbte_tipo AS arca_cbte_tipo,
+    ac.cbte_nro  AS arca_cbte_nro,
 
+    ac.doc_tipo  AS arca_doc_tipo,
+    ac.doc_nro   AS arca_doc_nro,
+    ac.receptor_nombre      AS arca_receptor_nombre,
+    ac.receptor_cond_iva_id AS arca_receptor_cond_iva_id,
+
+    ac.obs_code  AS arca_obs_code,
+    ac.obs_msg   AS arca_obs_msg
+
+  FROM facturas_mostrador fm
+
+  LEFT JOIN (
+    SELECT t1.*
+    FROM arca_comprobantes t1
+    JOIN (
+      SELECT factura_mostrador_id, MAX(id) AS max_id
+      FROM arca_comprobantes
+      GROUP BY factura_mostrador_id
+    ) t2
+      ON t1.factura_mostrador_id = t2.factura_mostrador_id
+     AND t1.id = t2.max_id
+  ) ac
+    ON ac.factura_mostrador_id = fm.id
+
+  ORDER BY fm.id DESC
+  LIMIT ? OFFSET ?
   `,
   [limit, offset]
 );
+
 
 
     return res.json({ rows, limit, offset });
