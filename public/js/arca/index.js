@@ -434,9 +434,31 @@ html: `
         const inpCbte = document.getElementById("sw_cbte");
         const inpTipo = document.getElementById("sw_doc_tipo");
         const inpNro = document.getElementById("sw_doc_nro");
-        inpNro.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); }
+
+       inpNro.addEventListener("keydown", async (e) => {
+  if (e.key !== "Enter") return;
+
+  // Enter NO confirma/cierra el modal, solo autocompleta
+  e.preventDefault();
+  e.stopPropagation();
+
+  // cancela debounce pendiente
+  clearTimeout(t);
+
+  toggleResolveBtn();
+
+  const { doc_tipo, doc_nro_str } = currentDoc();
+
+  // CUIT válido => resolver por padrón
+  if (doc_tipo === 80 && /^\d{11}$/.test(doc_nro_str)) {
+    await resolverPadron();
+    return;
+  }
+
+  // otros => intenta cache
+  await buscarReceptorCache();
 });
+
 
         const selCond = document.getElementById("sw_cond");
         const inpNom = document.getElementById("sw_nombre");
@@ -663,43 +685,56 @@ if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
           syncDraftFromUI();
         }
 
-        async function resolverPadron() {
-          const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
-          setSt("");
+       async function resolverPadron() {
+  const { doc_tipo, doc_nro_str, doc_nro } = currentDoc();
+  setSt("");
 
-          if (!(doc_tipo === 80 && /^\d{11}$/.test(doc_nro_str) && doc_nro > 0))
-            return;
+  if (!(doc_tipo === 80 && /^\d{11}$/.test(doc_nro_str) && doc_nro > 0)) return;
 
-          setSt("Resolviendo en padrón…");
-          try {
-            const data = await fetchJSON(
-              `/arca/receptor?doc_tipo=80&doc_nro=${doc_nro}&resolve=1&refresh=1`
-            );
-            
-            const nombre = (data.razon_social || data.nombre || "").trim();
-            if (nombre) inpNom.value = nombre;
+  const key = `${doc_tipo}:${doc_nro_str}`;
+  const seq = ++lookupSeq;
 
-            const dom = (data.domicilio || "").trim();
-            if (dom) inpDom.value = dom;
+  setSt("Resolviendo en padrón…");
 
-            const cond = Number(data.cond_iva_id || 0);
-            if (cond > 0) {
-              if (![...selCond.options].some((o) => Number(o.value) === cond)) {
-                const opt = document.createElement("option");
-                opt.value = String(cond);
-                opt.textContent = `${cond} - (padrón)`;
-                selCond.appendChild(opt);
-              }
-              selCond.value = String(cond);
-            }
+  // opcional: limpiar mientras carga
+  inpNom.value = "";
+  inpDom.value = "";
 
-            setSt("Resuelto.");
-          } catch (e) {
-            setSt(e.message || "No se pudo resolver");
-          }
+  try {
+    const data = await fetchJSON(
+      `/arca/receptor?doc_tipo=80&doc_nro=${doc_nro}&resolve=1&refresh=1`
+    );
 
-          syncDraftFromUI();
-        }
+    // anti-race: si cambió el CUIT mientras esperábamos, ignorar
+    const now = currentDoc();
+    if (seq !== lookupSeq) return;
+    if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
+
+    const nombre = (data.razon_social || data.nombre || "").trim();
+    if (nombre) inpNom.value = nombre;
+
+    const dom = (data.domicilio || "").trim();
+    if (dom) inpDom.value = dom;
+
+    const cond = Number(data.cond_iva_id || 0);
+    if (cond > 0) {
+      if (![...selCond.options].some((o) => Number(o.value) === cond)) {
+        const opt = document.createElement("option");
+        opt.value = String(cond);
+        opt.textContent = `${cond} - (padrón)`;
+        selCond.appendChild(opt);
+      }
+      selCond.value = String(cond);
+    }
+
+    setSt("Resuelto.");
+  } catch (e) {
+    setSt(e.message || "No se pudo resolver");
+  }
+
+  syncDraftFromUI();
+}
+
 
         let t = null;
         function scheduleBuscar() {
@@ -746,6 +781,7 @@ if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
           scheduleBuscar();
         })();
       },
+
       preConfirm: () => {
         const cbte_tipo = Number(document.getElementById("sw_cbte").value);
         const doc_tipo = Number(document.getElementById("sw_doc_tipo").value);
