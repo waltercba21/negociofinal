@@ -120,8 +120,10 @@ function receptorLabelFromRow(r) {
 
   if (docTipo === 99 && (docNro === "0" || docNro === "")) return "CONSUMIDOR FINAL";
   if (nombre) return nombre;
-  return String(r.nombre_cliente || "").trim() || "-";
+  return "—";
 }
+
+
 
 function docLabelFromRow(r) {
   const docTipo = Number(r.arca_doc_tipo || 0);
@@ -160,21 +162,27 @@ function renderList() {
 
 tbody.innerHTML = rows
   .map((r) => {
-    const tipo = tipoLabelFromCbteTipo(r.arca_cbte_tipo);
-const vendedor = (r.nombre_cliente || "-").toUpperCase();
-const cliente = clienteArcaLabelFromRow(r);
+const clienteFactura = String(r.cliente_factura || "-").trim();
+
+const tipo = tipoLabelFromCbteTipo(r.arca_cbte_tipo);
+const receptor = receptorLabelFromRow(r);
 const doc = docArcaLabelFromRow(r);
 
 return `
 <tr class="arca-row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
   <td><strong>#${r.id}</strong></td>
   <td class="muted">${esc(r.fecha || "-")}</td>
-  <td>${esc(vendedor)}</td>
+
+  <td>${esc(clienteFactura.toUpperCase())}</td>
+
+
   <td class="muted"><strong>${esc(tipo)}</strong></td>
+
   <td>
-    ${esc(String(cliente).toUpperCase())}
+    ${esc(String(receptor).toUpperCase())}
     ${doc ? `<div class="muted" style="margin-top:4px;font-size:12px">${esc(doc)}</div>` : ""}
   </td>
+
   <td><strong>${money(r.total)}</strong></td>
   <td class="muted">${esc(r.metodos_pago || "-")}</td>
   <td>
