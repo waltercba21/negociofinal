@@ -95,11 +95,12 @@ function saveDraft(key, d) {
   function applySearch(rows) {
     const s = (state.search || "").toLowerCase();
     if (!s) return rows;
-    return rows.filter(
-      (r) =>
-        String(r.id).includes(s) ||
-        String(r.nombre_cliente || "").toLowerCase().includes(s)
-    );
+    return rows.filter((r) =>
+  String(r.id).includes(s) ||
+  String(r.vendedor || "").toLowerCase().includes(s) ||
+  String(r.cliente_factura || "").toLowerCase().includes(s)
+);
+
   }
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (m) => ({
@@ -123,8 +124,16 @@ function receptorLabelFromRow(r) {
   return "—";
 }
 
-
-
+function fmtFecha(iso) {
+  const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || "-");
+}
+function tipoABFromCbteTipo(cbteTipo) {
+  const t = Number(cbteTipo || 0);
+  if (t === 1) return "A";
+  if (t === 6) return "B";
+  return "-";
+}
 function docLabelFromRow(r) {
   const docTipo = Number(r.arca_doc_tipo || 0);
   const docNro = String(r.arca_doc_nro ?? "").trim();
@@ -156,58 +165,40 @@ function renderList() {
 
   if (!rows.length) {
     tbody.innerHTML = `<tr><td colspan="8" class="muted">Sin resultados</td></tr>`;
-
     return;
   }
 
-tbody.innerHTML = rows
-  .map((r) => {
-const clienteFactura = String(r.cliente_factura || "-").trim();
-const vendedor = String(r.vendedor || "").trim();
-const tipo = tipoLabelFromCbteTipo(r.arca_cbte_tipo);
-const receptor = receptorLabelFromRow(r);
-const doc = docArcaLabelFromRow(r);
+  tbody.innerHTML = rows.map((r) => {
+    const vendedor = String(r.vendedor || "—").trim();
+    const cliente  = String(r.cliente_factura || "—").trim();
+    const tipo     = tipoABFromCbteTipo(r.arca_cbte_tipo);
 
-const clienteHtml = vendedor
-  ? `${esc(clienteFactura.toUpperCase())}
-     <div class="muted" style="margin-top:4px;font-size:12px">Vendedor: ${esc(vendedor.toUpperCase())}</div>`
-  : `${esc(clienteFactura.toUpperCase())}`;
-return `
-<tr class="arca-row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
-  <td><strong>#${r.id}</strong></td>
-  <td class="muted">${esc(r.fecha || "-")}</td>
-  <td>${clienteHtml}</td>
-  
-  <td>${esc(clienteFactura.toUpperCase())}</td>
-
-
-  <td class="muted"><strong>${esc(tipo)}</strong></td>
-
-  <td>
-    ${esc(String(receptor).toUpperCase())}
-    ${doc ? `<div class="muted" style="margin-top:4px;font-size:12px">${esc(doc)}</div>` : ""}
-  </td>
-
-  <td><strong>${money(r.total)}</strong></td>
-  <td class="muted">${esc(r.metodos_pago || "-")}</td>
-  <td>
-    ${badge(r.arca_estado)}
-    ${r.arca_cae ? `<div class="muted" style="margin-top:4px;font-size:12px">CAE ${esc(r.arca_cae)}</div>` : ""}
-  </td>
-</tr>
-`;
-
-  })
-  .join("");
-
+    return `
+      <tr class="arca-row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
+        <td><strong>#${r.id}</strong></td>
+        <td class="muted" style="white-space:nowrap">${esc(fmtFecha(r.fecha))}</td>
+        <td>${esc(vendedor.toUpperCase())}</td>
+        <td>${esc(cliente.toUpperCase())}</td>
+        <td class="muted"><strong>${esc(tipo)}</strong></td>
+        <td><strong>${money(r.total)}</strong></td>
+        <td class="muted">${esc(r.metodos_pago || "-")}</td>
+        <td>
+          ${badge(r.arca_estado)}
+          ${r.arca_cae ? `<div class="muted" style="margin-top:4px;font-size:12px">CAE ${esc(r.arca_cae)}</div>` : ""}
+        </td>
+      </tr>
+    `;
+  }).join("");
 
   tbody.querySelectorAll("tr[data-id]").forEach((tr) => {
     tr.addEventListener("click", () => onSelect(Number(tr.dataset.id)));
   });
 }
 
+
   async function loadList() {
     $("arcaTbody").innerHTML = `<tr><td colspan="8" class="muted">Cargando…</td></tr>`;
+
 
     const q = new URLSearchParams({
       limit: String(state.limit),
