@@ -1906,55 +1906,92 @@ procesarFormulario: async (req, res) => {
   }
 },
 procesarFormularioFacturas: async (req, res) => {
-    try {
-        const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
-        const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
-        const metodosPagoString = Array.isArray(metodosPago) ? metodosPago.join(', ') : metodosPago;
+  try {
+    const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
 
-        const fechaHoraActual = new Date();
-        const creadoEn = fechaHoraActual.toISOString().slice(0, 19).replace('T', ' ');
-
-        const factura = {
-            nombre_cliente: nombreCliente,
-            fecha: fechaPresupuesto,
-            total: totalLimpio,
-            metodos_pago: metodosPagoString,
-            creado_en: creadoEn
-        };
-
-        const facturaId = await producto.guardarFactura(factura);
-
-        if (!Array.isArray(invoiceItems) || invoiceItems.length === 0) {
-            return res.status(400).json({ error: 'No se proporcionaron items de factura.' });
-        }
-
-        const items = await Promise.all(invoiceItems.map(async item => {
-            const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
-
-            if (!producto_id) {
-                throw new Error(`Producto con ID ${item.producto_id} y descripción ${item.descripcion} no encontrado.`);
-            }
-
-            await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
-
-            return [
-                facturaId,
-                producto_id,
-                item.cantidad,
-                item.precio_unitario,
-                item.subtotal
-            ];
-        }));
-
-        await producto.guardarItemsFactura(items);
-
-        res.status(200).json({ message: 'FACTURA GUARDADA CORRECTAMENTE' });
-
-    } catch (error) {
-        console.error('Error al guardar la factura:', error);
-        res.status(500).json({ error: 'Error al guardar la factura: ' + error.message });
+    // 1) Validaciones mínimas antes de insertar
+    if (!nombreCliente || !String(nombreCliente).trim()) {
+      return res.status(400).json({ error: "Falta nombreCliente" });
     }
+    if (!fechaPresupuesto) {
+      return res.status(400).json({ error: "Falta fechaPresupuesto" });
+    }
+    if (!Array.isArray(invoiceItems) || invoiceItems.length === 0) {
+      return res.status(400).json({ error: "No se proporcionaron items de factura." });
+    }
+
+    // 2) Normalizar total (devuelve string decimal "1234.56")
+    const parseMoneyToDecimalStr = (v) => {
+      const s = String(v ?? "").trim();
+      if (!s) return "0.00";
+      let t = s.replace(/[^\d.,-]/g, "");        // deja dígitos , . y -
+      if (t.includes(".") && t.includes(",")) {  // 1.234,56
+        t = t.replace(/\./g, "").replace(",", ".");
+      } else if (t.includes(",") && !t.includes(".")) { // 1234,56
+        t = t.replace(",", ".");
+      }
+      const n = Number(t);
+      return Number.isFinite(n) ? n.toFixed(2) : "0.00";
+    };
+
+    const totalLimpio = parseMoneyToDecimalStr(totalPresupuesto);
+
+    const metodosPagoString = Array.isArray(metodosPago)
+      ? metodosPago.filter(Boolean).join(", ")
+      : (metodosPago || "");
+
+    const fechaHoraActual = new Date();
+    const creadoEn = fechaHoraActual.toISOString().slice(0, 19).replace("T", " ");
+
+    // 3) Vendedor desde sesión/usuario logueado
+    const vendedor =
+      (req.session?.usuario?.nombre || req.session?.usuario?.user || req.session?.usuario?.email) ||
+      (req.session?.user?.nombre    || req.session?.user?.user    || req.session?.user?.email) ||
+      (req.user?.nombre             || req.user?.user             || req.user?.email) ||
+      null;
+
+    // 4) Armar factura (incluye nuevos campos)
+    const factura = {
+      nombre_cliente: String(nombreCliente).trim(),      // NOT NULL (legacy)
+      cliente_nombre: String(nombreCliente).trim(),      // nuevo (cliente real)
+      vendedor: vendedor,                                // nuevo (usuario logueado)
+      fecha: fechaPresupuesto,
+      total: totalLimpio,
+      metodos_pago: metodosPagoString,
+      creado_en: creadoEn
+    };
+
+    const facturaId = await producto.guardarFactura(factura);
+
+    // 5) Guardar items + actualizar stock
+    const items = await Promise.all(invoiceItems.map(async (item) => {
+      const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
+
+      if (!producto_id) {
+        throw new Error(`Producto con ID ${item.producto_id} y descripción ${item.descripcion} no encontrado.`);
+      }
+
+      await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
+
+      return [
+        facturaId,
+        producto_id,
+        item.cantidad,
+        item.precio_unitario,
+        item.subtotal
+      ];
+    }));
+
+    await producto.guardarItemsFactura(items);
+
+    return res.status(200).json({ message: "FACTURA GUARDADA CORRECTAMENTE", facturaId });
+
+  } catch (error) {
+    console.error("Error al guardar la factura:", error);
+    return res.status(500).json({ error: "Error al guardar la factura: " + error.message });
+  }
 },
+
 listadoPresupuestos: (req, res) => {
   const { fechaInicio, fechaFin } = req.query;
 
