@@ -104,25 +104,20 @@ guardarPresupuesto : (presupuesto) => {
         });
     },
 guardarFactura: (factura) => {
-  console.log("[LOAD] producto.js", __filename);
-
   return new Promise((resolve, reject) => {
-
-    // Normalizar (mínimo)
+    // Normalizar mínimo (no inventar cliente)
     if (factura && typeof factura === "object") {
-      if (factura.cliente_nombre == null || String(factura.cliente_nombre).trim() === "") {
-        factura.cliente_nombre = factura.nombre_cliente || null;
-      }
+      // Si por algún motivo viene vendedor vacío, lo limpiamos
       if (factura.vendedor != null && String(factura.vendedor).trim() === "") {
         factura.vendedor = null;
       }
-    }
 
-    console.log("[guardarFactura] insert keys:", Object.keys(factura || {}), {
-      nombre_cliente: factura?.nombre_cliente,
-      cliente_nombre: factura?.cliente_nombre,
-      vendedor: factura?.vendedor,
-    });
+      // Importante: NO autocompletar cliente_nombre acá
+      // cliente_nombre debe ser NULL en "factura interna" y venir de ARCA luego
+      if (factura.cliente_nombre != null && String(factura.cliente_nombre).trim() === "") {
+        factura.cliente_nombre = null;
+      }
+    }
 
     conexion.query("INSERT INTO facturas_mostrador SET ?", factura, (error, resultado) => {
       if (error) return reject(error);
@@ -130,6 +125,7 @@ guardarFactura: (factura) => {
     });
   });
 },
+
 
 
     guardarItemsPresupuesto : (items) => {

@@ -1943,24 +1943,37 @@ procesarFormularioFacturas: async (req, res) => {
     const fechaHoraActual = new Date();
     const creadoEn = fechaHoraActual.toISOString().slice(0, 19).replace("T", " ");
 
-    // 3) Vendedor desde sesión/usuario logueado
-    const vendedor =
-      (req.session?.usuario?.nombre || req.session?.usuario?.user || req.session?.usuario?.email) ||
-      (req.session?.user?.nombre    || req.session?.user?.user    || req.session?.user?.email) ||
-      (req.user?.nombre             || req.user?.user             || req.user?.email) ||
-      null;
+  const sUser = req.session?.usuario || req.session?.user || {};
+
+const vendedorNombre =
+  sUser.nombre || sUser.name || sUser.username || sUser.user || sUser.email || null;
+
+const vendedorId =
+  sUser.id ||
+  req.session?.usuario_id ||
+  req.session?.user_id ||
+  req.session?.id_usuario ||
+  req.session?.userId ||
+  req.session?.usuarioId ||
+  null;
+
+const vendedor = vendedorNombre
+  ? String(vendedorNombre).trim()
+  : (vendedorId ? `usuario_${vendedorId}` : null);
 
     // 4) Armar factura (incluye nuevos campos)
     const factura = {
-      nombre_cliente: String(nombreCliente).trim(),      // NOT NULL (legacy)
-      cliente_nombre: String(nombreCliente).trim(),      // nuevo (cliente real)
-      vendedor: vendedor,                                // nuevo (usuario logueado)
-      fecha: fechaPresupuesto,
-      total: totalLimpio,
-      metodos_pago: metodosPagoString,
-      creado_en: creadoEn
-    };
+  // este campo es interno; si no hay cliente, poné placeholder
+  nombre_cliente: "MOSTRADOR",
+  cliente_nombre: null,          // cliente real se mostrará desde ARCA
+  vendedor: vendedor,            // esto sí debe quedar
+  fecha: fechaPresupuesto,
+  total: totalLimpio,
+  metodos_pago: metodosPagoString,
+  creado_en: creadoEn
+};
 
+    
     const facturaId = await producto.guardarFactura(factura);
 
     // 5) Guardar items + actualizar stock

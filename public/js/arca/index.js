@@ -159,6 +159,15 @@ function docArcaLabelFromRow(r) {
   if (!docNro) return `DocTipo ${docTipo}`;
   return `${docTipo}-${docNro}`;
 }
+function clienteDisplay(r) {
+  const docTipo = Number(r.arca_doc_tipo || 0);
+  const docNro  = Number(r.arca_doc_nro || 0);
+
+  if (docTipo === 99 && docNro === 0) return "CONSUMIDOR FINAL";
+  if (r.arca_receptor_nombre) return String(r.arca_receptor_nombre).trim();
+  return "MOSTRADOR";
+}
+
 function renderList() {
   const tbody = $("arcaTbody");
   const rows = applySearch(state.rows);
