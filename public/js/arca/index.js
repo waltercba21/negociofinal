@@ -106,7 +106,6 @@ function esc(s) {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[m]));
 }
-
 function tipoLabelFromCbteTipo(t) {
   const n = Number(t || 0);
   if (!n) return "-";
@@ -131,7 +130,24 @@ function docLabelFromRow(r) {
   if (!docNro) return `DocTipo ${docTipo}`;
   return `${docTipo}-${docNro}`;
 }
+function clienteArcaLabelFromRow(r) {
+  const docTipo = Number(r.arca_doc_tipo || 0);
+  const docNro = String(r.arca_doc_nro ?? "").trim();
+  const nombre = String(r.arca_receptor_nombre || "").trim();
 
+  // si no hay ARCA asociado, no inventar: mostrar vacío
+  if (!docTipo && !nombre) return "—";
+
+  if (docTipo === 99 && (docNro === "0" || docNro === "")) return "CONSUMIDOR FINAL";
+  return nombre || "—";
+}
+function docArcaLabelFromRow(r) {
+  const docTipo = Number(r.arca_doc_tipo || 0);
+  const docNro = String(r.arca_doc_nro ?? "").trim();
+  if (!docTipo) return "";
+  if (!docNro) return `DocTipo ${docTipo}`;
+  return `${docTipo}-${docNro}`;
+}
 function renderList() {
   const tbody = $("arcaTbody");
   const rows = applySearch(state.rows);
@@ -145,27 +161,29 @@ function renderList() {
 tbody.innerHTML = rows
   .map((r) => {
     const tipo = tipoLabelFromCbteTipo(r.arca_cbte_tipo);
-    const receptor = receptorLabelFromRow(r);
-    const doc = docLabelFromRow(r);
+const vendedor = (r.nombre_cliente || "-").toUpperCase();
+const cliente = clienteArcaLabelFromRow(r);
+const doc = docArcaLabelFromRow(r);
 
-    return `
-      <tr class="arca-row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
-        <td><strong>#${r.id}</strong></td>
-        <td class="muted">${esc(r.fecha || "-")}</td>
-        <td>${esc(String(r.nombre_cliente || "").toUpperCase())}</td>
-        <td class="muted"><strong>${esc(tipo)}</strong></td>
-        <td>
-          ${esc(String(receptor).toUpperCase())}
-          ${doc ? `<div class="muted" style="margin-top:4px;font-size:12px">${esc(doc)}</div>` : ""}
-        </td>
-        <td><strong>${money(r.total)}</strong></td>
-        <td class="muted">${esc(r.metodos_pago || "-")}</td>
-        <td>
-          ${badge(r.arca_estado)}
-          ${r.arca_cae ? `<div class="muted" style="margin-top:4px;font-size:12px">CAE ${esc(r.arca_cae)}</div>` : ""}
-        </td>
-      </tr>
-    `;
+return `
+<tr class="arca-row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
+  <td><strong>#${r.id}</strong></td>
+  <td class="muted">${esc(r.fecha || "-")}</td>
+  <td>${esc(vendedor)}</td>
+  <td class="muted"><strong>${esc(tipo)}</strong></td>
+  <td>
+    ${esc(String(cliente).toUpperCase())}
+    ${doc ? `<div class="muted" style="margin-top:4px;font-size:12px">${esc(doc)}</div>` : ""}
+  </td>
+  <td><strong>${money(r.total)}</strong></td>
+  <td class="muted">${esc(r.metodos_pago || "-")}</td>
+  <td>
+    ${badge(r.arca_estado)}
+    ${r.arca_cae ? `<div class="muted" style="margin-top:4px;font-size:12px">CAE ${esc(r.arca_cae)}</div>` : ""}
+  </td>
+</tr>
+`;
+
   })
   .join("");
 
