@@ -386,17 +386,17 @@ html: `
     <div class="f">
       <label>Tipo de comprobante</label>
       <select id="sw_cbte" class="swal2-input">
-        <option value="1">Factura A (1)</option>
-        <option value="6">Factura B (6)</option>
+        <option value="1">Factura A</option>
+        <option value="6">Factura B</option>
       </select>
     </div>
 
     <div class="f">
       <label>Tipo de documento</label>
       <select id="sw_doc_tipo" class="swal2-input">
-        <option value="80">CUIT (80)</option>
-        <option value="96">DNI (96)</option>
-        <option value="99">Consumidor Final (99)</option>
+        <option value="80">CUIT</option>
+        <option value="96">DNI</option>
+        <option value="99">CONSUMIDOR FINAL</option>
       </select>
     </div>
 
