@@ -1195,13 +1195,13 @@ async function listarFacturasMostrador(req, res) {
 const rows = await query(
   `
   SELECT
-    fm.id,
-    CASE
-  WHEN fm.vendedor IS NOT NULL AND fm.vendedor <> '' THEN fm.vendedor
-  WHEN fm.cliente_nombre IS NULL THEN fm.nombre_cliente      -- legacy: antes acá estaba el vendedor
-  ELSE NULL
-END AS vendedor,
-fm.cliente_nombre AS cliente_factura,
+     fm.id,
+  fm.vendedor AS vendedor,
+  COALESCE(fm.cliente_nombre, fm.nombre_cliente) AS cliente_factura,
+  DATE_FORMAT(fm.fecha, '%Y-%m-%d') AS fecha,
+  fm.total,
+  fm.metodos_pago,
+  DATE_FORMAT(fm.creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en,
 
 
     DATE_FORMAT(fm.fecha, '%Y-%m-%d') AS fecha,
