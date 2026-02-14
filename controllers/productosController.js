@@ -1906,6 +1906,13 @@ procesarFormulario: async (req, res) => {
   }
 },
 procesarFormularioFacturas: async (req, res) => {
+  console.log("[procesarFormularioFacturas] HIT", new Date().toISOString(), {
+  nombreCliente: req.body?.nombreCliente,
+  sessionKeys: Object.keys(req.session || {}),
+  sessionUsuario: req.session?.usuario,
+  sessionUser: req.session?.user
+});
+
   try {
     const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
 
@@ -1968,6 +1975,7 @@ procesarFormularioFacturas: async (req, res) => {
       metodos_pago: metodosPagoString,
       creado_en: creadoEn
     };
+    console.log("[procesarFormularioFacturas] factura:", factura);
 
     const facturaId = await producto.guardarFactura(factura);
 
