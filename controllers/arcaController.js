@@ -1196,8 +1196,9 @@ const rows = await query(
   `
   SELECT
     fm.id,
-    COALESCE(fm.cliente_nombre, fm.nombre_cliente) AS cliente_factura,
-    fm.vendedor AS vendedor,
+    COALESCE(fm.vendedor, fm.nombre_cliente) AS vendedor,
+fm.cliente_nombre AS cliente_factura,
+
     DATE_FORMAT(fm.fecha, '%Y-%m-%d') AS fecha,
     fm.total,
     fm.metodos_pago,
