@@ -106,26 +106,29 @@ guardarPresupuesto : (presupuesto) => {
 guardarFactura: (factura) => {
   return new Promise((resolve, reject) => {
 
-    // Normalizar nuevos campos (no rompe legacy)
+    // Normalizar (mínimo)
     if (factura && typeof factura === "object") {
-      // cliente_nombre: si no viene, usar nombre_cliente
       if (factura.cliente_nombre == null || String(factura.cliente_nombre).trim() === "") {
         factura.cliente_nombre = factura.nombre_cliente || null;
       }
-
-      // vendedor: si viene vacío, null
       if (factura.vendedor != null && String(factura.vendedor).trim() === "") {
         factura.vendedor = null;
       }
     }
 
-    conexion.query('INSERT INTO facturas_mostrador SET ?', factura, (error, resultado) => {
+    console.log("[guardarFactura] insert keys:", Object.keys(factura || {}), {
+      nombre_cliente: factura?.nombre_cliente,
+      cliente_nombre: factura?.cliente_nombre,
+      vendedor: factura?.vendedor,
+    });
+
+    conexion.query("INSERT INTO facturas_mostrador SET ?", factura, (error, resultado) => {
       if (error) return reject(error);
       resolve(resultado.insertId);
     });
-
   });
 },
+
 
     guardarItemsPresupuesto : (items) => {
         return new Promise((resolve, reject) => {
