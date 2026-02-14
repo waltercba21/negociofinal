@@ -1196,8 +1196,13 @@ const rows = await query(
   `
   SELECT
     fm.id,
-    COALESCE(fm.vendedor, fm.nombre_cliente) AS vendedor,
+    CASE
+  WHEN fm.vendedor IS NOT NULL AND fm.vendedor <> '' THEN fm.vendedor
+  WHEN fm.cliente_nombre IS NULL THEN fm.nombre_cliente      -- legacy: antes acá estaba el vendedor
+  ELSE NULL
+END AS vendedor,
 fm.cliente_nombre AS cliente_factura,
+
 
     DATE_FORMAT(fm.fecha, '%Y-%m-%d') AS fecha,
     fm.total,
