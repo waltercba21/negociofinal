@@ -1195,36 +1195,27 @@ async function listarFacturasMostrador(req, res) {
     const rows = await query(
       `
       SELECT
-        fm.id,
-        fm.nombre_cliente,
-        DATE_FORMAT(fm.fecha, '%Y-%m-%d') AS fecha,
-        fm.total,
-        fm.metodos_pago,
-        DATE_FORMAT(fm.creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en,
+  fm.id,
+  fm.nombre_cliente,
+  DATE_FORMAT(fm.fecha, '%Y-%m-%d') AS fecha,
+  fm.total,
+  fm.metodos_pago,
+  DATE_FORMAT(fm.creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en,
 
-        ac.estado      AS arca_estado,
-        ac.resultado   AS arca_resultado,
-        ac.cae         AS arca_cae,
-        ac.cae_vto     AS arca_cae_vto,
-        ac.cbte_tipo   AS arca_cbte_tipo,
-        ac.cbte_nro    AS arca_cbte_nro,
-        ac.obs_code    AS arca_obs_code,
-        ac.obs_msg     AS arca_obs_msg
-      FROM facturas_mostrador fm
-      LEFT JOIN (
-        SELECT t1.*
-        FROM arca_comprobantes t1
-        JOIN (
-          SELECT factura_mostrador_id, MAX(id) AS max_id
-          FROM arca_comprobantes
-          GROUP BY factura_mostrador_id
-        ) t2
-          ON t1.factura_mostrador_id = t2.factura_mostrador_id
-         AND t1.id = t2.max_id
-      ) ac
-        ON ac.factura_mostrador_id = fm.id
-      ORDER BY fm.id DESC
-      LIMIT ? OFFSET ?
+  ac.estado      AS arca_estado,
+  ac.resultado   AS arca_resultado,
+  ac.cae         AS arca_cae,
+  ac.cae_vto     AS arca_cae_vto,
+  ac.cbte_tipo   AS arca_cbte_tipo,
+  ac.cbte_nro    AS arca_cbte_nro,
+  ac.doc_tipo    AS arca_doc_tipo,
+  ac.doc_nro     AS arca_doc_nro,
+  ac.receptor_nombre AS arca_receptor_nombre,
+  ac.receptor_cond_iva_id AS arca_receptor_cond_iva_id,
+  ac.obs_code    AS arca_obs_code,
+  ac.obs_msg     AS arca_obs_msg
+FROM ...
+
       `,
       [limit, offset]
     );
