@@ -850,7 +850,6 @@ on(inpTipo, () => {
   return;
 }
 
-
     $("btnEmitir").disabled = true;
 
     try {
