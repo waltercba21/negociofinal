@@ -371,6 +371,7 @@ if (target && target.id) {
   async function emitirSeleccionada() {
     const id = state.selectedId;
     if (!id) return;
+    const draftKey = draftKeyForFactura(id);
 
     const { isConfirmed, value } = await Swal.fire({
       title: `Emitir ARCA — Factura #${id}`,
@@ -467,7 +468,6 @@ html: `
         const btnCache = document.getElementById("sw_cache_btn");
         const btnResolve = document.getElementById("sw_resolve_btn");
         const stCache = document.getElementById("sw_cache_status");
-        const draftKey = draftKeyForFactura(id);
 
         const setHint = (t) => {
           if (hint) hint.textContent = t || "";
@@ -479,13 +479,15 @@ html: `
         const draft =
          loadDraft(draftKey) || {
             cbte_tipo: 6,
-            doc_tipo: 99,
+            doc_tipo: 80,
             doc_nro: "",
             receptor_cond_iva_id: null,
             receptor_nombre: "",
             domicilio: "",
           };
-
+          if (Number(draft.doc_tipo || 0) !== 99 && String(draft.doc_nro || "").trim() === "0") {
+  draft.doc_nro = "";
+}
         const setVal = (el, v) => {
           if (el && v !== undefined && v !== null) el.value = String(v);
         };
@@ -843,7 +845,11 @@ on(inpTipo, () => {
       },
     });
 
-    if (!isConfirmed) return;
+    if (!isConfirmed) {
+  try { sessionStorage.removeItem(draftKey); } catch {}
+  return;
+}
+
 
     $("btnEmitir").disabled = true;
 
