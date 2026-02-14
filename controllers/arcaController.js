@@ -1472,11 +1472,11 @@ async function buscarReceptor(req, res) {
       console.log("[ARCA][buscarReceptor] cacheWriteEnabled =", receptorCacheWriteEnabled());
     }
 
-    // 1) cache (si no forzás refresh)
-    if (!refresh) {
-      const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-      if (cache) return res.json(cache);
-    }
+    if (!refresh && receptorCacheWriteEnabled()) {
+  const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+  if (cache) return res.json(cache);
+}
+
 
     // 2) si no pide resolve => termina acá
     if (!resolve) {
