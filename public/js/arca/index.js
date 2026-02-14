@@ -1085,12 +1085,19 @@ on(inpTipo, () => {
       </div>
     `).join("");
 
-   wrap.innerHTML = `
+ wrap.innerHTML = `
   <div class="gtable" style="--cols: 140px 1fr 1fr 1fr 140px">
-    <div class="thead">...</div>
+    <div class="thead tr">
+      <div>Fecha</div>
+      <div>Total facturado</div>
+      <div>Total NC</div>
+      <div>Neto ventas</div>
+      <div></div>
+    </div>
     ${rows}
   </div>
 `;
+
 
 
     wrap.querySelectorAll("[data-ver-dia]").forEach(btn=>{
@@ -1137,12 +1144,21 @@ on(inpTipo, () => {
       </div>
     `).join("");
 
-  wrap.innerHTML = `
+wrap.innerHTML = `
   <div class="gtable" style="--cols: 90px 160px 160px 140px 120px 140px minmax(240px, 1fr)">
-    <div class="thead">...</div>
+    <div class="thead tr">
+      <div>ID</div>
+      <div>Tipo</div>
+      <div>PtoVta-Nro</div>
+      <div>Fecha</div>
+      <div>Estado</div>
+      <div>Total</div>
+      <div>Acciones</div>
+    </div>
     ${rows}
   </div>
 `;
+
 
 
 
