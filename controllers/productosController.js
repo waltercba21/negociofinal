@@ -1909,10 +1909,7 @@ procesarFormularioFacturas: async (req, res) => {
   try {
     const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
 
-    // 1) Validaciones mínimas antes de insertar
-    if (!nombreCliente || !String(nombreCliente).trim()) {
-      return res.status(400).json({ error: "Falta nombreCliente" });
-    }
+    // Validaciones mínimas (factura interna)
     if (!fechaPresupuesto) {
       return res.status(400).json({ error: "Falta fechaPresupuesto" });
     }
@@ -1920,14 +1917,14 @@ procesarFormularioFacturas: async (req, res) => {
       return res.status(400).json({ error: "No se proporcionaron items de factura." });
     }
 
-    // 2) Normalizar total (devuelve string decimal "1234.56")
+    // Normalizar total a "1234.56"
     const parseMoneyToDecimalStr = (v) => {
       const s = String(v ?? "").trim();
       if (!s) return "0.00";
-      let t = s.replace(/[^\d.,-]/g, "");        // deja dígitos , . y -
-      if (t.includes(".") && t.includes(",")) {  // 1.234,56
+      let t = s.replace(/[^\d.,-]/g, "");
+      if (t.includes(".") && t.includes(",")) {
         t = t.replace(/\./g, "").replace(",", ".");
-      } else if (t.includes(",") && !t.includes(".")) { // 1234,56
+      } else if (t.includes(",") && !t.includes(".")) {
         t = t.replace(",", ".");
       }
       const n = Number(t);
@@ -1940,70 +1937,70 @@ procesarFormularioFacturas: async (req, res) => {
       ? metodosPago.filter(Boolean).join(", ")
       : (metodosPago || "");
 
-    const fechaHoraActual = new Date();
-    const creadoEn = fechaHoraActual.toISOString().slice(0, 19).replace("T", " ");
+    const creadoEn = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-  const sUser = req.session?.usuario || req.session?.user || {};
+    // Vendedor desde sesión (fallback a nombreCliente si tu UI lo manda)
+    const sUser = req.session?.usuario || req.session?.user || {};
 
-const vendedorNombre =
-  sUser.nombre || sUser.name || sUser.username || sUser.user || sUser.email || null;
+    const vendedorNombre =
+      sUser.nombre || sUser.name || sUser.username || sUser.user || sUser.email || null;
 
-const vendedorId =
-  sUser.id ||
-  req.session?.usuario_id ||
-  req.session?.user_id ||
-  req.session?.id_usuario ||
-  req.session?.userId ||
-  req.session?.usuarioId ||
-  null;
+    const vendedorId =
+      sUser.id ||
+      req.session?.usuario_id ||
+      req.session?.user_id ||
+      req.session?.id_usuario ||
+      req.session?.userId ||
+      req.session?.usuarioId ||
+      null;
 
-const vendedor = vendedorNombre
-  ? String(vendedorNombre).trim()
-  : (vendedorId ? `usuario_${vendedorId}` : null);
+    const vendedor = (vendedorNombre && String(vendedorNombre).trim())
+      ? String(vendedorNombre).trim()
+      : (vendedorId ? `usuario_${vendedorId}` : (String(nombreCliente || "").trim() || null));
 
-    // 4) Armar factura (incluye nuevos campos)
+    // Factura interna (cliente real se define en ARCA al emitir)
     const factura = {
-  // este campo es interno; si no hay cliente, poné placeholder
-  nombre_cliente: "MOSTRADOR",
-  cliente_nombre: null,          // cliente real se mostrará desde ARCA
-  vendedor: vendedor,            // esto sí debe quedar
-  fecha: fechaPresupuesto,
-  total: totalLimpio,
-  metodos_pago: metodosPagoString,
-  creado_en: creadoEn
-};
+      nombre_cliente: "MOSTRADOR",   // NOT NULL (legacy)
+      cliente_nombre: null,          // NO inventar cliente acá
+      vendedor: vendedor,            // guardar quién la cargó
+      fecha: fechaPresupuesto,
+      total: totalLimpio,
+      metodos_pago: metodosPagoString,
+      creado_en: creadoEn
+    };
 
-    
     const facturaId = await producto.guardarFactura(factura);
 
-    // 5) Guardar items + actualizar stock
-    const items = await Promise.all(invoiceItems.map(async (item) => {
-      const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
+    const items = await Promise.all(
+      invoiceItems.map(async (item) => {
+        const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
+        if (!producto_id) {
+          throw new Error(
+            `Producto con ID ${item.producto_id} y descripción ${item.descripcion} no encontrado.`
+          );
+        }
 
-      if (!producto_id) {
-        throw new Error(`Producto con ID ${item.producto_id} y descripción ${item.descripcion} no encontrado.`);
-      }
+        await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
 
-      await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
-
-      return [
-        facturaId,
-        producto_id,
-        item.cantidad,
-        item.precio_unitario,
-        item.subtotal
-      ];
-    }));
+        return [
+          facturaId,
+          producto_id,
+          item.cantidad,
+          item.precio_unitario,
+          item.subtotal
+        ];
+      })
+    );
 
     await producto.guardarItemsFactura(items);
 
     return res.status(200).json({ message: "FACTURA GUARDADA CORRECTAMENTE", facturaId });
-
   } catch (error) {
     console.error("Error al guardar la factura:", error);
     return res.status(500).json({ error: "Error al guardar la factura: " + error.message });
   }
 },
+
 
 listadoPresupuestos: (req, res) => {
   const { fechaInicio, fechaFin } = req.query;
