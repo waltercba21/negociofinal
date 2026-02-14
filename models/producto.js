@@ -103,19 +103,30 @@ guardarPresupuesto : (presupuesto) => {
           });
         });
     },
-    guardarFactura: (factura) => {
-        return new Promise((resolve, reject) => {
-            conexion.query('INSERT INTO facturas_mostrador SET ?', factura, (error, resultado) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(resultado.insertId); 
-                }
-            });
-        });  
-    },
-    
-    
+guardarFactura: (factura) => {
+  return new Promise((resolve, reject) => {
+
+    // Normalizar nuevos campos (no rompe legacy)
+    if (factura && typeof factura === "object") {
+      // cliente_nombre: si no viene, usar nombre_cliente
+      if (factura.cliente_nombre == null || String(factura.cliente_nombre).trim() === "") {
+        factura.cliente_nombre = factura.nombre_cliente || null;
+      }
+
+      // vendedor: si viene vacío, null
+      if (factura.vendedor != null && String(factura.vendedor).trim() === "") {
+        factura.vendedor = null;
+      }
+    }
+
+    conexion.query('INSERT INTO facturas_mostrador SET ?', factura, (error, resultado) => {
+      if (error) return reject(error);
+      resolve(resultado.insertId);
+    });
+
+  });
+},
+
     guardarItemsPresupuesto : (items) => {
         return new Promise((resolve, reject) => {
             const query = 'INSERT INTO presupuesto_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
