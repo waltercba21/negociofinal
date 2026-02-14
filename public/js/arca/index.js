@@ -98,7 +98,7 @@ function saveDraft(key, d) {
     return rows.filter((r) =>
   String(r.id).includes(s) ||
   String(r.vendedor || "").toLowerCase().includes(s) ||
-  String(r.cliente_factura || "").toLowerCase().includes(s)
+  String(r.cliente || "").toLowerCase().includes(s)
 );
 
   }
@@ -179,7 +179,7 @@ function renderList() {
 
   tbody.innerHTML = rows.map((r) => {
     const vendedor = String(r.vendedor || "—").trim();
-    const cliente  = String(r.cliente_factura || "—").trim();
+    const cliente  = String(r.cliente || "—").trim();
     const tipo     = tipoABFromCbteTipo(r.arca_cbte_tipo);
 
     return `
