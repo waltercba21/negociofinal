@@ -23,6 +23,12 @@ function isDupKey(err, keyName) {
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
+function isTrue(v) {
+  return ["1","true","yes","on","si"].includes(String(v||"").toLowerCase());
+}
+function receptorCacheWriteEnabled() {
+  return !isTrue(process.env.ARCA_DISABLE_RECEPTOR_CACHE_WRITE);
+}
 
 function claseFromCbteTipo(cbteTipo) {
   const t = Number(cbteTipo);
@@ -1435,19 +1441,23 @@ async function descargarPDFComprobante(req, res) {
 // controllers/arcaController.js
 // Requiere arriba: const padron = require("../services/padron");
 
+// helper (ponelo UNA vez arriba del archivo, fuera de la fn)
+function isTrue(v) {
+  return ["1", "true", "on", "si", "yes"].includes(String(v ?? "").trim().toLowerCase());
+}
+function receptorCacheWriteEnabled() {
+  // En local+homo con túnel a DB del server: ARCA_DISABLE_RECEPTOR_CACHE_WRITE=1
+  return !isTrue(process.env.ARCA_DISABLE_RECEPTOR_CACHE_WRITE);
+}
+
 async function buscarReceptor(req, res) {
   try {
     const doc_tipo = Number(req.query.doc_tipo || 0);
     const doc_nro  = Number(req.query.doc_nro  || 0);
 
-    const resolveStr = String(req.query.resolve ?? "").trim().toLowerCase();
-    const resolve = ["1", "true", "on", "si", "yes"].includes(resolveStr);
-
-    const refreshStr = String(req.query.refresh ?? "").trim().toLowerCase();
-    const refresh = ["1", "true", "on", "si", "yes"].includes(refreshStr);
-
-    const debugStr = String(req.query.debug ?? "").trim().toLowerCase();
-    const debug = ["1", "true", "on", "si", "yes"].includes(debugStr);
+    const resolve = isTrue(req.query.resolve);
+    const refresh = isTrue(req.query.refresh);
+    const debug   = isTrue(req.query.debug);
 
     if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) {
       return res.status(400).json({ error: "doc_tipo inválido" });
@@ -1459,6 +1469,7 @@ async function buscarReceptor(req, res) {
     if (debug) {
       console.log("[ARCA][buscarReceptor] query =", req.query);
       console.log("[ARCA][buscarReceptor] resolve =", resolve, "refresh =", refresh);
+      console.log("[ARCA][buscarReceptor] cacheWriteEnabled =", receptorCacheWriteEnabled());
     }
 
     // 1) cache (si no forzás refresh)
@@ -1483,46 +1494,45 @@ async function buscarReceptor(req, res) {
     }
 
     const out = await padron.getPersonaV2({ idPersona: doc_nro, cuitRepresentada });
-if (out?.notFound || !out?.data) {
-  return res.status(404).json({
-    error: "No encontrado en padrón",
-    service: out?.service || "ws_sr_padron_a13",
-  });
-}
 
-   if (!out || !out.ok) {
-  const msg = String(out?.fault || out?.error || "No se pudo resolver en padrón");
-  const isNotFound = /no existe|no se encuentra|inexistente/i.test(msg);
-  return res.status(isNotFound ? 404 : 502).json({ error: msg, service: out?.service || null });
-}
-// Si el servicio respondió "OK" pero sin datos, lo tratamos como NO ENCONTRADO
-if (!out.data) {
-  return res.status(404).json({
-    error: "La Clave (CUIT/CUIL) consultada es inexistente",
-    service: out?.service || "ws_sr_padron_a13",
-  });
-}
+    // Manejo de errores / no encontrado
+    if (!out || !out.ok) {
+      if (out?.notFound) {
+        return res.status(404).json({
+          error: "No encontrado en padrón",
+          service: out?.service || "ws_sr_padron_a13",
+        });
+      }
+      const msg = String(out?.fault || out?.error || "No se pudo resolver en padrón");
+      const isNotFound = /no existe|no se encuentra|inexistente/i.test(msg);
+      return res.status(isNotFound ? 404 : 502).json({ error: msg, service: out?.service || null });
+    }
 
+    if (!out.data) {
+      return res.status(404).json({
+        error: "La Clave (CUIT/CUIL) consultada es inexistente",
+        service: out?.service || "ws_sr_padron_a13",
+      });
+    }
 
-    // Guardar en cache
-    await arcaModel.upsertReceptorCache({
+    const receptorData = {
       doc_tipo,
       doc_nro,
       nombre: out.data?.nombre || null,
       razon_social: out.data?.razon_social || out.data?.nombre || null,
       cond_iva_id: null,
       domicilio: out.data?.domicilio || null,
-    });
+    };
 
-    const saved = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-    return res.json(saved || {
-      doc_tipo,
-      doc_nro,
-      nombre: out.data?.nombre || null,
-      razon_social: out.data?.razon_social || out.data?.nombre || null,
-      cond_iva_id: null,
-      domicilio: out.data?.domicilio || null,
-    });
+    // Guardar en cache (opcional: deshabilitable en local/homo)
+    if (receptorCacheWriteEnabled()) {
+      await arcaModel.upsertReceptorCache(receptorData);
+      const saved = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+      return res.json(saved || receptorData);
+    }
+
+    // Si cache write está deshabilitado, devolvemos directo (sin persistir)
+    return res.json({ ...receptorData, cache_write: false });
   } catch (e) {
     console.error("❌ ARCA buscarReceptor:", e);
     return res.status(500).json({ error: e.message || "Error receptor" });
@@ -1574,6 +1584,9 @@ async function guardarReceptorCache(req, res) {
     }
 
     const domicilio = String(req.body?.domicilio || "").trim() || null;
+    if (!receptorCacheWriteEnabled()) {
+  return res.status(403).json({ error: "Cache receptor deshabilitado por ARCA_DISABLE_RECEPTOR_CACHE_WRITE" });
+}
 
     await arcaModel.upsertReceptorCache({ doc_tipo, doc_nro, nombre, razon_social, cond_iva_id, domicilio });
 
