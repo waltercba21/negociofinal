@@ -480,7 +480,7 @@ html: `
          loadDraft(draftKey) || {
             cbte_tipo: 6,
             doc_tipo: 99,
-            doc_nro: "0",
+            doc_nro: "",
             receptor_cond_iva_id: null,
             receptor_nombre: "",
             domicilio: "",
@@ -493,7 +493,9 @@ html: `
         function syncDraftFromUI() {
           draft.cbte_tipo = Number(inpCbte.value || 0) || 6;
           draft.doc_tipo = Number(inpTipo.value || 0) || 99;
-          draft.doc_nro = String(inpNro.value || "").trim() || "0";
+          const nroTrim = String(inpNro.value || "").trim();
+          draft.doc_nro = nroTrim ? nroTrim : (draft.doc_tipo === 99 ? "0" : "");
+
           draft.receptor_cond_iva_id = Number(selCond.value || 0) || null;
           draft.receptor_nombre = (inpNom.value || "").trim();
           draft.domicilio = (inpDom.value || "").trim();
