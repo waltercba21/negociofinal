@@ -1187,88 +1187,93 @@ async function vistaArcaIndex(req, res) {
 }
 
 // GET /arca/ui/facturas?limit=50&offset=0
+// GET /arca/ui/facturas?limit=50&offset=0
 async function listarFacturasMostrador(req, res) {
   try {
     const limit = Math.min(parseInt(req.query.limit || "50", 10), 200);
     const offset = Math.max(parseInt(req.query.offset || "0", 10), 0);
-const rows = await query(
-  `
-  SELECT
-    fm.id,
 
-    -- vendedor (nuevo) + fallback para históricos
-    COALESCE(
-      NULLIF(fm.vendedor, ''),
-      CASE
-        WHEN fm.nombre_cliente <> 'MOSTRADOR' THEN fm.nombre_cliente
-        ELSE NULL
-      END
-    ) AS vendedor,
+    const rows = await query(
+      `
+      SELECT
+        fm.id,
 
-    -- cliente (solo desde ARCA; si no hay ARCA aún, MOSTRADOR)
-    CASE
-      WHEN ac.id IS NULL THEN 'MOSTRADOR'
-      WHEN ac.doc_tipo = 99 AND ac.doc_nro = 0 THEN 'CONSUMIDOR FINAL'
-      ELSE COALESCE(ac.receptor_nombre, '-')
-    END AS cliente,
+        -- vendedor: si existe fm.vendedor úsalo; si no, y nombre_cliente NO es MOSTRADOR, úsalo como fallback (data vieja)
+        CASE
+          WHEN fm.vendedor IS NOT NULL AND fm.vendedor <> '' THEN fm.vendedor
+          WHEN fm.nombre_cliente IS NOT NULL AND fm.nombre_cliente <> '' AND fm.nombre_cliente <> 'MOSTRADOR' THEN fm.nombre_cliente
+          ELSE NULL
+        END AS vendedor,
 
-    -- tipo según cbte_tipo
-    CASE
-      WHEN ac.cbte_tipo = 1 THEN 'A'
-      WHEN ac.cbte_tipo = 6 THEN 'B'
-      WHEN ac.cbte_tipo = 3 THEN 'NC A'
-      WHEN ac.cbte_tipo = 8 THEN 'NC B'
-      ELSE NULL
-    END AS tipo,
+        -- cliente: si hay comprobante ARCA, mostrar receptor; si es CF doc_tipo=99 => CONSUMIDOR FINAL.
+        -- si no hay ARCA todavía, mostrar placeholder de la factura (MOSTRADOR) o cliente_nombre si existiera.
+        CASE
+          WHEN ac.id IS NOT NULL THEN
+            CASE
+              WHEN ac.doc_tipo = 99 THEN 'CONSUMIDOR FINAL'
+              ELSE COALESCE(ac.receptor_nombre, fm.cliente_nombre, fm.nombre_cliente)
+            END
+          ELSE COALESCE(fm.cliente_nombre, fm.nombre_cliente)
+        END AS cliente,
 
-    DATE_FORMAT(fm.fecha, '%Y-%m-%d') AS fecha,
-    fm.total,
-    fm.metodos_pago,
-    DATE_FORMAT(fm.creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en,
+        -- tipo: A/B/NC según cbte_tipo (si no hay ARCA => null)
+        CASE
+          WHEN ac.cbte_tipo = 1 THEN 'A'
+          WHEN ac.cbte_tipo = 6 THEN 'B'
+          WHEN ac.cbte_tipo = 3 THEN 'NC A'
+          WHEN ac.cbte_tipo = 8 THEN 'NC B'
+          ELSE NULL
+        END AS tipo,
 
-    ac.estado    AS arca_estado,
-    ac.resultado AS arca_resultado,
-    ac.cae       AS arca_cae,
-    ac.cae_vto   AS arca_cae_vto,
-    ac.cbte_tipo AS arca_cbte_tipo,
-    ac.cbte_nro  AS arca_cbte_nro,
+        -- fecha: preferimos la del comprobante si existe cbte_fch (YYYYMMDD), sino la de la factura mostrador
+        CASE
+          WHEN ac.cbte_fch IS NOT NULL AND ac.cbte_fch <> ''
+            THEN DATE_FORMAT(STR_TO_DATE(ac.cbte_fch, '%Y%m%d'), '%Y-%m-%d')
+          ELSE DATE_FORMAT(fm.fecha, '%Y-%m-%d')
+        END AS fecha,
 
-    ac.doc_tipo  AS arca_doc_tipo,
-    ac.doc_nro   AS arca_doc_nro,
-    ac.receptor_nombre      AS arca_receptor_nombre,
-    ac.receptor_cond_iva_id AS arca_receptor_cond_iva_id,
+        fm.total,
+        fm.metodos_pago,
+        DATE_FORMAT(fm.creado_en, '%Y-%m-%d %H:%i:%s') AS creado_en,
 
-    ac.obs_code  AS arca_obs_code,
-    ac.obs_msg   AS arca_obs_msg
+        ac.estado      AS arca_estado,
+        ac.resultado   AS arca_resultado,
+        ac.cae         AS arca_cae,
+        ac.cae_vto     AS arca_cae_vto,
+        ac.cbte_tipo   AS arca_cbte_tipo,
+        ac.cbte_nro    AS arca_cbte_nro,
+        ac.doc_tipo    AS arca_doc_tipo,
+        ac.doc_nro     AS arca_doc_nro,
+        ac.receptor_nombre      AS arca_receptor_nombre,
+        ac.receptor_cond_iva_id AS arca_receptor_cond_iva_id,
+        ac.obs_code    AS arca_obs_code,
+        ac.obs_msg     AS arca_obs_msg
 
-  FROM facturas_mostrador fm
-
-  LEFT JOIN (
-    SELECT t1.*
-    FROM arca_comprobantes t1
-    JOIN (
-      SELECT factura_mostrador_id, MAX(id) AS max_id
-      FROM arca_comprobantes
-      GROUP BY factura_mostrador_id
-    ) t2
-      ON t1.factura_mostrador_id = t2.factura_mostrador_id
-     AND t1.id = t2.max_id
-  ) ac
-    ON ac.factura_mostrador_id = fm.id
-
-  ORDER BY fm.id DESC
-  LIMIT ? OFFSET ?
-  `,
-  [limit, offset]
-);
-
-
+      FROM facturas_mostrador fm
+      LEFT JOIN (
+        SELECT t1.*
+        FROM arca_comprobantes t1
+        JOIN (
+          SELECT factura_mostrador_id, MAX(id) AS max_id
+          FROM arca_comprobantes
+          GROUP BY factura_mostrador_id
+        ) t2
+          ON t1.factura_mostrador_id = t2.factura_mostrador_id
+         AND t1.id = t2.max_id
+      ) ac
+        ON ac.factura_mostrador_id = fm.id
+      ORDER BY fm.id DESC
+      LIMIT ? OFFSET ?
+      `,
+      [limit, offset]
+    );
 
     return res.json({ rows, limit, offset });
   } catch (e) {
     return res.status(500).json({ error: e.message || "Error listando facturas" });
   }
 }
+
 
 
 
