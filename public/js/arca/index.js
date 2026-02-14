@@ -163,16 +163,21 @@ function renderList() {
 tbody.innerHTML = rows
   .map((r) => {
 const clienteFactura = String(r.cliente_factura || "-").trim();
-
+const vendedor = String(r.vendedor || "").trim();
 const tipo = tipoLabelFromCbteTipo(r.arca_cbte_tipo);
 const receptor = receptorLabelFromRow(r);
 const doc = docArcaLabelFromRow(r);
 
+const clienteHtml = vendedor
+  ? `${esc(clienteFactura.toUpperCase())}
+     <div class="muted" style="margin-top:4px;font-size:12px">Vendedor: ${esc(vendedor.toUpperCase())}</div>`
+  : `${esc(clienteFactura.toUpperCase())}`;
 return `
 <tr class="arca-row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
   <td><strong>#${r.id}</strong></td>
   <td class="muted">${esc(r.fecha || "-")}</td>
-
+  <td>${clienteHtml}</td>
+  
   <td>${esc(clienteFactura.toUpperCase())}</td>
 
 
