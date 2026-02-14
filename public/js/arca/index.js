@@ -348,7 +348,8 @@ async function auditarWsfeActual() {
 
     $("dId").textContent = `#${det.factura.id}`;
     $("dFecha").textContent = det.factura.fecha || "-";
-    $("dVend").textContent = (det.factura.nombre_cliente || "").toUpperCase();
+    $("dVend").textContent = (det.factura?.vendedor || "-");
+    if ($("dCliente")) $("dCliente").textContent = (det.factura?.cliente || "MOSTRADOR");
     $("dPago").textContent = det.factura.metodos_pago || "-";
     $("dTotal").textContent = money(det.factura.total);
 
@@ -365,31 +366,79 @@ async function auditarWsfeActual() {
       )
       .join("");
 
-    const rows = hist.rows || [];
-    $("arcaHist").innerHTML = rows.length
-      ? rows
-          .map((r) => {
-            const caeLine = r.cae ? `CAE ${r.cae} · Vto ${r.cae_vto}` : "";
-            const obsLine = r.obs_code
-              ? `${r.obs_code} — ${r.obs_msg || ""}`
-              : "";
-            return `
-        <div class="histItem">
-          <div class="histTop">
-            <div>${badge(
-              r.estado
-            )} <span class="muted">Cbte ${r.cbte_tipo}-${r.cbte_nro} · ${
-              r.cbte_fch
-            }</span></div>
-            <div class="histMeta">${r.created_at || ""}</div>
+   const esc = (s) =>
+  String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+const cbteLabel = (t) => {
+  const n = Number(t || 0);
+  const map = { 1: "FA", 6: "FB", 3: "NCA", 8: "NCB", 11: "FC", 13: "NCC" };
+  return map[n] || (n ? String(n) : "-");
+};
+
+const receptorLabel = (r) => {
+  const dt = Number(r.doc_tipo || 0);
+  const dn = Number(r.doc_nro || 0);
+  if (dt === 99 && dn === 0) return "CONSUMIDOR FINAL";
+  return (
+    (r.receptor_nombre || "").trim() ||
+    (r.cache_razon_social || "").trim() ||
+    (r.cache_nombre || "").trim() ||
+    "-"
+  );
+};
+
+const rows = Array.isArray(hist.rows) ? hist.rows : [];
+
+$("arcaHist").innerHTML = rows.length
+  ? rows
+      .map((r) => {
+        const tipo = cbteLabel(r.cbte_tipo);
+        const rec = receptorLabel(r);
+
+        const caeLine = r.cae ? `CAE ${esc(r.cae)} · Vto ${esc(r.cae_vto)}` : "";
+        const obsLine = r.obs_code ? `${esc(r.obs_code)} — ${esc(r.obs_msg || "")}` : "";
+
+        const asocLine = r.asociado_arca_id
+          ? `Asoc: ${cbteLabel(r.asoc_cbte_tipo)} ${esc(r.asoc_pto_vta)}-${esc(r.asoc_cbte_nro)}`
+          : "";
+
+        const linkPDF =
+          r.estado === "EMITIDO"
+            ? `<a class="a" href="/arca/pdf/${r.id}" target="_blank" rel="noopener">PDF</a>`
+            : "";
+
+        const linkAudit = `<a class="a" href="/arca/wsfe/consultar/${r.id}?audit=1" target="_blank" rel="noopener">Auditoría</a>`;
+        const linkWsfe = `<a class="a" href="/arca/wsfe/consultas/${r.id}" target="_blank" rel="noopener">WSFE</a>`;
+
+        return `
+          <div class="histItem">
+            <div class="histTop">
+              <div>
+                ${badge(r.estado)}
+                <span class="muted">
+                  ${esc(tipo)} · ${esc(r.pto_vta)}-${esc(r.cbte_nro)} · ${esc(r.cbte_fch || "")}
+                </span>
+              </div>
+              <div class="histMeta">${esc(r.created_at || "")}</div>
+            </div>
+
+            <div class="histObs">Receptor: ${esc(rec)}${asocLine ? ` · ${esc(asocLine)}` : ""}</div>
+            ${caeLine ? `<div class="histObs">${caeLine}</div>` : ""}
+            ${obsLine ? `<div class="histObs">${obsLine}</div>` : ""}
+
+            <div class="histLinks" style="margin-top:6px; display:flex; gap:10px; flex-wrap:wrap;">
+              ${linkPDF} ${linkAudit} ${linkWsfe}
+            </div>
           </div>
-          ${caeLine ? `<div class="histObs">${caeLine}</div>` : ""}
-          ${obsLine ? `<div class="histObs">${obsLine}</div>` : ""}
-        </div>
-      `;
-          })
-          .join("")
-      : `<div class="muted">Sin intentos ARCA.</div>`;
+        `;
+      })
+      .join("")
+  : `<div class="muted">Sin intentos ARCA.</div>`;
 
    // --- WSFE UI ---
 state.selectedArcaId = null;

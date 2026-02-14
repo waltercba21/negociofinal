@@ -1274,19 +1274,18 @@ async function listarFacturasMostrador(req, res) {
   }
 }
 
-
-
-
-// GET /arca/ui/facturas/:id
 async function detalleFacturaMostrador(req, res) {
   try {
     const facturaId = Number(req.params.id || 0);
     if (!facturaId) return res.status(400).json({ error: "id inválido" });
 
-    const cab = await query(
+const cab = await query(
   `SELECT
      id,
-     nombre_cliente,
+     -- vendedor real si existe; si no, fallback a nombre_cliente (histórico)
+     COALESCE(NULLIF(vendedor,''), NULLIF(nombre_cliente,'MOSTRADOR')) AS vendedor,
+     -- cliente interno (si no hay, MOSTRADOR)
+     COALESCE(NULLIF(cliente_nombre,''), 'MOSTRADOR') AS cliente,
      DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
      total,
      metodos_pago,
@@ -1318,24 +1317,60 @@ async function detalleFacturaMostrador(req, res) {
   }
 }
 
-// GET /arca/ui/arca-por-factura/:id
 async function historialArcaPorFactura(req, res) {
   try {
     const facturaId = Number(req.params.id || 0);
     if (!facturaId) return res.status(400).json({ error: "id inválido" });
 
     const rows = await query(
-      `
-      SELECT id, factura_mostrador_id, ambiente, pto_vta, cbte_tipo, cbte_nro, cbte_fch,
-             doc_tipo, doc_nro, imp_total, imp_neto, imp_iva,
-             resultado, cae, cae_vto, obs_code, obs_msg, estado, created_at
-      FROM arca_comprobantes
-      WHERE factura_mostrador_id=?
-      ORDER BY id DESC
-      LIMIT 20
-      `,
-      [facturaId]
-    );
+  `SELECT
+     ac.id,
+     ac.factura_mostrador_id,
+     ac.estado,
+     ac.resultado,
+     ac.pto_vta,
+     ac.cbte_tipo,
+     ac.cbte_nro,
+     ac.cbte_fch,
+     ac.cae,
+     ac.cae_vto,
+     ac.imp_neto,
+     ac.imp_iva,
+     ac.imp_total,
+     ac.doc_tipo,
+     ac.doc_nro,
+
+     -- receptor directo si lo guardaste en arca_comprobantes
+     ac.receptor_nombre,
+     ac.receptor_cond_iva_id,
+
+     -- fallback desde cache (si no vino en ac.receptor_nombre)
+     rc.nombre        AS cache_nombre,
+     rc.razon_social  AS cache_razon_social,
+     rc.domicilio     AS cache_domicilio,
+     rc.cond_iva_id   AS cache_cond_iva_id,
+
+     -- asociación (nota de crédito)
+     a.asociado_arca_id,
+     a.asoc_pto_vta,
+     a.asoc_cbte_tipo,
+     a.asoc_cbte_nro,
+     a.asoc_cbte_fch,
+     a.asoc_cuit,
+
+     ac.obs_code,
+     ac.obs_msg,
+     DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') AS created_at
+   FROM arca_comprobantes ac
+   LEFT JOIN arca_receptores_cache rc
+     ON rc.doc_tipo = ac.doc_tipo AND rc.doc_nro = ac.doc_nro
+   LEFT JOIN arca_cbtes_asoc a
+     ON a.arca_comprobante_id = ac.id
+   WHERE ac.factura_mostrador_id=?
+   ORDER BY ac.id DESC`,
+  [facturaId]
+);
+
 
     return res.json({ rows });
   } catch (e) {
