@@ -910,7 +910,7 @@ on(inpTipo, () => {
 
   // Init
   loadList().catch((err) => {
-    $("arcaTbody").innerHTML = `<tr><td colspan="6" class="muted">${err.message}</td></tr>`;
+    $("arcaTbody").innerHTML = `<tr><td colspan="8" class="muted">${err.message}</td></tr>`;
   });
 })();
 (function reportesInit(){
