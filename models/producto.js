@@ -104,6 +104,8 @@ guardarPresupuesto : (presupuesto) => {
         });
     },
 guardarFactura: (factura) => {
+  console.log("[LOAD] producto.js", __filename);
+
   return new Promise((resolve, reject) => {
 
     // Normalizar (mínimo)
