@@ -401,7 +401,7 @@ html: `
 
     <div class="f">
       <label>Número Documento</label>
-      <input id="sw_doc_nro" class="swal2-input" value="0" />
+      <input id="sw_doc_nro" class="swal2-input" value="" />
     </div>
 
     <div class="f">
@@ -552,16 +552,20 @@ html: `
           const cbteTipo = Number(inpCbte.value || 0);
 
           if (cbteTipo === 1) {
-            inpTipo.value = "80";
-            setHint("Factura A: DocTipo 80 (CUIT) + Cond IVA válida (ej. 1).");
-            return;
-          }
+  inpTipo.value = "80";
+  if (String(inpNro.value || "").trim() === "0") inpNro.value = "";
+  setHint("Factura A: DocTipo 80 (CUIT) + Cond IVA válida (ej. 1).");
+  return;
+}
+
 
           if (cbteTipo === 6) {
-            setHint("Factura B: recomendado CF (DocTipo 99, DocNro 0, Cond IVA 5).");
-            if (Number(inpTipo.value || 0) === 99) inpNro.value = "0";
-            return;
-          }
+  setHint("Factura B: recomendado CF (DocTipo 99, DocNro 0, Cond IVA 5).");
+  if (Number(inpTipo.value || 0) === 99) inpNro.value = "0";
+  else if (String(inpNro.value || "").trim() === "0") inpNro.value = "";
+  return;
+}
+
 
           setHint("");
         }
@@ -767,11 +771,17 @@ if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
           await loadCondIvaOptions();
           scheduleBuscar();
         });
+on(inpTipo, () => {
+  toggleResolveBtn();
 
-        on(inpTipo, () => {
-          toggleResolveBtn();
-          scheduleBuscar();
-        });
+  if (Number(inpTipo.value || 0) !== 99 && String(inpNro.value || "").trim() === "0") {
+    inpNro.value = "";
+    syncDraftFromUI();
+  }
+
+  scheduleBuscar();
+});
+
         on(inpNro, () => {
           toggleResolveBtn();
           scheduleBuscar();
