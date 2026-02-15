@@ -3,16 +3,19 @@ const pool = require("../config/conexion");
 const util = require("util");
 const crypto = require("crypto");
 
-const FACT_TIPOS = [1, 6, 11];   // Factura A/B/C
-const NC_TIPOS   = [3, 8, 13];   // Nota de Crédito A/B/C
-function getQuery() {
-  if (pool.promise && typeof pool.promise === "function") {
-    return (sql, params = []) => pool.promise().query(sql, params).then(([rows]) => rows);
-  }
-  const q = util.promisify(pool.query).bind(pool);
-  return (sql, params = []) => q(sql, params);
+const FACT_TIPOS = [1, 6, 11];   
+const NC_TIPOS   = [3, 8, 13];   
+
+
+function getQuery(poolOverride) {
+  const p = poolOverride || pool;
+  return async (sql, params = []) => {
+    const [rows] = await p.promise().query(sql, params);
+    return rows;
+  };
 }
 const query = getQuery();
+
 
 async function crearComprobante(data) {
   const sql = `
@@ -231,7 +234,8 @@ async function reportesComprobantes(pool, {
   estado = "EMITIDO",
   cbte_tipo = null
 }) {
-  const q = query(pool);
+  const q = getQuery(pool);
+
 
   let sql = `
     SELECT
@@ -261,7 +265,8 @@ async function reportesResumen(pool, {
   hastaYmd,
   estado = "EMITIDO",
 }) {
-  const q = query(pool);
+  const q = getQuery(pool);
+
 
   const factList = FACT_TIPOS.join(",");
   const ncList   = NC_TIPOS.join(",");
@@ -307,7 +312,8 @@ async function crearCierreDiario(pool, {
   fechaYmd,
   usuario_email = null,
 }) {
-  const q = query(pool);
+const q = getQuery(pool);
+
 
   // 1) Tomamos snapshot del día (emitidos)
   const resumenArr = await reportesResumen(pool, {
@@ -387,7 +393,8 @@ async function listarCierresDiarios(pool, {
   desdeYmd,
   hastaYmd,
 }) {
-  const q = query(pool);
+  const q = getQuery(pool);
+
 
   const sql = `
     SELECT
@@ -408,7 +415,8 @@ async function detalleCierreDiario(pool, {
   pto_vta,
   fechaYmd,
 }) {
-  const q = query(pool);
+  const q = getQuery(pool);
+
 
   const rows = await q(`
     SELECT *
