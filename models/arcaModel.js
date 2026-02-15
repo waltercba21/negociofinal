@@ -2,26 +2,26 @@
 const pool = require("../config/conexion");
 const util = require("util");
 const crypto = require("crypto");
-
+const poolDefault = require("../config/conexion");
 const FACT_TIPOS = [1, 6, 11];   
 const NC_TIPOS   = [3, 8, 13];   
 
 
-function getQuery(pool) {
-  const p = pool || require("./db");
+function getQuery(poolArg) {
+  const p = poolArg || poolDefault;
+  if (!p || typeof p.promise !== "function") {
+    throw new Error("Pool mysql2 inválido (falta .promise())");
+  }
+  const pp = p.promise();
 
   return async (sql, params = []) => {
-    if (typeof sql !== "string") {
-      throw new TypeError(
-        `[ARCA][db] SQL debe ser string. Recibido: ${typeof sql}`
-      );
+    if (typeof sql !== "string" || !sql.trim()) {
+      throw new Error("SQL inválido (string vacío/undefined)");
     }
-
-    const normParams = Array.isArray(params)
-      ? params.map((v) => (v === undefined ? null : v))
+    const safeParams = Array.isArray(params)
+      ? params.map((v) => (v === undefined ? null : v)) // mysql2 NO acepta undefined
       : [];
-
-    const [rows] = await p.promise().query(sql, normParams);
+    const [rows] = await pp.query(sql, safeParams);
     return rows;
   };
 }
@@ -286,234 +286,230 @@ async function listarWsfeConsultas(arca_comprobante_id, limit = 20) {
   `;
   return query(sql, [arca_comprobante_id, Number(limit)]);
 }
-async function reportesResumen(pool, { ambiente, cuit_emisor, pto_vta, desdeYmd, hastaYmd, estado = "EMITIDO" }) {
+async function reportesResumen(pool, { ambiente, cuit_emisor, pto_vta, desdeYmd, hastaYmd, estado }) {
   const q = getQuery(pool);
 
-  const d = toYmd8(desdeYmd);
-  const h = toYmd8(hastaYmd);
-  if (!d || !h) throw new Error("desde/hasta inválidos (usar YYYY-MM-DD o YYYYMMDD)");
+  // Facturas típicas: A=1, B=6, C=11
+  // Notas de crédito típicas: A=3, B=8, C=13
+  const FACT = "1,6,11";
+  const NC   = "3,8,13";
 
-  const sql = `
+  let sql = `
     SELECT
       cbte_fch AS fecha_ymd,
-      DATE_FORMAT(STR_TO_DATE(cbte_fch, '%Y%m%d'), '%Y-%m-%d') AS fecha,
+      DATE_FORMAT(STR_TO_DATE(cbte_fch,'%Y%m%d'), '%Y-%m-%d') AS fecha,
 
-      SUM(cbte_tipo IN (1, 6, 11)) AS cant_facturas,
-      SUM(cbte_tipo IN (3, 8, 13)) AS cant_nc,
+      SUM(CASE WHEN cbte_tipo IN (${FACT}) THEN 1 ELSE 0 END) AS cant_facturas,
+      SUM(CASE WHEN cbte_tipo IN (${NC})   THEN 1 ELSE 0 END) AS cant_nc,
 
-      SUM(CASE WHEN cbte_tipo IN (1, 6, 11) THEN imp_total ELSE 0 END) AS total_facturas,
-      SUM(CASE WHEN cbte_tipo IN (3, 8, 13) THEN imp_total ELSE 0 END) AS total_nc,
-      (SUM(CASE WHEN cbte_tipo IN (1, 6, 11) THEN imp_total ELSE 0 END) -
-       SUM(CASE WHEN cbte_tipo IN (3, 8, 13) THEN imp_total ELSE 0 END)) AS ventas_netas,
+      SUM(CASE WHEN cbte_tipo IN (${FACT}) THEN imp_total ELSE 0 END) AS total_facturas,
+      SUM(CASE WHEN cbte_tipo IN (${NC})   THEN imp_total ELSE 0 END) AS total_nc,
 
-      SUM(CASE WHEN cbte_tipo IN (1, 6, 11) THEN imp_neto ELSE 0 END) AS neto_facturas,
-      SUM(CASE WHEN cbte_tipo IN (3, 8, 13) THEN imp_neto ELSE 0 END) AS neto_nc,
-      (SUM(CASE WHEN cbte_tipo IN (1, 6, 11) THEN imp_neto ELSE 0 END) -
-       SUM(CASE WHEN cbte_tipo IN (3, 8, 13) THEN imp_neto ELSE 0 END)) AS neto_neto,
+      ( SUM(CASE WHEN cbte_tipo IN (${FACT}) THEN imp_total ELSE 0 END)
+      - SUM(CASE WHEN cbte_tipo IN (${NC})   THEN imp_total ELSE 0 END) ) AS ventas_netas,
 
-      SUM(CASE WHEN cbte_tipo IN (1, 6, 11) THEN imp_iva ELSE 0 END) AS iva_facturas,
-      SUM(CASE WHEN cbte_tipo IN (3, 8, 13) THEN imp_iva ELSE 0 END) AS iva_nc,
-      (SUM(CASE WHEN cbte_tipo IN (1, 6, 11) THEN imp_iva ELSE 0 END) -
-       SUM(CASE WHEN cbte_tipo IN (3, 8, 13) THEN imp_iva ELSE 0 END)) AS iva_neto
+      SUM(CASE WHEN cbte_tipo IN (${FACT}) THEN imp_neto ELSE 0 END) AS neto_facturas,
+      SUM(CASE WHEN cbte_tipo IN (${NC})   THEN imp_neto ELSE 0 END) AS neto_nc,
+      ( SUM(CASE WHEN cbte_tipo IN (${FACT}) THEN imp_neto ELSE 0 END)
+      - SUM(CASE WHEN cbte_tipo IN (${NC})   THEN imp_neto ELSE 0 END) ) AS neto_neto,
+
+      SUM(CASE WHEN cbte_tipo IN (${FACT}) THEN imp_iva ELSE 0 END) AS iva_facturas,
+      SUM(CASE WHEN cbte_tipo IN (${NC})   THEN imp_iva ELSE 0 END) AS iva_nc,
+      ( SUM(CASE WHEN cbte_tipo IN (${FACT}) THEN imp_iva ELSE 0 END)
+      - SUM(CASE WHEN cbte_tipo IN (${NC})   THEN imp_iva ELSE 0 END) ) AS iva_neto
 
     FROM arca_comprobantes
     WHERE ambiente=? AND cuit_emisor=? AND pto_vta=?
       AND cbte_fch BETWEEN ? AND ?
-      AND estado=?
-    GROUP BY cbte_fch
-    ORDER BY cbte_fch ASC
   `;
+  const params = [ambiente, cuit_emisor, Number(pto_vta), desdeYmd, hastaYmd];
 
-  const params = [ambiente, cuit_emisor, pto_vta, d, h, estado];
+  if (estado) {
+    sql += ` AND estado=?`;
+    params.push(estado);
+  }
+
+  sql += ` GROUP BY cbte_fch ORDER BY cbte_fch ASC`;
+
   return q(sql, params);
 }
 
 async function reportesComprobantes(pool, { ambiente, cuit_emisor, pto_vta, desdeYmd, hastaYmd, estado, cbte_tipo }) {
   const q = getQuery(pool);
 
-  const d = toYmd8(desdeYmd);
-  const h = toYmd8(hastaYmd);
-  if (!d || !h) throw new Error("desde/hasta inválidos (usar YYYY-MM-DD o YYYYMMDD)");
-
   let sql = `
     SELECT
       id, estado, ambiente, cuit_emisor, pto_vta,
       cbte_tipo, cbte_nro, cbte_fch, cae, cae_vto,
       doc_tipo, doc_nro, receptor_nombre,
-      imp_total, imp_neto, imp_iva, created_at
+      imp_total, imp_neto, imp_iva,
+      created_at
     FROM arca_comprobantes
     WHERE ambiente=? AND cuit_emisor=? AND pto_vta=?
       AND cbte_fch BETWEEN ? AND ?
   `;
-
-  const params = [ambiente, cuit_emisor, pto_vta, d, h];
+  const params = [ambiente, cuit_emisor, Number(pto_vta), desdeYmd, hastaYmd];
 
   if (estado) {
-    sql += " AND estado=? ";
+    sql += ` AND estado=?`;
     params.push(estado);
   }
-  if (cbte_tipo !== null && cbte_tipo !== undefined && cbte_tipo !== "") {
-    sql += " AND cbte_tipo=? ";
+  if (cbte_tipo != null && cbte_tipo !== "") {
+    sql += ` AND cbte_tipo=?`;
     params.push(Number(cbte_tipo));
   }
 
-  sql += " ORDER BY cbte_fch ASC, cbte_tipo ASC, cbte_nro ASC ";
+  sql += ` ORDER BY cbte_fch ASC, cbte_tipo ASC, cbte_nro ASC`;
+
   return q(sql, params);
 }
-
-async function crearCierreDiario(pool, { ambiente, cuit_emisor, pto_vta, fechaYmd, fecha, usuarioEmail }) {
+async function crearCierreDiario(pool, { ambiente, cuit_emisor, pto_vta, fechaYmd, usuario_email }) {
   const q = getQuery(pool);
-  const schema = await getCierresSchema(q);
 
-  const ymd8 = toYmd8(fechaYmd || fecha);
-  if (!ymd8) throw new Error("fecha inválida (usar YYYY-MM-DD o YYYYMMDD)");
-  const fechaIso = ymd8ToIso(ymd8);
-  const fechaStore = schema.fechaIsDate ? fechaIso : ymd8;
-
-  // 1) Resumen diario (rows)
+  // 1) Traer resumen e ids
   const dias = await reportesResumen(pool, {
     ambiente,
     cuit_emisor,
     pto_vta,
-    desdeYmd: ymd8,
-    hastaYmd: ymd8,
+    desdeYmd: fechaYmd,
+    hastaYmd: fechaYmd,
     estado: "EMITIDO",
   });
 
-  // 2) Totales (se calculan acá, así NO existe más el ReferenceError "totales")
-  const tot = dias.reduce(
-    (acc, r) => {
-      acc.cant_facturas += toNumber(r.cant_facturas);
-      acc.cant_nc += toNumber(r.cant_nc);
-      acc.total_facturas += toNumber(r.total_facturas);
-      acc.total_nc += toNumber(r.total_nc);
-      acc.ventas_netas += toNumber(r.ventas_netas);
-      acc.neto_neto += toNumber(r.neto_neto);
-      acc.iva_neto += toNumber(r.iva_neto);
-      return acc;
-    },
-    { cant_facturas: 0, cant_nc: 0, total_facturas: 0, total_nc: 0, ventas_netas: 0, neto_neto: 0, iva_neto: 0 }
-  );
-
-  const cant_comprobantes = tot.cant_facturas + tot.cant_nc;
-
-  // 3) IDs ARCA del día (para ids_json)
   const comprobantes = await reportesComprobantes(pool, {
     ambiente,
     cuit_emisor,
     pto_vta,
-    desdeYmd: ymd8,
-    hastaYmd: ymd8,
+    desdeYmd: fechaYmd,
+    hastaYmd: fechaYmd,
     estado: "EMITIDO",
-    cbte_tipo: null,
   });
+
+  const dia = dias && dias[0] ? dias[0] : {
+    cant_facturas: 0, cant_nc: 0,
+    total_facturas: 0, total_nc: 0,
+    ventas_netas: 0,
+    neto_neto: 0,
+    iva_neto: 0,
+  };
+
+  const cantFact = Number(dia.cant_facturas || 0);
+  const cantNC   = Number(dia.cant_nc || 0);
+  const cantCbtes = cantFact + cantNC;
+
+  const totalFact = Number(dia.total_facturas || 0);
+  const totalNC   = Number(dia.total_nc || 0);
+  const ventasNetas = Number(dia.ventas_netas || 0);
+
+  const totalNeto = Number(dia.neto_neto || 0);
+  const totalIva  = Number(dia.iva_neto || 0);
+
   const ids = (comprobantes || []).map((c) => c.id);
 
   const snapshot = {
-    fecha: fechaIso,
-    fecha_ymd: ymd8,
-    estado: "EMITIDO",
-    totales: tot,
-    dias,
+    fechaYmd,
+    ambiente,
+    cuit_emisor,
+    pto_vta,
+    resumen_dia: dia,
+    comprobantes,
+  };
+
+  const snapshotJson = JSON.stringify(snapshot);
+  const hash = crypto.createHash("sha256").update(snapshotJson).digest("hex");
+
+  const totalsJson = JSON.stringify({
+    fechaYmd,
+    dia,
+    cant_cbtes: cantCbtes,
     ids,
-  };
+  });
 
-  const snapshotStr = JSON.stringify(snapshot);
-  const sha = crypto.createHash("sha256").update(snapshotStr).digest("hex");
-
-  // 4) Insert dinámico según tu schema real
-  const cols = [];
-  const vals = [];
-  const used = new Set();
-
-  const push = (col, val) => {
-    if (!col) return;
-    if (!schema.map.has(col)) return;
-    if (used.has(col)) return;
-    used.add(col);
-    cols.push(col);
-    vals.push(val === undefined ? null : val);
-  };
-
-  push("ambiente", ambiente);
-  push("cuit_emisor", cuit_emisor);
-  push("pto_vta", pto_vta);
-  push("fecha", fechaStore);
-
-  // usuario
-  push(schema.colUsuarioEmail, usuarioEmail || null);
-  push(schema.colCreatedBy, usuarioEmail || null);
-
-  // cantidades / totales (mapeadas)
-  push(schema.colCantComprobantes, cant_comprobantes);
-  push(schema.colCantFacturas, tot.cant_facturas);
-  push(schema.colCantNc, tot.cant_nc);
-  push(schema.colTotalFacturas, tot.total_facturas);
-  push(schema.colTotalNc, tot.total_nc);
-  push(schema.colVentasNetas, tot.ventas_netas);
-  push(schema.colTotalNeto, tot.neto_neto);
-  push(schema.colTotalIva, tot.iva_neto);
-
-  // json + hash
-  push(schema.colTotalsJson, JSON.stringify({ fecha: fechaIso, totales: tot, dias, estado: "EMITIDO" }));
-  push(schema.colSha, sha);
-  push(schema.colIdsJson, JSON.stringify(ids));
-  push(schema.colSnapshotJson, snapshotStr);
-
-  if (cols.length === 0) throw new Error("No se detectaron columnas insertables en arca_cierres_diarios");
-
-  const placeholders = cols.map(() => "?").join(",");
-  const updates = cols
-    .filter((c) => c !== "id")
-    .map((c) => `${c}=VALUES(${c})`)
-    .join(", ");
-
-  const sqlIns = `
-    INSERT INTO arca_cierres_diarios (${cols.join(",")})
-    VALUES (${placeholders})
-    ON DUPLICATE KEY UPDATE ${updates}
+  // 2) Insert (sin ON DUPLICATE KEY) para que tu controller pueda devolver 409 en duplicado
+  const sql = `
+    INSERT INTO arca_cierres_diarios
+    (
+      ambiente, cuit_emisor, pto_vta, fecha,
+      cant_comprobantes, cant_facturas, cant_notas_credito,
+      total_facturado, total_nc, total_neto_ventas,
+      total_neto, total_iva,
+      totals_json, hash_sha256,
+      created_by, usuario_email,
+      ids_json, snapshot_json
+    )
+    VALUES
+    (
+      ?, ?, ?, STR_TO_DATE(?, '%Y%m%d'),
+      ?, ?, ?,
+      ?, ?, ?,
+      ?, ?,
+      ?, ?,
+      ?, ?,
+      ?, ?
+    )
   `;
 
-  await q(sqlIns, vals);
-  return { fecha: fechaIso, sha256: sha, ids_count: ids.length, totales: tot };
+  const params = [
+    ambiente,
+    cuit_emisor,
+    Number(pto_vta),
+    fechaYmd,
+
+    cantCbtes,
+    cantFact,
+    cantNC,
+
+    totalFact.toFixed(2),
+    totalNC.toFixed(2),
+    ventasNetas.toFixed(2),
+
+    totalNeto.toFixed(2),
+    totalIva.toFixed(2),
+
+    totalsJson,
+    hash,
+
+    usuario_email ?? null,
+    usuario_email ?? null,
+
+    JSON.stringify(ids),
+    snapshotJson,
+  ];
+
+  const r = await q(sql, params);
+
+  return {
+    id: r && r.insertId ? r.insertId : null,
+    hash_sha256: hash,
+    cant_comprobantes: cantCbtes,
+  };
 }
-
-async function listarCierresDiarios(pool, { ambiente, cuit_emisor, pto_vta, desdeYmd, hastaYmd, desde, hasta }) {
+async function listarCierresDiarios(pool, { ambiente, cuit_emisor, pto_vta, desdeYmd, hastaYmd }) {
   const q = getQuery(pool);
-  const schema = await getCierresSchema(q);
-
-  const d8 = toYmd8(desdeYmd || desde);
-  const h8 = toYmd8(hastaYmd || hasta);
-  if (!d8 || !h8) throw new Error("desde/hasta inválidos (usar YYYY-MM-DD o YYYYMMDD)");
-
-  const dStore = schema.fechaIsDate ? ymd8ToIso(d8) : d8;
-  const hStore = schema.fechaIsDate ? ymd8ToIso(h8) : h8;
-
-  const fechaSelect = schema.fechaIsDate
-    ? "DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha"
-    : "DATE_FORMAT(STR_TO_DATE(fecha, '%Y%m%d'), '%Y-%m-%d') AS fecha";
 
   const sql = `
     SELECT
       id, ambiente, cuit_emisor, pto_vta,
-      ${fechaSelect},
+      DATE_FORMAT(fecha, '%Y%m%d') AS fecha,
       created_at,
-      ${schema.colUsuarioEmail ? `${schema.colUsuarioEmail} AS usuario_email` : "NULL AS usuario_email"},
-      ${schema.colCantFacturas ? `${schema.colCantFacturas} AS cant_facturas` : "0 AS cant_facturas"},
-      ${schema.colCantNc ? `${schema.colCantNc} AS cant_nc` : "0 AS cant_nc"},
-      ${schema.colTotalFacturas ? `${schema.colTotalFacturas} AS total_facturas` : "0 AS total_facturas"},
-      ${schema.colTotalNc ? `${schema.colTotalNc} AS total_nc` : "0 AS total_nc"},
-      ${schema.colVentasNetas ? `${schema.colVentasNetas} AS ventas_netas` : "0 AS ventas_netas"},
-      ${schema.colSha ? `${schema.colSha} AS sha256` : "NULL AS sha256"}
+      usuario_email,
+
+      cant_facturas,
+      cant_notas_credito AS cant_nc,
+
+      total_facturado AS total_facturas,
+      total_nc,
+      total_neto_ventas AS ventas_netas
+
     FROM arca_cierres_diarios
     WHERE ambiente=? AND cuit_emisor=? AND pto_vta=?
-      AND fecha BETWEEN ? AND ?
+      AND fecha BETWEEN STR_TO_DATE(?, '%Y%m%d') AND STR_TO_DATE(?, '%Y%m%d')
     ORDER BY fecha DESC
   `;
 
-  const params = [ambiente, cuit_emisor, pto_vta, dStore, hStore];
-  return q(sql, params);
+  return q(sql, [ambiente, cuit_emisor, Number(pto_vta), desdeYmd, hastaYmd]);
 }
+
 async function obtenerCierreDiario(pool, { ambiente, cuit_emisor, pto_vta, fechaYmd, fecha }) {
   const q = getQuery(pool);
   const schema = await getCierresSchema(q);
@@ -535,46 +531,42 @@ async function obtenerCierreDiario(pool, { ambiente, cuit_emisor, pto_vta, fecha
 
   return rows && rows[0] ? rows[0] : null;
 }
+async function detalleCierreDiario(pool, { ambiente, cuit_emisor, pto_vta, fechaYmd }) {
+  const q = getQuery(pool);
 
-async function detalleCierreDiario(pool, {
-  ambiente,
-  cuit_emisor,
-  pto_vta,
-  fechaYmd,
-}) {
-  const q = query(pool);
+  const sql = `
+    SELECT
+      id, ambiente, cuit_emisor, pto_vta,
+      DATE_FORMAT(fecha, '%Y%m%d') AS fecha,
+      created_at,
+      usuario_email,
 
-  const rows = await q(
-    `
-    SELECT *
+      cant_comprobantes,
+      cant_facturas,
+      cant_notas_credito AS cant_nc,
+
+      total_facturado AS total_facturas,
+      total_nc,
+      total_neto_ventas AS ventas_netas,
+      total_neto,
+      total_iva,
+
+      totals_json,
+      hash_sha256,
+      ids_json,
+      snapshot_json,
+      created_by
+
     FROM arca_cierres_diarios
-    WHERE ambiente=? AND cuit_emisor=? AND pto_vta=? AND fecha=?
+    WHERE ambiente=? AND cuit_emisor=? AND pto_vta=?
+      AND fecha = STR_TO_DATE(?, '%Y%m%d')
     LIMIT 1
-    `,
-    [String(ambiente || "").toUpperCase(), Number(cuit_emisor), Number(pto_vta), fechaYmd]
-  );
+  `;
 
-  if (!rows?.[0]) return null;
-
-  const row = rows[0];
-  try {
-    row.snapshot = typeof row.snapshot_json === "string"
-      ? JSON.parse(row.snapshot_json)
-      : row.snapshot_json;
-  } catch {
-    row.snapshot = null;
-  }
-
-  try {
-    row.ids = typeof row.ids_json === "string"
-      ? JSON.parse(row.ids_json)
-      : row.ids_json;
-  } catch {
-    row.ids = null;
-  }
-
-  return row;
+  const rows = await q(sql, [ambiente, cuit_emisor, Number(pto_vta), fechaYmd]);
+  return rows && rows[0] ? rows[0] : null;
 }
+
 
 module.exports = {
   crearComprobante,
