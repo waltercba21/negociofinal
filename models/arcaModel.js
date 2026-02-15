@@ -349,38 +349,34 @@ const q = getQuery(pool);
   const sha256 = crypto.createHash("sha256").update(snapshotStr).digest("hex");
 
   // 2) Insert (con UNIQUE: si existe, MySQL tirará duplicate)
-  const sql = `
-    INSERT INTO arca_cierres_diarios (
-      ambiente, cuit_emisor, pto_vta, fecha, usuario_email,
-      cant_facturas, cant_nc,
-      total_facturas, total_nc, ventas_netas,
-      neto_facturas, neto_nc, neto_neto,
-      iva_facturas, iva_nc, iva_neto,
-      snapshot_json, snapshot_sha256
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-  `;
+const sqlIns = `
+  INSERT INTO arca_cierres_diarios (
+    ambiente, cuit_emisor, pto_vta, fecha,
+    total_cbtes, total_emitidos, total_rechazados, total_neto, total_iva, total_total,
+    snapshot_sha256, snapshot_json, arca_ids_json,
+    usuario_email, created_at, updated_at
+  ) VALUES (
+    ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?,
+    ?, CAST(? AS JSON), CAST(? AS JSON),
+    ?, NOW(), NOW()
+  )
+`;
 
-  const params = [
-    ambiente, cuit_emisor, Number(pto_vta), fechaYmd, usuario_email,
+const paramsIns = [
+  ambiente, cuit_emisor, pto_vta, fechaYmd,
+  Number(totales.cbtes || 0),
+  Number(totales.emitidos || 0),
+  Number(totales.rechazados || 0),
+  Number(totales.neto || 0),
+  Number(totales.iva || 0),
+  Number(totales.total || 0),
+  sha,
+  snapshotJson,
+  arcaIdsJson,
+  usuario_email || null,
+];
 
-    Number(resumen.cant_facturas || 0),
-    Number(resumen.cant_nc || 0),
-
-    Number(resumen.total_facturas || 0),
-    Number(resumen.total_nc || 0),
-    Number(resumen.ventas_netas || 0),
-
-    Number(resumen.neto_facturas || 0),
-    Number(resumen.neto_nc || 0),
-    Number(resumen.neto_neto || 0),
-
-    Number(resumen.iva_facturas || 0),
-    Number(resumen.iva_nc || 0),
-    Number(resumen.iva_neto || 0),
-
-    snapshotStr,
-    sha256
-  ];
 
   const r = await q(sql, params);
   return { id: r.insertId, sha256, resumen, cant_cbtes: comprobantes.length };
