@@ -304,84 +304,118 @@ async function reportesResumen(pool, {
 
   return await q(sql, params);
 }
-
 async function crearCierreDiario(pool, {
   ambiente,
   cuit_emisor,
   pto_vta,
-  fechaYmd,
+  fechaYmd,          // YYYYMMDD
+  estado = "EMITIDO",
   usuario_email = null,
 }) {
-const q = getQuery(pool);
+  const q = query(pool);
 
-
-  // 1) Tomamos snapshot del día (emitidos)
-  const resumenArr = await reportesResumen(pool, {
-    ambiente, cuit_emisor, pto_vta,
-    desdeYmd: fechaYmd, hastaYmd: fechaYmd,
-    estado: "EMITIDO",
-  });
-
-  const resumen = resumenArr[0] || {
-    fecha_ymd: fechaYmd,
-    cant_facturas: 0, cant_nc: 0,
-    total_facturas: 0, total_nc: 0, ventas_netas: 0,
-    neto_facturas: 0, neto_nc: 0, neto_neto: 0,
-    iva_facturas: 0, iva_nc: 0, iva_neto: 0,
-  };
-
-  const comprobantes = await reportesComprobantes(pool, {
-    ambiente, cuit_emisor, pto_vta,
-    desdeYmd: fechaYmd, hastaYmd: fechaYmd,
-    estado: "EMITIDO",
-  });
-
-  const snapshot = {
-    fechaYmd,
+  // Resumen del día (usa tu función existente reportesResumen)
+  const rep = await reportesResumen(pool, {
     ambiente,
     cuit_emisor,
-    pto_vta: Number(pto_vta),
-    resumen,
-    comprobantes,
-  };
+    pto_vta,
+    desdeYmd: fechaYmd,
+    hastaYmd: fechaYmd,
+    estado,
+  });
 
-  const snapshotStr = JSON.stringify(snapshot);
-  const sha256 = crypto.createHash("sha256").update(snapshotStr).digest("hex");
+  const resumen = (rep && Array.isArray(rep.dias) && rep.dias[0]) ? rep.dias[0] : null;
 
-  // 2) Insert (con UNIQUE: si existe, MySQL tirará duplicate)
-const sqlIns = `
-  INSERT INTO arca_cierres_diarios (
-    ambiente, cuit_emisor, pto_vta, fecha,
-    total_cbtes, total_emitidos, total_rechazados, total_neto, total_iva, total_total,
-    snapshot_sha256, snapshot_json, arca_ids_json,
-    usuario_email, created_at, updated_at
-  ) VALUES (
-    ?, ?, ?, ?,
-    ?, ?, ?, ?, ?, ?,
-    ?, CAST(? AS JSON), CAST(? AS JSON),
-    ?, NOW(), NOW()
-  )
-`;
+  const cant_facturas   = Number(resumen?.cant_facturas || 0);
+  const cant_nc         = Number(resumen?.cant_nc || 0);
+  const total_facturas  = Number(resumen?.total_facturas || 0);
+  const total_nc        = Number(resumen?.total_nc || 0);
+  const ventas_netas    = Number(resumen?.ventas_netas || 0);
 
-const paramsIns = [
-  ambiente, cuit_emisor, pto_vta, fechaYmd,
-  Number(totales.cbtes || 0),
-  Number(totales.emitidos || 0),
-  Number(totales.rechazados || 0),
-  Number(totales.neto || 0),
-  Number(totales.iva || 0),
-  Number(totales.total || 0),
-  sha,
-  snapshotJson,
-  arcaIdsJson,
-  usuario_email || null,
-];
+  const neto_facturas = Number(resumen?.neto_facturas || 0);
+  const neto_nc       = Number(resumen?.neto_nc || 0);
+  const neto_neto     = Number(resumen?.neto_neto || 0);
 
+  const iva_facturas  = Number(resumen?.iva_facturas || 0);
+  const iva_nc        = Number(resumen?.iva_nc || 0);
+  const iva_neto      = Number(resumen?.iva_neto || 0);
 
-  const r = await q(sql, params);
-  return { id: r.insertId, sha256, resumen, cant_cbtes: comprobantes.length };
+  // IDs del día (para auditar qué quedó adentro del cierre)
+  const idsRows = await q(
+    `
+    SELECT GROUP_CONCAT(id ORDER BY id DESC) AS ids
+    FROM arca_comprobantes
+    WHERE ambiente=? AND cuit_emisor=? AND pto_vta=?
+      AND cbte_fch=? AND estado=?
+    `,
+    [String(ambiente || "").toUpperCase(), Number(cuit_emisor), Number(pto_vta), fechaYmd, estado]
+  );
+
+  const idsCsv = idsRows?.[0]?.ids || "";
+  const ids = idsCsv ? idsCsv.split(",").map((x) => Number(x)).filter(Boolean) : [];
+
+  // Guardar / actualizar (requiere UNIQUE por ambiente+cuit+pto+fecha)
+  await q(
+    `
+    INSERT INTO arca_cierres_diarios (
+      ambiente, cuit_emisor, pto_vta, fecha, usuario_email,
+      cant_facturas, cant_nc,
+      total_facturas, total_nc, ventas_netas,
+      neto_facturas, neto_nc, neto_neto,
+      iva_facturas, iva_nc, iva_neto,
+      ids_json, snapshot_json
+    )
+    VALUES (?,?,?,?,?,
+            ?,?,
+            ?,?,?,
+            ?,?,?,
+            ?,?,?,
+            CAST(? AS JSON), CAST(? AS JSON))
+    ON DUPLICATE KEY UPDATE
+      usuario_email=VALUES(usuario_email),
+      cant_facturas=VALUES(cant_facturas),
+      cant_nc=VALUES(cant_nc),
+      total_facturas=VALUES(total_facturas),
+      total_nc=VALUES(total_nc),
+      ventas_netas=VALUES(ventas_netas),
+      neto_facturas=VALUES(neto_facturas),
+      neto_nc=VALUES(neto_nc),
+      neto_neto=VALUES(neto_neto),
+      iva_facturas=VALUES(iva_facturas),
+      iva_nc=VALUES(iva_nc),
+      iva_neto=VALUES(iva_neto),
+      ids_json=VALUES(ids_json),
+      snapshot_json=VALUES(snapshot_json)
+    `,
+    [
+      String(ambiente || "").toUpperCase(),
+      Number(cuit_emisor),
+      Number(pto_vta),
+      fechaYmd,
+      usuario_email,
+
+      cant_facturas,
+      cant_nc,
+
+      total_facturas,
+      total_nc,
+      ventas_netas,
+
+      neto_facturas,
+      neto_nc,
+      neto_neto,
+
+      iva_facturas,
+      iva_nc,
+      iva_neto,
+
+      JSON.stringify(ids),
+      JSON.stringify({ estado, resumen }),
+    ]
+  );
+
+  return detalleCierreDiario(pool, { ambiente, cuit_emisor, pto_vta, fechaYmd });
 }
-
 async function listarCierresDiarios(pool, {
   ambiente,
   cuit_emisor,
@@ -389,8 +423,7 @@ async function listarCierresDiarios(pool, {
   desdeYmd,
   hastaYmd,
 }) {
-  const q = getQuery(pool);
-
+  const q = query(pool);
 
   const sql = `
     SELECT
@@ -402,7 +435,14 @@ async function listarCierresDiarios(pool, {
       AND fecha BETWEEN ? AND ?
     ORDER BY fecha DESC
   `;
-  return await q(sql, [ambiente, cuit_emisor, Number(pto_vta), desdeYmd, hastaYmd]);
+
+  return await q(sql, [
+    String(ambiente || "").toUpperCase(),
+    Number(cuit_emisor),
+    Number(pto_vta),
+    desdeYmd,
+    hastaYmd,
+  ]);
 }
 
 async function detalleCierreDiario(pool, {
@@ -411,29 +451,40 @@ async function detalleCierreDiario(pool, {
   pto_vta,
   fechaYmd,
 }) {
-  const q = getQuery(pool);
+  const q = query(pool);
 
-
-  const rows = await q(`
+  const rows = await q(
+    `
     SELECT *
     FROM arca_cierres_diarios
     WHERE ambiente=? AND cuit_emisor=? AND pto_vta=? AND fecha=?
     LIMIT 1
-  `, [ambiente, cuit_emisor, Number(pto_vta), fechaYmd]);
+    `,
+    [String(ambiente || "").toUpperCase(), Number(cuit_emisor), Number(pto_vta), fechaYmd]
+  );
 
-  if (!rows || !rows[0]) return null;
+  if (!rows?.[0]) return null;
 
   const row = rows[0];
-  // mysql puede devolver JSON como string
   try {
-    row.snapshot = (typeof row.snapshot_json === "string")
+    row.snapshot = typeof row.snapshot_json === "string"
       ? JSON.parse(row.snapshot_json)
       : row.snapshot_json;
   } catch {
     row.snapshot = null;
   }
+
+  try {
+    row.ids = typeof row.ids_json === "string"
+      ? JSON.parse(row.ids_json)
+      : row.ids_json;
+  } catch {
+    row.ids = null;
+  }
+
   return row;
 }
+
 module.exports = {
   crearComprobante,
   insertarItems,
