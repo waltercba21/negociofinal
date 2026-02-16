@@ -179,8 +179,8 @@ function renderList() {
 
   tbody.innerHTML = rows.map((r) => {
     const vendedor = String(r.vendedor || "—").trim();
-    const cliente  = String(r.cliente || "—").trim();
-    const tipo     = tipoABFromCbteTipo(r.arca_cbte_tipo);
+    const cliente  = String(clienteArcaLabelFromRow(r) || r.cliente || "—").trim();
+    const tipo     = tipoLabelFromCbteTipo(r.arca_cbte_tipo);
 
     return `
       <tr class="arca-row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
@@ -354,10 +354,10 @@ async function auditarWsfeActual() {
     $("dTotal").textContent = money(det.factura.total);
 
     $("itemsTbody").innerHTML = (det.items || [])
-      .map(
-        (it) => `
-      <tr>
-        <td>${it.descripcion || "(sin nombre)"}</td>
+       .map(
+         (it) => `
+       <tr>
+        <td>${esc(it.descripcion || "(sin nombre)")}</td>
         <td>${it.cantidad}</td>
         <td>${money(it.precio_unitario)}</td>
         <td><strong>${money(it.subtotal)}</strong></td>
@@ -542,6 +542,7 @@ html: `
       <button type="button" id="sw_cache_btn" class="btn secondary" style="margin:0">Guardar en cache</button>
       <button type="button" id="sw_resolve_btn" class="btn secondary" style="margin:0;display:none">Resolver por padrón</button>
       <span id="sw_cache_status" style="font-size:12px;color:#475467;font-weight:800"></span>
+      <span id="sw_hint" style="font-size:12px;color:#475467;font-weight:800"></span>
     </div>
 
   </div>
@@ -635,6 +636,22 @@ html: `
           const doc_nro = Number(doc_nro_str || 0);
           return { doc_tipo, doc_nro_str, doc_nro };
         }
+       // ---- FIX UI-1: si cambia doc_tipo/doc_nro, limpiamos receptor para no “arrastrar” datos ----
+        let lastDocKey = null;
+        function docKeyNow() {
+         const x = currentDoc();
+         return `${x.doc_tipo}:${x.doc_nro_str}`;
+        }
+        function resetReceptorIfDocChanged() {
+          const k = docKeyNow();
+          if (k === lastDocKey) return;
+          lastDocKey = k;
+          inpNom.value = "";
+          inpDom.value = "";
+          setHint("");
+          setSt("");
+          syncDraftFromUI(); // persiste limpio (evita mezcla al reabrir)
+        }
 
         async function loadCondIvaOptions() {
           const cbteTipo = Number(inpCbte.value || 0);
@@ -675,6 +692,7 @@ html: `
   inpTipo.value = "80";
   if (String(inpNro.value || "").trim() === "0") inpNro.value = "";
   setHint("Factura A: DocTipo 80 (CUIT) + Cond IVA válida (ej. 1).");
+  resetReceptorIfDocChanged();
   return;
 }
 
@@ -683,6 +701,12 @@ html: `
   setHint("Factura B: recomendado CF (DocTipo 99, DocNro 0, Cond IVA 5).");
   if (Number(inpTipo.value || 0) === 99) inpNro.value = "0";
   else if (String(inpNro.value || "").trim() === "0") inpNro.value = "";
+   // si el usuario pasa a CF, limpiamos receptor
+           if (Number(inpTipo.value || 0) === 99) {
+            inpNom.value = "";
+              inpDom.value = "";
+              resetReceptorIfDocChanged();
+            }
   return;
 }
 
@@ -877,7 +901,7 @@ if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
         setVal(inpNro, draft.doc_nro);
         setVal(inpNom, draft.receptor_nombre);
         setVal(inpDom, draft.domicilio);
-
+        lastDocKey = docKeyNow(); // base de comparación
         // Guardar borrador en cada cambio
         const hook = (el) => {
           if (!el) return;
@@ -889,6 +913,7 @@ if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
         on(inpCbte, async () => {
           applyRules();
           await loadCondIvaOptions();
+          resetReceptorIfDocChanged();
           scheduleBuscar();
         });
 on(inpTipo, () => {
@@ -898,12 +923,13 @@ on(inpTipo, () => {
     inpNro.value = "";
     syncDraftFromUI();
   }
-
+  resetReceptorIfDocChanged();
   scheduleBuscar();
 });
 
         on(inpNro, () => {
           toggleResolveBtn();
+          resetReceptorIfDocChanged();
           scheduleBuscar();
         });
 
