@@ -224,9 +224,17 @@ async function emitirDesdeFacturaMostrador(req, res) {
     if (!/^\d+$/.test(doc_nro_str)) return res.status(400).json({ error: "doc_nro inválido" });
     const doc_nro = Number(doc_nro_str);
 
-    // IMPORTANTE: si el front no lo manda, recién ahí usamos defaults / cache
-    const receptorCondIvaInput = req.body.receptor_cond_iva_id;
-    let receptor_cond_iva_id = receptorCondIvaInput != null ? Number(receptorCondIvaInput) : 5;
+  const receptorCondIvaInput = req.body.receptor_cond_iva_id;
+
+if (receptorCondIvaInput == null || receptorCondIvaInput === "") {
+  return res.status(400).json({ error: "Falta receptor_cond_iva_id" });
+}
+
+const receptor_cond_iva_id = Number(receptorCondIvaInput);
+
+if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
+  return res.status(400).json({ error: "receptor_cond_iva_id inválido" });
+}
 
     let receptor_nombre = String(req.body.receptor_nombre || "").trim() || null;
     let receptor_domicilio = null;
