@@ -1422,12 +1422,14 @@ async function descargarPDFComprobante(req, res) {
    WHERE c.id=? LIMIT 1`,
   [arcaId]
 );
+const c = cab?.[0];
+if (!c) {
+  return res.status(404).send("Comprobante ARCA no encontrado");
+}
+if (c.estado !== "EMITIDO") {
+  return res.status(409).send("Solo PDF si está EMITIDO");
+}
 
-    const c = cab[0];
-
-    if (c.estado !== "EMITIDO") {
-      return res.status(409).send("Solo PDF si está EMITIDO");
-    }
 
     const items = await query(
       `SELECT descripcion, cantidad, precio_unitario, iva_alicuota, imp_neto, imp_iva, imp_total
