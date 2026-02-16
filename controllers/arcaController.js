@@ -1526,17 +1526,30 @@ function receptorCacheWriteEnabled() {
   return !isTrue(process.env.ARCA_DISABLE_RECEPTOR_CACHE_WRITE);
 }
 
+// controllers/arcaController.js
 async function buscarReceptor(req, res) {
   try {
     const doc_tipo = Number(req.query.doc_tipo || 0);
-    const doc_nro  = Number(req.query.doc_nro  || 0);
+
+    const docNroRaw = String(req.query.doc_nro ?? "").trim();
+    const docNroDigits = docNroRaw.replace(/\D/g, "");
+    const doc_nro = Number(docNroDigits || 0);
 
     const resolve = isTrue(req.query.resolve);
     const refresh = isTrue(req.query.refresh);
     const debug   = isTrue(req.query.debug);
 
+    // ---------- Validaciones base ----------
     if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) {
       return res.status(400).json({ error: "doc_tipo inválido" });
+    }
+    if (!docNroDigits) {
+      return res.status(400).json({ error: "doc_nro inválido" });
+    }
+
+    // Si es CUIT, exigir 11 dígitos (esto arregla el caso doc_nro=123 que hoy te daba 404)
+    if (doc_tipo === 80 && docNroDigits.length !== 11) {
+      return res.status(400).json({ error: "CUIT inválido (se esperan 11 dígitos)" });
     }
     if (!Number.isFinite(doc_nro) || doc_nro <= 0) {
       return res.status(400).json({ error: "doc_nro inválido" });
@@ -1544,22 +1557,23 @@ async function buscarReceptor(req, res) {
 
     if (debug) {
       console.log("[ARCA][buscarReceptor] query =", req.query);
+      console.log("[ARCA][buscarReceptor] parsed =", { doc_tipo, doc_nro, docNroDigits });
       console.log("[ARCA][buscarReceptor] resolve =", resolve, "refresh =", refresh);
       console.log("[ARCA][buscarReceptor] cacheWriteEnabled =", receptorCacheWriteEnabled());
     }
 
-    if (!refresh && receptorCacheWriteEnabled()) {
-  const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-  if (cache) return res.json(cache);
-}
+    // ---------- 1) Cache (lectura SIEMPRE; escritura depende del flag) ----------
+    if (!refresh) {
+      const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+      if (cache) return res.json(cache);
+    }
 
-
-    // 2) si no pide resolve => termina acá
+    // ---------- 2) Si no pide resolve => termina acá ----------
     if (!resolve) {
       return res.status(404).json({ error: "No encontrado en cache" });
     }
 
-    // 3) resolve contra padrón (solo CUIT por ahora)
+    // ---------- 3) Resolve contra padrón (solo CUIT por ahora) ----------
     if (doc_tipo !== 80) {
       return res.status(400).json({ error: "resolve=1 solo soporta doc_tipo=80 (CUIT)" });
     }
@@ -1571,16 +1585,13 @@ async function buscarReceptor(req, res) {
 
     const out = await padron.getPersonaV2({ idPersona: doc_nro, cuitRepresentada });
 
-    // Manejo de errores / no encontrado
-    if (!out || !out.ok) {
-      if (out?.notFound) {
-        return res.status(404).json({
-          error: "No encontrado en padrón",
-          service: out?.service || "ws_sr_padron_a13",
-        });
-      }
+    // ---------- Manejo de errores / no encontrado ----------
+    // padron.getPersonaV2 puede devolver:
+    // - { ok:true, data:null, notFound:true }  (caso inexistente)
+    // - { ok:false, fault/error/... }         (upstream)
+    if (!out || out.ok === false) {
       const msg = String(out?.fault || out?.error || "No se pudo resolver en padrón");
-      const isNotFound = /no existe|no se encuentra|inexistente/i.test(msg);
+      const isNotFound = out?.notFound || /no existe|no se encuentra|inexistente/i.test(msg);
       return res.status(isNotFound ? 404 : 502).json({ error: msg, service: out?.service || null });
     }
 
@@ -1596,11 +1607,12 @@ async function buscarReceptor(req, res) {
       doc_nro,
       nombre: out.data?.nombre || null,
       razon_social: out.data?.razon_social || out.data?.nombre || null,
+      // Si más adelante mapeás condición IVA desde padrón, acá va.
       cond_iva_id: null,
       domicilio: out.data?.domicilio || null,
     };
 
-    // Guardar en cache (opcional: deshabilitable en local/homo)
+    // ---------- 4) Guardar en cache (opcional) ----------
     if (receptorCacheWriteEnabled()) {
       await arcaModel.upsertReceptorCache(receptorData);
       const saved = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
@@ -1614,9 +1626,6 @@ async function buscarReceptor(req, res) {
     return res.status(500).json({ error: e.message || "Error receptor" });
   }
 }
-
-
-
 async function paramsCondIvaReceptor(req, res) {
   try {
     const cbte_tipo = Number(req.query.cbte_tipo || 0);
