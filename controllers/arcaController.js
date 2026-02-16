@@ -1531,23 +1531,21 @@ async function buscarReceptor(req, res) {
   try {
     const doc_tipo = Number(req.query.doc_tipo || 0);
 
-    const docNroRaw = String(req.query.doc_nro ?? "").trim();
+    const docNroRaw    = String(req.query.doc_nro ?? "").trim();
     const docNroDigits = docNroRaw.replace(/\D/g, "");
-    const doc_nro = Number(docNroDigits || 0);
+    const doc_nro      = Number(docNroDigits || 0);
 
     const resolve = isTrue(req.query.resolve);
     const refresh = isTrue(req.query.refresh);
     const debug   = isTrue(req.query.debug);
 
-    // ---------- Validaciones base ----------
+    // ---------- Validaciones ----------
     if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) {
       return res.status(400).json({ error: "doc_tipo inválido" });
     }
     if (!docNroDigits) {
       return res.status(400).json({ error: "doc_nro inválido" });
     }
-
-    // Si es CUIT, exigir 11 dígitos (esto arregla el caso doc_nro=123 que hoy te daba 404)
     if (doc_tipo === 80 && docNroDigits.length !== 11) {
       return res.status(400).json({ error: "CUIT inválido (se esperan 11 dígitos)" });
     }
@@ -1562,45 +1560,38 @@ async function buscarReceptor(req, res) {
       console.log("[ARCA][buscarReceptor] cacheWriteEnabled =", receptorCacheWriteEnabled());
     }
 
-    // ---------- 1) Cache (lectura SIEMPRE; escritura depende del flag) ----------
+    // ---------- 1) Cache (lectura SIEMPRE; cache incompleto => MISS) ----------
     if (!refresh) {
       const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-      if (cache) return res.json(cache);
+
+      const cacheOk =
+        cache &&
+        (
+          (cache.razon_social && String(cache.razon_social).trim()) ||
+          (cache.nombre && String(cache.nombre).trim()) ||
+          (cache.domicilio && String(cache.domicilio).trim())
+        );
+
+      if (cacheOk) return res.json(cache);
+
+      if (debug && cache) {
+        console.log("[ARCA][buscarReceptor] cache incompleto => MISS", {
+          doc_tipo, doc_nro,
+          nombre: cache.nombre,
+          razon_social: cache.razon_social,
+          domicilio: cache.domicilio,
+          cond_iva_id: cache.cond_iva_id,
+          updated_at: cache.updated_at
+        });
+      }
     }
-    // 1) Cache (lectura SIEMPRE)
-if (!refresh) {
-  const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
-
-  // Considerar "válido" solo si trae algún dato identificatorio
-  const cacheOk =
-    cache &&
-    (
-      (cache.razon_social && String(cache.razon_social).trim()) ||
-      (cache.nombre && String(cache.nombre).trim()) ||
-      (cache.domicilio && String(cache.domicilio).trim())
-    );
-
-  if (cacheOk) return res.json(cache);
-
-  // Si existe pero está incompleto, lo tratamos como miss
-  if (debug && cache) {
-    console.log("[ARCA][buscarReceptor] cache incompleto => MISS", {
-      doc_tipo, doc_nro,
-      nombre: cache.nombre,
-      razon_social: cache.razon_social,
-      domicilio: cache.domicilio,
-      cond_iva_id: cache.cond_iva_id,
-      updated_at: cache.updated_at
-    });
-  }
-}
 
     // ---------- 2) Si no pide resolve => termina acá ----------
     if (!resolve) {
       return res.status(404).json({ error: "No encontrado en cache" });
     }
 
-    // ---------- 3) Resolve contra padrón (solo CUIT por ahora) ----------
+    // ---------- 3) Resolve contra padrón (solo CUIT) ----------
     if (doc_tipo !== 80) {
       return res.status(400).json({ error: "resolve=1 solo soporta doc_tipo=80 (CUIT)" });
     }
@@ -1612,16 +1603,20 @@ if (!refresh) {
 
     const out = await padron.getPersonaV2({ idPersona: doc_nro, cuitRepresentada });
 
+    // Errores upstream / no encontrado
     if (!out || out.ok === false) {
       const msg = String(out?.fault || out?.error || "No se pudo resolver en padrón");
       const isNotFound = out?.notFound || /no existe|no se encuentra|inexistente/i.test(msg);
-      return res.status(isNotFound ? 404 : 502).json({ error: msg, service: out?.service || null });
+      return res.status(isNotFound ? 404 : 502).json({
+        error: msg,
+        service: out?.service || "ws_sr_padron_a13"
+      });
     }
 
     if (!out.data) {
       return res.status(404).json({
         error: "La Clave (CUIT/CUIL) consultada es inexistente",
-        service: out?.service || "ws_sr_padron_a13",
+        service: out?.service || "ws_sr_padron_a13"
       });
     }
 
@@ -1630,25 +1625,28 @@ if (!refresh) {
       doc_nro,
       nombre: out.data?.nombre || null,
       razon_social: out.data?.razon_social || out.data?.nombre || null,
-      // Si más adelante mapeás condición IVA desde padrón, acá va.
-      cond_iva_id: null,
-      domicilio: out.data?.domicilio || null,
+      cond_iva_id: null, // si luego mapeás cond IVA desde padrón, setear acá
+      domicilio: out.data?.domicilio || null
     };
 
     // ---------- 4) Guardar en cache (opcional) ----------
     if (receptorCacheWriteEnabled()) {
       await arcaModel.upsertReceptorCache(receptorData);
       const saved = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+
+      // si por alguna razón no quedó completo, igual devolvemos datos de padrón
       return res.json(saved || receptorData);
     }
 
-    // Si cache write está deshabilitado, devolvemos directo (sin persistir)
+    // cache write deshabilitado => devolver directo
     return res.json({ ...receptorData, cache_write: false });
+
   } catch (e) {
     console.error("❌ ARCA buscarReceptor:", e);
     return res.status(500).json({ error: e.message || "Error receptor" });
   }
 }
+
 async function paramsCondIvaReceptor(req, res) {
   try {
     const cbte_tipo = Number(req.query.cbte_tipo || 0);
