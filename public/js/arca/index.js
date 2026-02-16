@@ -27,15 +27,17 @@ const ARCA_SWAL = (() => {
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  const state = {
-    limit: 50,
-    offset: 0,
-    rows: [],
-    selectedId: null,
-    selectedArcaId: null,
-    selectedArcaEstado: null,
-    search: "",
-  };
+const state = {
+  limit: 50,
+  offset: 0,
+  rows: [],
+  selectedId: null,
+  selectedArcaId: null,
+  selectedArcaEstado: null,
+  selectedHasItems: false,   // <-- agregar
+  search: "",
+};
+
 
  const DRAFT_PREFIX = "arca_emit_draft_v1:";
 const wsfeHistEl = $("wsfeHist");
@@ -331,155 +333,173 @@ async function auditarWsfeActual() {
     btnAuditarWsfe.disabled = false;
   }
 }
+async function onSelect(id) {
+  state.selectedId = id;
 
+  $("arcaEmpty").style.display = "none";
+  $("arcaDetail").style.display = "block";
 
-  // ---------------- Selección / detalle ----------------
-  async function onSelect(id) {
-    state.selectedId = id;
+  // Guardrail: por defecto deshabilitar emitir hasta validar items + estado ARCA
+  state.selectedHasItems = false;
+  if ($("btnEmitir")) $("btnEmitir").disabled = true;
 
-    $("arcaEmpty").style.display = "none";
-    $("arcaDetail").style.display = "block";
-    $("btnEmitir").disabled = false;
+  const [det, hist] = await Promise.all([
+    fetchJSON(`/arca/ui/facturas/${id}`),
+    fetchJSON(`/arca/ui/arca-por-factura/${id}`),
+  ]);
 
-    const [det, hist] = await Promise.all([
-      fetchJSON(`/arca/ui/facturas/${id}`),
-      fetchJSON(`/arca/ui/arca-por-factura/${id}`),
-    ]);
+  // ---------- Datos factura ----------
+  $("dId").textContent = `#${det.factura.id}`;
+  $("dFecha").textContent = det.factura.fecha || "-";
+  $("dVend").textContent = det.factura?.vendedor || "-";
+  if ($("dCliente")) $("dCliente").textContent = det.factura?.cliente || "MOSTRADOR";
+  $("dPago").textContent = det.factura.metodos_pago || "-";
+  $("dTotal").textContent = money(det.factura.total);
 
-    $("dId").textContent = `#${det.factura.id}`;
-    $("dFecha").textContent = det.factura.fecha || "-";
-    $("dVend").textContent = (det.factura?.vendedor || "-");
-    if ($("dCliente")) $("dCliente").textContent = (det.factura?.cliente || "MOSTRADOR");
-    $("dPago").textContent = det.factura.metodos_pago || "-";
-    $("dTotal").textContent = money(det.factura.total);
+  // ---------- Items (bloquear emisión si está vacía) ----------
+  const items = Array.isArray(det.items) ? det.items : [];
+  const hasItems = items.length > 0;
+  state.selectedHasItems = hasItems;
 
-    $("itemsTbody").innerHTML = (det.items || [])
-       .map(
-         (it) => `
-       <tr>
-        <td>${esc(it.descripcion || "(sin nombre)")}</td>
-        <td>${it.cantidad}</td>
-        <td>${money(it.precio_unitario)}</td>
-        <td><strong>${money(it.subtotal)}</strong></td>
-      </tr>
-    `
-      )
-      .join("");
+  $("itemsTbody").innerHTML = hasItems
+    ? items
+        .map(
+          (it) => `
+        <tr>
+          <td>${esc(it.descripcion || "(sin nombre)")}</td>
+          <td>${Number(it.cantidad || 0)}</td>
+          <td>${money(it.precio_unitario)}</td>
+          <td><strong>${money(it.subtotal)}</strong></td>
+        </tr>
+      `
+        )
+        .join("")
+    : `<tr><td colspan="4" class="muted">Factura sin items: no se puede emitir ARCA.</td></tr>`;
 
+  // ---------- Helpers historial ----------
+  const cbteLabel = (t) => {
+    const n = Number(t || 0);
+    const map = { 1: "FA", 6: "FB", 3: "NCA", 8: "NCB", 11: "FC", 13: "NCC" };
+    return map[n] || (n ? String(n) : "-");
+  };
 
-const cbteLabel = (t) => {
-  const n = Number(t || 0);
-  const map = { 1: "FA", 6: "FB", 3: "NCA", 8: "NCB", 11: "FC", 13: "NCC" };
-  return map[n] || (n ? String(n) : "-");
-};
+  const receptorLabel = (r) => {
+    const dt = Number(r.doc_tipo || 0);
+    const dn = Number(r.doc_nro || 0);
+    if (dt === 99 && dn === 0) return "CONSUMIDOR FINAL";
+    return (
+      (r.receptor_nombre || "").trim() ||
+      (r.cache_razon_social || "").trim() ||
+      (r.cache_nombre || "").trim() ||
+      "-"
+    );
+  };
 
-const receptorLabel = (r) => {
-  const dt = Number(r.doc_tipo || 0);
-  const dn = Number(r.doc_nro || 0);
-  if (dt === 99 && dn === 0) return "CONSUMIDOR FINAL";
-  return (
-    (r.receptor_nombre || "").trim() ||
-    (r.cache_razon_social || "").trim() ||
-    (r.cache_nombre || "").trim() ||
-    "-"
-  );
-};
+  const rows = Array.isArray(hist.rows) ? hist.rows : [];
 
-const rows = Array.isArray(hist.rows) ? hist.rows : [];
+  // ---------- Historial ARCA ----------
+  $("arcaHist").innerHTML = rows.length
+    ? rows
+        .map((r) => {
+          const tipo = cbteLabel(r.cbte_tipo);
+          const rec = receptorLabel(r);
 
-$("arcaHist").innerHTML = rows.length
-  ? rows
-      .map((r) => {
-        const tipo = cbteLabel(r.cbte_tipo);
-        const rec = receptorLabel(r);
+          const caeLine = r.cae ? `CAE ${esc(r.cae)} · Vto ${esc(r.cae_vto)}` : "";
+          const obsLine = r.obs_code ? `${esc(r.obs_code)} — ${esc(r.obs_msg || "")}` : "";
 
-        const caeLine = r.cae ? `CAE ${esc(r.cae)} · Vto ${esc(r.cae_vto)}` : "";
-        const obsLine = r.obs_code ? `${esc(r.obs_code)} — ${esc(r.obs_msg || "")}` : "";
-
-        const asocLine = r.asociado_arca_id
-          ? `Asoc: ${cbteLabel(r.asoc_cbte_tipo)} ${esc(r.asoc_pto_vta)}-${esc(r.asoc_cbte_nro)}`
-          : "";
-
-        const linkPDF =
-          r.estado === "EMITIDO"
-            ? `<a class="a" href="/arca/pdf/${r.id}" target="_blank" rel="noopener">PDF</a>`
+          const asocLine = r.asociado_arca_id
+            ? `Asoc: ${cbteLabel(r.asoc_cbte_tipo)} ${esc(r.asoc_pto_vta)}-${esc(r.asoc_cbte_nro)}`
             : "";
 
-        const linkAudit = `<a class="a" href="/arca/wsfe/consultar/${r.id}?audit=1" target="_blank" rel="noopener">Auditoría</a>`;
-        const linkWsfe = `<a class="a" href="/arca/wsfe/consultas/${r.id}" target="_blank" rel="noopener">WSFE</a>`;
+          const linkPDF =
+            r.estado === "EMITIDO"
+              ? `<a class="a" href="/arca/pdf/${r.id}" target="_blank" rel="noopener">PDF</a>`
+              : "";
 
-        return `
-          <div class="histItem">
-            <div class="histTop">
-              <div>
-                ${badge(r.estado)}
-                <span class="muted">
-                  ${esc(tipo)} · ${esc(r.pto_vta)}-${esc(r.cbte_nro)} · ${esc(r.cbte_fch || "")}
-                </span>
+          const linkAudit = `<a class="a" href="/arca/wsfe/consultar/${r.id}?audit=1" target="_blank" rel="noopener">Auditoría</a>`;
+          const linkWsfe = `<a class="a" href="/arca/wsfe/consultas/${r.id}" target="_blank" rel="noopener">WSFE</a>`;
+
+          return `
+            <div class="histItem">
+              <div class="histTop">
+                <div>
+                  ${badge(r.estado)}
+                  <span class="muted">
+                    ${esc(tipo)} · ${esc(r.pto_vta)}-${esc(r.cbte_nro)} · ${esc(r.cbte_fch || "")}
+                  </span>
+                </div>
+                <div class="histMeta">${esc(r.created_at || "")}</div>
               </div>
-              <div class="histMeta">${esc(r.created_at || "")}</div>
+
+              <div class="histObs">Receptor: ${esc(rec)}${asocLine ? ` · ${esc(asocLine)}` : ""}</div>
+              ${caeLine ? `<div class="histObs">${caeLine}</div>` : ""}
+              ${obsLine ? `<div class="histObs">${obsLine}</div>` : ""}
+
+              <div class="histLinks" style="margin-top:6px; display:flex; gap:10px; flex-wrap:wrap;">
+                ${linkPDF} ${linkAudit} ${linkWsfe}
+              </div>
             </div>
+          `;
+        })
+        .join("")
+    : `<div class="muted">Sin intentos ARCA.</div>`;
 
-            <div class="histObs">Receptor: ${esc(rec)}${asocLine ? ` · ${esc(asocLine)}` : ""}</div>
-            ${caeLine ? `<div class="histObs">${caeLine}</div>` : ""}
-            ${obsLine ? `<div class="histObs">${obsLine}</div>` : ""}
+  // ---------- WSFE UI ----------
+  state.selectedArcaId = null;
+  state.selectedArcaEstado = null;
+  if (btnAuditarWsfe) btnAuditarWsfe.disabled = true;
 
-            <div class="histLinks" style="margin-top:6px; display:flex; gap:10px; flex-wrap:wrap;">
-              ${linkPDF} ${linkAudit} ${linkWsfe}
-            </div>
-          </div>
-        `;
-      })
-      .join("")
-  : `<div class="muted">Sin intentos ARCA.</div>`;
-
-   // --- WSFE UI ---
-state.selectedArcaId = null;
-state.selectedArcaEstado = null;
-if (btnAuditarWsfe) btnAuditarWsfe.disabled = true;
-
-if (wsfeHistEl)
-  wsfeHistEl.innerHTML = `<div class="muted">Seleccioná un comprobante EMITIDO o PENDIENTE.</div>`;
-if (wsfeBadgeEl) wsfeBadgeEl.style.display = "none";
-
-const lastPending = (rows || []).find((x) => x.estado === "PENDIENTE");
-const lastEmitted = (rows || []).find((x) => x.estado === "EMITIDO");
-const target = lastPending || lastEmitted;
-
-if (target && target.id) {
-  state.selectedArcaId = target.id;
-  state.selectedArcaEstado = target.estado;
-
-  if (btnAuditarWsfe) {
-  btnAuditarWsfe.disabled = false;
-  btnAuditarWsfe.classList.toggle("warn", target.estado === "PENDIENTE");
-  btnAuditarWsfe.classList.toggle("secondary", target.estado !== "PENDIENTE");
-  btnAuditarWsfe.textContent =
-    target.estado === "PENDIENTE" ? "Confirmar en ARCA" : "Auditar WSFE";
-}
-
-
-  await loadWsfeHistory(state.selectedArcaId);
-} else {
   if (wsfeHistEl)
-    wsfeHistEl.innerHTML = `<div class="muted">No hay comprobante EMITIDO ni PENDIENTE.</div>`;
-}
+    wsfeHistEl.innerHTML = `<div class="muted">Seleccioná un comprobante EMITIDO o PENDIENTE.</div>`;
+  if (wsfeBadgeEl) wsfeBadgeEl.style.display = "none";
 
+  const lastPending = rows.find((x) => x.estado === "PENDIENTE");
+  const lastEmitted = rows.find((x) => x.estado === "EMITIDO");
+  const target = lastPending || lastEmitted;
 
-    const pdfBtn = document.getElementById("btnPDF");
-    if (pdfBtn) {
-      if (lastEmitted && lastEmitted.id) {
-        pdfBtn.style.display = "inline-flex";
-        pdfBtn.href = `/arca/pdf/${lastEmitted.id}`;
-      } else {
-        pdfBtn.style.display = "none";
-        pdfBtn.href = "#";
-      }
+  if (target && target.id) {
+    state.selectedArcaId = target.id;
+    state.selectedArcaEstado = target.estado;
+
+    if (btnAuditarWsfe) {
+      btnAuditarWsfe.disabled = false;
+      btnAuditarWsfe.classList.toggle("warn", target.estado === "PENDIENTE");
+      btnAuditarWsfe.classList.toggle("secondary", target.estado !== "PENDIENTE");
+      btnAuditarWsfe.textContent = target.estado === "PENDIENTE" ? "Confirmar en ARCA" : "Auditar WSFE";
+    }
+
+    await loadWsfeHistory(state.selectedArcaId);
+  } else {
+    if (wsfeHistEl) wsfeHistEl.innerHTML = `<div class="muted">No hay comprobante EMITIDO ni PENDIENTE.</div>`;
+  }
+
+  // ---------- PDF principal ----------
+  const pdfBtn = document.getElementById("btnPDF");
+  if (pdfBtn) {
+    if (lastEmitted && lastEmitted.id) {
+      pdfBtn.style.display = "inline-flex";
+      pdfBtn.href = `/arca/pdf/${lastEmitted.id}`;
+      pdfBtn.textContent = "PDF / Imprimir";
+    } else {
+      pdfBtn.style.display = "none";
+      pdfBtn.href = "#";
     }
   }
 
+  // ---------- Habilitar Emitir ----------
+  // Regla: solo si hay items y NO existe ARCA activo (PENDIENTE o EMITIDO)
+  const arcaActivo = !!(lastPending || lastEmitted);
+  if ($("btnEmitir")) $("btnEmitir").disabled = !state.selectedHasItems || arcaActivo;
+}
+
+
   // ---------------- Emisión ----------------
   async function emitirSeleccionada() {
+    if (!state.selectedHasItems) {
+  await Swal.fire({ icon:"warning", title:"No se puede emitir", text:"Factura sin items." });
+  return;
+}
+
     const id = state.selectedId;
     if (!id) return;
     const draftKey = draftKeyForFactura(id);
