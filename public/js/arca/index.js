@@ -366,13 +366,6 @@ async function auditarWsfeActual() {
       )
       .join("");
 
-   const esc = (s) =>
-  String(s ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 
 const cbteLabel = (t) => {
   const n = Number(t || 0);
@@ -475,9 +468,9 @@ if (target && target.id) {
 
     const pdfBtn = document.getElementById("btnPDF");
     if (pdfBtn) {
-      if (rows.length && rows[0].estado === "EMITIDO") {
+      if (lastEmitted && lastEmitted.id) {
         pdfBtn.style.display = "inline-flex";
-        pdfBtn.href = `/arca/pdf/${rows[0].id}`;
+        pdfBtn.href = `/arca/pdf/${lastEmitted.id}`;
       } else {
         pdfBtn.style.display = "none";
         pdfBtn.href = "#";
@@ -1106,7 +1099,7 @@ on(inpTipo, () => {
         <div>${r.fecha}</div>
         <div>$ ${money(r.total_facturas)}</div>
         <div>$ ${money(r.total_nc)}</div>
-        <div><b>$ ${money(r.total_neto_ventas)}</b></div>
+        <div><b>$ ${money(r.ventas_netas)}</b></div>
         <div><button class="btn secondary" data-ver-dia="${r.fecha}">Ver día</button></div>
       </div>
     `).join("");
@@ -1223,7 +1216,7 @@ wrap.innerHTML = `
       const d = repDesde.value;
       const h = repHasta.value;
       const j = await getJSON(`/arca/reportes/resumen?desde=${encodeURIComponent(d)}&hasta=${encodeURIComponent(h)}`);
-      renderResumen(j.resumen);
+      renderResumen(j.dias);
     }catch(e){
       Swal.fire({ icon:"error", title:"Error", text: String(e.message || e) });
     }
@@ -1237,11 +1230,11 @@ wrap.innerHTML = `
       const estado = repEstado.value;
 
       const qs = new URLSearchParams({ desde:d, hasta:h });
-      if (tipo) qs.set("tipo", tipo);
+      if (tipo) qs.set("cbte_tipo", tipo);
       if (estado) qs.set("estado", estado);
 
       const j = await getJSON(`/arca/reportes/comprobantes?${qs.toString()}`);
-      renderComprobantes(j.items);
+      renderComprobantes(j.comprobantes);
     }catch(e){
       Swal.fire({ icon:"error", title:"Error", text: String(e.message || e) });
     }
