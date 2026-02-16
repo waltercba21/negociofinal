@@ -1567,6 +1567,33 @@ async function buscarReceptor(req, res) {
       const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
       if (cache) return res.json(cache);
     }
+    // 1) Cache (lectura SIEMPRE)
+if (!refresh) {
+  const cache = await arcaModel.buscarReceptorCache(doc_tipo, doc_nro);
+
+  // Considerar "válido" solo si trae algún dato identificatorio
+  const cacheOk =
+    cache &&
+    (
+      (cache.razon_social && String(cache.razon_social).trim()) ||
+      (cache.nombre && String(cache.nombre).trim()) ||
+      (cache.domicilio && String(cache.domicilio).trim())
+    );
+
+  if (cacheOk) return res.json(cache);
+
+  // Si existe pero está incompleto, lo tratamos como miss
+  if (debug && cache) {
+    console.log("[ARCA][buscarReceptor] cache incompleto => MISS", {
+      doc_tipo, doc_nro,
+      nombre: cache.nombre,
+      razon_social: cache.razon_social,
+      domicilio: cache.domicilio,
+      cond_iva_id: cache.cond_iva_id,
+      updated_at: cache.updated_at
+    });
+  }
+}
 
     // ---------- 2) Si no pide resolve => termina acá ----------
     if (!resolve) {
@@ -1585,10 +1612,6 @@ async function buscarReceptor(req, res) {
 
     const out = await padron.getPersonaV2({ idPersona: doc_nro, cuitRepresentada });
 
-    // ---------- Manejo de errores / no encontrado ----------
-    // padron.getPersonaV2 puede devolver:
-    // - { ok:true, data:null, notFound:true }  (caso inexistente)
-    // - { ok:false, fault/error/... }         (upstream)
     if (!out || out.ok === false) {
       const msg = String(out?.fault || out?.error || "No se pudo resolver en padrón");
       const isNotFound = out?.notFound || /no existe|no se encuentra|inexistente/i.test(msg);
