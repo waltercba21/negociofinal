@@ -1459,7 +1459,6 @@ function buildAfipQrUrl(c) {
   const b64 = Buffer.from(JSON.stringify(payload)).toString("base64");
   return `https://www.afip.gob.ar/fe/qr/?p=${encodeURIComponent(b64)}`;
 }
-
 async function descargarPDFComprobante(req, res) {
   try {
     const arcaId = Number(req.params.arcaId || 0);
@@ -1519,23 +1518,56 @@ async function descargarPDFComprobante(req, res) {
     const right = doc.page.width - doc.page.margins.right;
     const topY = 40;
 
-    // HEADER (logo grande a la izquierda + datos debajo; SOLO el recuadro A/B centrado)
+    // --- Helpers de layout para footer QR fijo ---
+    const QR_BLOCK_H = 120; // alto reservado para footer (texto + QR + aire)
+    const footerTopY = () => doc.page.height - doc.page.margins.bottom - QR_BLOCK_H;
+
+    const ensureRoomAboveFooter = (extra = 0) => {
+      // si no entra el próximo bloque, agregamos página
+      if (doc.y + extra > footerTopY() - 10) doc.addPage();
+    };
+
+    const drawQrFooter = () => {
+      const ft = footerTopY();
+      const bottomY = doc.page.height - doc.page.margins.bottom;
+
+      // línea de footer pegada al fondo (como pie)
+      const lineY = ft - 8;
+      doc.moveTo(left, lineY).lineTo(right, lineY).strokeColor("#eee").stroke();
+
+      // texto QR
+      const qrY = ft;
+      doc.fontSize(8).fillColor("#666")
+        .text("Código QR para verificación del comprobante.", left, qrY, { width: 340 })
+        .text(qrUrl, left, qrY + 12, { width: 340 });
+
+      // QR a la derecha, dentro del footer
+      doc.image(qrBuffer, right - 95, qrY - 2, { width: 90 });
+
+      // (opcional) línea final al ras del margen inferior
+      // doc.moveTo(left, bottomY).lineTo(right, bottomY).strokeColor("#f4f4f4").stroke();
+    };
+
+    // ================= HEADER =================
+    // Logo más grande y más a la izquierda (cerca del borde)
     const pageW = doc.page.width;
 
     const logoAbs = resolveFsPath(emisor.logoPath);
     let logoH = 0;
-    const logoW = 240;
+
+    const LOGO_W = 320;                   // más grande
+    const logoX = Math.max(12, left - 22); // más a la izquierda que el margen
 
     if (logoAbs && fs.existsSync(logoAbs)) {
       const img = doc.openImage(logoAbs);
-      logoH = Math.round(img.height * (logoW / img.width));
-      doc.image(logoAbs, left, topY, { width: logoW }); // IZQUIERDA
+      logoH = Math.round(img.height * (LOGO_W / img.width));
+      doc.image(logoAbs, logoX, topY, { width: LOGO_W });
     } else {
-      doc.fillColor("#000").fontSize(14).text(emisor.fantasia, left, topY + 10);
+      doc.fillColor("#000").fontSize(16).text(emisor.fantasia, left, topY + 10);
       logoH = 24;
     }
 
-    // Datos fiscales debajo del logo (IZQUIERDA)
+    // Datos fiscales debajo del logo (izquierda)
     const infoY = topY + logoH + 8;
     doc.fillColor("#333").fontSize(10).text(
       `${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`,
@@ -1548,19 +1580,23 @@ async function descargarPDFComprobante(req, res) {
       infoY + 14
     );
 
-    // Recuadro A/B/C centrado (más chico)
-    const boxW = 42, boxH = 42;
-    const boxX = (pageW - boxW) / 2; // SOLO ESTO centrado
-    const boxY = topY + 18;
+    // Recuadro A/B/C centrado pero MÁS ARRIBA
+    const boxW = 38, boxH = 38;            // más chico
+    const boxX = (pageW - boxW) / 2;       // centrado horizontal
+    const boxY = topY + 4;                 // más arriba (antes: topY+18)
 
     doc.lineWidth(1).strokeColor("#000").rect(boxX, boxY, boxW, boxH).stroke();
-    doc.fillColor("#000").fontSize(22)
-      .text(letra, boxX, boxY + 8, { width: boxW, align: "center" });
+    doc.fillColor("#000").fontSize(20)
+      .text(letra, boxX, boxY + 7, { width: boxW, align: "center" });
 
-    // Separador y continuación
+    // Separador y continuidad
     const sepY = infoY + 36;
     doc.moveTo(left, sepY).lineTo(right, sepY).strokeColor("#ddd").stroke();
     doc.y = sepY + 12;
+
+    // ================= CUERPO =================
+    // Reservamos que el cuerpo nunca invada el footer del QR
+    ensureRoomAboveFooter(60);
 
     // Título + datos comprobante
     doc.fillColor("#000").fontSize(14).text(titulo, left, doc.y);
@@ -1578,6 +1614,8 @@ async function descargarPDFComprobante(req, res) {
 
     // CLIENTE
     const isCF = Number(c.doc_tipo) === 99 && Number(c.doc_nro) === 0;
+
+    ensureRoomAboveFooter(90);
 
     doc.fillColor("#000").fontSize(11).text("CLIENTE", { underline: true });
     doc.fontSize(10).fillColor("#333");
@@ -1610,6 +1648,8 @@ async function descargarPDFComprobante(req, res) {
     doc.moveDown(0.8);
 
     // ITEMS
+    ensureRoomAboveFooter(120);
+
     doc.fillColor("#000").fontSize(11).text("DETALLE", { underline: true });
     doc.moveDown(0.4);
 
@@ -1630,14 +1670,14 @@ async function descargarPDFComprobante(req, res) {
     doc.fillColor("#000").fontSize(9);
 
     for (const it of (items || [])) {
-      // reservamos espacio para el bloque QR fijo al pie
-      const qrBlockHReserve = 130;
-      if (doc.y > doc.page.height - doc.page.margins.bottom - qrBlockHReserve - 60) doc.addPage();
+      // No invadir footer QR
+      ensureRoomAboveFooter(40);
 
       const y = doc.y;
-      const ivaPct = (it.iva_alicuota != null && it.iva_alicuota !== "")
-        ? `${Number(it.iva_alicuota).toFixed(2)}%`
-        : "";
+      const ivaPct =
+        it.iva_alicuota != null && it.iva_alicuota !== ""
+          ? `${Number(it.iva_alicuota).toFixed(2)}%`
+          : "";
 
       doc.text(String(it.descripcion || ""), col.desc, y, { width: 290 });
       doc.text(String(it.cantidad ?? ""), col.cant, y, { width: 40, align: "right" });
@@ -1647,6 +1687,8 @@ async function descargarPDFComprobante(req, res) {
 
       doc.moveDown(0.8);
     }
+
+    ensureRoomAboveFooter(90);
 
     doc.moveDown(0.3);
     doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#ddd").stroke();
@@ -1661,24 +1703,10 @@ async function descargarPDFComprobante(req, res) {
     doc.fontSize(12).fillColor("#000");
     doc.text(`TOTAL: ${Number(c.imp_total || 0).toFixed(2)}`, { align: "right" });
 
-    // QR al pie (fijo al fondo de la página)
-    const qrBlockH = 115;
-    const bottomY = doc.page.height - doc.page.margins.bottom;
-    const qrYFixed = bottomY - qrBlockH;
-
-    // Si el contenido ya pasó el lugar reservado, nueva página
-    if (doc.y > (qrYFixed - 10)) doc.addPage();
-
-    // Línea separadora justo arriba del bloque QR (fija)
-    doc.moveTo(left, qrYFixed - 10).lineTo(right, qrYFixed - 10).strokeColor("#eee").stroke();
-
-    const qrY = qrYFixed;
-
-    doc.fontSize(8).fillColor("#666")
-      .text("Código QR para verificación del comprobante.", left, qrY, { width: 340 })
-      .text(qrUrl, left, qrY + 12, { width: 340 });
-
-    doc.image(qrBuffer, right - 95, qrY - 2, { width: 90 });
+    // ================= FOOTER QR =================
+    // Si el total quedó invadiendo el footer, pasamos a nueva página para que el QR SIEMPRE quede abajo
+    if (doc.y > footerTopY() - 10) doc.addPage();
+    drawQrFooter();
 
     doc.end();
   } catch (e) {
@@ -1686,7 +1714,6 @@ async function descargarPDFComprobante(req, res) {
     return res.status(500).send(e.message || "Error generando PDF");
   }
 }
-
 
 function isTrue(v) {
   return ["1", "true", "on", "si", "yes"].includes(String(v ?? "").trim().toLowerCase());
