@@ -1462,6 +1462,8 @@ function buildAfipQrUrl(c) {
 
 async function descargarPDFComprobante(req, res) {
   try {
+    const fs = require("fs");
+
     const arcaId = Number(req.params.arcaId || 0);
     if (!arcaId) return res.status(400).send("arcaId inválido");
 
@@ -1519,7 +1521,7 @@ async function descargarPDFComprobante(req, res) {
     const right = doc.page.width - doc.page.margins.right;
     const topY = 40;
 
-    // --- Footer QR fijo (pegado abajo en la última página) ---
+    // ===== Footer QR fijo (pegado abajo) =====
     const QR_BLOCK_H = 95;
     const bottomY = () => doc.page.height - doc.page.margins.bottom;
     const footerTopY = () => bottomY() - QR_BLOCK_H;
@@ -1530,8 +1532,6 @@ async function descargarPDFComprobante(req, res) {
 
     const drawQrFooter = () => {
       const ft = footerTopY();
-
-      // Separador del footer (cerca del fondo)
       doc.moveTo(left, ft).lineTo(right, ft).strokeColor("#eee").stroke();
 
       const qrY = ft + 8;
@@ -1543,24 +1543,24 @@ async function descargarPDFComprobante(req, res) {
     };
 
     // ================= HEADER =================
+    // (1) Recuadro A/B: NO TOCAR (queda donde está y centrado)
     const pageW = doc.page.width;
-
-    // Recuadro A/B/C centrado (solo esto centrado)
-    const boxW = 34, boxH = 34;
+    const boxW = 34,
+      boxH = 34;
     const boxX = (pageW - boxW) / 2;
-    const boxY = topY; // más arriba
+    const boxY = topY;
 
     doc.lineWidth(1).strokeColor("#000").rect(boxX, boxY, boxW, boxH).stroke();
-    doc.fillColor("#000").font("Helvetica-Bold").fontSize(18)
-      .text(letra, boxX, boxY + 7, { width: boxW, align: "center" });
+    doc.fillColor("#000").font("Helvetica-Bold").fontSize(18).text(letra, boxX, boxY + 7, {
+      width: boxW,
+      align: "center",
+    });
 
-    // Logo grande a la izquierda, alineado con el inicio del bloque de datos
-    const LOGO_W = 330;
-    const baseY = topY + 2;
-
+    // (2) Logo AUTOFAROS PEGADO AL MARGEN IZQUIERDO, debajo del recuadro
     const logoAbs = resolveFsPath(emisor.logoPath);
-    const logoX = 12;  // más a la izquierda (margen chico)
-    const logoY = baseY;
+    const LOGO_W = 340; // más grande
+    const logoX = left; // pegado al margen izquierdo (del PDF)
+    const logoY = boxY + boxH + 10;
 
     let logoH = 0;
     if (logoAbs && fs.existsSync(logoAbs)) {
@@ -1568,40 +1568,27 @@ async function descargarPDFComprobante(req, res) {
       logoH = Math.round(img.height * (LOGO_W / img.width));
       doc.image(logoAbs, logoX, logoY, { width: LOGO_W });
     } else {
-      doc.fillColor("#000").font("Helvetica-Bold").fontSize(16).text(emisor.fantasia, left, baseY);
-      logoH = 20;
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(18).text(emisor.fantasia, logoX, logoY);
+      logoH = 22;
     }
 
-    // Datos fiscales al lado del logo (misma altura)
-    let textX = logoX + LOGO_W + 14;
-    let textY = baseY;
-    let textW = right - textX;
-
-    // Si no entra al lado, pasa debajo del logo, pero pegado (sin gran blanco)
-    if (textW < 170) {
-      textX = left;
-      textY = logoY + Math.min(logoH, 70) + 6;
-      textW = right - textX;
-    }
-
+    // (3) Datos FAWA debajo del logo, inmediatamente (sin blanco grande) y en negrita
+    const infoY = logoY + logoH + 4;
     doc.fillColor("#000").font("Helvetica-Bold").fontSize(11).text(
       `${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`,
-      textX,
-      textY,
-      { width: textW }
+      left,
+      infoY,
+      { width: right - left }
     );
-
     doc.fillColor("#444").font("Helvetica").fontSize(9).text(
       `${emisor.iva} · ${emisor.domicilio}`,
-      textX,
-      textY + 14,
-      { width: textW }
+      left,
+      infoY + 14,
+      { width: right - left }
     );
 
-    // Separador header (compacto; no depender totalmente del alto real del PNG)
-    const logoHUsed = Math.min(logoH, 70);
-    const headerBottom = Math.max(logoY + logoHUsed, textY + 26, boxY + boxH) + 10;
-
+    // Separador header
+    const headerBottom = infoY + 14 + 10;
     doc.moveTo(left, headerBottom).lineTo(right, headerBottom).strokeColor("#ddd").stroke();
     doc.y = headerBottom + 12;
 
@@ -1679,7 +1666,7 @@ async function descargarPDFComprobante(req, res) {
 
     doc.fillColor("#000").font("Helvetica").fontSize(9);
 
-    for (const it of (items || [])) {
+    for (const it of items || []) {
       ensureRoomAboveFooter(48);
 
       const y = doc.y;
@@ -1712,7 +1699,7 @@ async function descargarPDFComprobante(req, res) {
     doc.font("Helvetica-Bold").fontSize(12).fillColor("#000");
     doc.text(`TOTAL: ${Number(c.imp_total || 0).toFixed(2)}`, { align: "right" });
 
-    // ================= FOOTER QR =================
+    // ===== Footer QR =====
     if (doc.y > footerTopY() - 10) doc.addPage();
     drawQrFooter();
 
