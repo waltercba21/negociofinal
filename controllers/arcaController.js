@@ -1462,8 +1462,6 @@ function buildAfipQrUrl(c) {
 
 async function descargarPDFComprobante(req, res) {
   try {
-    const fs = require("fs");
-
     const arcaId = Number(req.params.arcaId || 0);
     if (!arcaId) return res.status(400).send("arcaId inválido");
 
@@ -1498,10 +1496,10 @@ async function descargarPDFComprobante(req, res) {
 
     const emisor = {
       fantasia: process.env.ARCA_PDF_FANTASIA || "AUTOFAROS",
+      tagline: process.env.ARCA_PDF_TAGLINE || "LA CASA DE LOS FAROS",
       razon: process.env.ARCA_PDF_RAZON_SOCIAL || "FAWA S.A.S.",
       iva: process.env.ARCA_PDF_IVA || "Responsable Inscripto",
       domicilio: process.env.ARCA_PDF_DOMICILIO || "IGUALDAD 88 - CENTRO - CORDOBA",
-      logoPath: process.env.ARCA_PDF_LOGO_PATH || "public/images/logo.png",
     };
 
     const letra = claseFromCbteTipo(c.cbte_tipo) || "";
@@ -1538,54 +1536,37 @@ async function descargarPDFComprobante(req, res) {
       doc.font("Helvetica").fontSize(8).fillColor("#666");
       doc.text("Código QR para verificación del comprobante.", left, qrY, { width: 340 });
       doc.text(qrUrl, left, qrY + 12, { width: 340 });
-
       doc.image(qrBuffer, right - 95, ft + 2, { width: 90 });
     };
 
     // ================= HEADER =================
-    // (1) Recuadro A/B: NO TOCAR (queda donde está y centrado)
+    // (1) Recuadro A/B (NO TOCAR posición general)
     const pageW = doc.page.width;
-    const boxW = 34,
-      boxH = 34;
+    const boxW = 34, boxH = 34;
     const boxX = (pageW - boxW) / 2;
     const boxY = topY;
 
     doc.lineWidth(1).strokeColor("#000").rect(boxX, boxY, boxW, boxH).stroke();
-    doc.fillColor("#000").font("Helvetica-Bold").fontSize(18).text(letra, boxX, boxY + 7, {
-      width: boxW,
-      align: "center",
-    });
+    doc.fillColor("#000").font("Helvetica-Bold").fontSize(18)
+      .text(letra, boxX, boxY + 7, { width: boxW, align: "center" });
 
-    // (2) Logo AUTOFAROS PEGADO AL MARGEN IZQUIERDO, debajo del recuadro
-    const logoAbs = resolveFsPath(emisor.logoPath);
-    const LOGO_W = 340; // más grande
-    const logoX = left; // pegado al margen izquierdo (del PDF)
-    const logoY = boxY + boxH + 10;
+    // (2) “Logo” en TEXTO, pegado al margen izquierdo, debajo del recuadro
+    const brandY = boxY + boxH + 10;
 
-    let logoH = 0;
-    if (logoAbs && fs.existsSync(logoAbs)) {
-      const img = doc.openImage(logoAbs);
-      logoH = Math.round(img.height * (LOGO_W / img.width));
-      doc.image(logoAbs, logoX, logoY, { width: LOGO_W });
-    } else {
-      doc.fillColor("#000").font("Helvetica-Bold").fontSize(18).text(emisor.fantasia, logoX, logoY);
-      logoH = 22;
-    }
+    doc.fillColor("#0B2A6B").font("Helvetica-Bold").fontSize(30)
+      .text(emisor.fantasia, left, brandY, { align: "left" });
 
-    // (3) Datos FAWA debajo del logo, inmediatamente (sin blanco grande) y en negrita
-    const infoY = logoY + logoH + 4;
-    doc.fillColor("#000").font("Helvetica-Bold").fontSize(11).text(
-      `${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`,
-      left,
-      infoY,
-      { width: right - left }
-    );
-    doc.fillColor("#444").font("Helvetica").fontSize(9).text(
-      `${emisor.iva} · ${emisor.domicilio}`,
-      left,
-      infoY + 14,
-      { width: right - left }
-    );
+    doc.fillColor("#666").font("Helvetica").fontSize(10)
+      .text(emisor.tagline, left, brandY + 30, { align: "left" });
+
+    // (3) Datos FAWA debajo del “logo” (compacto, sin blanco grande)
+    const infoY = brandY + 44;
+
+    doc.fillColor("#000").font("Helvetica-Bold").fontSize(11)
+      .text(`${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`, left, infoY, { width: right - left });
+
+    doc.fillColor("#444").font("Helvetica").fontSize(9)
+      .text(`${emisor.iva} · ${emisor.domicilio}`, left, infoY + 14, { width: right - left });
 
     // Separador header
     const headerBottom = infoY + 14 + 10;
@@ -1666,7 +1647,7 @@ async function descargarPDFComprobante(req, res) {
 
     doc.fillColor("#000").font("Helvetica").fontSize(9);
 
-    for (const it of items || []) {
+    for (const it of (items || [])) {
       ensureRoomAboveFooter(48);
 
       const y = doc.y;
@@ -1709,6 +1690,7 @@ async function descargarPDFComprobante(req, res) {
     return res.status(500).send(e.message || "Error generando PDF");
   }
 }
+
 
 
 function isTrue(v) {
