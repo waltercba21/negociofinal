@@ -1500,6 +1500,8 @@ async function descargarPDFComprobante(req, res) {
       razon: process.env.ARCA_PDF_RAZON_SOCIAL || "FAWA S.A.S.",
       iva: process.env.ARCA_PDF_IVA || "Responsable Inscripto",
       domicilio: process.env.ARCA_PDF_DOMICILIO || "IGUALDAD 88 - CENTRO - CORDOBA",
+      iibb: process.env.ARCA_PDF_IIBB || "289499857",
+      inicioAct: process.env.ARCA_PDF_INICIO_ACT || "01/02/2026",
     };
 
     const letra = claseFromCbteTipo(c.cbte_tipo) || "";
@@ -1540,27 +1542,38 @@ async function descargarPDFComprobante(req, res) {
     };
 
     // ================= HEADER =================
-    // (1) Recuadro A/B (NO TOCAR posición general)
+    // (1) Recuadro A/B (posición general igual)
     const pageW = doc.page.width;
-    const boxW = 34, boxH = 34;
+    const boxW = 34,
+      boxH = 34;
     const boxX = (pageW - boxW) / 2;
     const boxY = topY;
+
+    // "ORIGINAL" arriba del cuadrado
+    doc.fillColor("#000").font("Helvetica-Bold").fontSize(8)
+      .text("ORIGINAL", boxX - 12, boxY - 12, { width: boxW + 24, align: "center" });
 
     doc.lineWidth(1).strokeColor("#000").rect(boxX, boxY, boxW, boxH).stroke();
     doc.fillColor("#000").font("Helvetica-Bold").fontSize(18)
       .text(letra, boxX, boxY + 7, { width: boxW, align: "center" });
 
-    // (2) “Logo” en TEXTO, pegado al margen izquierdo, debajo del recuadro
+    // (2) “Logo” en TEXTO, pegado a la izquierda
     const brandY = boxY + boxH + 10;
 
     doc.fillColor("#0B2A6B").font("Helvetica-Bold").fontSize(30)
       .text(emisor.fantasia, left, brandY, { align: "left" });
 
-    doc.fillColor("#666").font("Helvetica").fontSize(10)
-      .text(emisor.tagline, left, brandY + 30, { align: "left" });
+    // Tagline un poco más centrado debajo de AUTOFAROS (centrado respecto al ancho del texto "AUTOFAROS")
+    const brandTextW = doc.widthOfString(emisor.fantasia);
+    const tagTextW = doc.widthOfString(emisor.tagline);
+    const tagX = left + Math.max(0, (brandTextW - tagTextW) / 2);
 
-    // (3) Datos FAWA debajo del “logo” (compacto, sin blanco grande)
-    const infoY = brandY + 44;
+    doc.fillColor("#666").font("Helvetica").fontSize(10)
+      .text(emisor.tagline, tagX, brandY + 30, { align: "left" });
+
+    // (3) Espacio extra (1 renglón) antes de datos FAWA
+    const lineGap = 12;
+    const infoY = brandY + 44 + lineGap;
 
     doc.fillColor("#000").font("Helvetica-Bold").fontSize(11)
       .text(`${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`, left, infoY, { width: right - left });
@@ -1568,8 +1581,13 @@ async function descargarPDFComprobante(req, res) {
     doc.fillColor("#444").font("Helvetica").fontSize(9)
       .text(`${emisor.iva} · ${emisor.domicilio}`, left, infoY + 14, { width: right - left });
 
+    doc.fillColor("#444").font("Helvetica").fontSize(9)
+      .text(`Ingresos Brutos: ${emisor.iibb} · Inicio de Actividad: ${emisor.inicioAct}`, left, infoY + 28, {
+        width: right - left,
+      });
+
     // Separador header
-    const headerBottom = infoY + 14 + 10;
+    const headerBottom = infoY + 28 + 12;
     doc.moveTo(left, headerBottom).lineTo(right, headerBottom).strokeColor("#ddd").stroke();
     doc.y = headerBottom + 12;
 
@@ -1647,7 +1665,7 @@ async function descargarPDFComprobante(req, res) {
 
     doc.fillColor("#000").font("Helvetica").fontSize(9);
 
-    for (const it of (items || [])) {
+    for (const it of items || []) {
       ensureRoomAboveFooter(48);
 
       const y = doc.y;
@@ -1690,8 +1708,6 @@ async function descargarPDFComprobante(req, res) {
     return res.status(500).send(e.message || "Error generando PDF");
   }
 }
-
-
 
 function isTrue(v) {
   return ["1", "true", "on", "si", "yes"].includes(String(v ?? "").trim().toLowerCase());
