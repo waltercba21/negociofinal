@@ -134,6 +134,18 @@ async function getCondIvaReceptorCached() {
 
   return rows;
 }
+async function condIvaDescSafe(condId) {
+  const id = Number(condId || 0);
+  if (!id) return null;
+
+  try {
+    const rows = await getCondIvaReceptorCached(); // cache 6h
+    const hit = (rows || []).find(x => Number(x.id) === id);
+    return hit?.desc ? String(hit.desc).trim() : `ID ${id}`;
+  } catch (_) {
+    return `ID ${id}`;
+  }
+}
 
 function getQuery() {
   if (pool.promise && typeof pool.promise === "function") {
@@ -1566,8 +1578,19 @@ async function descargarPDFComprobante(req, res) {
       doc.text(`CUIT: ${formatCuit(c.doc_nro)}`);
       if (c.receptor_domicilio) doc.text(`Domicilio: ${String(c.receptor_domicilio).trim()}`);
 
-      const cond = Number(c.receptor_cond_iva_id || c.cache_cond_iva_id || 0);
-      if (cond) doc.text(`Cond. IVA (ARCA): ${cond}`);
+      // ---- COND. IVA (TEXTO CON FALLBACK A ID) ----
+      const condId = Number(c.receptor_cond_iva_id || c.cache_cond_iva_id || 0);
+      if (condId) {
+        let condTexto = `ID ${condId}`;
+        try {
+          const rows = await getCondIvaReceptorCached(); // ya existente en tu controller
+          const hit = (rows || []).find((x) => Number(x.id) === condId);
+          if (hit && hit.desc) condTexto = String(hit.desc).trim();
+        } catch (_) {
+          // fallback a ID
+        }
+        doc.text(`Cond. IVA: ${condTexto}`);
+      }
     }
 
     doc.moveDown(0.8);
@@ -1643,10 +1666,6 @@ async function descargarPDFComprobante(req, res) {
   }
 }
 
-// controllers/arcaController.js
-// Requiere arriba: const padron = require("../services/padron");
-
-// helper (ponelo UNA vez arriba del archivo, fuera de la fn)
 function isTrue(v) {
   return ["1", "true", "on", "si", "yes"].includes(String(v ?? "").trim().toLowerCase());
 }
