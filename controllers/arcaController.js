@@ -1421,8 +1421,10 @@ function safeImage(doc, filePath, x, y, opts) {
 
 
 function ymdToISO(yyyymmdd) {
-  // AFIP QR usa YYYY-MM-DD
-  return ymdToHuman(yyyymmdd);
+  // AFIP/ARCA QR usa YYYY-MM-DD
+  if (!yyyymmdd || !/^\d{8}$/.test(String(yyyymmdd))) return "-";
+  const s = String(yyyymmdd);
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 }
 
 function buildAfipQrUrl(c) {
