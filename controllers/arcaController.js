@@ -1,6 +1,8 @@
 // controllers/arcaController.js
 require("dotenv").config();
 const arcaCalc = require("../services/arca_calc");
+const fs = require("fs");
+const path = require("path");
 
 const pool = require("../config/conexion");
 const util = require("util");
@@ -1385,11 +1387,38 @@ async function historialArcaPorFactura(req, res) {
     return res.status(500).json({ error: e.message || "Error historial ARCA" });
   }
 }
-function ymdToHuman(yyyymmdd) {
+function padLeft(n, len) {
+  return String(n ?? "").padStart(len, "0");
+}
+function ymdToDMY(yyyymmdd) {
   if (!yyyymmdd || !/^\d{8}$/.test(String(yyyymmdd))) return "-";
   const s = String(yyyymmdd);
-  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+  return `${s.slice(6,8)}/${s.slice(4,6)}/${s.slice(0,4)}`;
 }
+function formatCuit(cuit) {
+  const d = String(cuit ?? "").replace(/\D/g, "");
+  if (d.length !== 11) return String(cuit ?? "");
+  return `${d.slice(0,2)}-${d.slice(2,10)}-${d.slice(10)}`;
+}
+function cbteTitulo(cbteTipo) {
+  const t = Number(cbteTipo || 0);
+  if ([1,6,11].includes(t)) return "FACTURA ELECTRÓNICA";
+  if ([3,8,13].includes(t)) return "NOTA DE CRÉDITO ELECTRÓNICA";
+  if ([2,7,12].includes(t)) return "NOTA DE DÉBITO ELECTRÓNICA";
+  return "COMPROBANTE ELECTRÓNICO";
+}
+function resolveFsPath(p) {
+  if (!p) return null;
+  if (path.isAbsolute(p)) return p;
+  return path.join(process.cwd(), p); // tu .env usa public/images/logo.png
+}
+function safeImage(doc, filePath, x, y, opts) {
+  try {
+    const abs = resolveFsPath(filePath);
+    if (abs && fs.existsSync(abs)) doc.image(abs, x, y, opts);
+  } catch (_) {}
+}
+
 
 function ymdToISO(yyyymmdd) {
   // AFIP QR usa YYYY-MM-DD
@@ -1422,22 +1451,22 @@ async function descargarPDFComprobante(req, res) {
     const arcaId = Number(req.params.arcaId || 0);
     if (!arcaId) return res.status(400).send("arcaId inválido");
 
-   const cab = await query(
-  `SELECT c.*, rc.domicilio AS receptor_domicilio
-   FROM arca_comprobantes c
-   LEFT JOIN arca_receptores_cache rc
-     ON rc.doc_tipo=c.doc_tipo AND rc.doc_nro=c.doc_nro
-   WHERE c.id=? LIMIT 1`,
-  [arcaId]
-);
-const c = cab?.[0];
-if (!c) {
-  return res.status(404).send("Comprobante ARCA no encontrado");
-}
-if (c.estado !== "EMITIDO") {
-  return res.status(409).send("Solo PDF si está EMITIDO");
-}
+    const cab = await query(
+      `SELECT c.*,
+              rc.nombre       AS cache_nombre,
+              rc.razon_social AS cache_razon_social,
+              rc.domicilio    AS receptor_domicilio,
+              rc.cond_iva_id  AS cache_cond_iva_id
+       FROM arca_comprobantes c
+       LEFT JOIN arca_receptores_cache rc
+         ON rc.doc_tipo=c.doc_tipo AND rc.doc_nro=c.doc_nro
+       WHERE c.id=? LIMIT 1`,
+      [arcaId]
+    );
 
+    const c = cab?.[0];
+    if (!c) return res.status(404).send("Comprobante ARCA no encontrado");
+    if (c.estado !== "EMITIDO") return res.status(409).send("Solo PDF si está EMITIDO");
 
     const items = await query(
       `SELECT descripcion, cantidad, precio_unitario, iva_alicuota, imp_neto, imp_iva, imp_total
@@ -1447,11 +1476,21 @@ if (c.estado !== "EMITIDO") {
       [arcaId]
     );
 
-    // QR
     const qrUrl = buildAfipQrUrl(c);
-    const qrDataUrl = await QRCode.toDataURL(qrUrl, { margin: 1, width: 180 });
-    const qrBase64 = qrDataUrl.split(",")[1];
-    const qrBuffer = Buffer.from(qrBase64, "base64");
+    const qrDataUrl = await QRCode.toDataURL(qrUrl, { margin: 1, width: 220 });
+    const qrBuffer = Buffer.from(qrDataUrl.split(",")[1], "base64");
+
+    const emisor = {
+      fantasia: process.env.ARCA_PDF_FANTASIA || "AUTOFAROS",
+      razon: process.env.ARCA_PDF_RAZON_SOCIAL || "FAWA S.A.S.",
+      iva: process.env.ARCA_PDF_IVA || "Responsable Inscripto",
+      domicilio: process.env.ARCA_PDF_DOMICILIO || "IGUALDAD 88 - CENTRO - CORDOBA",
+      logoPath: process.env.ARCA_PDF_LOGO_PATH || "public/images/logo.png",
+    };
+
+    const letra = claseFromCbteTipo(c.cbte_tipo) || "";
+    const titulo = cbteTitulo(c.cbte_tipo);
+    const nroFmt = `${padLeft(c.pto_vta, 4)}-${padLeft(c.cbte_nro, 8)}`;
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -1462,61 +1501,138 @@ if (c.estado !== "EMITIDO") {
     const doc = new PDFDocument({ margin: 40 });
     doc.pipe(res);
 
-    // Encabezado
-    doc.fontSize(16).text("Comprobante electrónico", 40, 40);
-    doc.fontSize(10).fillColor("#444");
+    const left = doc.page.margins.left;
+    const right = doc.page.width - doc.page.margins.right;
+    const topY = 40;
 
-    doc.text(`Ambiente: ${c.ambiente}  |  CUIT emisor: ${c.cuit_emisor}`);
-    doc.text(`PtoVta: ${c.pto_vta}  |  Tipo: ${c.cbte_tipo}  |  Nro: ${c.cbte_nro}`);
-    doc.text(`Fecha: ${ymdToHuman(c.cbte_fch)}  |  CAE: ${c.cae}  |  Vto CAE: ${ymdToHuman(c.cae_vto)}`);
-
-    // QR a la derecha
-    doc.image(qrBuffer, 430, 40, { width: 120 });
-
-    doc.moveDown(1.2);
-    doc.fillColor("#000").fontSize(11).text("Receptor", { underline: true });
-    doc.fontSize(10).text(`DocTipo: ${c.doc_tipo}  |  DocNro: ${c.doc_nro}`);
-    if (c.receptor_nombre) doc.text(`Nombre / Razón social: ${c.receptor_nombre}`);
-    if (c.receptor_cond_iva_id) doc.text(`Cond. IVA ID: ${c.receptor_cond_iva_id}`);
-    if (c.receptor_domicilio) doc.text(`Domicilio: ${c.receptor_domicilio}`);
-
-    doc.moveDown(0.8);
-    doc.fontSize(11).text("Items", { underline: true });
-    doc.moveDown(0.4);
-
-    // Tabla simple
-    const startY = doc.y;
-    doc.fontSize(9).fillColor("#333");
-    doc.text("Descripción", 40, startY);
-    doc.text("Cant.", 320, startY, { width: 40, align: "right" });
-    doc.text("P.Unit", 370, startY, { width: 70, align: "right" });
-    doc.text("Total", 450, startY, { width: 90, align: "right" });
-    doc.moveDown(0.2);
-    doc.moveTo(40, doc.y).lineTo(550, doc.y).strokeColor("#ddd").stroke();
-    doc.moveDown(0.5);
+    // HEADER
+    safeImage(doc, emisor.logoPath, left, topY, { width: 90 });
 
     doc.fillColor("#000");
-    for (const it of items) {
-      const y = doc.y;
-      doc.fontSize(9).text(String(it.descripcion || ""), 40, y, { width: 260 });
-      doc.text(String(it.cantidad), 320, y, { width: 40, align: "right" });
-      doc.text(Number(it.precio_unitario).toFixed(2), 370, y, { width: 70, align: "right" });
-      doc.text(Number(it.imp_total).toFixed(2), 450, y, { width: 90, align: "right" });
-      doc.moveDown(0.7);
-    }
+    doc.fontSize(20).text(emisor.fantasia, left + 105, topY + 2);
+    doc.fontSize(10).fillColor("#333").text(
+      `${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`,
+      left + 105,
+      topY + 28
+    );
+    doc.fontSize(9).fillColor("#444").text(
+      `${emisor.iva} · ${emisor.domicilio}`,
+      left + 105,
+      topY + 42
+    );
 
+    // Letra A/B/C en recuadro
+    const boxW = 60, boxH = 60;
+    const boxX = right - boxW;
+    doc.lineWidth(1).rect(boxX, topY, boxW, boxH).strokeColor("#000").stroke();
+    doc.fontSize(30).fillColor("#000")
+      .text(letra, boxX, topY + 12, { width: boxW, align: "center" });
+
+    doc.moveTo(left, topY + 80).lineTo(right, topY + 80).strokeColor("#ddd").stroke();
+    doc.y = topY + 92;
+
+    // Título + datos comprobante
+    doc.fillColor("#000").fontSize(14).text(titulo, left, doc.y);
     doc.moveDown(0.4);
-    doc.moveTo(40, doc.y).lineTo(550, doc.y).strokeColor("#ddd").stroke();
-    doc.moveDown(0.6);
 
-    doc.fontSize(10);
-    doc.text(`Neto: ${Number(c.imp_neto).toFixed(2)}`, { align: "right" });
-    doc.text(`IVA: ${Number(c.imp_iva).toFixed(2)}`, { align: "right" });
-    if (Number(c.imp_exento || 0) > 0) doc.text(`Exento: ${Number(c.imp_exento).toFixed(2)}`, { align: "right" });
-    doc.fontSize(12).text(`TOTAL: ${Number(c.imp_total).toFixed(2)}`, { align: "right" });
+    doc.fontSize(10).fillColor("#333");
+    doc.text(`Comprobante N°: ${nroFmt}`);
+    doc.text(`Fecha: ${ymdToDMY(c.cbte_fch)}`);
+    doc.text(`CAE: ${c.cae}`);
+    doc.text(`Vto CAE: ${ymdToDMY(c.cae_vto)}`);
 
     doc.moveDown(0.8);
-    doc.fontSize(8).fillColor("#666").text(qrUrl, { width: 510 });
+    doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#eee").stroke();
+    doc.moveDown(0.6);
+
+    // CLIENTE
+    const isCF = Number(c.doc_tipo) === 99 && Number(c.doc_nro) === 0;
+
+    doc.fillColor("#000").fontSize(11).text("CLIENTE", { underline: true });
+    doc.fontSize(10).fillColor("#333");
+
+    if (isCF) {
+      doc.text("CONSUMIDOR FINAL");
+    } else {
+      const nombre =
+        (c.receptor_nombre || "").trim() ||
+        (c.cache_razon_social || "").trim() ||
+        (c.cache_nombre || "").trim() ||
+        "-";
+
+      doc.text(nombre);
+      doc.text(`CUIT: ${formatCuit(c.doc_nro)}`);
+      if (c.receptor_domicilio) doc.text(`Domicilio: ${String(c.receptor_domicilio).trim()}`);
+
+      const cond = Number(c.receptor_cond_iva_id || c.cache_cond_iva_id || 0);
+      if (cond) doc.text(`Cond. IVA (ARCA): ${cond}`);
+    }
+
+    doc.moveDown(0.8);
+
+    // ITEMS
+    doc.fillColor("#000").fontSize(11).text("DETALLE", { underline: true });
+    doc.moveDown(0.4);
+
+    const col = { desc: left, cant: 340, unit: 390, iva: 460, sub: right - 70 };
+
+    const headerY = doc.y;
+    doc.fontSize(9).fillColor("#333");
+    doc.text("Descripción", col.desc, headerY);
+    doc.text("Cant.", col.cant, headerY, { width: 40, align: "right" });
+    doc.text("P.Unit", col.unit, headerY, { width: 60, align: "right" });
+    doc.text("IVA", col.iva, headerY, { width: 40, align: "right" });
+    doc.text("Subtotal", col.sub, headerY, { width: 70, align: "right" });
+
+    doc.moveDown(0.2);
+    doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#ddd").stroke();
+    doc.moveDown(0.5);
+
+    doc.fillColor("#000").fontSize(9);
+
+    for (const it of (items || [])) {
+      if (doc.y > doc.page.height - doc.page.margins.bottom - 170) doc.addPage();
+
+      const y = doc.y;
+      const ivaPct = (it.iva_alicuota != null && it.iva_alicuota !== "")
+        ? `${Number(it.iva_alicuota).toFixed(2)}%`
+        : "";
+
+      doc.text(String(it.descripcion || ""), col.desc, y, { width: 290 });
+      doc.text(String(it.cantidad ?? ""), col.cant, y, { width: 40, align: "right" });
+      doc.text(Number(it.precio_unitario || 0).toFixed(2), col.unit, y, { width: 60, align: "right" });
+      doc.text(ivaPct, col.iva, y, { width: 40, align: "right" });
+      doc.text(Number(it.imp_total || 0).toFixed(2), col.sub, y, { width: 70, align: "right" });
+
+      doc.moveDown(0.8);
+    }
+
+    doc.moveDown(0.3);
+    doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#ddd").stroke();
+    doc.moveDown(0.6);
+
+    // TOTALES
+    doc.fontSize(10).fillColor("#333");
+    doc.text(`Neto: ${Number(c.imp_neto || 0).toFixed(2)}`, { align: "right" });
+    doc.text(`IVA: ${Number(c.imp_iva || 0).toFixed(2)}`, { align: "right" });
+    if (Number(c.imp_exento || 0) > 0) doc.text(`Exento: ${Number(c.imp_exento).toFixed(2)}`, { align: "right" });
+
+    doc.fontSize(12).fillColor("#000");
+    doc.text(`TOTAL: ${Number(c.imp_total || 0).toFixed(2)}`, { align: "right" });
+
+    // QR al pie
+    if (doc.y > doc.page.height - doc.page.margins.bottom - 130) doc.addPage();
+
+    doc.moveDown(0.8);
+    doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#eee").stroke();
+    doc.moveDown(0.6);
+
+    const qrY = doc.y;
+    doc.fontSize(8).fillColor("#666")
+      .text("Código QR para verificación del comprobante.", left, qrY, { width: 300 })
+      .text(qrUrl, left, qrY + 12, { width: 300 });
+
+    doc.image(qrBuffer, right - 95, qrY - 5, { width: 90 });
 
     doc.end();
   } catch (e) {
@@ -1524,6 +1640,7 @@ if (c.estado !== "EMITIDO") {
     return res.status(500).send(e.message || "Error generando PDF");
   }
 }
+
 // controllers/arcaController.js
 // Requiere arriba: const padron = require("../services/padron");
 
