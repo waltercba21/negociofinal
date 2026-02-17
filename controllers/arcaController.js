@@ -1519,93 +1519,55 @@ async function descargarPDFComprobante(req, res) {
     const right = doc.page.width - doc.page.margins.right;
     const topY = 40;
 
-// HEADER (nuevo)
-const logoAbs = resolveFsPath(emisor.logoPath);
-const hasLogo = !!(logoAbs && fs.existsSync(logoAbs));
+// HEADER (logo grande centrado + datos debajo + recuadro A/B más chico centrado)
+const pageW = doc.page.width;
+const usableW = right - left;
 
-// Logo más grande
-if (hasLogo) {
-  doc.image(logoAbs, left, topY, { width: 140 });
+const logoAbs = resolveFsPath(emisor.logoPath);
+let logoH = 0;
+
+if (logoAbs && fs.existsSync(logoAbs)) {
+  const logoW = 280; // <- doble aprox. de 140
+  const img = doc.openImage(logoAbs); // obtiene width/height reales
+  logoH = Math.round(img.height * (logoW / img.width));
+
+  const logoX = (pageW - logoW) / 2;
+  doc.image(logoAbs, logoX, topY, { width: logoW });
 } else {
-  // Fallback si no hay logo
-  doc.fillColor("#000").fontSize(20).text(emisor.fantasia, left, topY + 10);
+  // fallback si no hay logo
+  doc.fillColor("#000").fontSize(18).text(emisor.razon, left, topY, { width: usableW, align: "center" });
+  logoH = 24;
 }
 
-// Datos fiscales DEBAJO del logo (sin "AUTOFAROS" redundante)
-const infoY = topY + 80;
+// Datos fiscales debajo del logo (centrados)
+const infoY = topY + logoH + 8;
 doc.fillColor("#333").fontSize(10).text(
   `${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`,
   left,
-  infoY
+  infoY,
+  { width: usableW, align: "center" }
 );
 doc.fillColor("#444").fontSize(9).text(
   `${emisor.iva} · ${emisor.domicilio}`,
   left,
-  infoY + 14
+  infoY + 14,
+  { width: usableW, align: "center" }
 );
 
-// Letra A/B/C en recuadro CENTRADO (horizontal) en el documento
-const boxW = 60, boxH = 60;
-const boxX = (doc.page.width - boxW) / 2;
-const boxY = topY + 10;
+// Recuadro A/B/C más chico y centrado
+const boxW = 42, boxH = 42;       // <- más chico
+const boxX = (pageW - boxW) / 2;  // centrado horizontal
+const boxY = infoY + 34;          // debajo de los datos
 
-doc.lineWidth(1).rect(boxX, boxY, boxW, boxH).strokeColor("#000").stroke();
-doc.fontSize(30).fillColor("#000")
-  .text(letra, boxX, boxY + 12, { width: boxW, align: "center" });
+doc.lineWidth(1).strokeColor("#000").rect(boxX, boxY, boxW, boxH).stroke();
+doc.fillColor("#000").fontSize(22)
+  .text(letra, boxX, boxY + 8, { width: boxW, align: "center" });
 
 // Separador y continuación
-const sepY = infoY + 36;
+const sepY = boxY + boxH + 14;
 doc.moveTo(left, sepY).lineTo(right, sepY).strokeColor("#ddd").stroke();
 doc.y = sepY + 12;
 
-
-    // Título + datos comprobante
-    doc.fillColor("#000").fontSize(14).text(titulo, left, doc.y);
-    doc.moveDown(0.4);
-
-    doc.fontSize(10).fillColor("#333");
-    doc.text(`Comprobante N°: ${nroFmt}`);
-    doc.text(`Fecha: ${ymdToDMY(c.cbte_fch)}`);
-    doc.text(`CAE: ${c.cae}`);
-    doc.text(`Vto CAE: ${ymdToDMY(c.cae_vto)}`);
-
-    doc.moveDown(0.8);
-    doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#eee").stroke();
-    doc.moveDown(0.6);
-
-    // CLIENTE
-    const isCF = Number(c.doc_tipo) === 99 && Number(c.doc_nro) === 0;
-
-    doc.fillColor("#000").fontSize(11).text("CLIENTE", { underline: true });
-    doc.fontSize(10).fillColor("#333");
-
-    if (isCF) {
-      doc.text("CONSUMIDOR FINAL");
-    } else {
-      const nombre =
-        (c.receptor_nombre || "").trim() ||
-        (c.cache_razon_social || "").trim() ||
-        (c.cache_nombre || "").trim() ||
-        "-";
-
-      doc.text(nombre);
-      doc.text(`CUIT: ${formatCuit(c.doc_nro)}`);
-      if (c.receptor_domicilio) doc.text(`Domicilio: ${String(c.receptor_domicilio).trim()}`);
-
-      // ---- COND. IVA (TEXTO CON FALLBACK A ID) ----
-      const condId = Number(c.receptor_cond_iva_id || c.cache_cond_iva_id || 0);
-      if (condId) {
-        let condTexto = `ID ${condId}`;
-        try {
-          const rows = await getCondIvaReceptorCached(); // ya existente en tu controller
-          const hit = (rows || []).find((x) => Number(x.id) === condId);
-          if (hit && hit.desc) condTexto = String(hit.desc).trim();
-        } catch (_) {
-          // fallback a ID
-        }
-        doc.text(`Cond. IVA: ${condTexto}`);
-      }
-    }
 
     doc.moveDown(0.8);
 
