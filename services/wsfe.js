@@ -118,173 +118,171 @@ async function FECompUltimoAutorizado(ptoVta = PTO_VTA_DEFAULT, cbteTipo) {
   const ult = Number(pickTag(resp, "CbteNro") || 0);
   return { ultimo: ult, raw: resp };
 }
-
 async function FECAESolicitar(det) {
-  const a = await auth();
-  const ptoVta = det.ptoVta ?? PTO_VTA_DEFAULT;
+  const xml = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+               xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <FECAESolicitar xmlns="http://ar.gov.afip.dif.FEV1/">
+      <Auth>
+        <Token>${det.token}</Token>
+        <Sign>${det.sign}</Sign>
+        <Cuit>${det.cuit}</Cuit>
+      </Auth>
+      <FeCAEReq>
+        <FeCabReq>
+          <CantReg>1</CantReg>
+          <PtoVta>${det.ptoVta}</PtoVta>
+          <CbteTipo>${det.cbteTipo}</CbteTipo>
+        </FeCabReq>
+        <FeDetReq>
+          <FECAEDetRequest>
+            <Concepto>${det.concepto}</Concepto>
+            <DocTipo>${det.docTipo}</DocTipo>
+            <DocNro>${det.docNro}</DocNro>
+            <CbteDesde>${det.cbteNro}</CbteDesde>
+            <CbteHasta>${det.cbteNro}</CbteHasta>
+            <CbteFch>${det.cbteFch}</CbteFch>
+            <ImpTotal>${det.impTotal}</ImpTotal>
+            <ImpTotConc>${det.impTotConc || 0}</ImpTotConc>
+            <ImpNeto>${det.impNeto}</ImpNeto>
+            <ImpOpEx>${det.impOpEx || 0}</ImpOpEx>
+            <ImpIVA>${det.impIva}</ImpIVA>
+            <ImpTrib>${det.impTrib || 0}</ImpTrib>
+            <MonId>${det.monId || "PES"}</MonId>
+            <MonCotiz>${det.monCotiz || 1}</MonCotiz>
 
-  const cbteFch = det.cbteFch || yyyymmddARFromDate(new Date());
+            ${(det.condicionIVAReceptorId != null && det.condicionIVAReceptorId !== "")
+              ? `<CondicionIVAReceptorId>${det.condicionIVAReceptorId}</CondicionIVAReceptorId>`
+              : ""}
 
-  const f2 = (n) => Number(n || 0).toFixed(2);
-  const f3 = (n) => {
-    const x = Number(n || 0);
-    return (Number.isFinite(x) ? x : 1).toFixed(3);
-  };
+            ${(det.cbtesAsoc && det.cbtesAsoc.length)
+              ? `<CbtesAsoc>${det.cbtesAsoc
+                  .map(
+                    (a) => `
+                <CbteAsoc>
+                  <Tipo>${a.tipo}</Tipo>
+                  <PtoVta>${a.ptoVta}</PtoVta>
+                  <Nro>${a.nro}</Nro>
+                  ${a.cuit ? `<Cuit>${a.cuit}</Cuit>` : ""}
+                  ${a.cbteFch ? `<CbteFch>${a.cbteFch}</CbteFch>` : ""}
+                </CbteAsoc>`
+                  )
+                  .join("")}
+              </CbtesAsoc>`
+              : ""}
 
-  const impTotal   = f2(det.impTotal);
-  const impTotConc = f2(det.impTotConc || 0);
-  const impNeto    = f2(det.impNeto || 0);
-  const impOpEx    = f2(det.impOpEx || 0);
-  const impIVA     = f2(det.impIVA || 0);
-  const impTrib    = f2(det.impTrib || 0);
+            ${(det.ivaAlicuotas && det.ivaAlicuotas.length)
+              ? `<Iva>${det.ivaAlicuotas
+                  .map(
+                    (i) => `
+                <AlicIva>
+                  <Id>${i.id}</Id>
+                  <BaseImp>${i.baseImp}</BaseImp>
+                  <Importe>${i.importe}</Importe>
+                </AlicIva>`
+                  )
+                  .join("")}
+              </Iva>`
+              : ""}
 
-  const monId    = det.monId || "PES";
-  const monCotiz = f3(det.monCotiz || 1);
+            ${(det.tributos && det.tributos.length)
+              ? `<Tributos>${det.tributos
+                  .map(
+                    (t) => `
+                <Tributo>
+                  <Id>${t.id}</Id>
+                  <Desc>${t.desc}</Desc>
+                  <BaseImp>${t.baseImp}</BaseImp>
+                  <Alic>${t.alic}</Alic>
+                  <Importe>${t.importe}</Importe>
+                </Tributo>`
+                  )
+                  .join("")}
+              </Tributos>`
+              : ""}
+          </FECAEDetRequest>
+        </FeDetReq>
+      </FeCAEReq>
+    </FECAESolicitar>
+  </soap:Body>
+</soap:Envelope>`;
 
-  // ---- CbtesAsoc (para NC/ND) ----
-  let cbtesAsocXml = "";
-  if (Array.isArray(det.cbtesAsoc) && det.cbtesAsoc.length) {
-    const asocs = det.cbtesAsoc
-      .map((x) => ({
-        tipo: Number(x.tipo || 0),
-        pto_vta: Number(x.pto_vta || 0),
-        nro: Number(x.nro || 0),
-        cuit: Number(x.cuit || a.cuit || 0),
-        cbte_fch: String(x.cbte_fch || "").trim(),
-      }))
-      .filter((x) => x.tipo > 0 && x.pto_vta > 0 && x.nro > 0 && /^\d{8}$/.test(x.cbte_fch));
+  const resp = await soapRequest("FECAESolicitar", xml, det.wsfeUrl);
 
-    if (asocs.length) {
-      cbtesAsocXml =
-        `<ar:CbtesAsoc>` +
-        asocs
-          .map(
-            (x) => `
-            <ar:CbteAsoc>
-              <ar:Tipo>${x.tipo}</ar:Tipo>
-              <ar:PtoVta>${x.pto_vta}</ar:PtoVta>
-              <ar:Nro>${x.nro}</ar:Nro>
-              <ar:Cuit>${x.cuit}</ar:Cuit>
-              <ar:CbteFch>${x.cbte_fch}</ar:CbteFch>
-            </ar:CbteAsoc>`
-          )
-          .join("") +
-        `</ar:CbtesAsoc>`;
-    }
+  // Resultado (hay varios <Resultado>, tomamos el primero: CabResp suele coincidir)
+  const resultado = pickTag(resp, "Resultado") || "";
+
+  // Prioridades:
+  // - Si Resultado=R -> tomar primer Error
+  // - Si no, tomar primera Observación (Obs)
+  // - Si no, tomar primer Evento (Evt)
+  const err = pickFirstErr(resp);
+  const obs = pickFirstObs(resp);
+  const evt = pickFirstEvt(resp);
+
+  let obsCode = "";
+  let obsMsg = "";
+
+  if (resultado === "R" && err?.code) {
+    obsCode = err.code;
+    obsMsg = err.msg || "";
+  } else if (obs?.code) {
+    obsCode = obs.code;
+    obsMsg = obs.msg || "";
+  } else if (evt?.code) {
+    obsCode = evt.code;
+    obsMsg = evt.msg || "";
   }
 
-  // ---- IVA ----
-  let ivaXml = "";
-  if (!det.omitirIva) {
-    if (Array.isArray(det.ivaAlicuotas) && det.ivaAlicuotas.length) {
-      const alics = det.ivaAlicuotas
-        .map((x) => ({
-          id: Number(x.id || 0),
-          baseImp: f2(x.baseImp),
-          importe: f2(x.importe),
-        }))
-        .filter((x) => x.id > 0);
-
-      if (alics.length) {
-        ivaXml =
-          `<ar:Iva>` +
-          alics
-            .map(
-              (x) => `
-              <ar:AlicIva>
-                <ar:Id>${x.id}</ar:Id>
-                <ar:BaseImp>${x.baseImp}</ar:BaseImp>
-                <ar:Importe>${x.importe}</ar:Importe>
-              </ar:AlicIva>`
-            )
-            .join("") +
-          `</ar:Iva>`;
-      }
-    }
-
-    // Fallback: si ImpIVA=0 pero hay neto, igual enviamos alícuota 0% (Id=3) para evitar 10018
-    if (!ivaXml && Number(det.impNeto || 0) > 0) {
-      ivaXml = `
-        <ar:Iva>
-          <ar:AlicIva>
-            <ar:Id>3</ar:Id>
-            <ar:BaseImp>${impNeto}</ar:BaseImp>
-            <ar:Importe>0.00</ar:Importe>
-          </ar:AlicIva>
-        </ar:Iva>`;
-    }
-  }
-
-  const soap = `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
-  <soapenv:Header/>
-  <soapenv:Body>
-    <ar:FECAESolicitar>
-      <ar:Auth>
-        <ar:Token>${a.token}</ar:Token>
-        <ar:Sign>${a.sign}</ar:Sign>
-        <ar:Cuit>${a.cuit}</ar:Cuit>
-      </ar:Auth>
-
-      <ar:FeCAEReq>
-        <ar:FeCabReq>
-          <ar:CantReg>1</ar:CantReg>
-          <ar:PtoVta>${ptoVta}</ar:PtoVta>
-          <ar:CbteTipo>${det.cbteTipo}</ar:CbteTipo>
-        </ar:FeCabReq>
-
-        <ar:FeDetReq>
-          <ar:FECAEDetRequest>
-            <ar:Concepto>1</ar:Concepto>
-            <ar:DocTipo>${det.docTipo}</ar:DocTipo>
-            <ar:DocNro>${det.docNro}</ar:DocNro>
-            <ar:CondicionIVAReceptorId>${det.condicionIVAReceptorId}</ar:CondicionIVAReceptorId>
-
-            <ar:CbteDesde>${det.cbteDesde}</ar:CbteDesde>
-            <ar:CbteHasta>${det.cbteHasta}</ar:CbteHasta>
-            <ar:CbteFch>${cbteFch}</ar:CbteFch>
-
-            ${cbtesAsocXml}
-
-            <ar:ImpTotal>${impTotal}</ar:ImpTotal>
-            <ar:ImpTotConc>${impTotConc}</ar:ImpTotConc>
-            <ar:ImpNeto>${impNeto}</ar:ImpNeto>
-            <ar:ImpOpEx>${impOpEx}</ar:ImpOpEx>
-            <ar:ImpIVA>${impIVA}</ar:ImpIVA>
-            <ar:ImpTrib>${impTrib}</ar:ImpTrib>
-
-            <ar:MonId>${monId}</ar:MonId>
-            <ar:MonCotiz>${monCotiz}</ar:MonCotiz>
-
-            ${ivaXml}
-
-          </ar:FECAEDetRequest>
-        </ar:FeDetReq>
-      </ar:FeCAEReq>
-    </ar:FECAESolicitar>
-  </soapenv:Body>
-</soapenv:Envelope>`;
-
-  const resp = await postXml(
-    WSFE_URL,
-    soap,
-    "http://ar.gov.afip.dif.FEV1/FECAESolicitar"
-  );
-
-  if (process.env.ARCA_FORCE_WSFE_THROW_AFTER === "1") {
-    throw new Error("ARCA_FORCE_WSFE_THROW_AFTER");
-  }
+  const next = Number(pickTag(resp, "CbteDesde") || pickTag(resp, "CbteHasta") || 0) || det.cbteNro;
 
   return {
-    resultado: pickTag(resp, "Resultado"),
-    cae: pickTag(resp, "CAE"),
-    caeVto: pickTag(resp, "CAEFchVto"),
-    obsCode: pickTag(resp, "Code"),
-    obsMsg: pickTag(resp, "Msg"),
-    raw: resp,
+    next,
+    resultado,
+    cae: pickTag(resp, "CAE") || "",
+    caeVto: pickTag(resp, "CAEFchVto") || "",
+    obsCode,
+    obsMsg,
+    // útil para debug sin romper tu DB:
+    _errCode: err?.code || "",
+    _errMsg: err?.msg || "",
+    _evtCode: evt?.code || "",
+    _evtMsg: evt?.msg || "",
   };
 }
 
+// Helpers (pegarlos cerca de pickTag)
+function pickFirstErr(xml) {
+  const errors = pickTag(xml, "Errors");
+  if (!errors) return null;
+  const err = pickTag(errors, "Err");
+  if (!err) return null;
+  const code = pickTag(err, "Code");
+  const msg = pickTag(err, "Msg");
+  return (code || msg) ? { code: code || "", msg: msg || "" } : null;
+}
+
+function pickFirstObs(xml) {
+  const obsCont = pickTag(xml, "Observaciones");
+  if (!obsCont) return null;
+  const obs = pickTag(obsCont, "Obs");
+  if (!obs) return null;
+  const code = pickTag(obs, "Code");
+  const msg = pickTag(obs, "Msg");
+  return (code || msg) ? { code: code || "", msg: msg || "" } : null;
+}
+
+function pickFirstEvt(xml) {
+  const evCont = pickTag(xml, "Events");
+  if (!evCont) return null;
+  const evt = pickTag(evCont, "Evt");
+  if (!evt) return null;
+  const code = pickTag(evt, "Code");
+  const msg = pickTag(evt, "Msg");
+  return (code || msg) ? { code: code || "", msg: msg || "" } : null;
+}
 
 async function FECompConsultar(ptoVta = PTO_VTA_DEFAULT, cbteTipo, cbteNro) {
   const a = await auth();
