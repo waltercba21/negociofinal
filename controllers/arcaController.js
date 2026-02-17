@@ -1519,7 +1519,7 @@ async function descargarPDFComprobante(req, res) {
     const right = doc.page.width - doc.page.margins.right;
     const topY = 40;
 
-    // --- Footer QR fijo (pegado abajo) ---
+    // --- Footer QR fijo (pegado abajo en la última página) ---
     const QR_BLOCK_H = 95;
     const bottomY = () => doc.page.height - doc.page.margins.bottom;
     const footerTopY = () => bottomY() - QR_BLOCK_H;
@@ -1531,49 +1531,56 @@ async function descargarPDFComprobante(req, res) {
     const drawQrFooter = () => {
       const ft = footerTopY();
 
-      // Separador del footer (bien abajo)
+      // Separador del footer (cerca del fondo)
       doc.moveTo(left, ft).lineTo(right, ft).strokeColor("#eee").stroke();
 
-      // Texto QR
       const qrY = ft + 8;
       doc.font("Helvetica").fontSize(8).fillColor("#666");
       doc.text("Código QR para verificación del comprobante.", left, qrY, { width: 340 });
       doc.text(qrUrl, left, qrY + 12, { width: 340 });
 
-      // QR a la derecha
       doc.image(qrBuffer, right - 95, ft + 2, { width: 90 });
     };
 
     // ================= HEADER =================
     const pageW = doc.page.width;
 
-    // Logo grande: a la izquierda, alineado con el inicio del bloque "FAWA S.A.S."
-    const LOGO_W = 300;
+    // Recuadro A/B/C centrado (solo esto centrado)
+    const boxW = 34, boxH = 34;
+    const boxX = (pageW - boxW) / 2;
+    const boxY = topY; // más arriba
+
+    doc.lineWidth(1).strokeColor("#000").rect(boxX, boxY, boxW, boxH).stroke();
+    doc.fillColor("#000").font("Helvetica-Bold").fontSize(18)
+      .text(letra, boxX, boxY + 7, { width: boxW, align: "center" });
+
+    // Logo grande a la izquierda, alineado con el inicio del bloque de datos
+    const LOGO_W = 330;
+    const baseY = topY + 2;
+
     const logoAbs = resolveFsPath(emisor.logoPath);
+    const logoX = 12;  // más a la izquierda (margen chico)
+    const logoY = baseY;
 
-    const logoX = Math.max(18, left - 18); // un poco más a la izquierda que el margen del texto
-    const logoY = topY;
     let logoH = 0;
-
     if (logoAbs && fs.existsSync(logoAbs)) {
       const img = doc.openImage(logoAbs);
       logoH = Math.round(img.height * (LOGO_W / img.width));
       doc.image(logoAbs, logoX, logoY, { width: LOGO_W });
     } else {
-      // fallback si falta logo
-      doc.font("Helvetica-Bold").fontSize(16).fillColor("#000").text(emisor.fantasia, left, topY + 6);
-      logoH = 22;
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(16).text(emisor.fantasia, left, baseY);
+      logoH = 20;
     }
 
-    // Datos empresa (a la derecha del logo), en negrita y sin tanto espacio en blanco
+    // Datos fiscales al lado del logo (misma altura)
     let textX = logoX + LOGO_W + 14;
-    let textY = logoY + 6; // misma altura visual que el inicio del logo
+    let textY = baseY;
     let textW = right - textX;
 
-    // Si no entra a la derecha, cae debajo del logo
-    if (textW < 180) {
+    // Si no entra al lado, pasa debajo del logo, pero pegado (sin gran blanco)
+    if (textW < 170) {
       textX = left;
-      textY = logoY + logoH + 6;
+      textY = logoY + Math.min(logoH, 70) + 6;
       textW = right - textX;
     }
 
@@ -1591,21 +1598,12 @@ async function descargarPDFComprobante(req, res) {
       { width: textW }
     );
 
-    // Recuadro A/B/C: SOLO esto centrado, más arriba
-    const boxW = 34, boxH = 34;
-    const boxX = (pageW - boxW) / 2;
-    const boxY = topY + 2;
+    // Separador header (compacto; no depender totalmente del alto real del PNG)
+    const logoHUsed = Math.min(logoH, 70);
+    const headerBottom = Math.max(logoY + logoHUsed, textY + 26, boxY + boxH) + 10;
 
-    doc.lineWidth(1).strokeColor("#000").rect(boxX, boxY, boxW, boxH).stroke();
-    doc.fillColor("#000").font("Helvetica-Bold").fontSize(18)
-      .text(letra, boxX, boxY + 7, { width: boxW, align: "center" });
-
-    // Separador del header (sin tanto blanco)
-    const headerBottom = Math.max(logoY + logoH, textY + 28);
-    const sepY = headerBottom + 10;
-
-    doc.moveTo(left, sepY).lineTo(right, sepY).strokeColor("#ddd").stroke();
-    doc.y = sepY + 12;
+    doc.moveTo(left, headerBottom).lineTo(right, headerBottom).strokeColor("#ddd").stroke();
+    doc.y = headerBottom + 12;
 
     // ================= CUERPO =================
     ensureRoomAboveFooter(70);
@@ -1724,7 +1722,6 @@ async function descargarPDFComprobante(req, res) {
     return res.status(500).send(e.message || "Error generando PDF");
   }
 }
-
 
 
 function isTrue(v) {
