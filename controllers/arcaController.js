@@ -1519,31 +1519,45 @@ async function descargarPDFComprobante(req, res) {
     const right = doc.page.width - doc.page.margins.right;
     const topY = 40;
 
-    // HEADER
-    safeImage(doc, emisor.logoPath, left, topY, { width: 90 });
+// HEADER (nuevo)
+const logoAbs = resolveFsPath(emisor.logoPath);
+const hasLogo = !!(logoAbs && fs.existsSync(logoAbs));
 
-    doc.fillColor("#000");
-    doc.fontSize(20).text(emisor.fantasia, left + 105, topY + 2);
-    doc.fontSize(10).fillColor("#333").text(
-      `${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`,
-      left + 105,
-      topY + 28
-    );
-    doc.fontSize(9).fillColor("#444").text(
-      `${emisor.iva} · ${emisor.domicilio}`,
-      left + 105,
-      topY + 42
-    );
+// Logo más grande
+if (hasLogo) {
+  doc.image(logoAbs, left, topY, { width: 140 });
+} else {
+  // Fallback si no hay logo
+  doc.fillColor("#000").fontSize(20).text(emisor.fantasia, left, topY + 10);
+}
 
-    // Letra A/B/C en recuadro
-    const boxW = 60, boxH = 60;
-    const boxX = right - boxW;
-    doc.lineWidth(1).rect(boxX, topY, boxW, boxH).strokeColor("#000").stroke();
-    doc.fontSize(30).fillColor("#000")
-      .text(letra, boxX, topY + 12, { width: boxW, align: "center" });
+// Datos fiscales DEBAJO del logo (sin "AUTOFAROS" redundante)
+const infoY = topY + 80;
+doc.fillColor("#333").fontSize(10).text(
+  `${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`,
+  left,
+  infoY
+);
+doc.fillColor("#444").fontSize(9).text(
+  `${emisor.iva} · ${emisor.domicilio}`,
+  left,
+  infoY + 14
+);
 
-    doc.moveTo(left, topY + 80).lineTo(right, topY + 80).strokeColor("#ddd").stroke();
-    doc.y = topY + 92;
+// Letra A/B/C en recuadro CENTRADO (horizontal) en el documento
+const boxW = 60, boxH = 60;
+const boxX = (doc.page.width - boxW) / 2;
+const boxY = topY + 10;
+
+doc.lineWidth(1).rect(boxX, boxY, boxW, boxH).strokeColor("#000").stroke();
+doc.fontSize(30).fillColor("#000")
+  .text(letra, boxX, boxY + 12, { width: boxW, align: "center" });
+
+// Separador y continuación
+const sepY = infoY + 36;
+doc.moveTo(left, sepY).lineTo(right, sepY).strokeColor("#ddd").stroke();
+doc.y = sepY + 12;
+
 
     // Título + datos comprobante
     doc.fillColor("#000").fontSize(14).text(titulo, left, doc.y);
