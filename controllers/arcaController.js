@@ -1519,55 +1519,93 @@ async function descargarPDFComprobante(req, res) {
     const right = doc.page.width - doc.page.margins.right;
     const topY = 40;
 
-// HEADER (logo grande centrado + datos debajo + recuadro A/B más chico centrado)
-const pageW = doc.page.width;
-const usableW = right - left;
+    // HEADER (logo grande a la izquierda + datos debajo; SOLO el recuadro A/B centrado)
+    const pageW = doc.page.width;
 
-const logoAbs = resolveFsPath(emisor.logoPath);
-let logoH = 0;
+    const logoAbs = resolveFsPath(emisor.logoPath);
+    let logoH = 0;
+    const logoW = 240;
 
-if (logoAbs && fs.existsSync(logoAbs)) {
-  const logoW = 280; // <- doble aprox. de 140
-  const img = doc.openImage(logoAbs); // obtiene width/height reales
-  logoH = Math.round(img.height * (logoW / img.width));
+    if (logoAbs && fs.existsSync(logoAbs)) {
+      const img = doc.openImage(logoAbs);
+      logoH = Math.round(img.height * (logoW / img.width));
+      doc.image(logoAbs, left, topY, { width: logoW }); // IZQUIERDA
+    } else {
+      doc.fillColor("#000").fontSize(14).text(emisor.fantasia, left, topY + 10);
+      logoH = 24;
+    }
 
-  const logoX = (pageW - logoW) / 2;
-  doc.image(logoAbs, logoX, topY, { width: logoW });
-} else {
-  // fallback si no hay logo
-  doc.fillColor("#000").fontSize(18).text(emisor.razon, left, topY, { width: usableW, align: "center" });
-  logoH = 24;
-}
+    // Datos fiscales debajo del logo (IZQUIERDA)
+    const infoY = topY + logoH + 8;
+    doc.fillColor("#333").fontSize(10).text(
+      `${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`,
+      left,
+      infoY
+    );
+    doc.fillColor("#444").fontSize(9).text(
+      `${emisor.iva} · ${emisor.domicilio}`,
+      left,
+      infoY + 14
+    );
 
-// Datos fiscales debajo del logo (centrados)
-const infoY = topY + logoH + 8;
-doc.fillColor("#333").fontSize(10).text(
-  `${emisor.razon} · CUIT ${formatCuit(c.cuit_emisor)}`,
-  left,
-  infoY,
-  { width: usableW, align: "center" }
-);
-doc.fillColor("#444").fontSize(9).text(
-  `${emisor.iva} · ${emisor.domicilio}`,
-  left,
-  infoY + 14,
-  { width: usableW, align: "center" }
-);
+    // Recuadro A/B/C centrado (más chico)
+    const boxW = 42, boxH = 42;
+    const boxX = (pageW - boxW) / 2; // SOLO ESTO centrado
+    const boxY = topY + 18;
 
-// Recuadro A/B/C más chico y centrado
-const boxW = 42, boxH = 42;       // <- más chico
-const boxX = (pageW - boxW) / 2;  // centrado horizontal
-const boxY = infoY + 34;          // debajo de los datos
+    doc.lineWidth(1).strokeColor("#000").rect(boxX, boxY, boxW, boxH).stroke();
+    doc.fillColor("#000").fontSize(22)
+      .text(letra, boxX, boxY + 8, { width: boxW, align: "center" });
 
-doc.lineWidth(1).strokeColor("#000").rect(boxX, boxY, boxW, boxH).stroke();
-doc.fillColor("#000").fontSize(22)
-  .text(letra, boxX, boxY + 8, { width: boxW, align: "center" });
+    // Separador y continuación
+    const sepY = infoY + 36;
+    doc.moveTo(left, sepY).lineTo(right, sepY).strokeColor("#ddd").stroke();
+    doc.y = sepY + 12;
 
-// Separador y continuación
-const sepY = boxY + boxH + 14;
-doc.moveTo(left, sepY).lineTo(right, sepY).strokeColor("#ddd").stroke();
-doc.y = sepY + 12;
+    // Título + datos comprobante
+    doc.fillColor("#000").fontSize(14).text(titulo, left, doc.y);
+    doc.moveDown(0.4);
 
+    doc.fontSize(10).fillColor("#333");
+    doc.text(`Comprobante N°: ${nroFmt}`);
+    doc.text(`Fecha: ${ymdToDMY(c.cbte_fch)}`);
+    doc.text(`CAE: ${c.cae}`);
+    doc.text(`Vto CAE: ${ymdToDMY(c.cae_vto)}`);
+
+    doc.moveDown(0.8);
+    doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#eee").stroke();
+    doc.moveDown(0.6);
+
+    // CLIENTE
+    const isCF = Number(c.doc_tipo) === 99 && Number(c.doc_nro) === 0;
+
+    doc.fillColor("#000").fontSize(11).text("CLIENTE", { underline: true });
+    doc.fontSize(10).fillColor("#333");
+
+    if (isCF) {
+      doc.text("CONSUMIDOR FINAL");
+    } else {
+      const nombre =
+        (c.receptor_nombre || "").trim() ||
+        (c.cache_razon_social || "").trim() ||
+        (c.cache_nombre || "").trim() ||
+        "-";
+
+      doc.text(nombre);
+      doc.text(`CUIT: ${formatCuit(c.doc_nro)}`);
+      if (c.receptor_domicilio) doc.text(`Domicilio: ${String(c.receptor_domicilio).trim()}`);
+
+      const condId = Number(c.receptor_cond_iva_id || c.cache_cond_iva_id || 0);
+      if (condId) {
+        let condTexto = `ID ${condId}`;
+        try {
+          const rows = await getCondIvaReceptorCached();
+          const hit = (rows || []).find((x) => Number(x.id) === condId);
+          if (hit && hit.desc) condTexto = String(hit.desc).trim();
+        } catch (_) {}
+        doc.text(`Cond. IVA: ${condTexto}`);
+      }
+    }
 
     doc.moveDown(0.8);
 
@@ -1592,7 +1630,9 @@ doc.y = sepY + 12;
     doc.fillColor("#000").fontSize(9);
 
     for (const it of (items || [])) {
-      if (doc.y > doc.page.height - doc.page.margins.bottom - 170) doc.addPage();
+      // reservamos espacio para el bloque QR fijo al pie
+      const qrBlockHReserve = 130;
+      if (doc.y > doc.page.height - doc.page.margins.bottom - qrBlockHReserve - 60) doc.addPage();
 
       const y = doc.y;
       const ivaPct = (it.iva_alicuota != null && it.iva_alicuota !== "")
@@ -1621,19 +1661,24 @@ doc.y = sepY + 12;
     doc.fontSize(12).fillColor("#000");
     doc.text(`TOTAL: ${Number(c.imp_total || 0).toFixed(2)}`, { align: "right" });
 
-    // QR al pie
-    if (doc.y > doc.page.height - doc.page.margins.bottom - 130) doc.addPage();
+    // QR al pie (fijo al fondo de la página)
+    const qrBlockH = 115;
+    const bottomY = doc.page.height - doc.page.margins.bottom;
+    const qrYFixed = bottomY - qrBlockH;
 
-    doc.moveDown(0.8);
-    doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#eee").stroke();
-    doc.moveDown(0.6);
+    // Si el contenido ya pasó el lugar reservado, nueva página
+    if (doc.y > (qrYFixed - 10)) doc.addPage();
 
-    const qrY = doc.y;
+    // Línea separadora justo arriba del bloque QR (fija)
+    doc.moveTo(left, qrYFixed - 10).lineTo(right, qrYFixed - 10).strokeColor("#eee").stroke();
+
+    const qrY = qrYFixed;
+
     doc.fontSize(8).fillColor("#666")
-      .text("Código QR para verificación del comprobante.", left, qrY, { width: 300 })
-      .text(qrUrl, left, qrY + 12, { width: 300 });
+      .text("Código QR para verificación del comprobante.", left, qrY, { width: 340 })
+      .text(qrUrl, left, qrY + 12, { width: 340 });
 
-    doc.image(qrBuffer, right - 95, qrY - 5, { width: 90 });
+    doc.image(qrBuffer, right - 95, qrY - 2, { width: 90 });
 
     doc.end();
   } catch (e) {
@@ -1641,6 +1686,7 @@ doc.y = sepY + 12;
     return res.status(500).send(e.message || "Error generando PDF");
   }
 }
+
 
 function isTrue(v) {
   return ["1", "true", "on", "si", "yes"].includes(String(v ?? "").trim().toLowerCase());
