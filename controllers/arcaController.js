@@ -1529,16 +1529,32 @@ async function descargarPDFComprobante(req, res) {
       if (doc.y + extra > footerTopY() - 8) doc.addPage();
     };
 
-    const drawQrFooter = () => {
-      const ft = footerTopY();
-      doc.moveTo(left, ft).lineTo(right, ft).strokeColor("#eee").stroke();
+const drawQrFooter = () => {
+  const ft = footerTopY();
 
-      const qrY = ft + 8;
-      doc.font("Helvetica").fontSize(8).fillColor("#666");
-      doc.text("Código QR para verificación del comprobante.", left, qrY, { width: 340 });
-      doc.text(qrUrl, left, qrY + 12, { width: 340 });
-      doc.image(qrBuffer, right - 95, ft + 2, { width: 90 });
-    };
+  // línea superior del footer
+  doc.moveTo(left, ft).lineTo(right, ft).strokeColor("#eee").stroke();
+
+  // QR a la izquierda
+  const qrSize = 85;
+  const qrX = left;
+  const qrY = ft + 6;
+  doc.image(qrBuffer, qrX, qrY, { width: qrSize });
+
+  // Texto “ARCA / COMPROBANTE AUTORIZADO” a la derecha del QR
+  const textX = qrX + qrSize + 14;
+  const textW = right - textX;
+
+  doc.fillColor("#000").font("Helvetica-Bold").fontSize(18)
+    .text("ARCA", textX, ft + 18, { width: textW, align: "left" });
+
+  doc.fillColor("#000").font("Helvetica-Bold").fontSize(10)
+    .text("COMPROBANTE AUTORIZADO", textX, ft + 40, { width: textW, align: "left" });
+
+  doc.fillColor("#666").font("Helvetica").fontSize(8)
+    .text("Verificable escaneando el código QR.", textX, ft + 56, { width: textW, align: "left" });
+};
+
 
     // ================= HEADER =================
     const pageW = doc.page.width;
