@@ -1082,12 +1082,8 @@ async function emitirNotaCreditoPorArcaId(req, res) {
   let arcaId = null;
 
   const qBool = (v) => ["1", "true", "yes", "on"].includes(String(v || "").toLowerCase());
-  const round2 = (n) => {
-    const x = Number(n);
-    return Math.round((x + Number.EPSILON) * 100) / 100;
-  };
 
-  const NC_BY_FACT = { 1: 3, 6: 8, 11: 13 }; // Fact A->NC A, Fact B->NC B, Fact C->NC C (opcional)
+  const NC_BY_FACT = { 1: 3, 6: 8, 11: 13 }; // Fact A->NC A, Fact B->NC B, Fact C->NC C
   const IVA_ALIC_MAP = [
     { id: 3, porc: 0 },
     { id: 4, porc: 10.5 },
@@ -1103,35 +1099,7 @@ async function emitirNotaCreditoPorArcaId(req, res) {
     return hit ? hit.id : null;
   };
 
-  const safeInsertWsfeConsulta = async (payload) => {
-    try {
-      await arcaModel.insertarWsfeConsulta(payload);
-    } catch (e) {
-      console.warn("⚠️ insertarWsfeConsulta (NC) falló:", e?.message || e);
-    }
-  };
-
-  const extractErrCodeMsg = (xml) => {
-    const s = String(xml || "");
-    // <Err><Code>602</Code><Msg>...</Msg></Err>
-    const m = s.match(/<Err>\s*<Code>(\d+)<\/Code>\s*<Msg>([\s\S]*?)<\/Msg>\s*<\/Err>/i);
-    if (!m) return null;
-    return { code: String(m[1] || "").trim(), msg: String(m[2] || "").trim() };
-  };
-
-  const extractCAE = (xml) => {
-    const s = String(xml || "");
-    // CodAutorizacion o CAE
-    const m = s.match(/<(?:\w+:)?(CodAutorizacion|CAE)>([^<]+)<\/(?:\w+:)?\1>/i);
-    return m ? String(m[2] || "").trim() : null;
-  };
-
-  const extractFchVto = (xml) => {
-    const s = String(xml || "");
-    const m = s.match(/<(?:\w+:)?(FchVto|CAEFchVto)>([^<]+)<\/(?:\w+:)?\1>/i);
-    const v = m ? String(m[2] || "").replace(/\D/g, "") : "";
-    return /^\d{8}$/.test(v) ? v : null;
-  };
+  const round2local = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
   try {
     const origenId = Number(req.params.arcaIdOrigen || 0);
@@ -1141,16 +1109,18 @@ async function emitirNotaCreditoPorArcaId(req, res) {
 
     const origen = await arcaModel.buscarPorId(origenId);
     if (!origen) return res.status(404).json({ error: "Comprobante origen no encontrado" });
+
     if (origen.estado !== "EMITIDO") {
       return res.status(409).json({
         error: "El comprobante origen debe estar EMITIDO",
         origen_id: origenId,
-        estado: origen.estado,
+        estado: origen.estado
       });
     }
+
     if (!origen.cbte_nro || !origen.pto_vta || !origen.cbte_tipo || !origen.cbte_fch) {
       return res.status(409).json({
-        error: "Origen inválido (faltan datos pto_vta/cbte_tipo/cbte_nro/cbte_fch)",
+        error: "Origen inválido (faltan datos pto_vta/cbte_tipo/cbte_nro/cbte_fch)"
       });
     }
 
@@ -1158,7 +1128,7 @@ async function emitirNotaCreditoPorArcaId(req, res) {
     if (!tipoNcAuto) {
       return res.status(400).json({
         error: "El origen no es una factura soportada para NC",
-        origen_cbte_tipo: origen.cbte_tipo,
+        origen_cbte_tipo: origen.cbte_tipo
       });
     }
 
@@ -1167,7 +1137,29 @@ async function emitirNotaCreditoPorArcaId(req, res) {
       return res.status(400).json({
         error: "cbte_tipo de NC no coincide con el tipo del origen",
         esperado: tipoNcAuto,
-        recibido: cbte_tipo,
+        recibido: cbte_tipo
+      });
+    }
+
+    // Guard rail: si hay NC PENDIENTE asociada al origen, no crear otra
+    const pend = await query(
+      `
+      SELECT ac.id, ac.estado, ac.cbte_nro
+      FROM arca_cbtes_asoc a
+      JOIN arca_comprobantes ac ON ac.id = a.arca_comprobante_id
+      WHERE a.asociado_arca_id = ?
+        AND ac.cbte_tipo = ?
+        AND ac.estado = 'PENDIENTE'
+      ORDER BY ac.id DESC
+      LIMIT 1
+      `,
+      [origenId, cbte_tipo]
+    );
+    if (pend.length) {
+      return res.status(409).json({
+        error: "Ya existe una NC PENDIENTE asociada a este comprobante. Auditar/reconciliar antes de reintentar.",
+        nc_pendiente: pend[0],
+        origen: { arca_id: origenId, cbte_tipo: origen.cbte_tipo, cbte_nro: origen.cbte_nro, cbte_fch: origen.cbte_fch }
       });
     }
 
@@ -1176,37 +1168,6 @@ async function emitirNotaCreditoPorArcaId(req, res) {
       return res.status(400).json({ error: "Solo NC A/B en este paso", clase, cbte_tipo });
     }
 
-    // Idempotencia: si ya hay NC asociada (PENDIENTE/EMITIDA) para este origen+tipo, no crear otra
-    {
-      const prev = await query(
-        `
-        SELECT ac.id, ac.estado, ac.cbte_nro, ac.cae, ac.cae_vto, ac.obs_code, ac.obs_msg
-        FROM arca_cbtes_asoc a
-        JOIN arca_comprobantes ac ON ac.id=a.arca_comprobante_id
-        WHERE a.asociado_arca_id=? AND ac.cbte_tipo=? AND ac.estado IN ('PENDIENTE','EMITIDO')
-        ORDER BY ac.id DESC
-        LIMIT 1
-        `,
-        [origenId, cbte_tipo]
-      );
-
-      if (prev?.length) {
-        const p = prev[0];
-        return res.status(409).json({
-          error: "Ya existe una NC asociada a este origen (PENDIENTE o EMITIDA). No se crea otra.",
-          nc_id: p.id,
-          nc_estado: p.estado,
-          nc_cbte_nro: p.cbte_nro,
-          nc_cae: p.cae,
-          nc_cae_vto: p.cae_vto,
-          nc_obs_code: p.obs_code,
-          nc_obs_msg: p.obs_msg,
-          origen_id: origenId,
-        });
-      }
-    }
-
-    // Doc + Cond IVA (por defecto del origen; override solo si el origen no tiene)
     const doc_tipo = Number(origen.doc_tipo);
     const doc_nro = Number(origen.doc_nro);
 
@@ -1216,16 +1177,11 @@ async function emitirNotaCreditoPorArcaId(req, res) {
         : Number(req.body.receptor_cond_iva_id || 0);
 
     if (!receptor_cond_iva_id || !Number.isFinite(receptor_cond_iva_id)) {
-      return res.status(400).json({
-        error: "Falta receptor_cond_iva_id (origen no lo tiene y no vino en body)",
-      });
+      return res.status(400).json({ error: "Falta receptor_cond_iva_id (origen no lo tiene y no vino en body)" });
     }
 
     if (clase === "A" && doc_tipo !== 80) {
-      return res.status(400).json({
-        error: "Para NC A el receptor debe ser CUIT (DocTipo=80)",
-        doc_tipo,
-      });
+      return res.status(400).json({ error: "Para NC A el receptor debe ser CUIT (DocTipo=80)", doc_tipo });
     }
 
     const allowed = await getAllowedCondIvaIdsForCbte(cbte_tipo);
@@ -1246,20 +1202,8 @@ async function emitirNotaCreditoPorArcaId(req, res) {
       return res.status(400).json({ error: "imp_total inválido (debe ser > 0)" });
     }
 
-    // no exceder lo facturado (NC emitidas contra origen)
     const yaAcreditado = await arcaModel.sumarTotalEmitidoAsociado(origenId);
-    const remanente = round2(origenTotal - Number(yaAcreditado || 0));
-
-    if (remanente <= 0.01) {
-      return res.status(409).json({
-        error: "El comprobante origen ya no tiene remanente acreditable (ya está acreditado).",
-        origen_id: origenId,
-        origen_total: origenTotal,
-        ya_acreditado: Number(yaAcreditado || 0),
-        remanente,
-      });
-    }
-
+    const remanente = round2local(origenTotal - Number(yaAcreditado || 0));
     if (targetTotal > remanente + 0.01) {
       return res.status(409).json({
         error: "La NC supera el remanente acreditable del comprobante origen",
@@ -1276,21 +1220,19 @@ async function emitirNotaCreditoPorArcaId(req, res) {
 
     const factor = origenTotal > 0 ? targetTotal / origenTotal : 1;
 
-    // Escalar items proporcional
     const items = origItems.map((it) => {
       const cantidad = Number(it.cantidad || 0) || 1;
-      let imp_total = round2(Number(it.imp_total) * factor);
+      let imp_total = round2local(Number(it.imp_total) * factor);
 
       const iva_alicuota = Number(it.iva_alicuota || 0);
-      const imp_neto = iva_alicuota === 0 ? imp_total : round2(imp_total / (1 + iva_alicuota / 100));
-      const imp_iva = round2(imp_total - imp_neto);
-      const precio_unitario = round2(imp_total / cantidad);
+      const imp_neto = iva_alicuota === 0 ? imp_total : round2local(imp_total / (1 + iva_alicuota / 100));
+      const imp_iva = round2local(imp_total - imp_neto);
 
       return {
         producto_id: it.producto_id ?? null,
         descripcion: it.descripcion,
         cantidad,
-        precio_unitario,
+        precio_unitario: round2local(imp_total / cantidad),
         bonif: Number(it.bonif || 0),
         iva_alicuota,
         imp_neto,
@@ -1299,36 +1241,30 @@ async function emitirNotaCreditoPorArcaId(req, res) {
       };
     });
 
-    // Ajuste final para cerrar total exacto
-    const sumAntes = round2(items.reduce((a, i) => a + Number(i.imp_total || 0), 0));
-    const diff = round2(targetTotal - sumAntes);
+    const sumAntes = round2local(items.reduce((a, i) => a + Number(i.imp_total || 0), 0));
+    const diff = round2local(targetTotal - sumAntes);
     if (Math.abs(diff) >= 0.01 && items.length) {
       const last = items[items.length - 1];
-      last.imp_total = round2(Number(last.imp_total) + diff);
+      last.imp_total = round2local(Number(last.imp_total) + diff);
       const p = Number(last.iva_alicuota || 0);
-      last.imp_neto = p === 0 ? last.imp_total : round2(last.imp_total / (1 + p / 100));
-      last.imp_iva = round2(last.imp_total - last.imp_neto);
-      last.precio_unitario = round2(last.imp_total / Number(last.cantidad || 1));
+      last.imp_neto = p === 0 ? last.imp_total : round2local(last.imp_total / (1 + p / 100));
+      last.imp_iva = round2local(last.imp_total - last.imp_neto);
+      last.precio_unitario = round2local(last.imp_total / Number(last.cantidad || 1));
     }
 
-    const imp_total = round2(items.reduce((a, i) => a + Number(i.imp_total || 0), 0));
-    const imp_neto = round2(items.reduce((a, i) => a + Number(i.imp_neto || 0), 0));
-    const imp_iva = round2(items.reduce((a, i) => a + Number(i.imp_iva || 0), 0));
+    const imp_total = round2local(items.reduce((a, i) => a + Number(i.imp_total || 0), 0));
+    const imp_neto  = round2local(items.reduce((a, i) => a + Number(i.imp_neto || 0), 0));
+    const imp_iva   = round2local(items.reduce((a, i) => a + Number(i.imp_iva || 0), 0));
 
-    // IVA alícuotas
     const map = new Map();
     for (const it of items) {
       const id = porcToWsfeId(it.iva_alicuota);
       if (!id) {
-        return res.status(400).json({
-          error: "IVA no soportado para WSFE",
-          iva_alicuota: it.iva_alicuota,
-          descripcion: it.descripcion,
-        });
+        return res.status(400).json({ error: "IVA no soportado para WSFE", iva_alicuota: it.iva_alicuota, descripcion: it.descripcion });
       }
       const prev = map.get(id) || { id, baseImp: 0, importe: 0 };
-      prev.baseImp = round2(prev.baseImp + Number(it.imp_neto || 0));
-      prev.importe = round2(prev.importe + Number(it.imp_iva || 0));
+      prev.baseImp = round2local(prev.baseImp + Number(it.imp_neto || 0));
+      prev.importe = round2local(prev.importe + Number(it.imp_iva || 0));
       map.set(id, prev);
     }
     const ivaAlicuotas = [...map.values()].sort((a, b) => a.id - b.id);
@@ -1337,20 +1273,16 @@ async function emitirNotaCreditoPorArcaId(req, res) {
     if (!allowIva0 && imp_iva === 0 && imp_neto > 0) {
       return res.status(409).json({
         error: "IVA quedó en 0. Reintentar con allow_iva_0=1 o revisar IVA de los productos/origen.",
-        imp_neto,
-        imp_iva,
-        imp_total,
+        imp_neto, imp_iva, imp_total
       });
     }
 
-    // Numeración / fechas
     const pto_vta = Number(origen.pto_vta);
     const info = await getNextAndDates(pto_vta, cbte_tipo);
 
     let next = info.next;
     let cbte_fch = info.cbte_fch;
 
-    // Reservar cbte_nro
     for (let i = 0; i < 3; i++) {
       try {
         const req_json = JSON.stringify({
@@ -1361,7 +1293,6 @@ async function emitirNotaCreditoPorArcaId(req, res) {
             cbte_tipo: Number(origen.cbte_tipo),
             cbte_nro: Number(origen.cbte_nro),
             cbte_fch: String(origen.cbte_fch),
-            cuit: Number(origen.cuit_emisor),
           },
           parcial: factor < 0.999,
           factor,
@@ -1412,201 +1343,86 @@ async function emitirNotaCreditoPorArcaId(req, res) {
       asoc_cuit: Number(origen.cuit_emisor),
     });
 
-    // ===== WSFE: FECAESolicitar =====
-    let cae;
+    const cae = await wsfe.FECAESolicitar({
+      ptoVta: pto_vta,
+      cbteTipo: cbte_tipo,
+      cbteDesde: next,
+      cbteHasta: next,
+      cbteFch: cbte_fch,
+      docTipo: doc_tipo,
+      docNro: doc_nro,
+      condicionIVAReceptorId: receptor_cond_iva_id,
+      impTotal: imp_total,
+      impNeto: imp_neto,
+      impIVA: imp_iva,
+      impOpEx: 0,
+      impTotConc: 0,
+      impTrib: 0,
+      monId: origen.mon_id || "PES",
+      monCotiz: origen.mon_cotiz || 1,
+      omitirIva: false,
+      ivaAlicuotas,
+      // SOLO 3 CAMPOS (Tipo/PtoVta/Nro)
+      cbtesAsoc: [{
+        tipo: Number(origen.cbte_tipo),
+        pto_vta: Number(origen.pto_vta),
+        nro: Number(origen.cbte_nro),
+      }],
+    });
+
+    // Auditoría SIEMPRE
     try {
-      cae = await wsfe.FECAESolicitar({
-        ptoVta: pto_vta,
-        cbteTipo: cbte_tipo,
-        cbteDesde: next,
-        cbteHasta: next,
-        cbteFch: cbte_fch,
-        docTipo: doc_tipo,
-        docNro: doc_nro,
-        condicionIVAReceptorId: receptor_cond_iva_id,
-        impTotal: imp_total,
-        impNeto: imp_neto,
-        impIVA: imp_iva,
-        impOpEx: 0,
-        impTotConc: 0,
-        impTrib: 0,
-        monId: origen.mon_id || "PES",
-        monCotiz: origen.mon_cotiz || 1,
-        omitirIva: false,
-        ivaAlicuotas,
-        cbtesAsoc: [{
-          tipo: Number(origen.cbte_tipo),
-          pto_vta: Number(origen.pto_vta),
-          nro: Number(origen.cbte_nro),
-          cuit: Number(origen.cuit_emisor),
-          cbte_fch: String(origen.cbte_fch),
-        }],
-      });
-    } catch (eCall) {
-      const xml = eCall?.body || eCall?.raw || "";
-      const err = extractErrCodeMsg(xml);
-      await safeInsertWsfeConsulta({
+      await arcaModel.insertarWsfeConsulta({
         arca_comprobante_id: arcaId,
-        ok: 0,
+        ok: cae?.resultado === "A",
         parsed_json: {
           mode: "emitir",
           action: "FECAESolicitar",
-          phase: "exception",
-          http_status: eCall?.meta?.statusCode ?? eCall?.statusCode ?? null,
-          soapAction: eCall?.meta?.soapAction ?? null,
-          url: eCall?.meta?.url ?? null,
-          req_xml: eCall?.meta?.requestXml ?? null,
-          error: (eCall?.message || String(eCall)).slice(0, 500),
-          wsfe_err_code: err?.code || null,
-          wsfe_err_msg: err?.msg || null,
+          http_status: cae?.meta?.statusCode ?? null,
+          soapAction: cae?.meta?.soapAction ?? null,
+          url: cae?.meta?.url ?? null,
+          req_xml: cae?.meta?.requestXml ?? null,
+          resultado: cae?.resultado ?? null,
+          obsCode: cae?.obsCode ?? null,
+          obsMsg: cae?.obsMsg ?? null,
         },
-        resp_xml: (xml && String(xml).trim()) ? xml : "<!-- WSFE EXCEPTION EMPTY BODY -->",
+        resp_xml: (cae?.raw && String(cae.raw).trim()) ? cae.raw : "<!-- WSFE EMPTY BODY -->",
       });
-
-      // Sin confirmación => PENDIENTE (no liberar cbte_nro)
-      await arcaModel.actualizarRespuesta(arcaId, {
-        resultado: null,
-        cae: null,
-        cae_vto: null,
-        obs_code: "WSFE_SIN_CONFIRM",
-        obs_msg: `WSFE exception sin confirmación: ${(eCall?.message || "error").slice(0, 200)}`,
-        resp_xml: (xml && String(xml).trim()) ? xml : "<!-- WSFE EXCEPTION EMPTY BODY -->",
-        estado: "PENDIENTE",
-      });
-
-      return res.status(502).json({
-        arca_id: arcaId,
-        estado: "PENDIENTE",
-        pto_vta,
-        cbte_tipo,
-        cbte_fch,
-        cbte_nro: next,
-        error: "WSFE sin confirmación (exception). Requiere auditoría/reconciliación antes de reintentar.",
-        origen: { arca_id: origenId, cbte_tipo: origen.cbte_tipo, cbte_nro: origen.cbte_nro, cbte_fch: origen.cbte_fch },
-        parcial: factor < 0.999,
-        remanente_antes: remanente,
-        acreditado_total_origen: Number(yaAcreditado || 0),
-      });
+    } catch (e) {
+      console.warn("⚠️ insertarWsfeConsulta (NC) falló:", e?.message || e);
     }
 
-    // Auditar FECAESolicitar
-    await safeInsertWsfeConsulta({
-      arca_comprobante_id: arcaId,
-      ok: cae?.resultado === "A",
-      parsed_json: {
-        mode: "emitir",
-        action: "FECAESolicitar",
-        http_status: cae?.meta?.statusCode ?? null,
-        soapAction: cae?.meta?.soapAction ?? null,
-        url: cae?.meta?.url ?? null,
-        req_xml: cae?.meta?.requestXml ?? null,
-        resultado: cae?.resultado ?? null,
-        obsCode: cae?.obsCode ?? null,
-        obsMsg: cae?.obsMsg ?? null,
-      },
+    const resultado = cae?.resultado ?? null;
+    const httpStatus = cae?.meta?.statusCode ?? null;
+    const rawLen = String(cae?.raw || "").trim().length;
+
+    let estado;
+    if (resultado === "A") estado = "EMITIDO";
+    else if (resultado === "R") estado = "RECHAZADO";
+    else if (httpStatus && httpStatus >= 400 && httpStatus < 500) estado = "RECHAZADO"; // request inválida
+    else estado = "PENDIENTE"; // sin confirmación real
+
+    const obs_code =
+      estado === "PENDIENTE" ? "WSFE_SIN_CONFIRM"
+      : (cae?.obsCode || (httpStatus ? `HTTP_${httpStatus}` : "RECHAZADO"));
+
+    const obs_msg =
+      estado === "PENDIENTE"
+        ? `WSFE sin confirmación (http_status=${httpStatus}, rawLen=${rawLen})`
+        : (cae?.obsMsg || (httpStatus ? `WSFE HTTP ${httpStatus} (rawLen=${rawLen})` : "Rechazado"));
+
+    await arcaModel.actualizarRespuesta(arcaId, {
+      resultado,
+      cae: cae?.cae || null,
+      cae_vto: cae?.caeVto || null,
+      obs_code,
+      obs_msg,
       resp_xml: (cae?.raw && String(cae.raw).trim()) ? cae.raw : "<!-- WSFE EMPTY BODY -->",
+      estado,
     });
 
-    // Clasificación inicial
-    const resultado = cae?.resultado ?? null;
-    let estado = (resultado === "A") ? "EMITIDO" : (resultado === "R" ? "RECHAZADO" : "PENDIENTE");
-
-    // Si quedó “sin confirmación”, recheck inmediato con FECompConsultar
-    if (estado === "PENDIENTE") {
-      try {
-        const chk = await wsfe.FECompConsultar(pto_vta, cbte_tipo, next);
-        await safeInsertWsfeConsulta({
-          arca_comprobante_id: arcaId,
-          ok: 0,
-          parsed_json: {
-            mode: "recheck",
-            action: "FECompConsultar",
-            http_status: chk?.meta?.statusCode ?? null,
-            soapAction: chk?.meta?.soapAction ?? null,
-            url: chk?.meta?.url ?? null,
-            req_xml: chk?.meta?.requestXml ?? null,
-          },
-          resp_xml: (chk?.raw && String(chk.raw).trim()) ? chk.raw : "<!-- FECompConsultar EMPTY BODY -->",
-        });
-
-        const caeChk = extractCAE(chk?.raw || "");
-        const vtoChk = extractFchVto(chk?.raw || "");
-        const errChk = extractErrCodeMsg(chk?.raw || "");
-
-        if (caeChk) {
-          estado = "EMITIDO";
-          await arcaModel.actualizarRespuesta(arcaId, {
-            resultado: "A",
-            cae: caeChk,
-            cae_vto: vtoChk || null,
-            obs_code: "RECONCILIADO",
-            obs_msg: "Autorizado en WSFE (recheck FECompConsultar) tras falta de confirmación",
-            resp_xml: (chk?.raw && String(chk.raw).trim()) ? chk.raw : "<!-- FECompConsultar EMPTY BODY -->",
-            estado,
-          });
-        } else if (errChk?.code === "602") {
-          // No existe: no se emitió => RECHAZADO + liberar nro
-          estado = "RECHAZADO";
-          await arcaModel.actualizarRespuesta(arcaId, {
-            resultado: "R",
-            cae: null,
-            cae_vto: null,
-            obs_code: "WSFE_602_NO_EXISTE",
-            obs_msg: "FECompConsultar: No existen datos (602). Se considera no emitido.",
-            resp_xml: (chk?.raw && String(chk.raw).trim()) ? chk.raw : "<!-- FECompConsultar EMPTY BODY -->",
-            estado,
-          });
-          await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
-        } else {
-          // Sigue sin confirmación: dejar PENDIENTE
-          await arcaModel.actualizarRespuesta(arcaId, {
-            resultado: null,
-            cae: null,
-            cae_vto: null,
-            obs_code: "WSFE_SIN_CONFIRM",
-            obs_msg: "WSFE sin confirmación (recheck no arrojó CAE ni 602). Requiere auditoría.",
-            resp_xml: (chk?.raw && String(chk.raw).trim()) ? chk.raw : "<!-- FECompConsultar EMPTY BODY -->",
-            estado: "PENDIENTE",
-          });
-        }
-      } catch (e2) {
-        await safeInsertWsfeConsulta({
-          arca_comprobante_id: arcaId,
-          ok: 0,
-          parsed_json: {
-            mode: "recheck",
-            action: "FECompConsultar",
-            phase: "exception",
-            error: (e2?.message || String(e2)).slice(0, 500),
-          },
-          resp_xml: (e2?.body || e2?.raw || "<!-- FECompConsultar exception -->"),
-        });
-
-        await arcaModel.actualizarRespuesta(arcaId, {
-          resultado: null,
-          cae: null,
-          cae_vto: null,
-          obs_code: "WSFE_SIN_CONFIRM",
-          obs_msg: `Recheck FECompConsultar falló: ${(e2?.message || "error").slice(0, 200)}`,
-          resp_xml: (e2?.body || e2?.raw || "<!-- FECompConsultar exception -->"),
-          estado: "PENDIENTE",
-        });
-      }
-    } else {
-      // Resultado A o R (normal)
-      await arcaModel.actualizarRespuesta(arcaId, {
-        resultado: resultado,
-        cae: cae?.cae || null,
-        cae_vto: cae?.caeVto || null,
-        obs_code: cae?.obsCode || null,
-        obs_msg: cae?.obsMsg || null,
-        resp_xml: (cae?.raw && String(cae.raw).trim()) ? cae.raw : "<!-- WSFE EMPTY BODY -->",
-        estado,
-      });
-
-      if (estado === "RECHAZADO") {
-        await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
-      }
+    if (estado === "RECHAZADO") {
+      await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
     }
 
     if (estado === "PENDIENTE") {
@@ -1631,10 +1447,12 @@ async function emitirNotaCreditoPorArcaId(req, res) {
       pto_vta,
       cbte_tipo,
       cbte_fch,
-      cbte_nro: next, // nro reservado que se intentó
-      resultado: (estado === "EMITIDO") ? "A" : "R",
-      cae: (estado === "EMITIDO") ? (cae?.cae || null) : null,
-      cae_vto: (estado === "EMITIDO") ? (cae?.caeVto || null) : null,
+      cbte_nro: next,
+      resultado,
+      cae: cae?.cae || null,
+      cae_vto: cae?.caeVto || null,
+      obs_code,
+      obs_msg,
       origen: { arca_id: origenId, cbte_tipo: origen.cbte_tipo, cbte_nro: origen.cbte_nro, cbte_fch: origen.cbte_fch },
       parcial: factor < 0.999,
       remanente_antes: remanente,
@@ -1658,7 +1476,6 @@ async function emitirNotaCreditoPorArcaId(req, res) {
     return res.status(500).json({ error: e.message || "Error interno" });
   }
 }
-
 
 async function statusPorFacturaMostrador(req, res) {
   try {
