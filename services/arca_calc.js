@@ -66,8 +66,9 @@ function calcularDesdeFactura(rows, clase, opts = {}) {
         imp_total,
       };
     }
-
-    const porc = normalizePorc(r.iva_porcentaje, defaultPorc);
+        let porc = normalizePorc(r.iva_porcentaje, defaultPorc);
+ // Regla de negocio: en A/B siempre 21%
+    if (porc !== defaultPorc) porc = defaultPorc;
     const wsfeId = porcToWsfeId(porc);
     if (!wsfeId) {
       const msg = `IVA del producto no soportado: ${r.iva_porcentaje} (normalizado=${porc}). producto_id=${r.producto_id}`;
