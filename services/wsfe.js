@@ -45,7 +45,15 @@ function soapRequest(action, xml, url) {
   const soapAction = action.startsWith("http")
     ? action
     : `http://ar.gov.afip.dif.FEV1/${action}`;
-  return postXml(url, xml, soapAction);
+    const finalUrl =
+    (url && String(url).trim()) ||
+    (process.env.ARCA_WSFE_URL && String(process.env.ARCA_WSFE_URL).trim());
+  if (!finalUrl) {
+    const err = new Error("WSFE_CONFIG: ARCA_WSFE_URL no configurada");
+    err.code = "WSFE_CONFIG";
+    throw err;
+  }
+ return postXml(finalUrl, xml, action);
 }
 
 function pickTag(xml, tag) {
