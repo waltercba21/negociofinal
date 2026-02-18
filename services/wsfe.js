@@ -2,7 +2,11 @@
 require("dotenv").config();
 
 const https = require("https");
+const http = require("http");
 const { getTokenSign } = require("./wsaa");
+
+const HTTPS_AGENT = new https.Agent({ keepAlive: true });
+const HTTP_AGENT = new http.Agent({ keepAlive: true });
 
 const ENV = (process.env.ARCA_ENV || "homo").toLowerCase();
 const CUIT = String(process.env.ARCA_CUIT || "").trim();
@@ -26,63 +30,74 @@ function postXml(url, xml, soapAction) {
     try {
       u = new URL(url);
     } catch (e) {
-      const err = new Error(`WSFE URL inválida: ${url}`);
-      err.code = "WSFE_URL_INVALID";
-      return reject(err);
+      e.message = `WSFE URL inválida: ${url}`;
+      return reject(e);
     }
 
     const isHttps = u.protocol === "https:";
-    const client = isHttps ? require("https") : require("http");
-
-    // AFIP/WSFE espera SOAPAction con URI completa (no "FECAESolicitar" pelado)
-    let soapActionValue = soapAction ? String(soapAction).trim() : "";
-    if (soapActionValue && !soapActionValue.includes("://")) {
-      soapActionValue = `http://ar.gov.afip.dif.FEV1/${soapActionValue}`;
+    if (!isHttps && u.protocol !== "http:") {
+      return reject(new Error(`Protocolo no soportado: ${u.protocol}`));
     }
+
+    const body = typeof xml === "string" ? xml : String(xml);
+    const action = normalizeSoapAction(soapAction);
 
     const headers = {
-      "Content-Type": "text/xml; charset=utf-8",
-      "Content-Length": Buffer.byteLength(xml, "utf8"),
-      Accept: "text/xml",
-      Connection: "close",
+      "Content-Type": 'text/xml; charset="utf-8"',
+      "Accept": "text/xml",
+      "Content-Length": Buffer.byteLength(body, "utf8"),
       "User-Agent": "autofaros-wsfe/1.0",
+      "Connection": "keep-alive",
     };
 
-    if (soapActionValue) {
-      // comillas ayudan con stacks SOAP clásicos
-      headers["SOAPAction"] = `"${soapActionValue}"`;
-    }
+    // WSFE/asmx suele ser estricto con SOAPAction
+    if (action) headers["SOAPAction"] = `"${action}"`;
 
-    const req = client.request(
-      {
-        method: "POST",
-        hostname: u.hostname,
-        port: u.port ? Number(u.port) : (isHttps ? 443 : 80),
-        path: u.pathname + u.search,
-        headers,
-      },
-      (res) => {
-        const chunks = [];
-        res.on("data", (c) => chunks.push(c));
-        res.on("end", () => {
-          const body = Buffer.concat(chunks).toString("utf8");
-          resolve(body); // NO rompo firma: devuelve XML crudo siempre (incluye soap:Fault)
-        });
-      }
-    );
+    const opts = {
+      method: "POST",
+      hostname: u.hostname,
+      port: u.port || (isHttps ? 443 : 80),
+      path: u.pathname + u.search,
+      headers,
+      agent: isHttps ? HTTPS_AGENT : HTTP_AGENT,
+      timeout: 30000,
+    };
 
-    req.setTimeout(25000, () => {
-      const err = new Error("Timeout WSFE postXml");
-      err.code = "WSFE_TIMEOUT";
-      req.destroy(err);
+    const mod = isHttps ? https : http;
+
+    const req = mod.request(opts, (res) => {
+      res.setEncoding("utf8");
+      let data = "";
+      res.on("data", (c) => (data += c));
+      res.on("end", () => {
+        if (res.statusCode >= 400) {
+          const err = new Error(`HTTP ${res.statusCode} ${res.statusMessage || ""}`.trim());
+          err.statusCode = res.statusCode;
+          err.body = data;
+          return reject(err);
+        }
+        resolve(data);
+      });
     });
 
-    req.on("error", (err) => reject(err));
-    req.write(xml, "utf8");
+    req.on("timeout", () => req.destroy(new Error("WSFE timeout")));
+    req.on("error", reject);
+    req.write(body, "utf8");
     req.end();
   });
 }
 
+function normalizeSoapAction(soapAction) {
+  if (!soapAction) return null;
+  const s = String(soapAction).trim();
+  if (!s) return null;
+
+  // Si ya viene como URL, lo dejamos
+  if (/^https?:\/\//i.test(s)) return s;
+
+  // WSFE usa este namespace para SOAPAction
+  return `http://ar.gov.afip.dif.FEV1/${s}`;
+}
 function soapRequest(action, xml, url) {
   const soapAction = action.startsWith("http")
     ? action
