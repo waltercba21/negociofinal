@@ -634,7 +634,7 @@ const pickDate8MaxFromTags = (xml, tags) => {
         cae_vto: null,
         obs_code: "WSFE_EXC",
         obs_msg: msg.slice(0, 1000),
-        resp_xml: null,
+        resp_xml: (err.body || err.raw || null),
         estado: "PENDIENTE",
       });
 
@@ -686,7 +686,7 @@ const pickDate8MaxFromTags = (xml, tags) => {
                 cae_vto: null,
                 obs_code: "DUP_CBTE",
                 obs_msg: "Choque de numeración (uq_cbte) al reintentar por 10016",
-                resp_xml: null,
+                resp_xml: (err.body || err.raw || null),
                 estado: "RECHAZADO",
               });
               await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
@@ -761,7 +761,7 @@ const pickDate8MaxFromTags = (xml, tags) => {
           cae_vto: null,
           obs_code: "WSFE_EXC",
           obs_msg: msg.slice(0, 1000),
-          resp_xml: null,
+          resp_xml: (err.body || err.raw || null),
           estado: "PENDIENTE",
         });
 
@@ -836,7 +836,7 @@ const pickDate8MaxFromTags = (xml, tags) => {
           cae_vto: null,
           obs_code: "EXC",
           obs_msg: (e?.message || String(e)).slice(0, 1000),
-          resp_xml: null,
+          resp_xml: (err.body || err.raw || null),
           estado: "RECHAZADO",
         });
         await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
@@ -1160,7 +1160,7 @@ async function emitirNotaCreditoPorArcaId(req, res) {
           cae_vto: null,
           obs_code: "EXC",
           obs_msg: (e?.message || String(e)).slice(0, 1000),
-          resp_xml: null,
+          resp_xml: (err.body || err.raw || null),
           estado: "RECHAZADO",
         });
         await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
@@ -1998,11 +1998,21 @@ const pickDateTagsStrict = (xml, tags) => {
     if (fault) {
       const parsed_json = { fault, raw_hint: "faultstring" };
       await arcaModel.insertarWsfeConsulta({
-        arca_comprobante_id: arcaId,
-        ok: false,
-        parsed_json,
-        resp_xml: raw,
-      });
+  arca_comprobante_id: arcaId,
+  ok: cae.resultado === "A",
+  parsed_json: {
+    mode: "emitir",
+    action: "FECAESolicitar",
+    http_status: cae?.meta?.statusCode || null,
+    soapAction: cae?.meta?.soapAction || null,
+    url: cae?.meta?.url || null,
+    req_xml: cae?.meta?.requestXml || null,
+    resultado: cae.resultado,
+    obsCode: cae.obsCode || null,
+  },
+  resp_xml: cae.raw || null,
+});
+
 
       return res.status(502).json({
         arca_id: arcaId,

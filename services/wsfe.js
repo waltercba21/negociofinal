@@ -21,36 +21,88 @@ const WSFE_URL =
 if (ENV === "prod" && /homo/i.test(WSFE_URL)) {
   throw new Error(`[ARCA][PROD] ARCA_WSFE_URL apunta a HOMO: ${WSFE_URL}`);
 }
-function postXml(url, xml, soapAction) {
+function redactAuth(xml) {
+  return String(xml || "")
+    .replace(/<(\w+:)?Token>[\s\S]*?<\/(\w+:)?Token>/gi, "<$1Token>REDACTED</$1Token>")
+    .replace(/<(\w+:)?Sign>[\s\S]*?<\/(\w+:)?Sign>/gi, "<$1Sign>REDACTED</$1Sign>");
+}
+
+async function soapRequestDetailed(action, xml, url) {
+  const soapAction = normalizeSoapAction(action); // ya existe en tu wsfe.js
+  const meta = await postXml(url, xml, soapAction, {
+    returnMeta: true,
+    allowHttpErrors: true, // clave: NO tirar exception por 500
+  });
+
+  return {
+    action,
+    url,
+    soapAction,
+    statusCode: meta.statusCode,
+    headers: meta.headers,
+    body: meta.body,                 // response body completo (SOAP Fault incluido)
+    requestXmlRedacted: redactAuth(xml), // request xml (con Token/Sign redacted)
+  };
+}
+
+async function postXml(url, xml, soapAction, opts = {}) {
+  const { returnMeta = false, allowHttpErrors = false, timeoutMs = 25000 } = opts;
+
+  const u = new URL(url);
+  const lib = u.protocol === "https:" ? require("https") : require("http");
+
   return new Promise((resolve, reject) => {
-    const u = new URL(url);
-
-    const headers = {
-      "Content-Type": "text/xml; charset=utf-8",
-      "Content-Length": Buffer.byteLength(xml),
-    };
-    if (soapAction) headers["SOAPAction"] = `"${soapAction}"`;
-
-    const req = https.request(
-      { method: "POST", hostname: u.hostname, path: u.pathname + u.search, headers },
+    const req = lib.request(
+      {
+        method: "POST",
+        hostname: u.hostname,
+        port: u.port || (u.protocol === "https:" ? 443 : 80),
+        path: u.pathname + (u.search || ""),
+        headers: {
+          "Content-Type": "text/xml; charset=utf-8",
+          "Content-Length": Buffer.byteLength(xml, "utf8"),
+          SOAPAction: soapAction,
+        },
+      },
       (res) => {
-        let data = "";
-        res.on("data", (c) => (data += c));
+        let body = "";
+        res.setEncoding("utf8");
+        res.on("data", (c) => (body += c));
         res.on("end", () => {
-          resolve({
+          const meta = {
             statusCode: res.statusCode || 0,
-            body: data,
             headers: res.headers || {},
-          });
+            body: body || "", // nunca null acá
+          };
+
+          const isOk = meta.statusCode >= 200 && meta.statusCode < 300;
+          if (!isOk && !allowHttpErrors) {
+            const err = new Error(`WSFE HTTP ${meta.statusCode}`);
+            err.code = "WSFE_HTTP";
+            err.statusCode = meta.statusCode;
+            err.headers = meta.headers;
+            err.body = meta.body; // clave: body siempre adjunto
+            return reject(err);
+          }
+
+          return resolve(returnMeta ? meta : meta.body);
         });
       }
     );
 
-    req.on("error", reject);
-    req.write(xml);
+    req.setTimeout(timeoutMs, () => {
+      const err = new Error(`WSFE TIMEOUT ${timeoutMs}ms`);
+      err.code = "WSFE_TIMEOUT";
+      return req.destroy(err);
+    });
+
+    req.on("error", (err) => reject(err));
+
+    req.write(xml, "utf8");
     req.end();
   });
 }
+
 
 function normalizeSoapAction(soapAction) {
   if (!soapAction) return "";
@@ -59,18 +111,9 @@ function normalizeSoapAction(soapAction) {
 }
 
 async function soapRequest(action, xml, url) {
-  const resp = await postXml(url, xml, action);
-
-  if (resp.statusCode >= 400) {
-    const err = new Error(`WSFE HTTP ${resp.statusCode}`);
-    err.statusCode = resp.statusCode;
-    err.body = resp.body;
-    throw err;
-  }
-
-  return resp.body;
+  const r = await soapRequestDetailed(action, xml, url);
+  return r.body;
 }
-
 
 function pickTag(xml, tag) {
   const r = new RegExp(
@@ -265,27 +308,27 @@ async function FECAESolicitar(det) {
     </ar:FECAESolicitar>
   </soap:Body>
 </soap:Envelope>`;
+const ex = await soapRequestDetailed("FECAESolicitar", xml, process.env.ARCA_WSFE_URL);
+const resp = ex.body || ""; // nunca null
+const parsed = parseWsfeCaeResponse(resp);
 
-  // IMPORTANTE: soapRequest devuelve el XML aunque WSFE responda HTTP 500 (SOAP Fault):contentReference[oaicite:3]{index=3}
-  const resp = await soapRequest("FECAESolicitar", xml, process.env.ARCA_WSFE_URL);
+return {
+  next,
+  resultado: parsed.resultado,
+  cae: parsed.cae,
+  caeVto: parsed.caeVto,
+  obsCode: parsed.obsCode,
+  obsMsg: parsed.obsMsg,
+  parsed,
+  raw: resp,
+  meta: {
+    statusCode: ex.statusCode,
+    soapAction: ex.soapAction,
+    url: ex.url,
+    requestXml: ex.requestXmlRedacted,
+  },
+};
 
-  // Parse único y consistente (incluye SOAP Fault -> SOAP_FAULT):contentReference[oaicite:4]{index=4}
-  const parsed = parseWsfeCaeResponse(resp);
-
-  const next =
-    Number(pickTag(resp, "CbteDesde") || pickTag(resp, "CbteHasta") || 0) ||
-    det.cbteNro;
-
-  return {
-    next,
-    resultado: parsed.resultado,
-    cae: parsed.cae,
-    caeVto: parsed.caeVto,
-    obsCode: parsed.obsCode,
-    obsMsg: parsed.obsMsg,
-    parsed,
-    raw: resp,
-  };
 }
 
 function pickFirstErr(xml) {
