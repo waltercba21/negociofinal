@@ -21,71 +21,61 @@ const WSFE_URL =
 if (ENV === "prod" && /homo/i.test(WSFE_URL)) {
   throw new Error(`[ARCA][PROD] ARCA_WSFE_URL apunta a HOMO: ${WSFE_URL}`);
 }
-
-
-// services/wsfe.js (helper)
-function postXml(url, xml, soapAction) {
+function postXml(url, xml, soapAction, opts = {}) {
   return new Promise((resolve, reject) => {
     let u;
     try {
       u = new URL(url);
     } catch (e) {
-      e.message = `WSFE URL inválida: ${url}`;
-      return reject(e);
+      const err = new Error(`WSFE invalid url: ${url}`);
+      err.code = "WSFE_INVALID_URL";
+      return reject(err);
     }
 
-    const isHttps = u.protocol === "https:";
-    if (!isHttps && u.protocol !== "http:") {
-      return reject(new Error(`Protocolo no soportado: ${u.protocol}`));
-    }
-
-    const body = typeof xml === "string" ? xml : String(xml);
-    const action = normalizeSoapAction(soapAction);
+    const lib = u.protocol === "https:" ? https : http;
+    const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : 20000;
 
     const headers = {
-      "Content-Type": 'text/xml; charset="utf-8"',
-      "Accept": "text/xml",
-      "Content-Length": Buffer.byteLength(body, "utf8"),
+      "Content-Type": "text/xml; charset=utf-8",
+      "Content-Length": Buffer.byteLength(xml),
       "User-Agent": "autofaros-wsfe/1.0",
-      "Connection": "keep-alive",
     };
 
-    // WSFE/asmx suele ser estricto con SOAPAction
-    if (action) headers["SOAPAction"] = `"${action}"`;
+    if (soapAction) headers["SOAPAction"] = `"${soapAction}"`;
 
-    const opts = {
-      method: "POST",
-      hostname: u.hostname,
-      port: u.port || (isHttps ? 443 : 80),
-      path: u.pathname + u.search,
-      headers,
-      agent: isHttps ? HTTPS_AGENT : HTTP_AGENT,
-      timeout: 30000,
-    };
+    const req = lib.request(
+      {
+        method: "POST",
+        hostname: u.hostname,
+        port: u.port || (u.protocol === "https:" ? 443 : 80),
+        path: u.pathname + u.search,
+        headers,
+        timeout: timeoutMs,
+      },
+      (res) => {
+        let data = "";
+        res.setEncoding("utf8");
+        res.on("data", (c) => (data += c));
+        res.on("end", () => {
+          if (res.statusCode && res.statusCode >= 400) {
+            const err = new Error(`WSFE HTTP ${res.statusCode}`);
+            err.code = "WSFE_HTTP";
+            err.statusCode = res.statusCode;
+            err.body = data;
+            return reject(err);
+          }
+          resolve(data);
+        });
+      }
+    );
 
-    const mod = isHttps ? https : http;
-
-    const req = mod.request(opts, (res) => {
-      res.setEncoding("utf8");
-      let data = "";
-      res.on("data", (c) => (data += c));
-      res.on("end", () => {
-        if (res.statusCode >= 400) {
-          const err = new Error(`HTTP ${res.statusCode} ${res.statusMessage || ""}`.trim());
-          err.statusCode = res.statusCode;
-          err.body = data;
-          return reject(err);
-        }
-        resolve(data);
-      });
-    });
-
-    req.on("timeout", () => req.destroy(new Error("WSFE timeout")));
+    req.on("timeout", () => req.destroy(new Error(`WSFE timeout after ${timeoutMs}ms`)));
     req.on("error", reject);
-    req.write(body, "utf8");
+    req.write(xml);
     req.end();
   });
 }
+
 
 function normalizeSoapAction(soapAction) {
   if (!soapAction) return null;
