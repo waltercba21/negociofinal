@@ -213,6 +213,34 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
   const qBool = (v) => ["1", "true", "yes", "on"].includes(String(v || "").toLowerCase());
 
+  // Para que resp_xml / auditoría NO queden NULL cuando el body venga vacío
+  const forceNonEmpty = (raw, label) => {
+    const s = raw == null ? "" : String(raw);
+    return s !== "" ? s : `<!-- WSFE EMPTY BODY | ${label} -->`;
+  };
+
+  const insertWsfeConsultaSafe = async ({ arca_comprobante_id, ok, parsed_json, resp_xml }) => {
+    try {
+      await arcaModel.insertarWsfeConsulta({
+        arca_comprobante_id,
+        ok: !!ok,
+        parsed_json: parsed_json || null,
+        resp_xml: forceNonEmpty(resp_xml, parsed_json?.action || "WSFE"),
+      });
+    } catch (e) {
+      // no cortar emisión por auditoría
+      console.warn("⚠️ insertarWsfeConsulta falló:", e?.message || e);
+    }
+  };
+
+  const updateRespSafe = async (id, patch) => {
+    try {
+      await arcaModel.actualizarRespuesta(id, patch);
+    } catch (e) {
+      console.warn("⚠️ actualizarRespuesta falló:", e?.message || e);
+    }
+  };
+
   try {
     const facturaId = Number(req.params.id || 0);
     if (!Number.isFinite(facturaId) || facturaId <= 0) {
@@ -234,30 +262,26 @@ async function emitirDesdeFacturaMostrador(req, res) {
     const cbte_tipo = Number(req.body.cbte_tipo || 6);
     const doc_tipo = Number(req.body.doc_tipo);
 
-    const doc_nro_str = String(req.body.doc_nro ?? "").trim();
+    if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) return res.status(400).json({ error: "cbte_tipo inválido" });
+    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return res.status(400).json({ error: "doc_tipo inválido" });
+
+    // doc_nro (permitir vacío solo si doc_tipo=99 => forzar 0)
+    let doc_nro_str = String(req.body.doc_nro ?? "").trim();
+    if (doc_tipo === 99 && doc_nro_str === "") doc_nro_str = "0";
     if (!/^\d+$/.test(doc_nro_str)) return res.status(400).json({ error: "doc_nro inválido" });
     const doc_nro = Number(doc_nro_str);
 
-  const receptorCondIvaInput = req.body.receptor_cond_iva_id;
+    // receptor_cond_iva_id (puede venir vacío y resolverse via cache/padrón si resolve_receptor=1)
+    const receptorCondIvaInput = req.body.receptor_cond_iva_id;
+    const frontSentCondIva = !(receptorCondIvaInput == null || receptorCondIvaInput === "");
 
-if (receptorCondIvaInput == null || receptorCondIvaInput === "") {
-  return res.status(400).json({ error: "Falta receptor_cond_iva_id" });
-}
-
-const receptor_cond_iva_id = Number(receptorCondIvaInput);
-
-if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
-  return res.status(400).json({ error: "receptor_cond_iva_id inválido" });
-}
+    let receptor_cond_iva_id = frontSentCondIva ? Number(receptorCondIvaInput) : null;
+    if (frontSentCondIva && (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0)) {
+      return res.status(400).json({ error: "receptor_cond_iva_id inválido" });
+    }
 
     let receptor_nombre = String(req.body.receptor_nombre || "").trim() || null;
     let receptor_domicilio = null;
-
-    if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) return res.status(400).json({ error: "cbte_tipo inválido" });
-    if (!Number.isFinite(doc_tipo) || doc_tipo <= 0) return res.status(400).json({ error: "doc_tipo inválido" });
-    if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
-      return res.status(400).json({ error: "receptor_cond_iva_id inválido" });
-    }
 
     // Validación doc_nro según doc_tipo
     if (doc_tipo === 99) {
@@ -294,15 +318,15 @@ if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
             if (!receptor_nombre) receptor_nombre = cached.razon_social || cached.nombre || receptor_nombre;
             receptor_domicilio = cached.domicilio || receptor_domicilio;
 
-            // solo si el front NO mandó receptor_cond_iva_id
-            if (receptorCondIvaInput == null && cached.cond_iva_id) {
+            // Solo si el front NO mandó receptor_cond_iva_id
+            if (!frontSentCondIva && cached.cond_iva_id) {
               const c = Number(cached.cond_iva_id);
               if (Number.isFinite(c) && c > 0) receptor_cond_iva_id = c;
             }
           }
         }
 
-        if (refreshReceptor || !cached || !receptor_nombre) {
+        if (refreshReceptor || !cached || !receptor_nombre || (!frontSentCondIva && !receptor_cond_iva_id)) {
           const out = await padron.getPersonaV2({
             idPersona: doc_nro,
             cuitRepresentada: cuit_emisor,
@@ -331,6 +355,11 @@ if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
       } catch (e) {
         console.warn("⚠️ Resolver receptor falló (no bloqueante):", e.message);
       }
+    }
+
+    // A partir de acá: condición IVA debe existir sí o sí (se usa en WSFE)
+    if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
+      return res.status(400).json({ error: "Falta receptor_cond_iva_id (enviar o usar ?resolve_receptor=1 con cache/padrón)" });
     }
 
     // ===== Reglas de negocio (server-side) =====
@@ -384,13 +413,13 @@ if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
 
     const { itemsCalc, totales, ivaAlicuotas, omitirIva } = calc;
     const imp_total = totales.imp_total;
-    const imp_neto  = totales.imp_neto;
-    const imp_iva   = totales.imp_iva;
+    const imp_neto = totales.imp_neto;
+    const imp_iva = totales.imp_iva;
 
-    // ===== Blindaje IVA=0 para clase A/B (evita emitir mal por IVA mal cargado en productos) =====
+    // ===== Blindaje IVA=0 para clase A/B =====
     const allowIvaZero = qBool(req.query.allow_iva_0);
     if (clase !== "C" && !omitirIva && Number(imp_iva) === 0 && !allowIvaZero) {
-      const detalle = (itemsCalc || []).map(x => ({
+      const detalle = (itemsCalc || []).map((x) => ({
         producto_id: x.producto_id,
         descripcion: x.descripcion,
         iva_porc: x.iva_porc,
@@ -408,52 +437,47 @@ if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0) {
       });
     }
 
-    // --- helpers para reconciliación (FECompConsultar devuelve solo XML crudo) ---
+    // --- helpers para reconciliación ---
     const pickBlock = (xml, tag) => {
       const r = new RegExp(`<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`, "i");
       const m = String(xml || "").match(r);
       return m ? m[1] : "";
     };
-const isValidYMD = (yyyymmdd) => {
-  if (!/^\d{8}$/.test(yyyymmdd)) return false;
-  const y = Number(yyyymmdd.slice(0, 4));
-  const m = Number(yyyymmdd.slice(4, 6));
-  const d = Number(yyyymmdd.slice(6, 8));
-  if (m < 1 || m > 12) return false;
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
-};
 
-const pickAllTagContents = (xml, tag) => {
-  const s = String(xml || "");
-  const r = new RegExp(
-    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
-    "gi"
-  );
-  const out = [];
-  let m;
-  while ((m = r.exec(s)) !== null) out.push(m[1]);
-  return out;
-};
+    const isValidYMD = (yyyymmdd) => {
+      if (!/^\d{8}$/.test(yyyymmdd)) return false;
+      const y = Number(yyyymmdd.slice(0, 4));
+      const m = Number(yyyymmdd.slice(4, 6));
+      const d = Number(yyyymmdd.slice(6, 8));
+      if (m < 1 || m > 12) return false;
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+    };
 
-const pickDate8MaxFromTags = (xml, tags) => {
-  let best = null;
-  for (const t of tags) {
-    const contents = pickAllTagContents(xml, t);
-    for (const v of contents) {
-      const digits = String(v).replace(/\D/g, "");
-      const candidates = digits.match(/20\d{6}/g) || [];
-      for (const c of candidates) {
-        if (!isValidYMD(c)) continue;
-        best = best ? (c > best ? c : best) : c;
+    const pickAllTagContents = (xml, tag) => {
+      const s = String(xml || "");
+      const r = new RegExp(`<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`, "gi");
+      const out = [];
+      let m;
+      while ((m = r.exec(s)) !== null) out.push(m[1]);
+      return out;
+    };
+
+    const pickDate8MaxFromTags = (xml, tags) => {
+      let best = null;
+      for (const t of tags) {
+        const contents = pickAllTagContents(xml, t);
+        for (const v of contents) {
+          const digits = String(v).replace(/\D/g, "");
+          const candidates = digits.match(/20\d{6}/g) || [];
+          for (const c of candidates) {
+            if (!isValidYMD(c)) continue;
+            best = best ? (c > best ? c : best) : c;
+          }
+        }
       }
-    }
-  }
-  return best;
-};
-
-
-
+      return best;
+    };
 
     const pickFirst = (xml, tags) => {
       for (const t of tags) {
@@ -462,6 +486,7 @@ const pickDate8MaxFromTags = (xml, tags) => {
       }
       return null;
     };
+
     const reconciliarEnWsfe = async (ptoVta, cbteTipo, cbteNro) => {
       for (let i = 1; i <= 3; i++) {
         try {
@@ -475,7 +500,6 @@ const pickDate8MaxFromTags = (xml, tags) => {
           const cae = pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]);
           const cae_vto = pickDate8MaxFromTags(resultGetXml, ["CAEFchVto", "FchVto"]);
           const cbte_fch_wsfe = pickDate8MaxFromTags(resultGetXml, ["CbteFch"]);
-
 
           if (cae) return { ok: true, cae, cae_vto, cbte_fch: cbte_fch_wsfe, raw };
           await sleep(200 * i);
@@ -514,7 +538,7 @@ const pickDate8MaxFromTags = (xml, tags) => {
           ultimo_autorizado: info.ultimo,
           last_cbte_fch: info.lastCbteFch,
           today: info.today,
-          alloc_attempt: attempt
+          alloc_attempt: attempt,
         },
       };
 
@@ -573,41 +597,113 @@ const pickDate8MaxFromTags = (xml, tags) => {
 
     // WSFE
     let cae;
+    const doAuditFromCae = async (caeObj, phase) => {
+      const respXml = forceNonEmpty(caeObj?.raw, `FECAESolicitar:${phase}`);
+      await insertWsfeConsultaSafe({
+        arca_comprobante_id: arcaId,
+        ok: caeObj?.resultado === "A",
+        parsed_json: {
+          action: "FECAESolicitar",
+          phase,
+          http_status: caeObj?.meta?.statusCode ?? null,
+          soapAction: caeObj?.meta?.soapAction ?? null,
+          url: caeObj?.meta?.url ?? null,
+          req_xml: caeObj?.meta?.requestXml ?? null, // redacted
+          resultado: caeObj?.resultado ?? null,
+          obsCode: caeObj?.obsCode ?? null,
+          obsMsg: caeObj?.obsMsg ?? null,
+        },
+        resp_xml: respXml,
+      });
+      return respXml;
+    };
+
     try {
       cae = await wsfe.FECAESolicitar({
         ptoVta: pto_vta,
         cbteTipo: cbte_tipo,
         docTipo: doc_tipo,
         docNro: doc_nro,
+
+        // compatibilidad con wsfe.js actual (usa receptorCondIvaId)
+        receptorCondIvaId: receptor_cond_iva_id,
+        // compatibilidad futura si wsfe.js acepta este alias
         condicionIVAReceptorId: receptor_cond_iva_id,
+
+        // compatibilidad con wsfe.js actual (usa det.concepto y det.cbteNro)
+        concepto: 1,
+        cbteNro: next,
+
         cbteFch: cbte_fch,
         cbteDesde: next,
         cbteHasta: next,
+
         impTotal: imp_total,
         impTotConc: 0,
         impNeto: imp_neto,
         impOpEx: 0,
         impIVA: imp_iva,
         impTrib: 0,
+
         ivaAlicuotas,
         omitirIva,
+
         monId: "PES",
         monCotiz: "1.000",
       });
+
+      // Auditoría SIEMPRE (incluso si viene HTTP 500 con body vacío, cae.meta trae status y requestXml)
+      await doAuditFromCae(cae, "initial");
     } catch (err) {
       const msg = err?.message || String(err);
+
+      const httpStatus = err?.statusCode || err?.status || null;
+      const soapAction = err?.soapAction || null;
+      const wsfeUrl = err?.url || null;
+      const reqXml = err?.requestXmlRedacted || err?.requestXml || null;
+
+      const bodyRaw =
+        (err && Object.prototype.hasOwnProperty.call(err, "body")) ? String(err.body ?? "") :
+        (err && Object.prototype.hasOwnProperty.call(err, "raw")) ? String(err.raw ?? "") :
+        "";
+
+      const respStore = forceNonEmpty(bodyRaw, `WSFE_EXC:${httpStatus || "NO_STATUS"}`);
+
+      await insertWsfeConsultaSafe({
+        arca_comprobante_id: arcaId,
+        ok: 0,
+        parsed_json: {
+          action: "FECAESolicitar",
+          phase: "exception",
+          http_status: httpStatus,
+          soapAction,
+          url: wsfeUrl,
+          req_xml: reqXml,
+          message: msg,
+        },
+        resp_xml: respStore,
+      });
 
       // Reconciliar: si se autorizó igual, marcar EMITIDO
       const rec = await reconciliarEnWsfe(pto_vta, cbte_tipo, next);
       if (rec.ok && rec.cae) {
-        await arcaModel.actualizarRespuesta(arcaId, {
+        const recXml = forceNonEmpty(rec.raw, "FECompConsultar:reconciliado");
+
+        await updateRespSafe(arcaId, {
           resultado: "A",
           cae: rec.cae,
           cae_vto: rec.cae_vto || null,
           obs_code: "RECONCILIADO",
           obs_msg: "Autorizado en WSFE luego de excepción",
-          resp_xml: rec.raw || null,
+          resp_xml: recXml,
           estado: "EMITIDO",
+        });
+
+        await insertWsfeConsultaSafe({
+          arca_comprobante_id: arcaId,
+          ok: 1,
+          parsed_json: { action: "FECompConsultar", phase: "reconcile", ok: 1 },
+          resp_xml: recXml,
         });
 
         return res.status(200).json({
@@ -627,14 +723,36 @@ const pickDate8MaxFromTags = (xml, tags) => {
         });
       }
 
-      // No se pudo confirmar: dejar PENDIENTE
-      await arcaModel.actualizarRespuesta(arcaId, {
+      // Si es SOAP Fault / request inválida => RECHAZADO y liberar cbte_nro (no dejar PENDIENTE bloqueante)
+      const isSoapFault = /<soap:Fault|:Fault>/i.test(respStore) || /faultstring/i.test(respStore) || /XML document|SOAPAction/i.test(msg);
+      if (isSoapFault) {
+        await updateRespSafe(arcaId, {
+          resultado: "R",
+          cae: null,
+          cae_vto: null,
+          obs_code: "SOAP_FAULT",
+          obs_msg: (`${httpStatus ? `[HTTP ${httpStatus}] ` : ""}${msg}`).slice(0, 1000),
+          resp_xml: respStore,
+          estado: "RECHAZADO",
+        });
+        await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+        return res.status(502).json({
+          arca_id: arcaId,
+          estado: "RECHAZADO",
+          cbte_nro: null,
+          error: "SOAP Fault / request inválida (ver resp_xml / arca_wsfe_consultas)",
+          detail: msg,
+        });
+      }
+
+      // Caso transitorio (timeout/500 sin confirmación): dejar PENDIENTE pero con evidencia
+      await updateRespSafe(arcaId, {
         resultado: null,
         cae: null,
         cae_vto: null,
         obs_code: "WSFE_EXC",
-        obs_msg: msg.slice(0, 1000),
-        resp_xml: (err.body || err.raw || null),
+        obs_msg: (`${httpStatus ? `[HTTP ${httpStatus}] ` : ""}${msg}`).slice(0, 1000),
+        resp_xml: respStore,
         estado: "PENDIENTE",
       });
 
@@ -666,27 +784,29 @@ const pickDate8MaxFromTags = (xml, tags) => {
           last_cbte_fch: info.lastCbteFch,
           today: info.today,
           retry: true,
-          alloc_attempt: attempt
+          alloc_attempt: attempt,
         };
         req_json = JSON.stringify(reqObj, null, 2);
 
         try {
-          await query(
-            `UPDATE arca_comprobantes SET cbte_nro=?, cbte_fch=?, req_json=?, updated_at=NOW() WHERE id=?`,
-            [next, cbte_fch, req_json, arcaId]
-          );
+          await query(`UPDATE arca_comprobantes SET cbte_nro=?, cbte_fch=?, req_json=?, updated_at=NOW() WHERE id=?`, [
+            next,
+            cbte_fch,
+            req_json,
+            arcaId,
+          ]);
           updated = true;
           break;
         } catch (err) {
           if (isDupKey(err, "uq_cbte")) {
             if (attempt === MAX_ALLOC_TRIES) {
-              await arcaModel.actualizarRespuesta(arcaId, {
+              await updateRespSafe(arcaId, {
                 resultado: "R",
                 cae: null,
                 cae_vto: null,
                 obs_code: "DUP_CBTE",
                 obs_msg: "Choque de numeración (uq_cbte) al reintentar por 10016",
-                resp_xml: (err.body || err.raw || null),
+                resp_xml: forceNonEmpty(err?.body || err?.raw, "DUP_CBTE"),
                 estado: "RECHAZADO",
               });
               await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
@@ -708,34 +828,81 @@ const pickDate8MaxFromTags = (xml, tags) => {
           cbteTipo: cbte_tipo,
           docTipo: doc_tipo,
           docNro: doc_nro,
+
+          receptorCondIvaId: receptor_cond_iva_id,
           condicionIVAReceptorId: receptor_cond_iva_id,
+
+          concepto: 1,
+          cbteNro: next,
+
           cbteFch: cbte_fch,
           cbteDesde: next,
           cbteHasta: next,
+
           impTotal: imp_total,
           impTotConc: 0,
           impNeto: imp_neto,
           impOpEx: 0,
           impIVA: imp_iva,
           impTrib: 0,
+
           ivaAlicuotas,
           omitirIva,
+
           monId: "PES",
           monCotiz: "1.000",
         });
+
+        await doAuditFromCae(cae, "retry10016");
       } catch (err) {
         const msg = err?.message || String(err);
 
+        const httpStatus = err?.statusCode || err?.status || null;
+        const soapAction = err?.soapAction || null;
+        const wsfeUrl = err?.url || null;
+        const reqXml = err?.requestXmlRedacted || err?.requestXml || null;
+
+        const bodyRaw =
+          (err && Object.prototype.hasOwnProperty.call(err, "body")) ? String(err.body ?? "") :
+          (err && Object.prototype.hasOwnProperty.call(err, "raw")) ? String(err.raw ?? "") :
+          "";
+
+        const respStore = forceNonEmpty(bodyRaw, `WSFE_EXC_RETRY:${httpStatus || "NO_STATUS"}`);
+
+        await insertWsfeConsultaSafe({
+          arca_comprobante_id: arcaId,
+          ok: 0,
+          parsed_json: {
+            action: "FECAESolicitar",
+            phase: "exception-retry10016",
+            http_status: httpStatus,
+            soapAction,
+            url: wsfeUrl,
+            req_xml: reqXml,
+            message: msg,
+          },
+          resp_xml: respStore,
+        });
+
         const rec = await reconciliarEnWsfe(pto_vta, cbte_tipo, next);
         if (rec.ok && rec.cae) {
-          await arcaModel.actualizarRespuesta(arcaId, {
+          const recXml = forceNonEmpty(rec.raw, "FECompConsultar:reconciliado:retry10016");
+
+          await updateRespSafe(arcaId, {
             resultado: "A",
             cae: rec.cae,
             cae_vto: rec.cae_vto || null,
             obs_code: "RECONCILIADO",
             obs_msg: "Autorizado en WSFE luego de excepción (retry)",
-            resp_xml: rec.raw || null,
+            resp_xml: recXml,
             estado: "EMITIDO",
+          });
+
+          await insertWsfeConsultaSafe({
+            arca_comprobante_id: arcaId,
+            ok: 1,
+            parsed_json: { action: "FECompConsultar", phase: "reconcile-retry10016", ok: 1 },
+            resp_xml: recXml,
           });
 
           return res.status(200).json({
@@ -755,13 +922,34 @@ const pickDate8MaxFromTags = (xml, tags) => {
           });
         }
 
-        await arcaModel.actualizarRespuesta(arcaId, {
+        const isSoapFault = /<soap:Fault|:Fault>/i.test(respStore) || /faultstring/i.test(respStore) || /XML document|SOAPAction/i.test(msg);
+        if (isSoapFault) {
+          await updateRespSafe(arcaId, {
+            resultado: "R",
+            cae: null,
+            cae_vto: null,
+            obs_code: "SOAP_FAULT",
+            obs_msg: (`${httpStatus ? `[HTTP ${httpStatus}] ` : ""}${msg}`).slice(0, 1000),
+            resp_xml: respStore,
+            estado: "RECHAZADO",
+          });
+          await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+          return res.status(502).json({
+            arca_id: arcaId,
+            estado: "RECHAZADO",
+            cbte_nro: null,
+            error: "SOAP Fault / request inválida (retry10016)",
+            detail: msg,
+          });
+        }
+
+        await updateRespSafe(arcaId, {
           resultado: null,
           cae: null,
           cae_vto: null,
           obs_code: "WSFE_EXC",
-          obs_msg: msg.slice(0, 1000),
-          resp_xml: (err.body || err.raw || null),
+          obs_msg: (`${httpStatus ? `[HTTP ${httpStatus}] ` : ""}${msg}`).slice(0, 1000),
+          resp_xml: respStore,
           estado: "PENDIENTE",
         });
 
@@ -780,13 +968,15 @@ const pickDate8MaxFromTags = (xml, tags) => {
 
     const estado = cae.resultado === "A" ? "EMITIDO" : "RECHAZADO";
 
-    await arcaModel.actualizarRespuesta(arcaId, {
+    const respXmlFinal = forceNonEmpty(cae.raw, `FECAESolicitar:final:${cae?.meta?.statusCode ?? "NO_STATUS"}`);
+
+    await updateRespSafe(arcaId, {
       resultado: cae.resultado || null,
       cae: cae.cae || null,
       cae_vto: cae.caeVto || null,
       obs_code: cae.obsCode || null,
       obs_msg: cae.obsMsg || null,
-      resp_xml: cae.raw || null,
+      resp_xml: respXmlFinal,
       estado,
     });
 
@@ -830,21 +1020,39 @@ const pickDate8MaxFromTags = (xml, tags) => {
     // Si ya creamos el comprobante y algo explotó, no dejarlo colgado
     if (arcaId) {
       try {
-        await arcaModel.actualizarRespuesta(arcaId, {
-          resultado: null,
+        const msg = (e?.message || String(e)).slice(0, 1000);
+        const httpStatus = e?.statusCode || e?.status || null;
+
+        const bodyRaw =
+          (e && Object.prototype.hasOwnProperty.call(e, "body")) ? String(e.body ?? "") :
+          (e && Object.prototype.hasOwnProperty.call(e, "raw")) ? String(e.raw ?? "") :
+          "";
+
+        const respStore = forceNonEmpty(bodyRaw, `EXC:${httpStatus || "NO_STATUS"}`);
+
+        await updateRespSafe(arcaId, {
+          resultado: "R",
           cae: null,
           cae_vto: null,
           obs_code: "EXC",
-          obs_msg: (e?.message || String(e)).slice(0, 1000),
-          resp_xml: (err.body || err.raw || null),
+          obs_msg: msg,
+          resp_xml: respStore,
           estado: "RECHAZADO",
         });
+
         await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+
+        await insertWsfeConsultaSafe({
+          arca_comprobante_id: arcaId,
+          ok: 0,
+          parsed_json: { action: "EXC", message: msg },
+          resp_xml: respStore,
+        });
       } catch (_) {}
     }
 
     console.error("❌ ARCA emitirDesdeFacturaMostrador:", e);
-    return res.status(500).json({ error: e.message || "Error interno" });
+    return res.status(500).json({ error: e?.message || "Error interno" });
   }
 }
 

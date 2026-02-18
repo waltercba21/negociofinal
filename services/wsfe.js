@@ -26,23 +26,32 @@ function redactAuth(xml) {
     .replace(/<(\w+:)?Token>[\s\S]*?<\/(\w+:)?Token>/gi, "<$1Token>REDACTED</$1Token>")
     .replace(/<(\w+:)?Sign>[\s\S]*?<\/(\w+:)?Sign>/gi, "<$1Sign>REDACTED</$1Sign>");
 }
-
 async function soapRequestDetailed(action, xml, url) {
-  const soapAction = normalizeSoapAction(action); // ya existe en tu wsfe.js
-  const meta = await postXml(url, xml, soapAction, {
-    returnMeta: true,
-    allowHttpErrors: true, // clave: NO tirar exception por 500
-  });
+  const soapAction = normalizeSoapAction(action);
+  const reqRedacted = redactAuth(xml);
 
-  return {
-    action,
-    url,
-    soapAction,
-    statusCode: meta.statusCode,
-    headers: meta.headers,
-    body: meta.body,                 // response body completo (SOAP Fault incluido)
-    requestXmlRedacted: redactAuth(xml), // request xml (con Token/Sign redacted)
-  };
+  try {
+    const meta = await postXml(url, xml, soapAction, {
+      returnMeta: true,
+      allowHttpErrors: true,
+    });
+
+    return {
+      action,
+      url,
+      soapAction,
+      statusCode: meta.statusCode,
+      headers: meta.headers,
+      body: meta.body,
+      requestXmlRedacted: reqRedacted,
+    };
+  } catch (err) {
+    // timeouts / network: adjuntamos request + SOAPAction para persistir igual
+    err.soapAction = soapAction;
+    err.url = url;
+    err.requestXmlRedacted = reqRedacted;
+    throw err;
+  }
 }
 
 async function postXml(url, xml, soapAction, opts = {}) {
@@ -109,9 +118,20 @@ function normalizeSoapAction(soapAction) {
   if (/^https?:\/\//i.test(soapAction)) return soapAction;
   return `http://ar.gov.afip.dif.FEV1/${soapAction}`;
 }
-
 async function soapRequest(action, xml, url) {
   const r = await soapRequestDetailed(action, xml, url);
+
+  if ((r.statusCode || 0) >= 400) {
+    const err = new Error(`WSFE HTTP ${r.statusCode}`);
+    err.code = "WSFE_HTTP";
+    err.statusCode = r.statusCode;
+    err.headers = r.headers;
+    err.body = r.body; // puede ser "" pero NO lo vamos a perder en controller
+    err.soapAction = r.soapAction;
+    err.url = r.url;
+    err.requestXmlRedacted = r.requestXmlRedacted;
+    throw err;
+  }
   return r.body;
 }
 
@@ -258,6 +278,16 @@ async function FECompUltimoAutorizado(ptoVta = PTO_VTA_DEFAULT, cbteTipo) {
 async function FECAESolicitar(det) {
   const a = await auth();
 
+  const concepto = Number(det.concepto ?? 1);
+  const cbteDesde = det.cbteDesde ?? det.cbteNro ?? det.cbte_nro;
+  const cbteHasta = det.cbteHasta ?? det.cbteNro ?? det.cbte_nro ?? cbteDesde;
+
+  const receptorCondIvaId =
+    det.receptorCondIvaId ??
+    det.condicionIVAReceptorId ??
+    det.receptor_cond_iva_id ??
+    null;
+
   const xml = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
   <soap:Header/>
@@ -276,11 +306,11 @@ async function FECAESolicitar(det) {
         </ar:FeCabReq>
         <ar:FeDetReq>
           <ar:FECAEDetRequest>
-            <ar:Concepto>${det.concepto}</ar:Concepto>
+            <ar:Concepto>${concepto}</ar:Concepto>
             <ar:DocTipo>${det.docTipo}</ar:DocTipo>
             <ar:DocNro>${det.docNro}</ar:DocNro>
-            <ar:CbteDesde>${det.cbteNro}</ar:CbteDesde>
-            <ar:CbteHasta>${det.cbteNro}</ar:CbteHasta>
+            <ar:CbteDesde>${cbteDesde}</ar:CbteDesde>
+            <ar:CbteHasta>${cbteHasta}</ar:CbteHasta>
             <ar:CbteFch>${det.cbteFch}</ar:CbteFch>
             <ar:ImpTotal>${det.impTotal}</ar:ImpTotal>
             <ar:ImpTotConc>${det.impTotConc || 0}</ar:ImpTotConc>
@@ -301,34 +331,49 @@ async function FECAESolicitar(det) {
               </ar:AlicIva>`).join("")}
             </ar:Iva>` : ""}
 
-            ${det.receptorCondIvaId ? `<ar:CondicionIVAReceptorId>${det.receptorCondIvaId}</ar:CondicionIVAReceptorId>` : ""}
+            ${receptorCondIvaId ? `<ar:CondicionIVAReceptorId>${receptorCondIvaId}</ar:CondicionIVAReceptorId>` : ""}
           </ar:FECAEDetRequest>
         </ar:FeDetReq>
       </ar:FeCAEReq>
     </ar:FECAESolicitar>
   </soap:Body>
 </soap:Envelope>`;
-const ex = await soapRequestDetailed("FECAESolicitar", xml, process.env.ARCA_WSFE_URL);
-const resp = ex.body || ""; // nunca null
-const parsed = parseWsfeCaeResponse(resp);
 
-return {
-  next,
-  resultado: parsed.resultado,
-  cae: parsed.cae,
-  caeVto: parsed.caeVto,
-  obsCode: parsed.obsCode,
-  obsMsg: parsed.obsMsg,
-  parsed,
-  raw: resp,
-  meta: {
-    statusCode: ex.statusCode,
-    soapAction: ex.soapAction,
-    url: ex.url,
-    requestXml: ex.requestXmlRedacted,
-  },
-};
+  const ex = await soapRequestDetailed("FECAESolicitar", xml, WSFE_URL);
 
+  // Caso crítico: HTTP error sin body -> forzamos excepción para que quede persistido
+  if ((ex.statusCode || 0) >= 400 && !ex.body) {
+    const err = new Error(`WSFE HTTP ${ex.statusCode} (sin body)`);
+    err.code = "WSFE_HTTP";
+    err.statusCode = ex.statusCode;
+    err.headers = ex.headers;
+    err.body = ex.body || "";
+    err.soapAction = ex.soapAction;
+    err.url = ex.url;
+    err.requestXmlRedacted = ex.requestXmlRedacted;
+    throw err;
+  }
+
+  const resp = ex.body || "";
+  const parsed = parseWsfeCaeResponse(resp);
+  const next = Number(cbteHasta || cbteDesde || 0) || null;
+
+  return {
+    next,
+    resultado: parsed.resultado,
+    cae: parsed.cae,
+    caeVto: parsed.caeVto,
+    obsCode: parsed.obsCode,
+    obsMsg: parsed.obsMsg,
+    parsed,
+    raw: resp,
+    meta: {
+      statusCode: ex.statusCode,
+      soapAction: ex.soapAction,
+      url: ex.url,
+      requestXml: ex.requestXmlRedacted,
+    },
+  };
 }
 
 function pickFirstErr(xml) {
