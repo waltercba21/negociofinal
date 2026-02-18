@@ -21,51 +21,37 @@ const WSFE_URL =
 if (ENV === "prod" && /homo/i.test(WSFE_URL)) {
   throw new Error(`[ARCA][PROD] ARCA_WSFE_URL apunta a HOMO: ${WSFE_URL}`);
 }
-function postXml(url, xml, soapAction, opts = {}) {
+function postXml(url, xml, soapAction) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
-    const isHttps = u.protocol === "https:";
-    const mod = isHttps ? https : http;
-
-    const action = normalizeSoapAction(soapAction);
 
     const headers = {
       "Content-Type": "text/xml; charset=utf-8",
       "Content-Length": Buffer.byteLength(xml),
-      "Accept": "text/xml",
-      "Connection": "close",
     };
-    if (action) headers["SOAPAction"] = `"${action}"`;
+    if (soapAction) headers["SOAPAction"] = `"${soapAction}"`;
 
-    const req = mod.request(
-      {
-        method: "POST",
-        hostname: u.hostname,
-        port: u.port || (isHttps ? 443 : 80),
-        path: u.pathname + u.search,
-        headers,
-        timeout: opts.timeoutMs ?? 30000,
-      },
+    const req = https.request(
+      { method: "POST", hostname: u.hostname, path: u.pathname + u.search, headers },
       (res) => {
         let data = "";
-        res.setEncoding("utf8");
         res.on("data", (c) => (data += c));
         res.on("end", () => {
-          if (res.statusCode >= 200 && res.statusCode < 300) return resolve(data);
-          const err = new Error(`WSFE HTTP ${res.statusCode}`);
-          err.status = res.statusCode;
-          err.body = data;
-          reject(err);
+          resolve({
+            statusCode: res.statusCode || 0,
+            body: data,
+            headers: res.headers || {},
+          });
         });
       }
     );
 
-    req.on("timeout", () => req.destroy(new Error("WSFE timeout")));
     req.on("error", reject);
     req.write(xml);
     req.end();
   });
 }
+
 function normalizeSoapAction(soapAction) {
   if (!soapAction) return "";
   if (/^https?:\/\//i.test(soapAction)) return soapAction;
