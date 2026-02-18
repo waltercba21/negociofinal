@@ -309,6 +309,30 @@ async function FECAESolicitar(det) {
 
   const ivaAlicuotas = det.ivaAlicuotas || [];
   const omitirIva = !!det.omitirIva;
+    const cbtesAsoc = Array.isArray(det.cbtesAsoc || det.cbtes_asoc) ? (det.cbtesAsoc || det.cbtes_asoc) : [];
+
+  const cbtesAsocXml = cbtesAsoc.length
+    ? `
+    <ar:CbtesAsoc>
+      ${cbtesAsoc.map(a => {
+        const tipo = Number(a.tipo ?? a.cbte_tipo ?? a.cbteTipo);
+        const pto  = Number(a.pto_vta ?? a.ptoVta ?? a.pto_vta_asoc ?? a.ptoVtaAsoc);
+        const nro  = Number(a.nro ?? a.cbte_nro ?? a.cbteNro);
+        const cuit = String(a.cuit ?? "").replace(/\D/g, "");
+        const fch  = String(a.cbte_fch ?? a.cbteFch ?? "").replace(/\D/g, "");
+
+        // Campos mínimos: Tipo/PtoVta/Nro. Cuit/CbteFch se envían si vienen (útil para débito/crédito y FCE).
+        return `
+      <ar:CbteAsoc>
+        <ar:Tipo>${tipo}</ar:Tipo>
+        <ar:PtoVta>${pto}</ar:PtoVta>
+        <ar:Nro>${nro}</ar:Nro>
+        ${cuit ? `<ar:Cuit>${cuit}</ar:Cuit>` : ``}
+        ${fch ? `<ar:CbteFch>${fch}</ar:CbteFch>` : ``}
+      </ar:CbteAsoc>`;
+      }).join("")}
+    </ar:CbtesAsoc>`
+    : "";
 
   const xml = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
@@ -340,20 +364,23 @@ async function FECAESolicitar(det) {
             <ar:ImpOpEx>${impOpEx}</ar:ImpOpEx>
             <ar:ImpIVA>${impIVA}</ar:ImpIVA>
             <ar:ImpTrib>${impTrib}</ar:ImpTrib>
-            <ar:MonId>${monId}</ar:MonId>
-            <ar:MonCotiz>${monCotiz}</ar:MonCotiz>
+            <<ar:MonId>${monId}</ar:MonId>
+<ar:MonCotiz>${monCotiz}</ar:MonCotiz>
 
-            ${(!omitirIva && ivaAlicuotas.length) ? `
-            <ar:Iva>
-              ${ivaAlicuotas.map(i => `
-              <ar:AlicIva>
-                <ar:Id>${i.id}</ar:Id>
-                <ar:BaseImp>${i.baseImp}</ar:BaseImp>
-                <ar:Importe>${i.importe}</ar:Importe>
-              </ar:AlicIva>`).join("")}
-            </ar:Iva>` : ""}
+${cbtesAsocXml}
 
-            ${receptorCondIvaId ? `<ar:CondicionIVAReceptorId>${receptorCondIvaId}</ar:CondicionIVAReceptorId>` : ""}
+${(!omitirIva && ivaAlicuotas.length) ? `
+<ar:Iva>
+  ${ivaAlicuotas.map(i => `
+  <ar:AlicIva>
+    <ar:Id>${i.id}</ar:Id>
+    <ar:BaseImp>${i.baseImp}</ar:BaseImp>
+    <ar:Importe>${i.importe}</ar:Importe>
+  </ar:AlicIva>`).join("")}
+</ar:Iva>` : ""}
+
+${receptorCondIvaId ? `<ar:CondicionIVAReceptorId>${receptorCondIvaId}</ar:CondicionIVAReceptorId>` : ""}
+
           </ar:FECAEDetRequest>
         </ar:FeDetReq>
       </ar:FeCAEReq>
