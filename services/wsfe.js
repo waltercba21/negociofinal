@@ -99,12 +99,18 @@ function normalizeSoapAction(soapAction) {
   // WSFE usa este namespace para SOAPAction
   return `http://ar.gov.afip.dif.FEV1/${s}`;
 }
-function soapRequest(action, xml, url) {
-  const ns = "http://ar.gov.afip.dif.FEV1/";
-  const soapAction = String(action || "").startsWith("http") ? action : (ns + action);
-  return postXml(url, xml, soapAction, { timeoutMs: 25000 });
+async function soapRequest(action, xml, url) {
+  const soapAction = `http://ar.gov.afip.dif.FEV1/${action}`;
+  try {
+    return await postXml(url, xml, soapAction);
+  } catch (err) {
+    // AFIP/ARCA suele responder SOAP Fault con HTTP 500.
+    if (err && err.code === "WSFE_HTTP" && err.body) {
+      return err.body; // devolvemos el XML igual
+    }
+    throw err;
+  }
 }
-
 
 function pickTag(xml, tag) {
   const r = new RegExp(
@@ -136,6 +142,20 @@ function pickFirstCodeMsg(blockXml, itemTag) {
 }
 
 function parseWsfeCaeResponse(respXml) {
+  const xml = String(respXml || "");
+    if (xml.includes("<soap:Fault") || xml.includes(":Fault>")) {
+    const m = xml.match(/<faultstring>([\s\S]*?)<\/faultstring>/i);
+    const fault = m ? m[1] : "SOAP Fault";
+    return {
+      next: null,
+      resultado: "R",
+      cae: null,
+      caeVto: null,
+      obsCode: "SOAP_FAULT",
+      obsMsg: fault,
+      rawXml: xml,
+    };
+  }
   const resultado = (pickTag(respXml, "Resultado") || "").trim();
   const cae = (pickTag(respXml, "CAE") || "").trim();
   const caeVto = (pickTag(respXml, "CAEFchVto") || "").trim();
