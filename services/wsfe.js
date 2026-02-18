@@ -21,26 +21,52 @@ if (ENV === "prod" && /homo/i.test(WSFE_URL)) {
 
 function postXml(url, xml, soapAction) {
   return new Promise((resolve, reject) => {
-    const u = new URL(url);
-    const headers = {
-      "Content-Type": "text/xml; charset=utf-8",
-      "Content-Length": Buffer.byteLength(xml),
-    };
-    if (soapAction) headers["SOAPAction"] = `"${soapAction}"`;
+    try {
+      // Validación fuerte de URL (evita "Invalid URL")
+      const u = new URL(String(url || "").trim());
+      const xmlStr = String(xml ?? "");
 
-    const req = https.request(
-      { method: "POST", hostname: u.hostname, path: u.pathname + u.search, headers },
-      (res) => {
-        let data = "";
-        res.on("data", (c) => (data += c));
-        res.on("end", () => resolve(data));
-      }
-    );
-    req.on("error", reject);
-    req.write(xml);
-    req.end();
+      // WSFE: SOAPAction debe incluir namespace FEV1 (AFIP rechaza "FECAESolicitar" solo)
+      const SOAP_NS = "http://ar.gov.afip.dif.FEV1/";
+      const actionRaw = String(soapAction || "").trim();
+      const soapActionFinal = actionRaw
+        ? (actionRaw.startsWith("http") ? actionRaw : SOAP_NS + actionRaw)
+        : null;
+
+      const headers = {
+        "Content-Type": "text/xml; charset=utf-8",
+        "Content-Length": Buffer.byteLength(xmlStr, "utf8"),
+      };
+
+      // Importante: NO encerrar entre comillas extra (tu error vino de SOAPAction inválido)
+      if (soapActionFinal) headers["SOAPAction"] = soapActionFinal;
+
+      const req = https.request(
+        {
+          method: "POST",
+          hostname: u.hostname,
+          path: u.pathname + u.search,
+          headers,
+        },
+        (res) => {
+          let data = "";
+          res.on("data", (c) => (data += c));
+          res.on("end", () => resolve(data));
+        }
+      );
+
+      req.on("error", reject);
+      req.write(xmlStr, "utf8");
+      req.end();
+    } catch (e) {
+      // Estandarizamos error de config
+      const err = new Error(`WSFE_CONFIG: ${e.message}`);
+      err.code = "WSFE_CONFIG";
+      reject(err);
+    }
   });
 }
+
 function soapRequest(action, xml, url) {
   const soapAction = action.startsWith("http")
     ? action
