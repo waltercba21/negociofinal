@@ -1390,7 +1390,8 @@ async function emitirNotaCreditoPorArcaId(req, res) {
           cae_vto: null,
           obs_code: "EXC",
           obs_msg: (e?.message || String(e)).slice(0, 1000),
-          resp_xml: (err.body || err.raw || null),
+          resp_xml: (e?.body || e?.raw || null),
+
           estado: "RECHAZADO",
         });
         await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
