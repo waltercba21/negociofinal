@@ -23,82 +23,55 @@ if (ENV === "prod" && /homo/i.test(WSFE_URL)) {
 }
 function postXml(url, xml, soapAction, opts = {}) {
   return new Promise((resolve, reject) => {
-    const timeoutMs = Number.isFinite(Number(opts.timeoutMs)) ? Number(opts.timeoutMs) : 30000;
+    const u = new URL(url);
+    const isHttps = u.protocol === "https:";
+    const mod = isHttps ? https : http;
 
-    let u;
-    try {
-      u = new URL(url);
-    } catch (e) {
-      const err = new Error(`WSFE URL inválida: ${url}`);
-      err.code = "WSFE_BAD_URL";
-      return reject(err);
-    }
-
-    const lib = u.protocol === "https:" ? require("https") : require("http");
+    const action = normalizeSoapAction(soapAction);
 
     const headers = {
       "Content-Type": "text/xml; charset=utf-8",
-      Accept: "text/xml",
-      "Content-Length": Buffer.byteLength(xml, "utf8"),
+      "Content-Length": Buffer.byteLength(xml),
+      "Accept": "text/xml",
+      "Connection": "close",
     };
+    if (action) headers["SOAPAction"] = `"${action}"`;
 
-    if (soapAction) {
-      const sa = String(soapAction).trim();
-      headers.SOAPAction = sa.startsWith('"') ? sa : `"${sa}"`;
-    }
-
-    const req = lib.request(
+    const req = mod.request(
       {
         method: "POST",
         hostname: u.hostname,
-        port: u.port ? Number(u.port) : u.protocol === "https:" ? 443 : 80,
+        port: u.port || (isHttps ? 443 : 80),
         path: u.pathname + u.search,
         headers,
+        timeout: opts.timeoutMs ?? 30000,
       },
       (res) => {
         let data = "";
         res.setEncoding("utf8");
         res.on("data", (c) => (data += c));
         res.on("end", () => {
-          const status = res.statusCode || 0;
-
-          if (status >= 400) {
-            const err = new Error(`WSFE HTTP ${status}`);
-            err.code = "WSFE_HTTP";
-            err.statusCode = status;
-            err.body = data;      // <- SOAP Fault acá
-            err.headers = res.headers;
-            return reject(err);
-          }
-
-          resolve(data);
+          if (res.statusCode >= 200 && res.statusCode < 300) return resolve(data);
+          const err = new Error(`WSFE HTTP ${res.statusCode}`);
+          err.status = res.statusCode;
+          err.body = data;
+          reject(err);
         });
       }
     );
 
-    req.setTimeout(timeoutMs, () => {
-      const err = new Error(`WSFE timeout (${timeoutMs}ms)`);
-      err.code = "WSFE_TIMEOUT";
-      req.destroy(err);
-    });
-
+    req.on("timeout", () => req.destroy(new Error("WSFE timeout")));
     req.on("error", reject);
     req.write(xml);
     req.end();
   });
 }
-
 function normalizeSoapAction(soapAction) {
-  if (!soapAction) return null;
-  const s = String(soapAction).trim();
-  if (!s) return null;
-
-  // Si ya viene como URL, lo dejamos
-  if (/^https?:\/\//i.test(s)) return s;
-
-  // WSFE usa este namespace para SOAPAction
-  return `http://ar.gov.afip.dif.FEV1/${s}`;
+  if (!soapAction) return "";
+  if (/^https?:\/\//i.test(soapAction)) return soapAction;
+  return `http://ar.gov.afip.dif.FEV1/${soapAction}`;
 }
+
 async function soapRequest(action, xml, url) {
   const soapAction = `http://ar.gov.afip.dif.FEV1/${action}`;
   try {
