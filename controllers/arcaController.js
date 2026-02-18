@@ -219,13 +219,23 @@ async function emitirDesdeFacturaMostrador(req, res) {
     return s !== "" ? s : `<!-- WSFE EMPTY BODY | ${label} -->`;
   };
 
+  const toJsonStr = (v) => {
+    if (v == null) return null;
+    if (typeof v === "string") return v;
+    try {
+      return JSON.stringify(v);
+    } catch (_) {
+      return String(v);
+    }
+  };
+
   const insertWsfeConsultaSafe = async ({ arca_comprobante_id, ok, parsed_json, resp_xml }) => {
     try {
       await arcaModel.insertarWsfeConsulta({
         arca_comprobante_id,
         ok: !!ok,
-        parsed_json: parsed_json || null,
-        resp_xml: forceNonEmpty(resp_xml, parsed_json?.action || "WSFE"),
+        parsed_json: toJsonStr(parsed_json),
+        resp_xml: forceNonEmpty(resp_xml, (parsed_json && parsed_json.action) || "WSFE"),
       });
     } catch (e) {
       // no cortar emisión por auditoría
@@ -365,6 +375,31 @@ async function emitirDesdeFacturaMostrador(req, res) {
     // ===== Reglas de negocio (server-side) =====
     const { clase, ids: allowedCondIvaIds } = await getAllowedCondIvaIdsForCbte(cbte_tipo);
     if (!clase) return res.status(400).json({ error: "cbte_tipo no soportado", cbte_tipo });
+
+    // Bloqueo Clase A en PROD si ya hay evidencia de 10000, salvo override explícito
+    const forceA = qBool(req.query.force_a);
+    if (ambiente === "PROD" && clase === "A" && !forceA) {
+      const prev = await query(
+        `SELECT id
+           FROM arca_comprobantes
+          WHERE ambiente='PROD'
+            AND cuit_emisor=?
+            AND pto_vta=?
+            AND cbte_tipo=?
+            AND obs_code='10000'
+          ORDER BY id DESC
+          LIMIT 1`,
+        [cuit_emisor, pto_vta, cbte_tipo]
+      );
+      if (prev.length) {
+        return res.status(403).json({
+          error: "WSFE/ARCA informó que este CUIT no está habilitado para emitir comprobantes Clase A (obs_code=10000).",
+          obs_code: "10000",
+          last_attempt_id: prev[0].id,
+          hint: "Para forzar un intento puntual: ?force_a=1",
+        });
+      }
+    }
 
     if (clase === "A") {
       if (doc_tipo !== 80) return res.status(400).json({ error: "Clase A requiere doc_tipo=80 (CUIT)" });
@@ -597,6 +632,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
     // WSFE
     let cae;
+
     const doAuditFromCae = async (caeObj, phase) => {
       const respXml = forceNonEmpty(caeObj?.raw, `FECAESolicitar:${phase}`);
       await insertWsfeConsultaSafe({
@@ -620,28 +656,27 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
     try {
       cae = await wsfe.FECAESolicitar({
-  ptoVta: pto_vta,
-  cbteTipo: cbte_tipo,
-  concepto: 1,
-  docTipo: doc_tipo,
-  docNro: doc_nro,
-  receptorCondIvaId: receptor_cond_iva_id,
-  cbteFch: cbte_fch,
-  cbteNro: next,
-  impTotal: imp_total,
-  impTotConc: 0,
-  impNeto: imp_neto,
-  impOpEx: 0,
-  impIVA: imp_iva,
-  impTrib: 0,
-  ivaAlicuotas,
-  omitirIva,
-  monId: "PES",
-  monCotiz: "1",
-});
+        ptoVta: pto_vta,
+        cbteTipo: cbte_tipo,
+        concepto: 1,
+        docTipo: doc_tipo,
+        docNro: doc_nro,
+        receptorCondIvaId: receptor_cond_iva_id,
+        cbteFch: cbte_fch,
+        cbteNro: next,
+        impTotal: imp_total,
+        impTotConc: 0,
+        impNeto: imp_neto,
+        impOpEx: 0,
+        impIVA: imp_iva,
+        impTrib: 0,
+        ivaAlicuotas,
+        omitirIva,
+        monId: "PES",
+        monCotiz: "1.000",
+      });
 
-
-      // Auditoría SIEMPRE (incluso si viene HTTP 500 con body vacío, cae.meta trae status y requestXml)
+      // Auditoría SIEMPRE
       await doAuditFromCae(cae, "initial");
     } catch (err) {
       const msg = err?.message || String(err);
@@ -673,7 +708,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
         resp_xml: respStore,
       });
 
-      // Reconciliar: si se autorizó igual, marcar EMITIDO
+      // Reconciliar
       const rec = await reconciliarEnWsfe(pto_vta, cbte_tipo, next);
       if (rec.ok && rec.cae) {
         const recXml = forceNonEmpty(rec.raw, "FECompConsultar:reconciliado");
@@ -712,8 +747,12 @@ async function emitirDesdeFacturaMostrador(req, res) {
         });
       }
 
-      // Si es SOAP Fault / request inválida => RECHAZADO y liberar cbte_nro (no dejar PENDIENTE bloqueante)
-      const isSoapFault = /<soap:Fault|:Fault>/i.test(respStore) || /faultstring/i.test(respStore) || /XML document|SOAPAction/i.test(msg);
+      // SOAP Fault / request inválida => RECHAZADO y liberar cbte_nro
+      const isSoapFault =
+        /<soap:Fault|:Fault>/i.test(respStore) ||
+        /faultstring/i.test(respStore) ||
+        /XML document|SOAPAction/i.test(msg);
+
       if (isSoapFault) {
         await updateRespSafe(arcaId, {
           resultado: "R",
@@ -734,7 +773,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
         });
       }
 
-      // Caso transitorio (timeout/500 sin confirmación): dejar PENDIENTE pero con evidencia
+      // Caso transitorio: PENDIENTE con evidencia
       await updateRespSafe(arcaId, {
         resultado: null,
         cae: null,
@@ -757,7 +796,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       });
     }
 
-    // Reintento si 10016 (fecha) + reserva robusta ante uq_cbte
+    // Reintento si 10016 (fecha)
     if (cae.resultado === "R" && String(cae.obsCode) === "10016") {
       let updated = false;
 
@@ -815,29 +854,20 @@ async function emitirDesdeFacturaMostrador(req, res) {
         cae = await wsfe.FECAESolicitar({
           ptoVta: pto_vta,
           cbteTipo: cbte_tipo,
+          concepto: 1,
           docTipo: doc_tipo,
           docNro: doc_nro,
-
           receptorCondIvaId: receptor_cond_iva_id,
-          condicionIVAReceptorId: receptor_cond_iva_id,
-
-          concepto: 1,
-          cbteNro: next,
-
           cbteFch: cbte_fch,
-          cbteDesde: next,
-          cbteHasta: next,
-
+          cbteNro: next,
           impTotal: imp_total,
           impTotConc: 0,
           impNeto: imp_neto,
           impOpEx: 0,
           impIVA: imp_iva,
           impTrib: 0,
-
           ivaAlicuotas,
           omitirIva,
-
           monId: "PES",
           monCotiz: "1.000",
         });
@@ -911,7 +941,11 @@ async function emitirDesdeFacturaMostrador(req, res) {
           });
         }
 
-        const isSoapFault = /<soap:Fault|:Fault>/i.test(respStore) || /faultstring/i.test(respStore) || /XML document|SOAPAction/i.test(msg);
+        const isSoapFault =
+          /<soap:Fault|:Fault>/i.test(respStore) ||
+          /faultstring/i.test(respStore) ||
+          /XML document|SOAPAction/i.test(msg);
+
         if (isSoapFault) {
           await updateRespSafe(arcaId, {
             resultado: "R",
@@ -956,8 +990,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
     }
 
     const estado = cae.resultado === "A" ? "EMITIDO" : "RECHAZADO";
-
-    const respXmlFinal = forceNonEmpty(cae.raw, `FECAESolicitar:final:${cae?.meta?.statusCode ?? "NO_STATUS"}`);
+    const respXmlFinal = forceNonEmpty(cae?.raw, `FECAESolicitar:final:${cae?.meta?.statusCode ?? "NO_STATUS"}`);
 
     await updateRespSafe(arcaId, {
       resultado: cae.resultado || null,
