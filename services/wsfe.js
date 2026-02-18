@@ -265,7 +265,7 @@ async function FECAESolicitar(det) {
   </soap:Body>
 </soap:Envelope>`;
 
-  const resp = await soapRequest("FECAESolicitar", xml, det.wsfeUrl);
+  const resp = await soapRequest("FECAESolicitar", xml, process.env.ARCA_WSFE_URL);
   const resultado = pickTag(resp, "Resultado") || "";
   const err = pickFirstErr(resp);
   const obs = pickFirstObs(resp);
