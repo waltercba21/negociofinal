@@ -23,59 +23,70 @@ if (ENV === "prod" && /homo/i.test(WSFE_URL)) {
 }
 function postXml(url, xml, soapAction, opts = {}) {
   return new Promise((resolve, reject) => {
+    const timeoutMs = Number.isFinite(Number(opts.timeoutMs)) ? Number(opts.timeoutMs) : 30000;
+
     let u;
     try {
       u = new URL(url);
     } catch (e) {
-      const err = new Error(`WSFE invalid url: ${url}`);
-      err.code = "WSFE_INVALID_URL";
+      const err = new Error(`WSFE URL inválida: ${url}`);
+      err.code = "WSFE_BAD_URL";
       return reject(err);
     }
 
-    const lib = u.protocol === "https:" ? https : http;
-    const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : 20000;
+    const lib = u.protocol === "https:" ? require("https") : require("http");
 
     const headers = {
       "Content-Type": "text/xml; charset=utf-8",
-      "Content-Length": Buffer.byteLength(xml),
-      "User-Agent": "autofaros-wsfe/1.0",
+      Accept: "text/xml",
+      "Content-Length": Buffer.byteLength(xml, "utf8"),
     };
 
-    if (soapAction) headers["SOAPAction"] = `"${soapAction}"`;
+    if (soapAction) {
+      const sa = String(soapAction).trim();
+      headers.SOAPAction = sa.startsWith('"') ? sa : `"${sa}"`;
+    }
 
     const req = lib.request(
       {
         method: "POST",
         hostname: u.hostname,
-        port: u.port || (u.protocol === "https:" ? 443 : 80),
+        port: u.port ? Number(u.port) : u.protocol === "https:" ? 443 : 80,
         path: u.pathname + u.search,
         headers,
-        timeout: timeoutMs,
       },
       (res) => {
         let data = "";
         res.setEncoding("utf8");
         res.on("data", (c) => (data += c));
         res.on("end", () => {
-          if (res.statusCode && res.statusCode >= 400) {
-            const err = new Error(`WSFE HTTP ${res.statusCode}`);
+          const status = res.statusCode || 0;
+
+          if (status >= 400) {
+            const err = new Error(`WSFE HTTP ${status}`);
             err.code = "WSFE_HTTP";
-            err.statusCode = res.statusCode;
-            err.body = data;
+            err.statusCode = status;
+            err.body = data;      // <- SOAP Fault acá
+            err.headers = res.headers;
             return reject(err);
           }
+
           resolve(data);
         });
       }
     );
 
-    req.on("timeout", () => req.destroy(new Error(`WSFE timeout after ${timeoutMs}ms`)));
+    req.setTimeout(timeoutMs, () => {
+      const err = new Error(`WSFE timeout (${timeoutMs}ms)`);
+      err.code = "WSFE_TIMEOUT";
+      req.destroy(err);
+    });
+
     req.on("error", reject);
     req.write(xml);
     req.end();
   });
 }
-
 
 function normalizeSoapAction(soapAction) {
   if (!soapAction) return null;
