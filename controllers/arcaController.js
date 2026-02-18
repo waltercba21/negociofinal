@@ -620,37 +620,26 @@ async function emitirDesdeFacturaMostrador(req, res) {
 
     try {
       cae = await wsfe.FECAESolicitar({
-        ptoVta: pto_vta,
-        cbteTipo: cbte_tipo,
-        docTipo: doc_tipo,
-        docNro: doc_nro,
+  ptoVta: pto_vta,
+  cbteTipo: cbte_tipo,
+  concepto: 1,
+  docTipo: doc_tipo,
+  docNro: doc_nro,
+  receptorCondIvaId: receptor_cond_iva_id,
+  cbteFch: cbte_fch,
+  cbteNro: next,
+  impTotal: imp_total,
+  impTotConc: 0,
+  impNeto: imp_neto,
+  impOpEx: 0,
+  impIVA: imp_iva,
+  impTrib: 0,
+  ivaAlicuotas,
+  omitirIva,
+  monId: "PES",
+  monCotiz: "1",
+});
 
-        // compatibilidad con wsfe.js actual (usa receptorCondIvaId)
-        receptorCondIvaId: receptor_cond_iva_id,
-        // compatibilidad futura si wsfe.js acepta este alias
-        condicionIVAReceptorId: receptor_cond_iva_id,
-
-        // compatibilidad con wsfe.js actual (usa det.concepto y det.cbteNro)
-        concepto: 1,
-        cbteNro: next,
-
-        cbteFch: cbte_fch,
-        cbteDesde: next,
-        cbteHasta: next,
-
-        impTotal: imp_total,
-        impTotConc: 0,
-        impNeto: imp_neto,
-        impOpEx: 0,
-        impIVA: imp_iva,
-        impTrib: 0,
-
-        ivaAlicuotas,
-        omitirIva,
-
-        monId: "PES",
-        monCotiz: "1.000",
-      });
 
       // Auditoría SIEMPRE (incluso si viene HTTP 500 con body vacío, cae.meta trae status y requestXml)
       await doAuditFromCae(cae, "initial");
