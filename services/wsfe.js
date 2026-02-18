@@ -59,17 +59,18 @@ function normalizeSoapAction(soapAction) {
 }
 
 async function soapRequest(action, xml, url) {
-  const soapAction = `http://ar.gov.afip.dif.FEV1/${action}`;
-  try {
-    return await postXml(url, xml, soapAction);
-  } catch (err) {
-    // AFIP/ARCA suele responder SOAP Fault con HTTP 500.
-    if (err && err.code === "WSFE_HTTP" && err.body) {
-      return err.body; // devolvemos el XML igual
-    }
+  const resp = await postXml(url, xml, action);
+
+  if (resp.statusCode >= 400) {
+    const err = new Error(`WSFE HTTP ${resp.statusCode}`);
+    err.statusCode = resp.statusCode;
+    err.body = resp.body;
     throw err;
   }
+
+  return resp.body;
 }
+
 
 function pickTag(xml, tag) {
   const r = new RegExp(
