@@ -41,6 +41,12 @@ function postXml(url, xml, soapAction) {
     req.end();
   });
 }
+function soapRequest(action, xml, url) {
+  const soapAction = action.startsWith("http")
+    ? action
+    : `http://ar.gov.afip.dif.FEV1/${action}`;
+  return postXml(url, xml, soapAction);
+}
 
 function pickTag(xml, tag) {
   const r = new RegExp(
@@ -49,6 +55,56 @@ function pickTag(xml, tag) {
   );
   const m = xml.match(r);
   return m ? m[1].trim() : "";
+}
+function pickBlock(xml, tag) {
+  const r = new RegExp(
+    `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+    "i"
+  );
+  const m = String(xml || "").match(r);
+  return m ? m[1] : "";
+}
+
+function pickFirstCodeMsg(blockXml, itemTag) {
+  const b = String(blockXml || "");
+  const r = new RegExp(
+    `<(?:(?:\\w+):)?${itemTag}[^>]*>[\\s\\S]*?<(?:(?:\\w+):)?Code[^>]*>([\\s\\S]*?)<\\/` +
+      `(?:(?:\\w+):)?Code>[\\s\\S]*?<(?:(?:\\w+):)?Msg[^>]*>([\\s\\S]*?)<\\/` +
+      `(?:(?:\\w+):)?Msg>[\\s\\S]*?<\\/(?:(?:\\w+):)?${itemTag}>`,
+    "i"
+  );
+  const m = b.match(r);
+  return { code: m ? String(m[1]).trim() : "", msg: m ? String(m[2]).replace(/\s+/g, " ").trim() : "" };
+}
+
+function parseWsfeCaeResponse(respXml) {
+  const resultado = (pickTag(respXml, "Resultado") || "").trim();
+  const cae = (pickTag(respXml, "CAE") || "").trim();
+  const caeVto = (pickTag(respXml, "CAEFchVto") || "").trim();
+
+  const err = pickFirstCodeMsg(pickBlock(respXml, "Errors"), "Err");
+  const obs = pickFirstCodeMsg(pickBlock(respXml, "Observaciones"), "Obs");
+  const evt = pickFirstCodeMsg(pickBlock(respXml, "Events"), "Evt");
+
+  let obsCode = "";
+  let obsMsg = "";
+
+  if (resultado.toUpperCase() === "R") {
+    if (err.code) { obsCode = err.code; obsMsg = err.msg; }
+    else if (obs.code) { obsCode = obs.code; obsMsg = obs.msg; }
+    else if (evt.code) { obsCode = evt.code; obsMsg = evt.msg; }
+  } else {
+    if (obs.code) { obsCode = obs.code; obsMsg = obs.msg; }
+    else if (evt.code) { obsCode = evt.code; obsMsg = evt.msg; }
+  }
+
+  return {
+    resultado: resultado || null,
+    cae: cae || null,
+    caeVto: caeVto || null,
+    obsCode: obsCode || null,
+    obsMsg: obsMsg || null,
+  };
 }
 
 function yyyymmddARFromDate(dateLike) {
@@ -210,14 +266,7 @@ async function FECAESolicitar(det) {
 </soap:Envelope>`;
 
   const resp = await soapRequest("FECAESolicitar", xml, det.wsfeUrl);
-
-  // Resultado (hay varios <Resultado>, tomamos el primero: CabResp suele coincidir)
   const resultado = pickTag(resp, "Resultado") || "";
-
-  // Prioridades:
-  // - Si Resultado=R -> tomar primer Error
-  // - Si no, tomar primera Observación (Obs)
-  // - Si no, tomar primer Evento (Evt)
   const err = pickFirstErr(resp);
   const obs = pickFirstObs(resp);
   const evt = pickFirstEvt(resp);
@@ -237,7 +286,7 @@ async function FECAESolicitar(det) {
   }
 
   const next = Number(pickTag(resp, "CbteDesde") || pickTag(resp, "CbteHasta") || 0) || det.cbteNro;
-
+  const parsed = parseWsfeCaeResponse(resp);
   return {
     next,
     resultado,
@@ -245,6 +294,8 @@ async function FECAESolicitar(det) {
     caeVto: pickTag(resp, "CAEFchVto") || "",
     obsCode,
     obsMsg,
+    parsed, 
+    raw: resp,
     // útil para debug sin romper tu DB:
     _errCode: err?.code || "",
     _errMsg: err?.msg || "",
