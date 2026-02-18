@@ -2140,9 +2140,7 @@ async function guardarReceptorCache(req, res) {
     return res.status(500).json({ error: e.message || "Error guardando cache" });
   }
 }
-// GET /arca/wsfe/consultar/:arcaId
-// - EMITIDO: audita y compara
-// - PENDIENTE + ?reconciliar=1: consulta WSFE y si hay CAE, actualiza a EMITIDO
+
 async function auditarWsfePorArcaId(req, res) {
   try {
     const arcaId = Number(req.params.arcaId || 0);
@@ -2155,9 +2153,7 @@ async function auditarWsfePorArcaId(req, res) {
 
     const c = cab[0];
 
-    const permitido =
-      c.estado === "EMITIDO" || (reconciliar && c.estado === "PENDIENTE");
-
+    const permitido = c.estado === "EMITIDO" || (reconciliar && c.estado === "PENDIENTE");
     if (!permitido) {
       return res.status(409).json({
         error: "Solo se permite auditar EMITIDO, o reconciliar PENDIENTE con ?reconciliar=1",
@@ -2172,9 +2168,7 @@ async function auditarWsfePorArcaId(req, res) {
       });
     }
 
-    const out = await wsfe.FECompConsultar(c.pto_vta, c.cbte_tipo, c.cbte_nro);
-    const raw = out?.raw || "";
-
+    // ---------------- Helpers XML ----------------
     const pickBlock = (xml, tag) => {
       const r = new RegExp(
         `<(?:(?:\\w+):)?${tag}[^>]*>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
@@ -2183,38 +2177,56 @@ async function auditarWsfePorArcaId(req, res) {
       const m = String(xml || "").match(r);
       return m ? m[1] : "";
     };
-const isValidYMD = (yyyymmdd) => {
-  if (!/^\d{8}$/.test(yyyymmdd)) return false;
-  const y = Number(yyyymmdd.slice(0, 4));
-  const m = Number(yyyymmdd.slice(4, 6));
-  const d = Number(yyyymmdd.slice(6, 8));
-  if (m < 1 || m > 12) return false;
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
-};
 
-const pickDateTagsStrict = (xml, tags) => {
-  const s = String(xml || "");
-  for (const tag of tags) {
-    const r = new RegExp(
-      `<(?:(?:\\w+):)?${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
-      "i"
-    );
-    const m = s.match(r);
-    if (!m) continue;
+    const pickTag = (xml, tag) => {
+      const s = String(xml || "");
+      const r = new RegExp(
+        `<(?:(?:\\w+):)?${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+        "i"
+      );
+      const m = s.match(r);
+      if (!m) return null;
+      return String(m[1] ?? "").trim();
+    };
 
-    const digits = String(m[1]).replace(/\D/g, "");
-    const candidates = digits.match(/20\d{6}/g) || [];
-    let best = null;
-    for (const c of candidates) {
-      if (!isValidYMD(c)) continue;
-      best = best ? (c > best ? c : best) : c; // max
-    }
-    if (best) return best;
-  }
-  return null;
-};
+    const isValidYMD = (yyyymmdd) => {
+      if (!/^\d{8}$/.test(yyyymmdd)) return false;
+      const y = Number(yyyymmdd.slice(0, 4));
+      const m = Number(yyyymmdd.slice(4, 6));
+      const d = Number(yyyymmdd.slice(6, 8));
+      if (m < 1 || m > 12) return false;
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      return (
+        dt.getUTCFullYear() === y &&
+        dt.getUTCMonth() === m - 1 &&
+        dt.getUTCDate() === d
+      );
+    };
 
+    const pickDateTagsStrict = (xml, tags) => {
+      const s = String(xml || "");
+      for (const tag of tags) {
+        const r = new RegExp(
+          `<(?:(?:\\w+):)?${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:(?:\\w+):)?${tag}>`,
+          "i"
+        );
+        const m = s.match(r);
+        if (!m) continue;
+
+        const digits = String(m[1]).replace(/\D/g, "");
+        const candidates = digits.match(/20\d{6}/g) || [];
+
+        let best = null;
+        for (const cand of candidates) {
+          if (!isValidYMD(cand)) continue;
+          best = best ? (cand > best ? cand : best) : cand;
+        }
+        if (best) return best;
+      }
+      return null;
+    };
+
+    const pickDate8MaxFromTags = (xml, tags) => pickDateTagsStrict(xml, tags);
 
     const pickFirst = (xml, tags) => {
       for (const t of tags) {
@@ -2224,25 +2236,35 @@ const pickDateTagsStrict = (xml, tags) => {
       return null;
     };
 
+    const toNum = (x) => Number(Number(x || 0).toFixed(2));
+
+    // ---------------- WSFE Consultar ----------------
+    const out = await wsfe.FECompConsultar(c.pto_vta, c.cbte_tipo, c.cbte_nro);
+
+    let raw = out?.raw || "";
+    const meta = out?.meta || {};
+    if (!raw) {
+      raw = `<!-- WSFE EMPTY BODY cbte_tipo=${c.cbte_tipo} pto_vta=${c.pto_vta} cbte_nro=${c.cbte_nro} -->`;
+    }
+
+    // SOAP Fault (consultar)
     const fault = pickTag(raw, "faultstring");
     if (fault) {
-      const parsed_json = { fault, raw_hint: "faultstring" };
       await arcaModel.insertarWsfeConsulta({
-  arca_comprobante_id: arcaId,
-  ok: cae.resultado === "A",
-  parsed_json: {
-    mode: "emitir",
-    action: "FECAESolicitar",
-    http_status: cae?.meta?.statusCode || null,
-    soapAction: cae?.meta?.soapAction || null,
-    url: cae?.meta?.url || null,
-    req_xml: cae?.meta?.requestXml || null,
-    resultado: cae.resultado,
-    obsCode: cae.obsCode || null,
-  },
-  resp_xml: cae.raw || null,
-});
-
+        arca_comprobante_id: arcaId,
+        ok: false,
+        parsed_json: {
+          mode: "consultar",
+          action: "FECompConsultar",
+          http_status: meta?.statusCode ?? null,
+          soapAction: meta?.soapAction ?? null,
+          url: meta?.url ?? null,
+          req_xml: meta?.requestXml ?? null,
+          fault,
+          raw_hint: "faultstring",
+        },
+        resp_xml: raw,
+      });
 
       return res.status(502).json({
         arca_id: arcaId,
@@ -2255,10 +2277,11 @@ const pickDateTagsStrict = (xml, tags) => {
     const resultGetXml = pickBlock(raw, "ResultGet") || raw;
 
     const parsed = {
-      cbte_nro: Number(pickFirst(resultGetXml, ["CbteDesde", "CbteNro"])) || Number(c.cbte_nro),
+      cbte_nro:
+        Number(pickFirst(resultGetXml, ["CbteDesde", "CbteNro"])) || Number(c.cbte_nro),
       cbte_fch: pickDate8MaxFromTags(resultGetXml, ["CbteFch"]),
       cae: pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]),
-      cae_vto:  pickDate8MaxFromTags(resultGetXml, ["CAEFchVto", "FchVto"]),
+      cae_vto: pickDate8MaxFromTags(resultGetXml, ["CAEFchVto", "FchVto"]),
       doc_tipo: Number(pickFirst(resultGetXml, ["DocTipo"])) || Number(c.doc_tipo),
       doc_nro: Number(pickFirst(resultGetXml, ["DocNro"])) || Number(c.doc_nro),
       imp_total: Number(pickFirst(resultGetXml, ["ImpTotal"])) || 0,
@@ -2268,23 +2291,29 @@ const pickDateTagsStrict = (xml, tags) => {
       mon_cotiz: pickFirst(resultGetXml, ["MonCotiz"]) || "1",
     };
 
-    const toNum = (x) => Number(Number(x || 0).toFixed(2));
-
     // diffs contra DB actual
     const diffs = {};
 
-    if (String(parsed.cae || "") !== String(c.cae || "")) diffs.cae = { wsfe: parsed.cae || null, db: c.cae || null };
-    if (String(parsed.cae_vto || "") !== String(c.cae_vto || "")) diffs.cae_vto = { wsfe: parsed.cae_vto || null, db: c.cae_vto || null };
-    if (String(parsed.cbte_fch || "") !== String(c.cbte_fch || "")) diffs.cbte_fch = { wsfe: parsed.cbte_fch || null, db: c.cbte_fch || null };
+    if (String(parsed.cae || "") !== String(c.cae || ""))
+      diffs.cae = { wsfe: parsed.cae || null, db: c.cae || null };
 
-    if (toNum(parsed.imp_total) !== toNum(c.imp_total)) diffs.imp_total = { wsfe: toNum(parsed.imp_total), db: toNum(c.imp_total) };
-    if (toNum(parsed.imp_neto) !== toNum(c.imp_neto)) diffs.imp_neto = { wsfe: toNum(parsed.imp_neto), db: toNum(c.imp_neto) };
-    if (toNum(parsed.imp_iva) !== toNum(c.imp_iva)) diffs.imp_iva = { wsfe: toNum(parsed.imp_iva), db: toNum(c.imp_iva) };
+    if (String(parsed.cae_vto || "") !== String(c.cae_vto || ""))
+      diffs.cae_vto = { wsfe: parsed.cae_vto || null, db: c.cae_vto || null };
+
+    if (String(parsed.cbte_fch || "") !== String(c.cbte_fch || ""))
+      diffs.cbte_fch = { wsfe: parsed.cbte_fch || null, db: c.cbte_fch || null };
+
+    if (toNum(parsed.imp_total) !== toNum(c.imp_total))
+      diffs.imp_total = { wsfe: toNum(parsed.imp_total), db: toNum(c.imp_total) };
+
+    if (toNum(parsed.imp_neto) !== toNum(c.imp_neto))
+      diffs.imp_neto = { wsfe: toNum(parsed.imp_neto), db: toNum(c.imp_neto) };
+
+    if (toNum(parsed.imp_iva) !== toNum(c.imp_iva))
+      diffs.imp_iva = { wsfe: toNum(parsed.imp_iva), db: toNum(c.imp_iva) };
 
     let ok = Object.keys(diffs).length === 0;
-    let reconciliado = ok; // en vez de false
-
-
+    let reconciliado = ok;
 
     // reconciliar PENDIENTE si WSFE trae CAE
     if (reconciliar && c.estado === "PENDIENTE" && parsed.cae) {
@@ -2301,7 +2330,6 @@ const pickDateTagsStrict = (xml, tags) => {
       reconciliado = true;
       ok = true;
 
-      // si querés también “alinear” cbte_fch (opcional, pero recomendado)
       if (parsed.cbte_fch && parsed.cbte_fch !== c.cbte_fch) {
         await query(`UPDATE arca_comprobantes SET cbte_fch=?, updated_at=NOW() WHERE id=?`, [
           parsed.cbte_fch,
@@ -2310,8 +2338,15 @@ const pickDateTagsStrict = (xml, tags) => {
       }
     }
 
-    // Guardar auditoría (si se reconcilió, guardamos ok=true y sin diffs)
-    const parsed_json = {
+    // Guardar auditoría (consultar)
+    const auditParsed = {
+      mode: "consultar",
+      action: "FECompConsultar",
+      http_status: meta?.statusCode ?? null,
+      soapAction: meta?.soapAction ?? null,
+      url: meta?.url ?? null,
+      req_xml: meta?.requestXml ?? null,
+
       reconciliar,
       reconciliado,
       ok,
@@ -2322,7 +2357,7 @@ const pickDateTagsStrict = (xml, tags) => {
     await arcaModel.insertarWsfeConsulta({
       arca_comprobante_id: arcaId,
       ok,
-      parsed_json,
+      parsed_json: auditParsed,
       resp_xml: raw,
     });
 
@@ -2347,6 +2382,7 @@ const pickDateTagsStrict = (xml, tags) => {
     return res.status(500).json({ error: e.message || "Error consultando WSFE" });
   }
 }
+
 
 async function listarWsfeConsultas(req, res) {
   try {

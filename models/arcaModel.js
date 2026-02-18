@@ -267,12 +267,27 @@ async function insertarWsfeConsulta({ arca_comprobante_id, ok, parsed_json, resp
     INSERT INTO arca_wsfe_consultas (arca_comprobante_id, ok, parsed_json, resp_xml)
     VALUES (?, ?, ?, ?)
   `;
+
+  const ensureJsonText = (v) => {
+    if (v == null) return null;
+
+    if (typeof v === "string") {
+      const s = v.trim();
+      // si ya es JSON válido, guardarlo tal cual (evita doble stringify)
+      try { JSON.parse(s); return s; } catch { return JSON.stringify(v); }
+    }
+
+    try { return JSON.stringify(v); }
+    catch { return JSON.stringify({ _raw: String(v) }); }
+  };
+
   const params = [
     arca_comprobante_id,
     ok ? 1 : 0,
-    parsed_json ? JSON.stringify(parsed_json) : null,
+    ensureJsonText(parsed_json),
     resp_xml || null,
   ];
+
   return query(sql, params);
 }
 

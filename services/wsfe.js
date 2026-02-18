@@ -437,13 +437,23 @@ async function FECompConsultar(ptoVta = PTO_VTA_DEFAULT, cbteTipo, cbteNro) {
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  const resp = await postXml(
-    WSFE_URL,
-    soap,
-    "http://ar.gov.afip.dif.FEV1/FECompConsultar"
-  );
-  return { raw: resp };
+  const ex = await soapRequestDetailed("FECompConsultar", soap, WSFE_URL);
+
+  let resp = ex.body || "";
+  if (!resp) resp = `<!-- WSFE EMPTY BODY status=${ex.statusCode} soapAction=${ex.soapAction} -->`;
+
+  return {
+    raw: resp,
+    meta: {
+      statusCode: ex.statusCode,
+      soapAction: ex.soapAction,
+      url: ex.url,
+      requestXml: ex.requestXmlRedacted,
+    },
+  };
 }
+
+
 async function FEParamGetCondicionIvaReceptor() {
   const a = await auth();
 
