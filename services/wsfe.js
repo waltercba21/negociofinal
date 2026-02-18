@@ -89,19 +89,11 @@ function normalizeSoapAction(soapAction) {
   return `http://ar.gov.afip.dif.FEV1/${s}`;
 }
 function soapRequest(action, xml, url) {
-  const soapAction = action.startsWith("http")
-    ? action
-    : `http://ar.gov.afip.dif.FEV1/${action}`;
-    const finalUrl =
-    (url && String(url).trim()) ||
-    (process.env.ARCA_WSFE_URL && String(process.env.ARCA_WSFE_URL).trim());
-  if (!finalUrl) {
-    const err = new Error("WSFE_CONFIG: ARCA_WSFE_URL no configurada");
-    err.code = "WSFE_CONFIG";
-    throw err;
-  }
- return postXml(finalUrl, xml, action);
+  const ns = "http://ar.gov.afip.dif.FEV1/";
+  const soapAction = String(action || "").startsWith("http") ? action : (ns + action);
+  return postXml(url, xml, soapAction, { timeoutMs: 25000 });
 }
+
 
 function pickTag(xml, tag) {
   const r = new RegExp(
