@@ -19,51 +19,67 @@ if (ENV === "prod" && /homo/i.test(WSFE_URL)) {
 }
 
 
+// services/wsfe.js (helper)
 function postXml(url, xml, soapAction) {
   return new Promise((resolve, reject) => {
+    let u;
     try {
-      // Validación fuerte de URL (evita "Invalid URL")
-      const u = new URL(String(url || "").trim());
-      const xmlStr = String(xml ?? "");
-
-      // WSFE: SOAPAction debe incluir namespace FEV1 (AFIP rechaza "FECAESolicitar" solo)
-      const SOAP_NS = "http://ar.gov.afip.dif.FEV1/";
-      const actionRaw = String(soapAction || "").trim();
-      const soapActionFinal = actionRaw
-        ? (actionRaw.startsWith("http") ? actionRaw : SOAP_NS + actionRaw)
-        : null;
-
-      const headers = {
-        "Content-Type": "text/xml; charset=utf-8",
-        "Content-Length": Buffer.byteLength(xmlStr, "utf8"),
-      };
-
-      // Importante: NO encerrar entre comillas extra (tu error vino de SOAPAction inválido)
-      if (soapActionFinal) headers["SOAPAction"] = soapActionFinal;
-
-      const req = https.request(
-        {
-          method: "POST",
-          hostname: u.hostname,
-          path: u.pathname + u.search,
-          headers,
-        },
-        (res) => {
-          let data = "";
-          res.on("data", (c) => (data += c));
-          res.on("end", () => resolve(data));
-        }
-      );
-
-      req.on("error", reject);
-      req.write(xmlStr, "utf8");
-      req.end();
+      u = new URL(url);
     } catch (e) {
-      // Estandarizamos error de config
-      const err = new Error(`WSFE_CONFIG: ${e.message}`);
-      err.code = "WSFE_CONFIG";
-      reject(err);
+      const err = new Error(`WSFE URL inválida: ${url}`);
+      err.code = "WSFE_URL_INVALID";
+      return reject(err);
     }
+
+    const isHttps = u.protocol === "https:";
+    const client = isHttps ? require("https") : require("http");
+
+    // AFIP/WSFE espera SOAPAction con URI completa (no "FECAESolicitar" pelado)
+    let soapActionValue = soapAction ? String(soapAction).trim() : "";
+    if (soapActionValue && !soapActionValue.includes("://")) {
+      soapActionValue = `http://ar.gov.afip.dif.FEV1/${soapActionValue}`;
+    }
+
+    const headers = {
+      "Content-Type": "text/xml; charset=utf-8",
+      "Content-Length": Buffer.byteLength(xml, "utf8"),
+      Accept: "text/xml",
+      Connection: "close",
+      "User-Agent": "autofaros-wsfe/1.0",
+    };
+
+    if (soapActionValue) {
+      // comillas ayudan con stacks SOAP clásicos
+      headers["SOAPAction"] = `"${soapActionValue}"`;
+    }
+
+    const req = client.request(
+      {
+        method: "POST",
+        hostname: u.hostname,
+        port: u.port ? Number(u.port) : (isHttps ? 443 : 80),
+        path: u.pathname + u.search,
+        headers,
+      },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          const body = Buffer.concat(chunks).toString("utf8");
+          resolve(body); // NO rompo firma: devuelve XML crudo siempre (incluye soap:Fault)
+        });
+      }
+    );
+
+    req.setTimeout(25000, () => {
+      const err = new Error("Timeout WSFE postXml");
+      err.code = "WSFE_TIMEOUT";
+      req.destroy(err);
+    });
+
+    req.on("error", (err) => reject(err));
+    req.write(xml, "utf8");
+    req.end();
   });
 }
 
