@@ -1319,68 +1319,119 @@ async function emitirNotaCreditoPorArcaId(req, res) {
       asoc_cuit: Number(origen.cuit_emisor),
     });
 
-    // WSFE: incluir comprobante asociado
-    const cae = await wsfe.FECAESolicitar({
-      ptoVta: pto_vta,
-      cbteTipo: cbte_tipo,
-      cbteDesde: next,
-      cbteHasta: next,
-      cbteFch: cbte_fch,
-      docTipo: doc_tipo,
-      docNro: doc_nro,
-      condicionIVAReceptorId: receptor_cond_iva_id,
-      impTotal: imp_total,
-      impNeto: imp_neto,
-      impIVA: imp_iva,
-      impOpEx: 0,
-      impTotConc: 0,
-      impTrib: 0,
-      monId: origen.mon_id || "PES",
-      monCotiz: origen.mon_cotiz || 1,
-      omitirIva: false,
-      ivaAlicuotas,
-      cbtesAsoc: [{
-        tipo: Number(origen.cbte_tipo),
-        pto_vta: Number(origen.pto_vta),
-        nro: Number(origen.cbte_nro),
-        cuit: Number(origen.cuit_emisor),
-        cbte_fch: String(origen.cbte_fch),
-      }],
-    });
+// WSFE: incluir comprobante asociado
+const cae = await wsfe.FECAESolicitar({
+  ptoVta: pto_vta,
+  cbteTipo: cbte_tipo,
+  cbteDesde: next,
+  cbteHasta: next,
+  cbteFch: cbte_fch,
+  docTipo: doc_tipo,
+  docNro: doc_nro,
+  condicionIVAReceptorId: receptor_cond_iva_id,
+  impTotal: imp_total,
+  impNeto: imp_neto,
+  impIVA: imp_iva,
+  impOpEx: 0,
+  impTotConc: 0,
+  impTrib: 0,
+  monId: origen.mon_id || "PES",
+  monCotiz: origen.mon_cotiz || 1,
+  omitirIva: false,
+  ivaAlicuotas,
+  cbtesAsoc: [{
+    tipo: Number(origen.cbte_tipo),
+    pto_vta: Number(origen.pto_vta),
+    nro: Number(origen.cbte_nro),
+    cuit: Number(origen.cuit_emisor),
+    cbte_fch: String(origen.cbte_fch),
+  }],
+});
 
-    const estado = cae.resultado === "A" ? "EMITIDO" : "RECHAZADO";
+// ---- AUDITORÍA WSFE (OBLIGATORIA) ----
+try {
+  await arcaModel.insertarWsfeConsulta({
+    arca_comprobante_id: arcaId,
+    ok: cae?.resultado === "A",
+    parsed_json: {
+      mode: "emitir",
+      action: "FECAESolicitar",
+      http_status: cae?.meta?.statusCode ?? null,
+      soapAction: cae?.meta?.soapAction ?? null,
+      url: cae?.meta?.url ?? null,
+      req_xml: cae?.meta?.requestXml ?? null,
+      resultado: cae?.resultado ?? null,
+      obsCode: cae?.obsCode ?? null,
+      obsMsg: cae?.obsMsg ?? null,
+    },
+    resp_xml: (cae?.raw && String(cae.raw).trim()) ? cae.raw : "<!-- WSFE EMPTY BODY -->",
+  });
+} catch (e) {
+  console.warn("⚠️ insertarWsfeConsulta (NC) falló:", e?.message || e);
+}
 
-    await arcaModel.actualizarRespuesta(arcaId, {
-      resultado: cae.resultado || null,
-      cae: cae.cae || null,
-      cae_vto: cae.caeVto || null,
-      obs_code: cae.obsCode || null,
-      obs_msg: cae.obsMsg || null,
-      resp_xml: cae.raw || null,
-      estado,
-    });
+// ---- CLASIFICACIÓN DE ESTADO (NO ADIVINAR) ----
+const resultado = cae?.resultado ?? null;
+const rawLen = String(cae?.raw || "").trim().length;
+const httpStatus = cae?.meta?.statusCode ?? null;
 
-    if (estado === "RECHAZADO") {
-      await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
-    }
+let estado;
+if (resultado === "A") estado = "EMITIDO";
+else if (resultado === "R") estado = "RECHAZADO";
+else estado = "PENDIENTE"; // sin confirmación
 
-    return res.status(200).json({
-      arca_id: arcaId,
-      estado,
-      pto_vta,
-      cbte_tipo,
-      cbte_fch,
-      cbte_nro: next,
-      resultado: cae.resultado || null,
-      cae: cae.cae || null,
-      cae_vto: cae.caeVto || null,
-      obs_code: cae.obsCode || null,
-      obs_msg: cae.obsMsg || null,
-      origen: { arca_id: origenId, cbte_tipo: origen.cbte_tipo, cbte_nro: origen.cbte_nro, cbte_fch: origen.cbte_fch },
-      parcial: factor < 0.999,
-      remanente_antes: remanente,
-      acreditado_total_origen: Number(yaAcreditado || 0),
-    });
+await arcaModel.actualizarRespuesta(arcaId, {
+  resultado,
+  cae: cae?.cae || null,
+  cae_vto: cae?.caeVto || null,
+  obs_code: estado === "PENDIENTE" ? "WSFE_SIN_CONFIRM" : (cae?.obsCode || null),
+  obs_msg: estado === "PENDIENTE"
+    ? `WSFE sin confirmación (http_status=${httpStatus}, rawLen=${rawLen})`
+    : (cae?.obsMsg || null),
+  resp_xml: (cae?.raw && String(cae.raw).trim()) ? cae.raw : "<!-- WSFE EMPTY BODY -->",
+  estado,
+});
+
+if (estado === "RECHAZADO") {
+  await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+}
+
+if (estado === "PENDIENTE") {
+  return res.status(502).json({
+    arca_id: arcaId,
+    estado,
+    pto_vta,
+    cbte_tipo,
+    cbte_fch,
+    cbte_nro: next,
+    error: "WSFE sin confirmación. Requiere auditoría/reconciliación antes de reintentar.",
+    origen: { arca_id: origenId, cbte_tipo: origen.cbte_tipo, cbte_nro: origen.cbte_nro, cbte_fch: origen.cbte_fch },
+    parcial: factor < 0.999,
+    remanente_antes: remanente,
+    acreditado_total_origen: Number(yaAcreditado || 0),
+  });
+}
+
+return res.status(200).json({
+  arca_id: arcaId,
+  estado,
+  pto_vta,
+  cbte_tipo,
+  cbte_fch,
+  cbte_nro: next,
+  resultado,
+  cae: cae?.cae || null,
+  cae_vto: cae?.caeVto || null,
+  obs_code: estado === "PENDIENTE" ? "WSFE_SIN_CONFIRM" : (cae?.obsCode || null),
+  obs_msg: estado === "PENDIENTE"
+    ? `WSFE sin confirmación (http_status=${httpStatus}, rawLen=${rawLen})`
+    : (cae?.obsMsg || null),
+  origen: { arca_id: origenId, cbte_tipo: origen.cbte_tipo, cbte_nro: origen.cbte_nro, cbte_fch: origen.cbte_fch },
+  parcial: factor < 0.999,
+  remanente_antes: remanente,
+  acreditado_total_origen: Number(yaAcreditado || 0),
+});
+
   } catch (e) {
     if (arcaId) {
       try {
