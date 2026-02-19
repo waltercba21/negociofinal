@@ -15,26 +15,25 @@ const IS_PROD = /^prod\b/i.test(ARCA_ENV);
 const PROD_LOCK = isTrue(process.env.ARCA_PROD_LOCK);
 
 function prodEmitLock(req, res, next) {
-  if (!IS_PROD || !PROD_LOCK) return next();
+  const arcaEnv = String(process.env.ARCA_ENV || "").toLowerCase();
+  const lockOn = isTrue(process.env.ARCA_PROD_LOCK);
 
-  // Solo bloquear emisiones
-  if (req.method !== "POST") return next();
+  const isProd = arcaEnv === "prod" || arcaEnv === "production";
+  const isEmitPath =
+    req.method === "POST" &&
+    (req.path.startsWith("/emitir-desde-factura") || req.path.startsWith("/emitir-nc"));
 
-  const p = String(req.path || "");
-  const isEmitFactura = p.startsWith("/emitir-desde-factura/");
-  const isEmitNc = p.startsWith("/emitir-nc/");
+  if (!isProd || !lockOn || !isEmitPath) return next();
 
-  if (!isEmitFactura && !isEmitNc) return next();
-
-  const confirm = String(req.get("X-ARCA-CONFIRM") || "").trim().toUpperCase();
-  if (confirm === "SI") return next();
+  const confirmHeader = String(req.get("X-ARCA-CONFIRM") || "").trim().toUpperCase();
+  if (confirmHeader === "SI") return next();
 
   return res.status(423).json({
     error: "ARCA_PROD_LOCK activo: emisión bloqueada en PRODUCCIÓN.",
     hint: "Para habilitar SOLO este request: enviar header X-ARCA-CONFIRM: SI",
     locked: true,
-    env: ARCA_ENV,
-    path: p,
+    env: arcaEnv,
+    path: req.path,
   });
 }
 
