@@ -2266,6 +2266,16 @@ async function auditarWsfePorArcaId(req, res) {
       return String(m[1] ?? "").trim();
     };
 
+    const pickFirstErr = (xml) => {
+      const errorsBlock = pickBlock(xml, "Errors");
+      if (!errorsBlock) return null;
+      const errBlock = pickBlock(errorsBlock, "Err") || errorsBlock;
+      const code = pickTag(errBlock, "Code");
+      const msg = pickTag(errBlock, "Msg");
+      if (!code && !msg) return null;
+      return { code: code || null, msg: msg || null };
+    };
+
     const isValidYMD = (yyyymmdd) => {
       if (!/^\d{8}$/.test(yyyymmdd)) return false;
       const y = Number(yyyymmdd.slice(0, 4));
@@ -2346,26 +2356,110 @@ async function auditarWsfePorArcaId(req, res) {
       return res.status(502).json({
         arca_id: arcaId,
         ok: false,
-        diffs: { faultstring: fault },
-        wsfe: { faultstring: fault },
+        reconciliado: false,
+        wsfe_error: { type: "SOAP_FAULT", faultstring: fault },
+        wsfe: null,
+        db: {
+          cbte_nro: Number(c.cbte_nro),
+          cbte_fch: c.cbte_fch,
+          cae: c.cae,
+          cae_vto: c.cae_vto,
+          imp_total: c.imp_total,
+          imp_neto: c.imp_neto,
+          imp_iva: c.imp_iva,
+        },
       });
     }
 
-    const resultGetXml = pickBlock(raw, "ResultGet") || raw;
+    // Errors (ej: 602 No existen datos)
+    const err = pickFirstErr(raw);
+    if (err?.code) {
+      const payload = {
+        mode: "consultar",
+        action: "FECompConsultar",
+        http_status: meta?.statusCode ?? null,
+        soapAction: meta?.soapAction ?? null,
+        url: meta?.url ?? null,
+        req_xml: meta?.requestXml ?? null,
+        wsfe_error: { code: String(err.code), msg: err.msg || null },
+      };
+
+      await arcaModel.insertarWsfeConsulta({
+        arca_comprobante_id: arcaId,
+        ok: false,
+        parsed_json: payload,
+        resp_xml: raw,
+      });
+
+      // 602 => no existe en WSFE (clave para detectar falsos EMITIDO)
+      if (String(err.code) === "602") {
+        return res.json({
+          arca_id: arcaId,
+          reconciliado: false,
+          ok: false,
+          diffs: { wsfe_error: { code: "602", msg: err.msg || null } },
+          wsfe_error: { code: "602", msg: err.msg || null },
+          wsfe: null,
+          db: {
+            cbte_nro: Number(c.cbte_nro),
+            cbte_fch: c.cbte_fch,
+            cae: c.cae,
+            cae_vto: c.cae_vto,
+            imp_total: c.imp_total,
+            imp_neto: c.imp_neto,
+            imp_iva: c.imp_iva,
+          },
+        });
+      }
+
+      return res.status(502).json({
+        arca_id: arcaId,
+        ok: false,
+        reconciliado: false,
+        wsfe_error: { code: String(err.code), msg: err.msg || null },
+      });
+    }
+
+    const resultGetBlock = pickBlock(raw, "ResultGet");
+    if (!resultGetBlock) {
+      // sin Errors pero sin ResultGet => no confiable
+      const payload = {
+        mode: "consultar",
+        action: "FECompConsultar",
+        http_status: meta?.statusCode ?? null,
+        soapAction: meta?.soapAction ?? null,
+        url: meta?.url ?? null,
+        req_xml: meta?.requestXml ?? null,
+        wsfe_error: { code: "NO_RESULTGET", msg: "WSFE no devolvió ResultGet" },
+      };
+
+      await arcaModel.insertarWsfeConsulta({
+        arca_comprobante_id: arcaId,
+        ok: false,
+        parsed_json: payload,
+        resp_xml: raw,
+      });
+
+      return res.status(502).json({
+        arca_id: arcaId,
+        ok: false,
+        reconciliado: false,
+        wsfe_error: payload.wsfe_error,
+      });
+    }
 
     const parsed = {
-      cbte_nro:
-        Number(pickFirst(resultGetXml, ["CbteDesde", "CbteNro"])) || Number(c.cbte_nro),
-      cbte_fch: pickDate8MaxFromTags(resultGetXml, ["CbteFch"]),
-      cae: pickFirst(resultGetXml, ["CodAutorizacion", "CAE"]),
-      cae_vto: pickDate8MaxFromTags(resultGetXml, ["CAEFchVto", "FchVto"]),
-      doc_tipo: Number(pickFirst(resultGetXml, ["DocTipo"])) || Number(c.doc_tipo),
-      doc_nro: Number(pickFirst(resultGetXml, ["DocNro"])) || Number(c.doc_nro),
-      imp_total: Number(pickFirst(resultGetXml, ["ImpTotal"])) || 0,
-      imp_neto: Number(pickFirst(resultGetXml, ["ImpNeto"])) || 0,
-      imp_iva: Number(pickFirst(resultGetXml, ["ImpIVA"])) || 0,
-      mon_id: pickFirst(resultGetXml, ["MonId"]) || "PES",
-      mon_cotiz: pickFirst(resultGetXml, ["MonCotiz"]) || "1",
+      cbte_nro: Number(pickFirst(resultGetBlock, ["CbteDesde", "CbteNro"])) || Number(c.cbte_nro),
+      cbte_fch: pickDate8MaxFromTags(resultGetBlock, ["CbteFch"]),
+      cae: pickFirst(resultGetBlock, ["CodAutorizacion", "CAE"]),
+      cae_vto: pickDate8MaxFromTags(resultGetBlock, ["CAEFchVto", "FchVto"]),
+      doc_tipo: Number(pickFirst(resultGetBlock, ["DocTipo"])) || Number(c.doc_tipo),
+      doc_nro: Number(pickFirst(resultGetBlock, ["DocNro"])) || Number(c.doc_nro),
+      imp_total: Number(pickFirst(resultGetBlock, ["ImpTotal"])) || 0,
+      imp_neto: Number(pickFirst(resultGetBlock, ["ImpNeto"])) || 0,
+      imp_iva: Number(pickFirst(resultGetBlock, ["ImpIVA"])) || 0,
+      mon_id: pickFirst(resultGetBlock, ["MonId"]) || "PES",
+      mon_cotiz: pickFirst(resultGetBlock, ["MonCotiz"]) || "1",
     };
 
     // diffs contra DB actual
@@ -2459,7 +2553,6 @@ async function auditarWsfePorArcaId(req, res) {
     return res.status(500).json({ error: e.message || "Error consultando WSFE" });
   }
 }
-
 
 async function listarWsfeConsultas(req, res) {
   try {
