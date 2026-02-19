@@ -262,18 +262,22 @@ async function sumarTotalEmitidoAsociado(asociado_arca_id) {
 }
 
 // ---- Auditoría WSFE ----
-async function insertarWsfeConsulta({ arca_comprobante_id, ok, parsed_json, resp_xml }) {
-  const sql = `
-    INSERT INTO arca_wsfe_consultas (arca_comprobante_id, ok, parsed_json, resp_xml)
-    VALUES (?, ?, ?, ?)
-  `;
-
+// ---- Auditoría WSFE ----
+async function insertarWsfeConsulta({
+  arca_comprobante_id,
+  ok,
+  parsed_json,
+  resp_xml,
+  http_status,
+  soap_action,
+  url,
+  req_xml,
+}) {
   const ensureJsonText = (v) => {
     if (v == null) return null;
 
     if (typeof v === "string") {
       const s = v.trim();
-      // si ya es JSON válido, guardarlo tal cual (evita doble stringify)
       try { JSON.parse(s); return s; } catch { return JSON.stringify(v); }
     }
 
@@ -281,26 +285,118 @@ async function insertarWsfeConsulta({ arca_comprobante_id, ok, parsed_json, resp
     catch { return JSON.stringify({ _raw: String(v) }); }
   };
 
-  const params = [
+  const parseObj = (v) => {
+    if (!v) return null;
+    if (typeof v === "object") return v;
+    if (typeof v === "string") {
+      try { return JSON.parse(v); } catch { return null; }
+    }
+    return null;
+  };
+
+  const pjObj = parseObj(parsed_json);
+
+  const httpStatusStore =
+    (http_status != null ? Number(http_status) : null) ??
+    (pjObj?.http_status != null ? Number(pjObj.http_status) : null) ??
+    (pjObj?.httpStatus != null ? Number(pjObj.httpStatus) : null) ??
+    null;
+
+  const soapActionStore =
+    (soap_action != null ? String(soap_action) : null) ??
+    (pjObj?.soapAction != null ? String(pjObj.soapAction) : null) ??
+    (pjObj?.soap_action != null ? String(pjObj.soap_action) : null) ??
+    null;
+
+  const urlStore =
+    (url != null ? String(url) : null) ??
+    (pjObj?.url != null ? String(pjObj.url) : null) ??
+    null;
+
+  const reqXmlStore =
+    (req_xml != null ? String(req_xml) : null) ??
+    (pjObj?.req_xml != null ? String(pjObj.req_xml) : null) ??
+    (pjObj?.requestXml != null ? String(pjObj.requestXml) : null) ??
+    (pjObj?.requestXmlRedacted != null ? String(pjObj.requestXmlRedacted) : null) ??
+    null;
+
+  const parsedStore = ensureJsonText(parsed_json);
+
+  // Preferimos el INSERT con columnas nuevas; si el entorno no las tiene aún, fallback al esquema viejo.
+  const sqlNew = `
+    INSERT INTO arca_wsfe_consultas
+      (arca_comprobante_id, ok, http_status, soap_action, url, req_xml, parsed_json, resp_xml)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+  const paramsNew = [
     arca_comprobante_id,
     ok ? 1 : 0,
-    ensureJsonText(parsed_json),
+    httpStatusStore,
+    soapActionStore,
+    urlStore,
+    reqXmlStore,
+    parsedStore,
     resp_xml || null,
   ];
 
-  return query(sql, params);
+  try {
+    return await query(sqlNew, paramsNew);
+  } catch (err) {
+    const msg = String(err?.message || "");
+    const badField =
+      err?.code === "ER_BAD_FIELD_ERROR" ||
+      /Unknown column/i.test(msg);
+
+    if (badField) {
+      const sqlOld = `
+        INSERT INTO arca_wsfe_consultas (arca_comprobante_id, ok, parsed_json, resp_xml)
+        VALUES (?, ?, ?, ?)
+      `;
+      const paramsOld = [
+        arca_comprobante_id,
+        ok ? 1 : 0,
+        parsedStore,
+        resp_xml || null,
+      ];
+      return query(sqlOld, paramsOld);
+    }
+    throw err;
+  }
 }
 
 async function listarWsfeConsultas(arca_comprobante_id, limit = 20) {
-  const sql = `
-    SELECT id, ok, parsed_json, created_at
+  const sqlNew = `
+    SELECT
+      id, ok, http_status, soap_action, url, req_xml, parsed_json, created_at
     FROM arca_wsfe_consultas
     WHERE arca_comprobante_id=?
     ORDER BY id DESC
     LIMIT ?
   `;
-  return query(sql, [arca_comprobante_id, Number(limit)]);
+
+  try {
+    return await query(sqlNew, [arca_comprobante_id, Number(limit)]);
+  } catch (err) {
+    const msg = String(err?.message || "");
+    const badField =
+      err?.code === "ER_BAD_FIELD_ERROR" ||
+      /Unknown column/i.test(msg);
+
+    if (badField) {
+      // fallback viejo
+      const sqlOld = `
+        SELECT id, ok, parsed_json, created_at
+        FROM arca_wsfe_consultas
+        WHERE arca_comprobante_id=?
+        ORDER BY id DESC
+        LIMIT ?
+      `;
+      return query(sqlOld, [arca_comprobante_id, Number(limit)]);
+    }
+    throw err;
+  }
 }
+
 async function reportesResumen(pool, { ambiente, cuit_emisor, pto_vta, desdeYmd, hastaYmd, estado }) {
   const q = getQuery(pool);
 
