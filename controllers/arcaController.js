@@ -33,12 +33,21 @@ function receptorCacheWriteEnabled() {
 }
 
 function claseFromCbteTipo(cbteTipo) {
-  const t = Number(cbteTipo);
-  if ([1,2,3,4,5].includes(t)) return "A";     // Fact A / ND A / NC A / ...
-  if ([6,7,8,9,10].includes(t)) return "B";    // Fact B / ND B / NC B / ...
-  if ([11,12,13,14,15].includes(t)) return "C"; // Fact C / ND C / NC C / ...
+  const t = Number(cbteTipo || 0);
+
+  // A estándar: 1..5
+  // A con leyenda “Operación sujeta a retención”: 51..55
+  if ((t >= 1 && t <= 5) || (t >= 51 && t <= 55)) return "A";
+
+  // B: 6..10
+  if (t >= 6 && t <= 10) return "B";
+
+  // C (si alguna vez lo usan): 11..15
+  if (t >= 11 && t <= 15) return "C";
+
   return null;
 }
+
 function isValidYMD(yyyymmdd) {
   if (!/^\d{8}$/.test(yyyymmdd)) return false;
   const y = Number(yyyymmdd.slice(0, 4));
@@ -1083,7 +1092,8 @@ async function emitirNotaCreditoPorArcaId(req, res) {
 
   const qBool = (v) => ["1", "true", "yes", "on"].includes(String(v || "").toLowerCase());
 
-  const NC_BY_FACT = { 1: 3, 6: 8, 11: 13 }; // Fact A->NC A, Fact B->NC B, Fact C->NC C
+  const NC_BY_FACT = { 1: 3, 51: 53, 6: 8, 11: 13 };
+
   const IVA_ALIC_MAP = [
     { id: 3, porc: 0 },
     { id: 4, porc: 10.5 },
@@ -1515,8 +1525,6 @@ async function vistaArcaIndex(req, res) {
   }
 }
 
-// GET /arca/ui/facturas?limit=50&offset=0
-// GET /arca/ui/facturas?limit=50&offset=0
 async function listarFacturasMostrador(req, res) {
   try {
     const limit = Math.min(parseInt(req.query.limit || "50", 10), 200);
@@ -1527,15 +1535,12 @@ async function listarFacturasMostrador(req, res) {
       SELECT
         fm.id,
 
-        -- vendedor: si existe fm.vendedor úsalo; si no, y nombre_cliente NO es MOSTRADOR, úsalo como fallback (data vieja)
         CASE
           WHEN fm.vendedor IS NOT NULL AND fm.vendedor <> '' THEN fm.vendedor
           WHEN fm.nombre_cliente IS NOT NULL AND fm.nombre_cliente <> '' AND fm.nombre_cliente <> 'MOSTRADOR' THEN fm.nombre_cliente
           ELSE NULL
         END AS vendedor,
 
-        -- cliente: si hay comprobante ARCA, mostrar receptor; si es CF doc_tipo=99 => CONSUMIDOR FINAL.
-        -- si no hay ARCA todavía, mostrar placeholder de la factura (MOSTRADOR) o cliente_nombre si existiera.
         CASE
           WHEN ac.id IS NOT NULL THEN
             CASE
@@ -1545,16 +1550,14 @@ async function listarFacturasMostrador(req, res) {
           ELSE COALESCE(fm.cliente_nombre, fm.nombre_cliente)
         END AS cliente,
 
-        -- tipo: A/B/NC según cbte_tipo (si no hay ARCA => null)
         CASE
-          WHEN ac.cbte_tipo = 1 THEN 'A'
+          WHEN ac.cbte_tipo IN (1, 51) THEN 'A'
           WHEN ac.cbte_tipo = 6 THEN 'B'
-          WHEN ac.cbte_tipo = 3 THEN 'NC A'
+          WHEN ac.cbte_tipo IN (3, 53) THEN 'NC A'
           WHEN ac.cbte_tipo = 8 THEN 'NC B'
           ELSE NULL
         END AS tipo,
 
-        -- fecha: preferimos la del comprobante si existe cbte_fch (YYYYMMDD), sino la de la factura mostrador
         CASE
           WHEN ac.cbte_fch IS NOT NULL AND ac.cbte_fch <> ''
             THEN DATE_FORMAT(STR_TO_DATE(ac.cbte_fch, '%Y%m%d'), '%Y-%m-%d')
@@ -1721,11 +1724,19 @@ function formatCuit(cuit) {
 }
 function cbteTitulo(cbteTipo) {
   const t = Number(cbteTipo || 0);
-  if ([1,6,11].includes(t)) return "FACTURA ELECTRÓNICA";
-  if ([3,8,13].includes(t)) return "NOTA DE CRÉDITO ELECTRÓNICA";
-  if ([2,7,12].includes(t)) return "NOTA DE DÉBITO ELECTRÓNICA";
+
+  // Facturas
+  if ([1, 6, 11, 51].includes(t)) return "FACTURA ELECTRÓNICA";
+
+  // Notas de Crédito
+  if ([3, 8, 13, 53].includes(t)) return "NOTA DE CRÉDITO ELECTRÓNICA";
+
+  // Notas de Débito
+  if ([2, 7, 12, 52].includes(t)) return "NOTA DE DÉBITO ELECTRÓNICA";
+
   return "COMPROBANTE ELECTRÓNICO";
 }
+
 function resolveFsPath(p) {
   if (!p) return null;
   if (path.isAbsolute(p)) return p;

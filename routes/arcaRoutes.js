@@ -40,6 +40,20 @@ function prodEmitLock(req, res, next) {
 // IMPORTANTE: lock antes del adminMiddleware para poder evidenciar con curl aun sin sesión.
 // (Con header SI pasa al adminMiddleware; sin header queda bloqueado 423.)
 router.use(prodEmitLock);
+function normalizeCbteTipoA(req, _res, next) {
+  try {
+    const cfgA = Number(process.env.ARCA_CBTE_TIPO_A || 1); // para FAWA debe ser 51
+    const b = req.body || {};
+    const t = Number(b.cbte_tipo || 0);
+
+    // Si piden “A” (1 o 51), forzamos al tipo configurado (51 en PROD para FAWA)
+    if ((t === 1 || t === 51) && cfgA) {
+      b.cbte_tipo = cfgA;
+      req.body = b;
+    }
+  } catch (_) {}
+  next();
+}
 
 // Protege TODO /arca (UI + API)
 router.use(adminMiddleware);
@@ -47,7 +61,8 @@ router.use(adminMiddleware);
 // ===== API (JSON) =====
 
 // Emitir ARCA desde una factura existente del mostrador
-router.post("/emitir-desde-factura/:id", arcaController.emitirDesdeFacturaMostrador);
+router.post("/emitir-desde-factura/:facturaId", normalizeCbteTipoA, arcaController.emitirDesdeFacturaMostrador);
+
 
 // Ver estado ARCA (último) por factura mostrador
 router.get("/status/factura/:id", arcaController.statusPorFacturaMostrador);
