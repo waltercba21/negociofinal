@@ -471,6 +471,28 @@ async function FECompConsultar(ptoVta = PTO_VTA_DEFAULT, cbteTipo, cbteNro) {
     },
   };
 }
+function parseTiposCbteFromXml(xml) {
+  const s = String(xml || "");
+  const out = [];
+
+  // Patrón probado con XML real WSFE: <CbteTipo><Id>..</Id><Desc>..</Desc>...</CbteTipo>
+  const re = /<CbteTipo>\s*<Id>([\s\S]*?)<\/Id>\s*<Desc>([\s\S]*?)<\/Desc>[\s\S]*?<\/CbteTipo>/gi;
+
+  let m;
+  while ((m = re.exec(s))) {
+    const id = String(m[1] || "").trim();
+    const desc = String(m[2] || "").trim();
+    if (id) out.push({ id, desc });
+  }
+
+  // dedupe por id
+  const seen = new Set();
+  return out.filter((x) => {
+    if (seen.has(x.id)) return false;
+    seen.add(x.id);
+    return true;
+  });
+}
 
 
 async function FEParamGetCondicionIvaReceptor() {
@@ -499,6 +521,39 @@ async function FEParamGetCondicionIvaReceptor() {
   // Devolvemos el XML crudo; lo parseás en el controller con pickTag/regex.
   return { raw: resp };
 }
+async function FEParamGetTiposCbte() {
+  const a = await auth();
+
+  const soap = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <ar:FEParamGetTiposCbte>
+      <ar:Auth>
+        <ar:Token>${a.token}</ar:Token>
+        <ar:Sign>${a.sign}</ar:Sign>
+        <ar:Cuit>${a.cuit}</ar:Cuit>
+      </ar:Auth>
+    </ar:FEParamGetTiposCbte>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+  const ex = await soapRequestDetailed("FEParamGetTiposCbte", soap, WSFE_URL);
+
+  let resp = ex.body || "";
+  if (!resp) resp = `<!-- WSFE EMPTY BODY status=${ex.statusCode} soapAction=${ex.soapAction} -->`;
+
+  return {
+    raw: resp,
+    tipos: parseTiposCbteFromXml(resp),
+    meta: {
+      statusCode: ex.statusCode,
+      soapAction: ex.soapAction,
+      url: ex.url,
+      requestXml: ex.requestXmlRedacted,
+    },
+  };
+}
 
 
 module.exports = {
@@ -508,6 +563,6 @@ module.exports = {
   FECompUltimoAutorizado,
   FECAESolicitar,
   FECompConsultar,
-  FEParamGetCondicionIvaReceptor
+  FEParamGetCondicionIvaReceptor,
+  FEParamGetTiposCbte,
 };
-
