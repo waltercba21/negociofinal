@@ -33,20 +33,13 @@ function receptorCacheWriteEnabled() {
 }
 
 function claseFromCbteTipo(cbteTipo) {
-  const t = Number(cbteTipo || 0);
-
-  // A estándar: 1..5
-  // A con leyenda “Operación sujeta a retención”: 51..55
-  if ((t >= 1 && t <= 5) || (t >= 51 && t <= 55)) return "A";
-
-  // B: 6..10
-  if (t >= 6 && t <= 10) return "B";
-
-  // C (si alguna vez lo usan): 11..15
-  if (t >= 11 && t <= 15) return "C";
-
+  const t = Number(cbteTipo);
+  if ([1,2,3,4,5,51,52,53].includes(t)) return "A";
+  if ([6,7,8,9].includes(t)) return "B";
+  if ([11,12,13].includes(t)) return "C";
   return null;
 }
+
 
 function isValidYMD(yyyymmdd) {
   if (!/^\d{8}$/.test(yyyymmdd)) return false;
@@ -1092,7 +1085,12 @@ async function emitirNotaCreditoPorArcaId(req, res) {
 
   const qBool = (v) => ["1", "true", "yes", "on"].includes(String(v || "").toLowerCase());
 
-  const NC_BY_FACT = { 1: 3, 51: 53, 6: 8, 11: 13 };
+  const NC_BY_FACT = {
+  1: 3,
+  6: 8,
+  11: 13,
+  51: 53, 
+};
 
   const IVA_ALIC_MAP = [
     { id: 3, porc: 0 },
