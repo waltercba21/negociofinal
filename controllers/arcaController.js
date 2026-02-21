@@ -18,6 +18,15 @@ const _condIvaCache = {
   rows: null,
   raw: null
 };
+const CBTE_TIPO_FACT_A = Number(process.env.ARCA_CBTE_TIPO_FACT_A || 1);
+const CBTE_TIPO_NC_A   = Number(process.env.ARCA_CBTE_TIPO_NC_A   || 3);
+
+function mapCbteTipoRequested(t) {
+  const n = Number(t || 0);
+  if (n === 1) return CBTE_TIPO_FACT_A; // 51 en PROD
+  if (n === 3) return CBTE_TIPO_NC_A;   // 53 en PROD
+  return n;
+}
 function isDupKey(err, keyName) {
   const msg = String(err?.sqlMessage || err?.message || "");
   return (err?.code === "ER_DUP_ENTRY" || err?.errno === 1062) && msg.includes(keyName);
