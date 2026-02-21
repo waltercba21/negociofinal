@@ -1153,12 +1153,7 @@ async function emitirNotaCreditoPorArcaId(req, res) {
 
   const qBool = (v) => ["1", "true", "yes", "on"].includes(String(v || "").toLowerCase());
 
-  const NC_BY_FACT = {
-  1: 3,
-  6: 8,
-  11: 13,
-  51: 53, 
-};
+  const NC_BY_FACT = { 1: 3, 6: 8, 11: 13, 51: 53 };
 
   const IVA_ALIC_MAP = [
     { id: 3, porc: 0 },
@@ -1190,37 +1185,15 @@ async function emitirNotaCreditoPorArcaId(req, res) {
       return res.status(409).json({
         error: "El comprobante origen debe estar EMITIDO",
         origen_id: origenId,
-        estado: origen.estado
+        estado: origen.estado,
       });
     }
-
-    if (remanente <= 0.01) {
-  return res.status(409).json({
-    error: "El comprobante origen ya está totalmente anulado",
-    origen_id: origenId,
-    origen_total: origenTotal,
-    ya_acreditado: Number(yaAcreditado || 0),
-    remanente,
-  });
-}
-
-// si querés mantener el caso “supera remanente” cuando es parcial:
-if (montoSolicitado > remanente + 0.01) {
-  return res.status(409).json({
-    error: "La NC supera el remanente acreditable del comprobante origen",
-    origen_id: origenId,
-    origen_total: origenTotal,
-    ya_acreditado: Number(yaAcreditado || 0),
-    remanente,
-    solicitado: montoSolicitado,
-  });
-}
 
     const tipoNcAuto = NC_BY_FACT[Number(origen.cbte_tipo)];
     if (!tipoNcAuto) {
       return res.status(400).json({
         error: "El origen no es una factura soportada para NC",
-        origen_cbte_tipo: origen.cbte_tipo
+        origen_cbte_tipo: origen.cbte_tipo,
       });
     }
 
@@ -1229,10 +1202,10 @@ if (montoSolicitado > remanente + 0.01) {
       return res.status(400).json({
         error: "cbte_tipo de NC no coincide con el tipo del origen",
         esperado: tipoNcAuto,
-        recibido: cbte_tipo
+        recibido: cbte_tipo,
       });
     }
-    
+
     // Guard rail: si hay NC PENDIENTE asociada al origen, no crear otra
     const pend = await query(
       `
@@ -1251,7 +1224,7 @@ if (montoSolicitado > remanente + 0.01) {
       return res.status(409).json({
         error: "Ya existe una NC PENDIENTE asociada a este comprobante. Auditar/reconciliar antes de reintentar.",
         nc_pendiente: pend[0],
-        origen: { arca_id: origenId, cbte_tipo: origen.cbte_tipo, cbte_nro: origen.cbte_nro, cbte_fch: origen.cbte_fch }
+        origen: { arca_id: origenId, cbte_tipo: origen.cbte_tipo, cbte_nro: origen.cbte_nro, cbte_fch: origen.cbte_fch },
       });
     }
 
@@ -1287,7 +1260,8 @@ if (montoSolicitado > remanente + 0.01) {
       });
     }
 
-    const origenTotal = Number(origen.imp_total);
+    // ---- ACÁ VA EL CÁLCULO ANTES DE USAR remanente ----
+    const origenTotal = Number(origen.imp_total || 0);
     const targetTotal = req.body.imp_total != null ? Number(req.body.imp_total) : origenTotal;
 
     if (!Number.isFinite(targetTotal) || targetTotal <= 0) {
@@ -1296,6 +1270,19 @@ if (montoSolicitado > remanente + 0.01) {
 
     const yaAcreditado = await arcaModel.sumarTotalEmitidoAsociado(origenId);
     const remanente = round2local(origenTotal - Number(yaAcreditado || 0));
+
+    // idempotencia: ya anulada
+    if (remanente <= 0.01) {
+      return res.status(409).json({
+        error: "El comprobante origen ya está totalmente anulado",
+        origen_id: origenId,
+        origen_total: origenTotal,
+        ya_acreditado: Number(yaAcreditado || 0),
+        remanente,
+      });
+    }
+
+    // supera remanente (parcial)
     if (targetTotal > remanente + 0.01) {
       return res.status(409).json({
         error: "La NC supera el remanente acreditable del comprobante origen",
@@ -1345,8 +1332,8 @@ if (montoSolicitado > remanente + 0.01) {
     }
 
     const imp_total = round2local(items.reduce((a, i) => a + Number(i.imp_total || 0), 0));
-    const imp_neto  = round2local(items.reduce((a, i) => a + Number(i.imp_neto || 0), 0));
-    const imp_iva   = round2local(items.reduce((a, i) => a + Number(i.imp_iva || 0), 0));
+    const imp_neto = round2local(items.reduce((a, i) => a + Number(i.imp_neto || 0), 0));
+    const imp_iva = round2local(items.reduce((a, i) => a + Number(i.imp_iva || 0), 0));
 
     const map = new Map();
     for (const it of items) {
@@ -1365,7 +1352,7 @@ if (montoSolicitado > remanente + 0.01) {
     if (!allowIva0 && imp_iva === 0 && imp_neto > 0) {
       return res.status(409).json({
         error: "IVA quedó en 0. Reintentar con allow_iva_0=1 o revisar IVA de los productos/origen.",
-        imp_neto, imp_iva, imp_total
+        imp_neto, imp_iva, imp_total,
       });
     }
 
@@ -1413,10 +1400,7 @@ if (montoSolicitado > remanente + 0.01) {
         });
         break;
       } catch (e) {
-        if (isDupKey(e, "uq_cbte")) {
-          next++;
-          continue;
-        }
+        if (isDupKey(e, "uq_cbte")) { next++; continue; }
         throw e;
       }
     }
@@ -1454,12 +1438,7 @@ if (montoSolicitado > remanente + 0.01) {
       monCotiz: origen.mon_cotiz || 1,
       omitirIva: false,
       ivaAlicuotas,
-      // SOLO 3 CAMPOS (Tipo/PtoVta/Nro)
-      cbtesAsoc: [{
-        tipo: Number(origen.cbte_tipo),
-        pto_vta: Number(origen.pto_vta),
-        nro: Number(origen.cbte_nro),
-      }],
+      cbtesAsoc: [{ tipo: Number(origen.cbte_tipo), pto_vta: Number(origen.pto_vta), nro: Number(origen.cbte_nro) }],
     });
 
     // Auditoría SIEMPRE
@@ -1491,12 +1470,11 @@ if (montoSolicitado > remanente + 0.01) {
     let estado;
     if (resultado === "A") estado = "EMITIDO";
     else if (resultado === "R") estado = "RECHAZADO";
-    else if (httpStatus && httpStatus >= 400 && httpStatus < 500) estado = "RECHAZADO"; // request inválida
-    else estado = "PENDIENTE"; // sin confirmación real
+    else if (httpStatus && httpStatus >= 400 && httpStatus < 500) estado = "RECHAZADO";
+    else estado = "PENDIENTE";
 
     const obs_code =
-      estado === "PENDIENTE" ? "WSFE_SIN_CONFIRM"
-      : (cae?.obsCode || (httpStatus ? `HTTP_${httpStatus}` : "RECHAZADO"));
+      estado === "PENDIENTE" ? "WSFE_SIN_CONFIRM" : (cae?.obsCode || (httpStatus ? `HTTP_${httpStatus}` : "RECHAZADO"));
 
     const obs_msg =
       estado === "PENDIENTE"
@@ -1518,7 +1496,7 @@ if (montoSolicitado > remanente + 0.01) {
     }
 
     if (estado === "PENDIENTE") {
-      return res.status(502).json({
+      return res.status(202).json({
         arca_id: arcaId,
         estado,
         pto_vta,
@@ -1551,54 +1529,49 @@ if (montoSolicitado > remanente + 0.01) {
       acreditado_total_origen: Number(yaAcreditado || 0),
     });
   } catch (e) {
-   // Si ya creamos el comprobante y algo explotó, NO asumir RECHAZADO (riesgo duplicado).
-if (arcaId) {
-  try {
-    const msg = (e?.message || String(e)).slice(0, 1000);
-    const httpStatus = e?.statusCode || e?.status || null;
+    // tu catch PENDIENTE ya lo tenés bien (estado PENDIENTE + 202 y sin liberar cbte_nro)
+    if (arcaId) {
+      try {
+        const msg = (e?.message || String(e)).slice(0, 1000);
+        const httpStatus = e?.statusCode || e?.status || null;
 
-    const bodyRaw =
-      (e && Object.prototype.hasOwnProperty.call(e, "body")) ? String(e.body ?? "") :
-      (e && Object.prototype.hasOwnProperty.call(e, "raw")) ? String(e.raw ?? "") :
-      "";
+        const bodyRaw =
+          (e && Object.prototype.hasOwnProperty.call(e, "body")) ? String(e.body ?? "") :
+          (e && Object.prototype.hasOwnProperty.call(e, "raw")) ? String(e.raw ?? "") :
+          "";
 
-    const respStore = forceNonEmpty(bodyRaw, `EXC:${httpStatus || "NO_STATUS"}`);
+        const respStore = forceNonEmpty(bodyRaw, `EXC:${httpStatus || "NO_STATUS"}`);
 
-    await updateRespSafe(arcaId, {
-      resultado: null,
-      cae: null,
-      cae_vto: null,
-      obs_code: "WSFE_SIN_CONFIRM",
-      obs_msg: `Excepción sin confirmación WSFE (http_status=${httpStatus ?? "NULL"}) :: ${msg}`,
-      resp_xml: respStore,
-      estado: "PENDIENTE",
-    });
+        await updateRespSafe(arcaId, {
+          resultado: null,
+          cae: null,
+          cae_vto: null,
+          obs_code: "WSFE_SIN_CONFIRM",
+          obs_msg: `Excepción sin confirmación WSFE (http_status=${httpStatus ?? "NULL"}) :: ${msg}`,
+          resp_xml: respStore,
+          estado: "PENDIENTE",
+        });
 
-    // NO liberar cbte_nro acá. Se libera SOLO si luego la reconciliación da 602.
-    await insertWsfeConsultaSafe({
-      arca_comprobante_id: arcaId,
-      ok: 0,
-      parsed_json: {
-        action: "EXC",
-        http_status: httpStatus,
-        message: msg,
-      },
-      resp_xml: respStore,
-    });
+        await insertWsfeConsultaSafe({
+          arca_comprobante_id: arcaId,
+          ok: 0,
+          parsed_json: { action: "EXC", http_status: httpStatus, message: msg },
+          resp_xml: respStore,
+        });
 
-    return res.status(202).json({
-      arca_id: arcaId,
-      estado: "PENDIENTE",
-      error: "Excepción sin confirmación WSFE. Requiere reconciliación (FECompConsultar) antes de reintentar.",
-      obs_code: "WSFE_SIN_CONFIRM",
-      obs_msg: `http_status=${httpStatus ?? "NULL"}`,
-    });
-  } catch (_) {}
-}
+        return res.status(202).json({
+          arca_id: arcaId,
+          estado: "PENDIENTE",
+          error: "Excepción sin confirmación WSFE. Requiere reconciliación (FECompConsultar) antes de reintentar.",
+          obs_code: "WSFE_SIN_CONFIRM",
+          obs_msg: `http_status=${httpStatus ?? "NULL"}`,
+        });
+      } catch (_) {}
+    }
+
     return res.status(500).json({ error: e.message || "Error interno" });
   }
 }
-
 async function statusPorFacturaMostrador(req, res) {
   try {
     const facturaId = Number(req.params.id || 0);
