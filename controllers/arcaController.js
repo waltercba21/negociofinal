@@ -280,7 +280,8 @@ async function emitirDesdeFacturaMostrador(req, res) {
       });
     }
 
-    const cbte_tipo = Number(req.body.cbte_tipo || 6);
+    const cbte_tipo_req = Number(req.body.cbte_tipo || 6);
+    const cbte_tipo = mapCbteTipoRequested(cbte_tipo_req);
     const doc_tipo = Number(req.body.doc_tipo);
 
     if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0) return res.status(400).json({ error: "cbte_tipo inválido" });
