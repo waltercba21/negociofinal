@@ -1158,7 +1158,7 @@ async function emitirNotaCreditoPorArcaId(req, res) {
         recibido: cbte_tipo
       });
     }
-
+    
     // Guard rail: si hay NC PENDIENTE asociada al origen, no crear otra
     const pend = await query(
       `
