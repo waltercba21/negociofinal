@@ -1001,55 +1001,101 @@ async function emitirDesdeFacturaMostrador(req, res) {
       }
     }
 
-    const estado = cae.resultado === "A" ? "EMITIDO" : "RECHAZADO";
-    const respXmlFinal = forceNonEmpty(cae?.raw, `FECAESolicitar:final:${cae?.meta?.statusCode ?? "NO_STATUS"}`);
+// --- Estado final: NO asumir RECHAZADO si WSFE no confirmó ---
+const resultado = cae?.resultado ?? null;
+const httpStatus = cae?.meta?.statusCode ?? null;
+const rawLen = String(cae?.raw || "").trim().length;
 
-    await updateRespSafe(arcaId, {
-      resultado: cae.resultado || null,
-      cae: cae.cae || null,
-      cae_vto: cae.caeVto || null,
-      obs_code: cae.obsCode || null,
-      obs_msg: cae.obsMsg || null,
-      resp_xml: respXmlFinal,
-      estado,
+let estado;
+if (resultado === "A") estado = "EMITIDO";
+else if (resultado === "R") estado = "RECHAZADO";
+// si HTTP 4xx típico de validación, tratar como rechazo
+else if (httpStatus && httpStatus >= 400 && httpStatus < 500) estado = "RECHAZADO";
+// si no hay confirmación (resultado null/undefined, body vacío, etc) => PENDIENTE
+else estado = "PENDIENTE";
+
+const respXmlFinal = forceNonEmpty(
+  cae?.raw,
+  `FECAESolicitar:final:${httpStatus ?? "NO_STATUS"}`
+);
+
+// obs en PENDIENTE para forzar reconciliación
+const obs_code =
+  estado === "PENDIENTE"
+    ? "WSFE_SIN_CONFIRM"
+    : (cae?.obsCode || null);
+
+const obs_msg =
+  estado === "PENDIENTE"
+    ? `WSFE sin confirmación (http_status=${httpStatus ?? "NULL"}, rawLen=${rawLen})`
+    : (cae?.obsMsg || null);
+
+await updateRespSafe(arcaId, {
+  resultado,
+  cae: cae?.cae || null,
+  cae_vto: cae?.caeVto || null,
+  obs_code,
+  obs_msg,
+  resp_xml: respXmlFinal,
+  estado,
+});
+
+// Solo si queda RECHAZADO confirmado, liberar cbte_nro para permitir reintento sin chocar uq_cbte
+if (estado === "RECHAZADO") {
+  await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+}
+
+// Cache receptor (solo si tiene doc real)
+if (doc_nro > 0 && doc_tipo !== 99) {
+  try {
+    await arcaModel.upsertReceptorCache({
+      doc_tipo,
+      doc_nro,
+      razon_social: receptor_nombre || null,
+      nombre: receptor_nombre || null,
+      cond_iva_id: receptor_cond_iva_id || null,
+      domicilio: receptor_domicilio,
     });
+  } catch (e) {
+    console.warn("⚠️ No se pudo cachear receptor:", e.message);
+  }
+}
 
-    // Si quedó RECHAZADO, liberar cbte_nro para permitir reintento sin chocar uq_cbte
-    if (estado === "RECHAZADO") {
-      await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
-    }
+// Respuesta: si quedó PENDIENTE, devolver 202 y NO sugerir reintento automático
+if (estado === "PENDIENTE") {
+  return res.status(202).json({
+    arca_id: arcaId,
+    estado,
+    pto_vta,
+    cbte_tipo,
+    cbte_fch,
+    cbte_nro: next,
+    ultimo_autorizado: info?.ultimo ?? null,
+    last_cbte_fch: info?.lastCbteFch ?? null,
+    resultado,
+    cae: null,
+    cae_vto: null,
+    obs_code,
+    obs_msg,
+    error: "WSFE sin confirmación. Requiere reconciliación (FECompConsultar) antes de reintentar.",
+  });
+}
 
-    // Cache receptor (solo si tiene doc real)
-    if (doc_nro > 0 && doc_tipo !== 99) {
-      try {
-        await arcaModel.upsertReceptorCache({
-          doc_tipo,
-          doc_nro,
-          razon_social: receptor_nombre || null,
-          nombre: receptor_nombre || null,
-          cond_iva_id: receptor_cond_iva_id || null,
-          domicilio: receptor_domicilio,
-        });
-      } catch (e) {
-        console.warn("⚠️ No se pudo cachear receptor:", e.message);
-      }
-    }
-
-    return res.json({
-      arca_id: arcaId,
-      estado,
-      pto_vta,
-      cbte_tipo,
-      cbte_fch,
-      cbte_nro: next,
-      ultimo_autorizado: info.ultimo,
-      last_cbte_fch: info.lastCbteFch,
-      resultado: cae.resultado || null,
-      cae: cae.cae || null,
-      cae_vto: cae.caeVto || null,
-      obs_code: cae.obsCode || null,
-      obs_msg: cae.obsMsg || null,
-    });
+return res.json({
+  arca_id: arcaId,
+  estado,
+  pto_vta,
+  cbte_tipo,
+  cbte_fch,
+  cbte_nro: next,
+  ultimo_autorizado: info?.ultimo ?? null,
+  last_cbte_fch: info?.lastCbteFch ?? null,
+  resultado,
+  cae: cae?.cae || null,
+  cae_vto: cae?.caeVto || null,
+  obs_code,
+  obs_msg,
+});
   } catch (e) {
     // Si ya creamos el comprobante y algo explotó, no dejarlo colgado
     if (arcaId) {
