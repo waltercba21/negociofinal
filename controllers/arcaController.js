@@ -263,7 +263,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
   };
 
   try {
-    const facturaId = Number(req.params.id || 0);
+    const facturaId = Number(req.params.facturaId || req.params.id || 0);
     if (!Number.isFinite(facturaId) || facturaId <= 0) {
       return res.status(400).json({ error: "facturaId inválido" });
     }
