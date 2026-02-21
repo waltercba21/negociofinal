@@ -43,7 +43,7 @@ const state = {
 const wsfeHistEl = $("wsfeHist");
 const wsfeBadgeEl = $("wsfeBadge");
 const btnAuditarWsfe = $("btnAuditarWsfe");
-
+const btnAnular = $("btnAnular");
 function draftKeyForFactura(facturaId) {
   return `${DRAFT_PREFIX}${Number(facturaId)}`;
 }
@@ -75,19 +75,52 @@ function saveDraft(key, d) {
     return `<span class="badge b-none">${estado}</span>`;
   }
 
-  async function fetchJSON(url, opts) {
-    const r = await fetch(url, opts);
-    const txt = await r.text();
-    let data = {};
-    try {
-      data = txt ? JSON.parse(txt) : {};
-    } catch {
-      data = { raw: txt };
-    }
-    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
-    return data;
-  }
+async function fetchJSON(url, opts) {
+  const r = await fetch(url, opts);
+  const txt = await r.text();
+  let data = {};
+  try { data = txt ? JSON.parse(txt) : {}; } catch { data = { raw: txt }; }
 
+  if (!r.ok) {
+    const err = new Error(data?.error || `HTTP ${r.status}`);
+    err.status = r.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+}
+async function fetchJSONWithProdLockConfirm(url, opts = {}) {
+  try {
+    return await fetchJSON(url, opts);
+  } catch (e) {
+    if (e.status !== 423) throw e;
+
+    const r = await ARCA_SWAL.confirm.fire({
+      icon: "warning",
+      title: "Confirmación PRODUCCIÓN",
+      html: `ARCA_PROD_LOCK activo.<br/>Escribí <b>SI</b> para habilitar SOLO este request.`,
+      input: "text",
+      inputPlaceholder: "SI",
+      showCancelButton: true,
+      confirmButtonText: "Continuar",
+      cancelButtonText: "Cancelar",
+      preConfirm: (v) => {
+        if (String(v || "").trim().toUpperCase() !== "SI") {
+          Swal.showValidationMessage("Debés escribir SI");
+          return false;
+        }
+        return true;
+      },
+    });
+
+    if (!r.isConfirmed) throw new Error("Cancelado");
+
+    const headers = { ...(opts.headers || {}) };
+    headers["X-ARCA-CONFIRM"] = "SI";
+
+    return await fetchJSON(url, { ...opts, headers });
+  }
+}
   function renderPager() {
     const from = state.offset + 1;
     const to = state.offset + state.rows.length;
@@ -112,7 +145,12 @@ function esc(s) {
 function tipoLabelFromCbteTipo(t) {
   const n = Number(t || 0);
   if (!n) return "-";
-  const map = { 1:"FA", 6:"FB", 11:"FC", 3:"NC A", 8:"NC B", 13:"NC C", 2:"ND A", 7:"ND B", 12:"ND C" };
+  const map = {
+  1:"FA", 6:"FB", 11:"FC",
+  51:"FA RET", 53:"NC A RET",
+  3:"NC A", 8:"NC B", 13:"NC C",
+  2:"ND A", 7:"ND B", 12:"ND C"
+};
   return map[n] || `T${n}`;
 }
 
@@ -379,7 +417,7 @@ async function onSelect(id) {
   // ---------- Helpers historial ----------
   const cbteLabel = (t) => {
     const n = Number(t || 0);
-    const map = { 1: "FA", 6: "FB", 3: "NCA", 8: "NCB", 11: "FC", 13: "NCC" };
+    const map = { 1:"FA", 6:"FB", 11:"FC", 51:"FA RET", 3:"NCA", 8:"NCB", 13:"NCC", 53:"NC A RET" };
     return map[n] || (n ? String(n) : "-");
   };
 
@@ -455,6 +493,19 @@ async function onSelect(id) {
 
   const lastPending = rows.find((x) => x.estado === "PENDIENTE");
   const lastEmitted = rows.find((x) => x.estado === "EMITIDO");
+  const facturaEmitida = rows.find(x => x.estado === "EMITIDO" && [6, 51].includes(Number(x.cbte_tipo)));
+const hayPendiente = !!lastPending;
+
+if (btnAnular) {
+  btnAnular.disabled = true;
+  btnAnular.dataset.origen = "";
+
+  // Solo permitir anular si hay FACTURA EMITIDA (6/51) y no hay PENDIENTE
+  if (facturaEmitida?.id && !hayPendiente) {
+    btnAnular.disabled = false;
+    btnAnular.dataset.origen = String(facturaEmitida.id);
+  }
+}
   const target = lastPending || lastEmitted;
 
   if (target && target.id) {
@@ -492,7 +543,44 @@ async function onSelect(id) {
   if ($("btnEmitir")) $("btnEmitir").disabled = !state.selectedHasItems || arcaActivo;
 }
 
+async function anularSeleccionada() {
+  const origen = Number(btnAnular?.dataset?.origen || 0);
+  if (!origen) return;
 
+  const ok = await ARCA_SWAL.confirm.fire({
+    icon: "warning",
+    title: "Anular (emitir NC)",
+    text: `Se intentará emitir una Nota de Crédito asociada al comprobante ARCA #${origen}.`,
+    showCancelButton: true,
+    confirmButtonText: "Continuar",
+    cancelButtonText: "Cancelar",
+  });
+  if (!ok.isConfirmed) return;
+
+  try {
+    const resp = await fetchJSONWithProdLockConfirm(`/arca/emitir-nc/${origen}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+
+    await Swal.fire({
+      icon: "success",
+      title: resp.estado || "OK",
+      html: `NC emitida.<br/>CAE <b>${resp.cae || "-"}</b><br/>Cbte nro <b>${resp.cbte_nro || "-"}</b>`,
+    });
+
+    await loadList();
+    if (state.selectedId) await onSelect(state.selectedId);
+  } catch (e) {
+    const msg = e?.data?.error || e.message || "Error";
+    await Swal.fire({
+      icon: e.status === 409 ? "warning" : "error",
+      title: e.status === 409 ? "No se puede anular" : "Error",
+      text: msg,
+    });
+  }
+}
   // ---------------- Emisión ----------------
   async function emitirSeleccionada() {
     if (!state.selectedHasItems) {
@@ -1010,7 +1098,7 @@ on(inpTipo, () => {
     $("btnEmitir").disabled = true;
 
     try {
-      const resp = await fetchJSON(`/arca/emitir-desde-factura/${id}`, {
+      const resp = await fetchJSONWithProdLockConfirm(`/arca/emitir-desde-factura/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(value),
@@ -1064,7 +1152,7 @@ on(inpTipo, () => {
 
   $("btnEmitir").addEventListener("click", emitirSeleccionada);
   if (btnAuditarWsfe) btnAuditarWsfe.addEventListener("click", auditarWsfeActual);
-
+  if (btnAnular) btnAnular.addEventListener("click", anularSeleccionada);
   // Init
   loadList().catch((err) => {
     $("arcaTbody").innerHTML = `<tr><td colspan="8" class="muted">${err.message}</td></tr>`;
