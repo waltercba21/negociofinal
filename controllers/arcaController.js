@@ -1098,38 +1098,50 @@ return res.json({
 });
   } catch (e) {
     // Si ya creamos el comprobante y algo explotó, no dejarlo colgado
-    if (arcaId) {
-      try {
-        const msg = (e?.message || String(e)).slice(0, 1000);
-        const httpStatus = e?.statusCode || e?.status || null;
+    // Si ya creamos el comprobante y algo explotó, NO asumir RECHAZADO (riesgo duplicado).
+if (arcaId) {
+  try {
+    const msg = (e?.message || String(e)).slice(0, 1000);
+    const httpStatus = e?.statusCode || e?.status || null;
 
-        const bodyRaw =
-          (e && Object.prototype.hasOwnProperty.call(e, "body")) ? String(e.body ?? "") :
-          (e && Object.prototype.hasOwnProperty.call(e, "raw")) ? String(e.raw ?? "") :
-          "";
+    const bodyRaw =
+      (e && Object.prototype.hasOwnProperty.call(e, "body")) ? String(e.body ?? "") :
+      (e && Object.prototype.hasOwnProperty.call(e, "raw")) ? String(e.raw ?? "") :
+      "";
 
-        const respStore = forceNonEmpty(bodyRaw, `EXC:${httpStatus || "NO_STATUS"}`);
+    const respStore = forceNonEmpty(bodyRaw, `EXC:${httpStatus || "NO_STATUS"}`);
 
-        await updateRespSafe(arcaId, {
-          resultado: "R",
-          cae: null,
-          cae_vto: null,
-          obs_code: "EXC",
-          obs_msg: msg,
-          resp_xml: respStore,
-          estado: "RECHAZADO",
-        });
+    await updateRespSafe(arcaId, {
+      resultado: null,
+      cae: null,
+      cae_vto: null,
+      obs_code: "WSFE_SIN_CONFIRM",
+      obs_msg: `Excepción sin confirmación WSFE (http_status=${httpStatus ?? "NULL"}) :: ${msg}`,
+      resp_xml: respStore,
+      estado: "PENDIENTE",
+    });
 
-        await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
+    // NO liberar cbte_nro acá. Se libera SOLO si luego la reconciliación da 602.
+    await insertWsfeConsultaSafe({
+      arca_comprobante_id: arcaId,
+      ok: 0,
+      parsed_json: {
+        action: "EXC",
+        http_status: httpStatus,
+        message: msg,
+      },
+      resp_xml: respStore,
+    });
 
-        await insertWsfeConsultaSafe({
-          arca_comprobante_id: arcaId,
-          ok: 0,
-          parsed_json: { action: "EXC", message: msg },
-          resp_xml: respStore,
-        });
-      } catch (_) {}
-    }
+    return res.status(202).json({
+      arca_id: arcaId,
+      estado: "PENDIENTE",
+      error: "Excepción sin confirmación WSFE. Requiere reconciliación (FECompConsultar) antes de reintentar.",
+      obs_code: "WSFE_SIN_CONFIRM",
+      obs_msg: `http_status=${httpStatus ?? "NULL"}`,
+    });
+  } catch (_) {}
+}
 
     console.error("❌ ARCA emitirDesdeFacturaMostrador:", e);
     return res.status(500).json({ error: e?.message || "Error interno" });
@@ -1523,20 +1535,50 @@ async function emitirNotaCreditoPorArcaId(req, res) {
       acreditado_total_origen: Number(yaAcreditado || 0),
     });
   } catch (e) {
-    if (arcaId) {
-      try {
-        await arcaModel.actualizarRespuesta(arcaId, {
-          resultado: null,
-          cae: null,
-          cae_vto: null,
-          obs_code: "EXC",
-          obs_msg: (e?.message || String(e)).slice(0, 1000),
-          resp_xml: (e?.body || e?.raw || null),
-          estado: "RECHAZADO",
-        });
-        await query(`UPDATE arca_comprobantes SET cbte_nro=NULL, updated_at=NOW() WHERE id=?`, [arcaId]);
-      } catch (_) {}
-    }
+   // Si ya creamos el comprobante y algo explotó, NO asumir RECHAZADO (riesgo duplicado).
+if (arcaId) {
+  try {
+    const msg = (e?.message || String(e)).slice(0, 1000);
+    const httpStatus = e?.statusCode || e?.status || null;
+
+    const bodyRaw =
+      (e && Object.prototype.hasOwnProperty.call(e, "body")) ? String(e.body ?? "") :
+      (e && Object.prototype.hasOwnProperty.call(e, "raw")) ? String(e.raw ?? "") :
+      "";
+
+    const respStore = forceNonEmpty(bodyRaw, `EXC:${httpStatus || "NO_STATUS"}`);
+
+    await updateRespSafe(arcaId, {
+      resultado: null,
+      cae: null,
+      cae_vto: null,
+      obs_code: "WSFE_SIN_CONFIRM",
+      obs_msg: `Excepción sin confirmación WSFE (http_status=${httpStatus ?? "NULL"}) :: ${msg}`,
+      resp_xml: respStore,
+      estado: "PENDIENTE",
+    });
+
+    // NO liberar cbte_nro acá. Se libera SOLO si luego la reconciliación da 602.
+    await insertWsfeConsultaSafe({
+      arca_comprobante_id: arcaId,
+      ok: 0,
+      parsed_json: {
+        action: "EXC",
+        http_status: httpStatus,
+        message: msg,
+      },
+      resp_xml: respStore,
+    });
+
+    return res.status(202).json({
+      arca_id: arcaId,
+      estado: "PENDIENTE",
+      error: "Excepción sin confirmación WSFE. Requiere reconciliación (FECompConsultar) antes de reintentar.",
+      obs_code: "WSFE_SIN_CONFIRM",
+      obs_msg: `http_status=${httpStatus ?? "NULL"}`,
+    });
+  } catch (_) {}
+}
     return res.status(500).json({ error: e.message || "Error interno" });
   }
 }
