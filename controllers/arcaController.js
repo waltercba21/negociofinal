@@ -1194,11 +1194,27 @@ async function emitirNotaCreditoPorArcaId(req, res) {
       });
     }
 
-    if (!origen.cbte_nro || !origen.pto_vta || !origen.cbte_tipo || !origen.cbte_fch) {
-      return res.status(409).json({
-        error: "Origen inválido (faltan datos pto_vta/cbte_tipo/cbte_nro/cbte_fch)"
-      });
-    }
+    if (remanente <= 0.01) {
+  return res.status(409).json({
+    error: "El comprobante origen ya está totalmente anulado",
+    origen_id: origenId,
+    origen_total: origenTotal,
+    ya_acreditado: Number(yaAcreditado || 0),
+    remanente,
+  });
+}
+
+// si querés mantener el caso “supera remanente” cuando es parcial:
+if (montoSolicitado > remanente + 0.01) {
+  return res.status(409).json({
+    error: "La NC supera el remanente acreditable del comprobante origen",
+    origen_id: origenId,
+    origen_total: origenTotal,
+    ya_acreditado: Number(yaAcreditado || 0),
+    remanente,
+    solicitado: montoSolicitado,
+  });
+}
 
     const tipoNcAuto = NC_BY_FACT[Number(origen.cbte_tipo)];
     if (!tipoNcAuto) {
