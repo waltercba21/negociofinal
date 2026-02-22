@@ -613,9 +613,10 @@ html: `
     <div class="f">
       <label>Tipo de documento</label>
       <select id="sw_doc_tipo" class="swal2-input">
-        <option value="80">CUIT</option>
-        <option value="96">DNI</option>
-        <option value="99">CONSUMIDOR FINAL</option>
+       <option value="">(Vacío)</option>
+       <option value="99">CONSUMIDOR FINAL</option>
+       <option value="80">CUIT</option>
+      <option value="96">DNI</option>
       </select>
     </div>
 
@@ -696,15 +697,14 @@ html: `
           if (stCache) stCache.textContent = t || "";
         };
 
-        const draft =
-         loadDraft(draftKey) || {
-            cbte_tipo: 6,
-            doc_tipo: 80,
-            doc_nro: "",
-            receptor_cond_iva_id: null,
-            receptor_nombre: "",
-            domicilio: "",
-          };
+        const draft = loadDraft(draftKey) || {
+  cbte_tipo: 6,
+  doc_tipo: "",   // <-- vacío por defecto
+  doc_nro: "",
+  receptor_cond_iva_id: null,
+  receptor_nombre: "",
+  domicilio: "",
+};
           if (Number(draft.doc_tipo || 0) !== 99 && String(draft.doc_nro || "").trim() === "0") {
   draft.doc_nro = "";
 }
@@ -799,15 +799,30 @@ html: `
 
 
           if (cbteTipo === 6) {
-  setHint("Factura B: recomendado CF (DocTipo 99, DocNro 0, Cond IVA 5).");
-  if (Number(inpTipo.value || 0) === 99) inpNro.value = "0";
-  else if (String(inpNro.value || "").trim() === "0") inpNro.value = "";
-   // si el usuario pasa a CF, limpiamos receptor
-           if (Number(inpTipo.value || 0) === 99) {
-            inpNom.value = "";
-              inpDom.value = "";
-              resetReceptorIfDocChanged();
-            }
+  const cond = Number(selCond.value || 0); // 5 = Consumidor Final
+  setHint("Factura B: si es Consumidor Final (cond 5) no requiere documento.");
+
+  const docTipoRaw = String(inpTipo.value || "").trim();
+  const docTipoNum = Number(docTipoRaw || 0);
+
+  const isCF = cond === 5 && (docTipoRaw === "" || docTipoNum === 99);
+
+  // Si es CF, no mostrar 0 y no exigir número
+  if (isCF) {
+    inpNro.value = "";
+    inpNro.disabled = true;
+    inpNro.placeholder = "No requerido (Consumidor Final)";
+    // opcional: si querés forzar visualmente CF:
+    // inpTipo.value = "";
+    inpNom.value = "";
+    inpDom.value = "";
+    resetReceptorIfDocChanged();
+    return;
+  }
+
+  // Si NO es CF, habilitar y exigir documento
+  inpNro.disabled = false;
+  inpNro.placeholder = "";
   return;
 }
 
@@ -1040,54 +1055,57 @@ on(inpTipo, () => {
           scheduleBuscar();
         })();
       },
+preConfirm: () => {
+  const cbte_tipo = Number(document.getElementById("sw_cbte").value);
 
-      preConfirm: () => {
-        const cbte_tipo = Number(document.getElementById("sw_cbte").value);
-        const doc_tipo = Number(document.getElementById("sw_doc_tipo").value);
-        const doc_nro = Number(document.getElementById("sw_doc_nro").value);
-        const receptor_cond_iva_id = Number(
-          document.getElementById("sw_cond").value
-        );
-        const receptor_nombre =
-          (document.getElementById("sw_nombre").value || "").trim() || null;
+  const docTipoRaw = String(document.getElementById("sw_doc_tipo").value || "").trim();
+  let doc_tipo = Number(docTipoRaw || 0);
 
-        if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0)
-          return Swal.showValidationMessage("cbte_tipo inválido");
-        if (!Number.isFinite(doc_tipo) || doc_tipo <= 0)
-          return Swal.showValidationMessage("doc_tipo inválido");
-        if (!Number.isFinite(doc_nro) || doc_nro < 0)
-          return Swal.showValidationMessage("doc_nro inválido");
-        if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0)
-          return Swal.showValidationMessage("condición IVA inválida");
+  const docNroRaw = String(document.getElementById("sw_doc_nro").value || "").trim();
+  let doc_nro = docNroRaw === "" ? 0 : Number(docNroRaw);
 
-        if (cbte_tipo === 1) {
-          if (doc_tipo !== 80)
-            return Swal.showValidationMessage(
-              "Factura A requiere DocTipo 80 (CUIT)"
-            );
-          if (String(doc_nro).length !== 11)
-            return Swal.showValidationMessage("CUIT inválido (11 dígitos)");
-        }
+  const receptor_cond_iva_id = Number(document.getElementById("sw_cond").value);
+  const receptor_nombre = (document.getElementById("sw_nombre").value || "").trim() || null;
 
-        if (cbte_tipo === 6) {
-          if (receptor_cond_iva_id === 1)
-            return Swal.showValidationMessage(
-              "Condición IVA 1 (RI) no es válida para Factura B"
-            );
-          if (doc_tipo === 99 && doc_nro !== 0)
-            return Swal.showValidationMessage(
-              "Consumidor Final: DocNro debe ser 0"
-            );
-        }
+  if (!Number.isFinite(cbte_tipo) || cbte_tipo <= 0)
+    return Swal.showValidationMessage("cbte_tipo inválido");
+  if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0)
+    return Swal.showValidationMessage("condición IVA inválida");
 
-        return {
-          cbte_tipo,
-          doc_tipo,
-          doc_nro,
-          receptor_cond_iva_id,
-          receptor_nombre,
-        };
-      },
+  // FACTURA A: CUIT obligatorio
+  if (cbte_tipo === 1) {
+    doc_tipo = 80;
+    if (!/^\d{11}$/.test(docNroRaw))
+      return Swal.showValidationMessage("CUIT inválido (11 dígitos)");
+    doc_nro = Number(docNroRaw);
+  }
+
+  // FACTURA B: si es Consumidor Final (cond 5) permitir vacío => 99/0
+  if (cbte_tipo === 6) {
+    const isCF = receptor_cond_iva_id === 5 && (docTipoRaw === "" || doc_tipo === 99);
+    if (isCF) {
+      doc_tipo = 99;
+      doc_nro = 0;
+    } else {
+      // si NO es CF, exigir doc_tipo y doc_nro válidos
+      if (!Number.isFinite(doc_tipo) || doc_tipo <= 0)
+        return Swal.showValidationMessage("Seleccioná Tipo de documento (CUIT/DNI)");
+      if (!Number.isFinite(doc_nro) || doc_nro <= 0)
+        return Swal.showValidationMessage("Número de documento requerido");
+
+      if (doc_tipo === 80 && !/^\d{11}$/.test(docNroRaw))
+        return Swal.showValidationMessage("CUIT inválido (11 dígitos)");
+    }
+  }
+
+  return {
+    cbte_tipo,
+    doc_tipo,
+    doc_nro,
+    receptor_cond_iva_id,
+    receptor_nombre,
+  };
+}
     });
 
     if (!isConfirmed) {
