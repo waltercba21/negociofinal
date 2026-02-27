@@ -5,6 +5,7 @@ node_modules/
 # ARCA / secretos / runtime
 .env
 .env.*
+!.env.example
 .cache/
 *.key
 *.pem
