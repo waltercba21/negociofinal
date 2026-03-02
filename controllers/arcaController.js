@@ -2860,15 +2860,16 @@ async function getFacturasMostradorSchema() {
       "creado_por",
       "created_by"
     ),
-    colPago: pick(
-      "metodo_pago",
-      "medio_pago",
-      "forma_pago",
-      "pago_metodo",
-      "payment_method",
-      "mp_metodo_pago",
-      "metodo"
-    ),
+   colPago: pick(
+  "metodos_pago",         // <-- agregar
+  "metodo_pago",
+  "medio_pago",
+  "forma_pago",
+  "pago_metodo",
+  "payment_method",
+  "mp_metodo_pago",
+  "metodo"
+),
   };
   return _fmSchemaCache;
 }
@@ -2929,29 +2930,34 @@ async function reporteVentasDiariasPdf(req, res) {
 
     const inList = tipos.map(() => "?").join(",");
 
-    const rows = await query(
-      `
-      SELECT
-        ac.cbte_fch,
-        ac.cbte_tipo,
-        ac.pto_vta,
-        ac.cbte_nro,
-        ac.imp_total,
-        ac.receptor_nombre,
-        DATE_FORMAT(ac.created_at, '%H:%i') AS hora,
-        ${selCliente} AS nombre_cliente,
-        ${selVendedor} AS vendedor,
-        ${selPago} AS metodo_pago
-      FROM arca_comprobantes ac
-      LEFT JOIN facturas_mostrador fm ON fm.id = ac.factura_mostrador_id
-      WHERE ac.ambiente=? AND ac.cuit_emisor=? AND ac.pto_vta=?
-        AND ac.cbte_fch=?
-        AND ac.estado='EMITIDO'
-        AND ac.cbte_tipo IN (${inList})
-      ORDER BY ac.cbte_tipo ASC, ac.cbte_nro ASC
-      `,
-      [ambiente, cuit_emisor, pto_vta, fechaYmd, ...tipos]
-    );
+const rows = await query(
+  `
+  SELECT
+    ac.cbte_fch,
+    ac.cbte_tipo,
+    ac.pto_vta,
+    ac.cbte_nro,
+    ac.imp_total,
+    ac.receptor_nombre,
+    ac.doc_tipo,
+    ac.doc_nro,
+    DATE_FORMAT(ac.created_at, '%H:%i') AS hora,
+
+    fm.cliente_nombre   AS fm_cliente_nombre,
+    fm.nombre_cliente   AS fm_nombre_cliente,
+    fm.vendedor         AS fm_vendedor,
+    fm.metodos_pago     AS fm_metodos_pago
+
+  FROM arca_comprobantes ac
+  LEFT JOIN facturas_mostrador fm ON fm.id = ac.factura_mostrador_id
+  WHERE ac.ambiente=? AND ac.cuit_emisor=? AND ac.pto_vta=?
+    AND ac.cbte_fch=?
+    AND ac.estado='EMITIDO'
+    AND ac.cbte_tipo IN (${inList})
+  ORDER BY ac.cbte_tipo ASC, ac.cbte_nro ASC
+  `,
+  [ambiente, cuit_emisor, pto_vta, fechaYmd, ...tipos]
+);
 
     const emisor = {
       fantasia: process.env.ARCA_PDF_FANTASIA || "AUTOFAROS",
@@ -2994,9 +3000,9 @@ async function reporteVentasDiariasPdf(req, res) {
 
     const wFecha = 70;
     const wComp = 85;
-    const wCliente = 160;
+    const wCliente = 145;
     const wVend = 60;
-    const wPago = 60;
+    const wPago = 85;
     const wTotal = 70;
 
     const xFecha = left;
@@ -3042,7 +3048,84 @@ async function reporteVentasDiariasPdf(req, res) {
     let totalFacturado = 0;
     let totalNc = 0;
     let cant = 0;
+    const isMostradorLike = (v) => {
+  const s = String(v ?? "").trim();
+  if (!s) return true;
+  const u = s.toUpperCase();
+  return u === "MOSTRADOR" || u === "CLIENTE: MOSTRADOR" || u === "CLIENTE MOSTRADOR";
+};
+const cleanName = (v) => {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  if (isMostradorLike(s)) return null;
+  return s;
+};
 
+const clienteFromRow = (r) => {
+  const docTipo = Number(r.doc_tipo || 0);
+  const docNro = String(r.doc_nro ?? "").trim();
+  const tipoCbte = Number(r.cbte_tipo || 0);
+  const esFacturaA = (tipoCbte === 1 || tipoCbte === 51);
+
+  if (docTipo === 99 || docNro === "0") return "Consumidor Final";
+
+  const receptor = cleanName(r.receptor_nombre);
+  const cli1 = cleanName(r.fm_cliente_nombre);
+  const cli2 = cleanName(r.fm_nombre_cliente);
+
+  // Para Factura A: NO mostrar mostrador nunca
+  if (esFacturaA) {
+    if (receptor) return receptor;
+    if (cli1) return cli1;
+    if (cli2) return cli2;
+    if (docTipo === 80 && /^\d{11}$/.test(docNro)) return `CUIT ${formatCuit(docNro)}`;
+    return "Consumidor Final";
+  }
+
+  // Para B/C: usar el mejor disponible
+  return receptor || cli1 || cli2 || "Consumidor Final";
+};
+
+const normalizePago = (s) => {
+  const t = String(s ?? "").trim();
+  if (!t) return "";
+  const u = t.toUpperCase();
+  if (u.includes("QR")) return "QR";
+  if (u.includes("TRANSFER")) return "Transferencia";
+  if (u.includes("DEBIT")) return "Débito";
+  if (u.includes("CRED")) return "Crédito";
+  if (u.includes("CONTADO") || u.includes("EFECT")) return "Contado";
+  if (u.includes("MERCADO") || u === "MP") return "Mercado Pago";
+  return t;
+};
+
+const pagoLabel = (raw) => {
+  if (raw == null) return "-";
+
+  if (typeof raw === "string") {
+    const s = raw.trim();
+    if (!s) return "-";
+    try { return pagoLabel(JSON.parse(s)); } catch { return normalizePago(s) || "-"; }
+  }
+
+  if (Array.isArray(raw)) {
+    const labels = [];
+    for (const it of raw) {
+      if (it == null) continue;
+      if (typeof it === "string") labels.push(it);
+      else if (typeof it === "object") {
+        labels.push(
+          it.metodo || it.metodo_pago || it.medio || it.tipo || it.forma || it.method || it.nombre || it.descripcion || ""
+        );
+      }
+    }
+    const uniq = [...new Set(labels.map(normalizePago).filter(Boolean))];
+    return uniq.length ? uniq.join(" + ") : "-";
+  }
+
+  if (typeof raw === "object") return pagoLabel([raw]);
+  return "-";
+};
     for (const r of rows) {
       ensureRoom(18);
       const tipo = Number(r.cbte_tipo);
@@ -3053,9 +3136,14 @@ async function reporteVentasDiariasPdf(req, res) {
       cant += 1;
 
       const nroFmt = `${padLeft(r.pto_vta, 4)}-${padLeft(r.cbte_nro, 8)}`;
-      const cliente = r.nombre_cliente || r.receptor_nombre || "-";
-      const vend = r.vendedor || "-";
-      const pago = r.metodo_pago || "-";
+      const cliente = clienteFromRow(r);
+
+const vend =
+  cleanName(r.fm_vendedor) ||
+  cleanName(r.fm_nombre_cliente) || // fallback histórico (igual que tu listarFacturasMostrador)
+  "-";
+
+const pago = pagoLabel(r.fm_metodos_pago);
       const fecha = `${ymdToDMY(r.cbte_fch)} ${r.hora || ""}`.trim();
 
       const y = doc.y;
