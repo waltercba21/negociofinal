@@ -2943,10 +2943,20 @@ const rows = await query(
     ac.doc_nro,
     DATE_FORMAT(ac.created_at, '%H:%i') AS hora,
 
-    fm.cliente_nombre   AS fm_cliente_nombre,
-    fm.nombre_cliente   AS fm_nombre_cliente,
-    fm.vendedor         AS fm_vendedor,
-    fm.metodos_pago     AS fm_metodos_pago
+    -- vendedor: igual que listarFacturasMostrador
+    CASE
+      WHEN fm.vendedor IS NOT NULL AND fm.vendedor <> '' THEN fm.vendedor
+      WHEN fm.nombre_cliente IS NOT NULL AND fm.nombre_cliente <> '' AND fm.nombre_cliente <> 'MOSTRADOR' THEN fm.nombre_cliente
+      ELSE NULL
+    END AS vendedor,
+
+    -- cliente: si DocTipo=99 => Consumidor Final, si no usar receptor/cliente real y evitar MOSTRADOR
+    CASE
+      WHEN ac.doc_tipo = 99 OR ac.doc_nro = 0 THEN 'Consumidor Final'
+      ELSE COALESCE(NULLIF(ac.receptor_nombre,''), NULLIF(fm.cliente_nombre,''), NULLIF(fm.nombre_cliente,''), 'Consumidor Final')
+    END AS cliente,
+
+    fm.metodos_pago AS metodos_pago
 
   FROM arca_comprobantes ac
   LEFT JOIN facturas_mostrador fm ON fm.id = ac.factura_mostrador_id
@@ -2958,7 +2968,6 @@ const rows = await query(
   `,
   [ambiente, cuit_emisor, pto_vta, fechaYmd, ...tipos]
 );
-
     const emisor = {
       fantasia: process.env.ARCA_PDF_FANTASIA || "AUTOFAROS",
       razon: process.env.ARCA_PDF_RAZON_SOCIAL || "FAWA S.A.S.",
@@ -3136,14 +3145,9 @@ const pagoLabel = (raw) => {
       cant += 1;
 
       const nroFmt = `${padLeft(r.pto_vta, 4)}-${padLeft(r.cbte_nro, 8)}`;
-      const cliente = clienteFromRow(r);
-
-const vend =
-  cleanName(r.fm_vendedor) ||
-  cleanName(r.fm_nombre_cliente) || // fallback histórico (igual que tu listarFacturasMostrador)
-  "-";
-
-const pago = pagoLabel(r.fm_metodos_pago);
+      const cliente = r.cliente || "-";
+const vend = r.vendedor || "-";
+const pago = pagoLabel(r.metodos_pago); // tu pagoLabel (JSON/string) sirve igual
       const fecha = `${ymdToDMY(r.cbte_fch)} ${r.hora || ""}`.trim();
 
       const y = doc.y;
