@@ -1356,14 +1356,18 @@ wrap.innerHTML = `
       Swal.fire({ icon:"error", title:"Error", text: String(e.message || e) });
     }
   }
-$(function () {
-  $("#btnInformePdf").on("click", function (e) {
+  const btnInformePdf = $("#btnInformePdf");
+if (btnInformePdf) {
+  btnInformePdf.addEventListener("click", (e) => {
     e.preventDefault();
-    const f = $("#cierreFecha").val();
-    window.open(`/arca/reportes/ventas-diarias.pdf?fecha=${encodeURIComponent(f)}&v=${Date.now()}`, "_blank");
+    const f = cierreFecha?.value || todayISO();
+    window.open(
+      `/arca/reportes/ventas-diarias.pdf?fecha=${encodeURIComponent(f)}&v=${Date.now()}`,
+      "_blank",
+      "noopener"
+    );
   });
-});
-
+}
  async function crearCierre(){ // (podés renombrarla a generarInforme)
   try{
     const f = cierreFecha.value;
