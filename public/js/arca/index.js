@@ -97,20 +97,11 @@ async function fetchJSONWithProdLockConfirm(url, opts = {}) {
 
     const r = await ARCA_SWAL.confirm.fire({
       icon: "warning",
-      title: "Confirmación PRODUCCIÓN",
-      html: `ARCA_PROD_LOCK activo.<br/>Escribí <b>SI</b> para habilitar SOLO este request.`,
-      input: "text",
-      inputPlaceholder: "SI",
+      title: "ESTÁS POR REALIZAR LA FACTURA",
+      text: "¿Verificaste todos los datos?",
       showCancelButton: true,
-      confirmButtonText: "Continuar",
-      cancelButtonText: "Cancelar",
-      preConfirm: (v) => {
-        if (String(v || "").trim().toUpperCase() !== "SI") {
-          Swal.showValidationMessage("Debés escribir SI");
-          return false;
-        }
-        return true;
-      },
+      confirmButtonText: "CONFIRMAR",
+      cancelButtonText: "VOLVER",
     });
 
     if (!r.isConfirmed) throw new Error("Cancelado");
