@@ -2917,57 +2917,61 @@ async function reporteVentasDiariasPdf(req, res) {
     const tiposFact = [CBTE_TIPO_FACT_A, 6, 11];
     const tiposNc = [CBTE_TIPO_NC_A, 8, 13];
     const tipos = incluirNc ? [...tiposFact, ...tiposNc] : tiposFact;
-
-    let schema = null;
-    try { schema = await getFacturasMostradorSchema(); } catch { schema = null; }
-    const colCliente = safeIdent(schema?.colCliente);
-    const colVendedor = safeIdent(schema?.colVendedor);
-    const colPago = safeIdent(schema?.colPago);
-
-    const selCliente = colCliente ? `fm.\`${colCliente}\`` : "fm.nombre_cliente";
-    const selVendedor = colVendedor ? `fm.\`${colVendedor}\`` : "NULL";
-    const selPago = colPago ? `fm.\`${colPago}\`` : "NULL";
-
     const inList = tipos.map(() => "?").join(",");
 
-const rows = await query(
-  `
-  SELECT
-    ac.cbte_fch,
-    ac.cbte_tipo,
-    ac.pto_vta,
-    ac.cbte_nro,
-    ac.imp_total,
-    ac.receptor_nombre,
-    ac.doc_tipo,
-    ac.doc_nro,
-    DATE_FORMAT(ac.created_at, '%H:%i') AS hora,
+    const rows = await query(
+      `
+      SELECT
+        ac.cbte_fch,
+        ac.cbte_tipo,
+        ac.pto_vta,
+        ac.cbte_nro,
+        ac.imp_total,
+        ac.receptor_nombre,
+        ac.doc_tipo,
+        ac.doc_nro,
+        DATE_FORMAT(ac.created_at, '%H:%i') AS hora,
 
-    -- vendedor: igual que listarFacturasMostrador
-    CASE
-      WHEN fm.vendedor IS NOT NULL AND fm.vendedor <> '' THEN fm.vendedor
-      WHEN fm.nombre_cliente IS NOT NULL AND fm.nombre_cliente <> '' AND fm.nombre_cliente <> 'MOSTRADOR' THEN fm.nombre_cliente
-      ELSE NULL
-    END AS vendedor,
+        -- vendedor (igual que pantalla)
+        CASE
+          WHEN fm.vendedor IS NOT NULL AND fm.vendedor <> '' THEN fm.vendedor
+          WHEN fm.nombre_cliente IS NOT NULL AND fm.nombre_cliente <> '' AND fm.nombre_cliente <> 'MOSTRADOR' THEN fm.nombre_cliente
+          ELSE NULL
+        END AS vendedor,
 
-    -- cliente: si DocTipo=99 => Consumidor Final, si no usar receptor/cliente real y evitar MOSTRADOR
-    CASE
-      WHEN ac.doc_tipo = 99 OR ac.doc_nro = 0 THEN 'Consumidor Final'
-      ELSE COALESCE(NULLIF(ac.receptor_nombre,''), NULLIF(fm.cliente_nombre,''), NULLIF(fm.nombre_cliente,''), 'Consumidor Final')
-    END AS cliente,
+        -- cliente:
+        -- 1) DocTipo 99 o DocNro 0 => Consumidor Final
+        -- 2) Factura A: NO permitir MOSTRADOR
+        CASE
+          WHEN ac.doc_tipo = 99 OR ac.doc_nro = '0' OR ac.doc_nro = 0 THEN 'Consumidor Final'
+          WHEN ac.cbte_tipo IN (1,51) THEN
+            COALESCE(
+              NULLIF(ac.receptor_nombre,''),
+              NULLIF(fm.cliente_nombre,''),
+              NULLIF(NULLIF(fm.nombre_cliente,'MOSTRADOR'),''),
+              CONCAT('CUIT ', ac.doc_nro)
+            )
+          ELSE
+            COALESCE(
+              NULLIF(ac.receptor_nombre,''),
+              NULLIF(fm.cliente_nombre,''),
+              NULLIF(fm.nombre_cliente,''),
+              'Consumidor Final'
+            )
+        END AS cliente,
 
-    fm.metodos_pago AS metodos_pago
+        fm.metodos_pago AS metodos_pago
+      FROM arca_comprobantes ac
+      LEFT JOIN facturas_mostrador fm ON fm.id = ac.factura_mostrador_id
+      WHERE ac.ambiente=? AND ac.cuit_emisor=? AND ac.pto_vta=?
+        AND ac.cbte_fch=?
+        AND ac.estado='EMITIDO'
+        AND ac.cbte_tipo IN (${inList})
+      ORDER BY ac.cbte_tipo ASC, ac.cbte_nro ASC
+      `,
+      [ambiente, cuit_emisor, pto_vta, fechaYmd, ...tipos]
+    );
 
-  FROM arca_comprobantes ac
-  LEFT JOIN facturas_mostrador fm ON fm.id = ac.factura_mostrador_id
-  WHERE ac.ambiente=? AND ac.cuit_emisor=? AND ac.pto_vta=?
-    AND ac.cbte_fch=?
-    AND ac.estado='EMITIDO'
-    AND ac.cbte_tipo IN (${inList})
-  ORDER BY ac.cbte_tipo ASC, ac.cbte_nro ASC
-  `,
-  [ambiente, cuit_emisor, pto_vta, fechaYmd, ...tipos]
-);
     const emisor = {
       fantasia: process.env.ARCA_PDF_FANTASIA || "AUTOFAROS",
       razon: process.env.ARCA_PDF_RAZON_SOCIAL || "FAWA S.A.S.",
@@ -2975,8 +2979,12 @@ const rows = await query(
       iva: process.env.ARCA_PDF_IVA || "Responsable Inscripto",
     };
 
+    // Anti-cache (PDF inline suele cachearse)
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename="INFORME_VENTAS_${fechaIso}.pdf"`);
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
     const doc = new PDFDocument({ margin: 40, size: "A4" });
     doc.pipe(res);
@@ -2990,6 +2998,47 @@ const rows = await query(
       timeStyle: "medium",
     }).format(new Date());
 
+    const normalizePago = (s) => {
+      const t = String(s ?? "").trim();
+      if (!t) return "";
+      const u = t.toUpperCase();
+      if (u.includes("QR")) return "QR";
+      if (u.includes("TRANSFER")) return "Transferencia";
+      if (u.includes("DEBIT")) return "Débito";
+      if (u.includes("CRED")) return "Crédito";
+      if (u.includes("CONTADO") || u.includes("EFECT")) return "Contado";
+      if (u.includes("MERCADO") || u === "MP") return "Mercado Pago";
+      return t;
+    };
+
+    const pagoLabel = (raw) => {
+      if (raw == null) return "-";
+
+      if (typeof raw === "string") {
+        const s = raw.trim();
+        if (!s) return "-";
+        try { return pagoLabel(JSON.parse(s)); } catch { return normalizePago(s) || "-"; }
+      }
+
+      if (Array.isArray(raw)) {
+        const labels = [];
+        for (const it of raw) {
+          if (it == null) continue;
+          if (typeof it === "string") labels.push(it);
+          else if (typeof it === "object") {
+            labels.push(
+              it.metodo || it.metodo_pago || it.medio || it.tipo || it.forma || it.method || it.nombre || it.descripcion || ""
+            );
+          }
+        }
+        const uniq = [...new Set(labels.map(normalizePago).filter(Boolean))];
+        return uniq.length ? uniq.join(" + ") : "-";
+      }
+
+      if (typeof raw === "object") return pagoLabel([raw]);
+      return "-";
+    };
+
     const drawHeader = () => {
       doc.fillColor("#0B2A6B").font("Helvetica-Bold").fontSize(18)
         .text(emisor.fantasia, left, 40, { width: right - left, align: "left" });
@@ -2998,8 +3047,10 @@ const rows = await query(
       doc.fillColor("#444").font("Helvetica").fontSize(8)
         .text(`${emisor.iva} · ${emisor.domicilio}`, left, 75, { width: right - left });
 
+      // Marcador de versión para verificar que realmente cargó el código nuevo
       doc.fillColor("#000").font("Helvetica-Bold").fontSize(12)
-        .text(`INFORME DIARIO DE VENTAS · ${fechaIso}`, left, 96, { width: right - left });
+        .text(`INFORME DIARIO DE VENTAS · ${fechaIso} · v2`, left, 96, { width: right - left });
+
       doc.fillColor("#666").font("Helvetica").fontSize(8)
         .text(`Generado: ${genTs}`, left, 112, { width: right - left });
 
@@ -3007,13 +3058,7 @@ const rows = await query(
       doc.y = 134;
     };
 
-    const wFecha = 70;
-    const wComp = 85;
-    const wCliente = 145;
-    const wVend = 60;
-    const wPago = 85;
-    const wTotal = 70;
-
+    const wFecha = 70, wComp = 85, wCliente = 145, wVend = 60, wPago = 85, wTotal = 70;
     const xFecha = left;
     const xComp = xFecha + wFecha;
     const xCliente = xComp + wComp;
@@ -3057,97 +3102,23 @@ const rows = await query(
     let totalFacturado = 0;
     let totalNc = 0;
     let cant = 0;
-    const isMostradorLike = (v) => {
-  const s = String(v ?? "").trim();
-  if (!s) return true;
-  const u = s.toUpperCase();
-  return u === "MOSTRADOR" || u === "CLIENTE: MOSTRADOR" || u === "CLIENTE MOSTRADOR";
-};
-const cleanName = (v) => {
-  const s = String(v ?? "").trim();
-  if (!s) return null;
-  if (isMostradorLike(s)) return null;
-  return s;
-};
 
-const clienteFromRow = (r) => {
-  const docTipo = Number(r.doc_tipo || 0);
-  const docNro = String(r.doc_nro ?? "").trim();
-  const tipoCbte = Number(r.cbte_tipo || 0);
-  const esFacturaA = (tipoCbte === 1 || tipoCbte === 51);
-
-  if (docTipo === 99 || docNro === "0") return "Consumidor Final";
-
-  const receptor = cleanName(r.receptor_nombre);
-  const cli1 = cleanName(r.fm_cliente_nombre);
-  const cli2 = cleanName(r.fm_nombre_cliente);
-
-  // Para Factura A: NO mostrar mostrador nunca
-  if (esFacturaA) {
-    if (receptor) return receptor;
-    if (cli1) return cli1;
-    if (cli2) return cli2;
-    if (docTipo === 80 && /^\d{11}$/.test(docNro)) return `CUIT ${formatCuit(docNro)}`;
-    return "Consumidor Final";
-  }
-
-  // Para B/C: usar el mejor disponible
-  return receptor || cli1 || cli2 || "Consumidor Final";
-};
-
-const normalizePago = (s) => {
-  const t = String(s ?? "").trim();
-  if (!t) return "";
-  const u = t.toUpperCase();
-  if (u.includes("QR")) return "QR";
-  if (u.includes("TRANSFER")) return "Transferencia";
-  if (u.includes("DEBIT")) return "Débito";
-  if (u.includes("CRED")) return "Crédito";
-  if (u.includes("CONTADO") || u.includes("EFECT")) return "Contado";
-  if (u.includes("MERCADO") || u === "MP") return "Mercado Pago";
-  return t;
-};
-
-const pagoLabel = (raw) => {
-  if (raw == null) return "-";
-
-  if (typeof raw === "string") {
-    const s = raw.trim();
-    if (!s) return "-";
-    try { return pagoLabel(JSON.parse(s)); } catch { return normalizePago(s) || "-"; }
-  }
-
-  if (Array.isArray(raw)) {
-    const labels = [];
-    for (const it of raw) {
-      if (it == null) continue;
-      if (typeof it === "string") labels.push(it);
-      else if (typeof it === "object") {
-        labels.push(
-          it.metodo || it.metodo_pago || it.medio || it.tipo || it.forma || it.method || it.nombre || it.descripcion || ""
-        );
-      }
-    }
-    const uniq = [...new Set(labels.map(normalizePago).filter(Boolean))];
-    return uniq.length ? uniq.join(" + ") : "-";
-  }
-
-  if (typeof raw === "object") return pagoLabel([raw]);
-  return "-";
-};
     for (const r of rows) {
       ensureRoom(18);
+
       const tipo = Number(r.cbte_tipo);
       const isNc = [CBTE_TIPO_NC_A, 8, 13, 53].includes(tipo);
+
       const imp = Number(r.imp_total || 0);
       if (isNc) totalNc += imp;
       else totalFacturado += imp;
       cant += 1;
 
       const nroFmt = `${padLeft(r.pto_vta, 4)}-${padLeft(r.cbte_nro, 8)}`;
-      const cliente = r.cliente || "-";
-const vend = r.vendedor || "-";
-const pago = pagoLabel(r.metodos_pago); // tu pagoLabel (JSON/string) sirve igual
+      const cliente = String(r.cliente || "-");
+      const vend = String(r.vendedor || "-");
+      const pago = pagoLabel(r.metodos_pago);
+
       const fecha = `${ymdToDMY(r.cbte_fch)} ${r.hora || ""}`.trim();
 
       const y = doc.y;
@@ -3156,7 +3127,7 @@ const pago = pagoLabel(r.metodos_pago); // tu pagoLabel (JSON/string) sirve igua
       doc.text(cut(`${cbteTipoLabel(tipo)} ${nroFmt}`, 20), xComp, y, { width: wComp });
       doc.text(cut(cliente, 34), xCliente, y, { width: wCliente });
       doc.text(cut(vend, 12), xVend, y, { width: wVend });
-      doc.text(cut(pago, 12), xPago, y, { width: wPago });
+      doc.text(cut(pago, 18), xPago, y, { width: wPago });
       doc.text(fmtMoney(imp), xTotal, y, { width: wTotal, align: "right" });
       doc.moveDown(1.1);
     }
