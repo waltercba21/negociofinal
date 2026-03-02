@@ -97,4 +97,6 @@ router.get("/wsfe/consultas/:arcaId", arcaController.listarWsfeConsultas);
 
 router.post("/emitir-nc/:arcaIdOrigen", arcaController.emitirNotaCreditoPorArcaId);
 
+router.get("/reportes/ventas-diarias.pdf", arcaController.reporteVentasDiariasPdf);
+
 module.exports = router;

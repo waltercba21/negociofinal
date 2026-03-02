@@ -2841,7 +2841,259 @@ async function detalleCierreDiario(req, res) {
   }
 }
 
+let _fmSchemaCache = null;
+async function getFacturasMostradorSchema() {
+  if (_fmSchemaCache) return _fmSchemaCache;
+  const cols = await query("SHOW COLUMNS FROM facturas_mostrador");
+  const names = new Set((cols || []).map((c) => String(c.Field)));
+  const pick = (...opts) => opts.find((x) => names.has(x)) || null;
 
+  _fmSchemaCache = {
+    colCliente: pick("nombre_cliente", "cliente_nombre", "razon_social", "cliente"),
+    colVendedor: pick(
+      "vendedor",
+      "vendedor_nombre",
+      "vendedor_email",
+      "usuario",
+      "usuario_email",
+      "empleado",
+      "creado_por",
+      "created_by"
+    ),
+    colPago: pick(
+      "metodo_pago",
+      "medio_pago",
+      "forma_pago",
+      "pago_metodo",
+      "payment_method",
+      "mp_metodo_pago",
+      "metodo"
+    ),
+  };
+  return _fmSchemaCache;
+}
+function safeIdent(col) {
+  if (!col) return null;
+  const s = String(col);
+  return /^[a-zA-Z0-9_]+$/.test(s) ? s : null;
+}
+function cbteTipoLabel(t) {
+  const n = Number(t || 0);
+  if (n === 1 || n === 51) return "Factura A";
+  if (n === 6) return "Factura B";
+  if (n === 11) return "Factura C";
+  if (n === 3 || n === 53) return "NC A";
+  if (n === 8) return "NC B";
+  if (n === 13) return "NC C";
+  return `Tipo ${n}`;
+}
+function fmtMoney(n) {
+  const x = Number(n || 0);
+  try {
+    return x.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  } catch {
+    return x.toFixed(2);
+  }
+}
+function cut(s, max) {
+  const t = String(s ?? "").trim();
+  if (!t) return "-";
+  if (!max || t.length <= max) return t;
+  return t.slice(0, Math.max(1, max - 1)) + "…";
+}
+
+async function reporteVentasDiariasPdf(req, res) {
+  try {
+    const fechaIso = req.query.fecha || todayIsoAR();
+    const fechaYmd = isoToYmd8(fechaIso);
+    if (!isValidYMD(fechaYmd)) return res.status(400).send("Fecha inválida. Use YYYY-MM-DD");
+
+    const ambiente = process.env.ARCA_ENV || "homo";
+    const cuit_emisor = process.env.ARCA_CUIT || process.env.CUIT || "30718763718";
+    const pto_vta = Number(process.env.ARCA_PTO_VTA || 2);
+
+    const incluirNc = isTrue(req.query.incluir_nc);
+    const tiposFact = [CBTE_TIPO_FACT_A, 6, 11];
+    const tiposNc = [CBTE_TIPO_NC_A, 8, 13];
+    const tipos = incluirNc ? [...tiposFact, ...tiposNc] : tiposFact;
+
+    let schema = null;
+    try { schema = await getFacturasMostradorSchema(); } catch { schema = null; }
+    const colCliente = safeIdent(schema?.colCliente);
+    const colVendedor = safeIdent(schema?.colVendedor);
+    const colPago = safeIdent(schema?.colPago);
+
+    const selCliente = colCliente ? `fm.\`${colCliente}\`` : "fm.nombre_cliente";
+    const selVendedor = colVendedor ? `fm.\`${colVendedor}\`` : "NULL";
+    const selPago = colPago ? `fm.\`${colPago}\`` : "NULL";
+
+    const inList = tipos.map(() => "?").join(",");
+
+    const rows = await query(
+      `
+      SELECT
+        ac.cbte_fch,
+        ac.cbte_tipo,
+        ac.pto_vta,
+        ac.cbte_nro,
+        ac.imp_total,
+        ac.receptor_nombre,
+        DATE_FORMAT(ac.created_at, '%H:%i') AS hora,
+        ${selCliente} AS nombre_cliente,
+        ${selVendedor} AS vendedor,
+        ${selPago} AS metodo_pago
+      FROM arca_comprobantes ac
+      LEFT JOIN facturas_mostrador fm ON fm.id = ac.factura_mostrador_id
+      WHERE ac.ambiente=? AND ac.cuit_emisor=? AND ac.pto_vta=?
+        AND ac.cbte_fch=?
+        AND ac.estado='EMITIDO'
+        AND ac.cbte_tipo IN (${inList})
+      ORDER BY ac.cbte_tipo ASC, ac.cbte_nro ASC
+      `,
+      [ambiente, cuit_emisor, pto_vta, fechaYmd, ...tipos]
+    );
+
+    const emisor = {
+      fantasia: process.env.ARCA_PDF_FANTASIA || "AUTOFAROS",
+      razon: process.env.ARCA_PDF_RAZON_SOCIAL || "FAWA S.A.S.",
+      domicilio: process.env.ARCA_PDF_DOMICILIO || "IGUALDAD 88 - CENTRO - CORDOBA",
+      iva: process.env.ARCA_PDF_IVA || "Responsable Inscripto",
+    };
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="INFORME_VENTAS_${fechaIso}.pdf"`);
+
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
+    doc.pipe(res);
+
+    const left = doc.page.margins.left;
+    const right = doc.page.width - doc.page.margins.right;
+
+    const genTs = new Intl.DateTimeFormat("es-AR", {
+      timeZone: "America/Argentina/Cordoba",
+      dateStyle: "short",
+      timeStyle: "medium",
+    }).format(new Date());
+
+    const drawHeader = () => {
+      doc.fillColor("#0B2A6B").font("Helvetica-Bold").fontSize(18)
+        .text(emisor.fantasia, left, 40, { width: right - left, align: "left" });
+      doc.fillColor("#000").font("Helvetica").fontSize(9)
+        .text(`${emisor.razon} · CUIT ${formatCuit(cuit_emisor)}`, left, 62, { width: right - left });
+      doc.fillColor("#444").font("Helvetica").fontSize(8)
+        .text(`${emisor.iva} · ${emisor.domicilio}`, left, 75, { width: right - left });
+
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(12)
+        .text(`INFORME DIARIO DE VENTAS · ${fechaIso}`, left, 96, { width: right - left });
+      doc.fillColor("#666").font("Helvetica").fontSize(8)
+        .text(`Generado: ${genTs}`, left, 112, { width: right - left });
+
+      doc.moveTo(left, 126).lineTo(right, 126).strokeColor("#ddd").stroke();
+      doc.y = 134;
+    };
+
+    const wFecha = 70;
+    const wComp = 85;
+    const wCliente = 160;
+    const wVend = 60;
+    const wPago = 60;
+    const wTotal = 70;
+
+    const xFecha = left;
+    const xComp = xFecha + wFecha;
+    const xCliente = xComp + wComp;
+    const xVend = xCliente + wCliente;
+    const xPago = xVend + wVend;
+    const xTotal = right - wTotal;
+
+    const drawTableHeader = () => {
+      const y = doc.y;
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(9);
+      doc.text("Fecha", xFecha, y, { width: wFecha });
+      doc.text("Comprobante", xComp, y, { width: wComp });
+      doc.text("Cliente", xCliente, y, { width: wCliente });
+      doc.text("Vend.", xVend, y, { width: wVend });
+      doc.text("Pago", xPago, y, { width: wPago });
+      doc.text("Total", xTotal, y, { width: wTotal, align: "right" });
+      doc.moveDown(0.6);
+      doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#eee").stroke();
+      doc.moveDown(0.4);
+    };
+
+    const ensureRoom = (extra = 16) => {
+      const bottom = doc.page.height - doc.page.margins.bottom;
+      if (doc.y + extra > bottom) {
+        doc.addPage();
+        drawHeader();
+        drawTableHeader();
+      }
+    };
+
+    drawHeader();
+    drawTableHeader();
+
+    if (!rows?.length) {
+      doc.fillColor("#666").font("Helvetica").fontSize(10)
+        .text("Sin ventas emitidas para esa fecha.", left, doc.y + 10);
+      doc.end();
+      return;
+    }
+
+    let totalFacturado = 0;
+    let totalNc = 0;
+    let cant = 0;
+
+    for (const r of rows) {
+      ensureRoom(18);
+      const tipo = Number(r.cbte_tipo);
+      const isNc = [CBTE_TIPO_NC_A, 8, 13, 53].includes(tipo);
+      const imp = Number(r.imp_total || 0);
+      if (isNc) totalNc += imp;
+      else totalFacturado += imp;
+      cant += 1;
+
+      const nroFmt = `${padLeft(r.pto_vta, 4)}-${padLeft(r.cbte_nro, 8)}`;
+      const cliente = r.nombre_cliente || r.receptor_nombre || "-";
+      const vend = r.vendedor || "-";
+      const pago = r.metodo_pago || "-";
+      const fecha = `${ymdToDMY(r.cbte_fch)} ${r.hora || ""}`.trim();
+
+      const y = doc.y;
+      doc.fillColor("#000").font("Helvetica").fontSize(8);
+      doc.text(cut(fecha, 16), xFecha, y, { width: wFecha });
+      doc.text(cut(`${cbteTipoLabel(tipo)} ${nroFmt}`, 20), xComp, y, { width: wComp });
+      doc.text(cut(cliente, 34), xCliente, y, { width: wCliente });
+      doc.text(cut(vend, 12), xVend, y, { width: wVend });
+      doc.text(cut(pago, 12), xPago, y, { width: wPago });
+      doc.text(fmtMoney(imp), xTotal, y, { width: wTotal, align: "right" });
+      doc.moveDown(1.1);
+    }
+
+    doc.moveDown(0.4);
+    doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#ddd").stroke();
+    doc.moveDown(0.6);
+
+    const neto = totalFacturado - totalNc;
+
+    doc.fillColor("#000").font("Helvetica-Bold").fontSize(10)
+      .text(`Comprobantes: ${cant}`, left, doc.y, { width: right - left });
+
+    doc.fillColor("#000").font("Helvetica-Bold").fontSize(11)
+      .text(`Total facturado: $ ${fmtMoney(totalFacturado)}`, left, doc.y + 14, { width: right - left, align: "right" });
+
+    if (incluirNc) {
+      doc.fillColor("#000").font("Helvetica").fontSize(10)
+        .text(`Total NC: $ ${fmtMoney(totalNc)}`, left, doc.y + 2, { width: right - left, align: "right" });
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(11)
+        .text(`Neto ventas: $ ${fmtMoney(neto)}`, left, doc.y + 2, { width: right - left, align: "right" });
+    }
+
+    doc.end();
+  } catch (e) {
+    console.error("[ARCA][reporteVentasDiariasPdf]", e);
+    return res.status(500).send("Error generando PDF");
+  }
+}
 module.exports = {
   emitirDesdeFacturaMostrador,
   statusPorFacturaMostrador,
@@ -2861,4 +3113,5 @@ reportesComprobantes,
 crearCierreDiario,
 listarCierresDiarios,
 detalleCierreDiario,
+reporteVentasDiariasPdf,
 };

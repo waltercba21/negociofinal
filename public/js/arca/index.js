@@ -1356,7 +1356,10 @@ wrap.innerHTML = `
       Swal.fire({ icon:"error", title:"Error", text: String(e.message || e) });
     }
   }
-
+  $("#btnInformePdf")?.addEventListener("click", ()=>{
+  const f = cierreFecha.value;
+  window.open(`/arca/reportes/ventas-diarias.pdf?fecha=${encodeURIComponent(f)}`, "_blank");
+});
  async function crearCierre(){ // (podés renombrarla a generarInforme)
   try{
     const f = cierreFecha.value;
