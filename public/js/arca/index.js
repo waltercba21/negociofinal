@@ -1357,46 +1357,43 @@ wrap.innerHTML = `
     }
   }
 
-  async function crearCierre(){
-    try{
-      const f = cierreFecha.value;
-      const ok = await Swal.fire({
-        icon:"question",
-        title:"Crear cierre diario",
-        text:`Se guardará el snapshot del día ${f}.`,
-        showCancelButton:true,
-        confirmButtonText:"Crear cierre",
-        cancelButtonText:"Cancelar"
-      });
-      if (!ok.isConfirmed) return;
+ async function crearCierre(){ // (podés renombrarla a generarInforme)
+  try{
+    const f = cierreFecha.value;
 
-      const r = await fetch("/arca/cierres-diarios", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", "Accept":"application/json" },
-        body: JSON.stringify({ fecha: f })
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
+    const ok = await Swal.fire({
+      icon:"question",
+      title:"Informe del día",
+      text:`Se calculará el informe del día ${f} (al momento).`,
+      showCancelButton:true,
+      confirmButtonText:"Generar informe",
+      cancelButtonText:"Cancelar"
+    });
+    if (!ok.isConfirmed) return;
 
-      const c = j.cierre;
-      await Swal.fire({
-        icon:"success",
-        title: j.existente ? "Cierre ya existía" : "Cierre creado",
-        html: `
-          <div style="text-align:left">
-            <div><b>Fecha:</b> ${c.fecha}</div>
-            <div><b>Facturado:</b> $ ${money(c.total_facturado)}</div>
-            <div><b>NC:</b> $ ${money(c.total_nc)}</div>
-            <div><b>Neto ventas:</b> $ ${money(c.total_neto_ventas)}</div>
-            <div><b>Comprobantes:</b> ${c.cant_comprobantes}</div>
-          </div>`
-      });
+    const resumen = await getJSON(`/arca/reportes/resumen?desde=${encodeURIComponent(f)}&hasta=${encodeURIComponent(f)}&estado=EMITIDO`);
+    const dia = (resumen.dias && resumen.dias[0]) ? resumen.dias[0] : null;
 
-      verResumen();
-    }catch(e){
-      Swal.fire({ icon:"error", title:"Error", text: String(e.message || e) });
-    }
+    const comps = await getJSON(`/arca/reportes/comprobantes?desde=${encodeURIComponent(f)}&hasta=${encodeURIComponent(f)}&estado=EMITIDO`);
+    const cant = (comps.comprobantes || []).length;
+
+    await Swal.fire({
+      icon:"success",
+      title:"Informe generado",
+      html: dia ? `
+        <div style="text-align:left">
+          <div><b>Fecha:</b> ${dia.fecha}</div>
+          <div><b>Facturado:</b> $ ${money(dia.total_facturas)}</div>
+          <div><b>NC:</b> $ ${money(dia.total_nc)}</div>
+          <div><b>Neto ventas:</b> $ ${money(dia.ventas_netas)}</div>
+          <div><b>Comprobantes:</b> ${cant}</div>
+        </div>` : `<div class="hint">Sin emitidos para esa fecha.</div>`
+    });
+
+  }catch(e){
+    Swal.fire({ icon:"error", title:"Error", text: String(e.message || e) });
   }
+}
 
   $("#btnRepResumen")?.addEventListener("click", verResumen);
   $("#btnRepListar")?.addEventListener("click", listarComprobantes);
