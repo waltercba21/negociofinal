@@ -3114,7 +3114,8 @@ async function reporteVentasDiariasPdf(req, res) {
       else totalFacturado += imp;
       cant += 1;
 
-      const nroFmt = `${padLeft(r.pto_vta, 4)}-${padLeft(r.cbte_nro, 8)}`;
+      const nroFmt = padLeft(r.cbte_nro, 8);
+      const compTxt = `${cbteTipoLabel(tipo)} ${nroFmt}`;
       const cliente = String(r.cliente || "-");
       const vend = String(r.vendedor || "-");
       const pago = pagoLabel(r.metodos_pago);
@@ -3124,7 +3125,7 @@ async function reporteVentasDiariasPdf(req, res) {
       const y = doc.y;
       doc.fillColor("#000").font("Helvetica").fontSize(8);
       doc.text(cut(fecha, 16), xFecha, y, { width: wFecha });
-      doc.text(cut(`${cbteTipoLabel(tipo)} ${nroFmt}`, 20), xComp, y, { width: wComp });
+      doc.text(cut(compTxt, 24), xComp, y, { width: wComp });
       doc.text(cut(cliente, 34), xCliente, y, { width: wCliente });
       doc.text(cut(vend, 12), xVend, y, { width: wVend });
       doc.text(cut(pago, 18), xPago, y, { width: wPago });
