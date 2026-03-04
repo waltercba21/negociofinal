@@ -1961,10 +1961,13 @@ procesarFormularioFacturas: async (req, res) => {
       req.session?.usuarioId ||
       null;
 
-    const vendedor = (vendedorNombre && String(vendedorNombre).trim())
-      ? String(vendedorNombre).trim()
-      : (vendedorId ? `usuario_${vendedorId}` : (String(nombreCliente || "").trim() || null));
+    const vendedorForm = String(nombreCliente || "").trim();
 
+const vendedor = vendedorForm
+  ? vendedorForm
+  : ((vendedorNombre && String(vendedorNombre).trim())
+      ? String(vendedorNombre).trim()
+      : (vendedorId ? `usuario_${vendedorId}` : null));
     // Factura interna (cliente real se define en ARCA al emitir)
     const factura = {
       nombre_cliente: "MOSTRADOR",   // NOT NULL (legacy)
