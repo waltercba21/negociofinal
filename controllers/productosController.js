@@ -1946,22 +1946,22 @@ procesarFormularioFacturas: async (req, res) => {
 
     const creadoEn = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-    // Vendedor desde sesión (fallback a nombreCliente si tu UI lo manda)
-    const sUser = req.session?.usuario || req.session?.user || {};
+  // Vendedor: priorizar lo elegido en el formulario, luego sesión
+const sUser = req.session?.usuario || req.session?.user || {};
 
-    const vendedorNombre =
-      sUser.nombre || sUser.name || sUser.username || sUser.user || sUser.email || null;
+const vendedorNombre =
+  sUser.nombre || sUser.name || sUser.username || sUser.user || sUser.email || null;
 
-    const vendedorId =
-      sUser.id ||
-      req.session?.usuario_id ||
-      req.session?.user_id ||
-      req.session?.id_usuario ||
-      req.session?.userId ||
-      req.session?.usuarioId ||
-      null;
+const vendedorId =
+  sUser.id ||
+  req.session?.usuario_id ||
+  req.session?.user_id ||
+  req.session?.id_usuario ||
+  req.session?.userId ||
+  req.session?.usuarioId ||
+  null;
 
-    const vendedorForm = String(nombreCliente || "").trim();
+const vendedorForm = String(nombreCliente || "").trim();
 
 const vendedor = vendedorForm
   ? vendedorForm
