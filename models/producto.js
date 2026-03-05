@@ -995,12 +995,6 @@ obtenerProductosPorProveedorDetalle: async function (conexion, proveedorId, cate
   return rows;
 },
 
-// ✅ Alias temporal (para no romper nada si quedara alguna llamada vieja).
-// Cuando confirmes que ya no se usa, lo eliminamos.
-obtenerProductosPorProveedorYCategoría: function (conexion, proveedorId, categoriaId = null) {
-  return this.obtenerProductosPorProveedorDetalle(conexion, proveedorId, categoriaId);
-},
-
 obtenerProveedores: function(conexion) {
     return new Promise((resolve, reject) => {
         const query = `
@@ -1275,16 +1269,6 @@ obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId)
         });
     });
 },
-obtenerProductos: function(conexion, saltar, productosPorPagina, callback) {
-  var query = "SELECT * FROM productos LIMIT ?, ?";
-  conexion.query(query, [saltar, productosPorPagina], function(error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados);
-      }
-  });
-},
 obtenerProductosPorCategoria: function(conexion, categoriaId) {
   const query = `
     SELECT 
@@ -1304,24 +1288,6 @@ obtenerProductosPorCategoria: function(conexion, categoriaId) {
     });
   });
 },
-
-obtenerTodosPaginados: function(conexion, pagina, productosPorPagina, callback) {
-    const offset = (pagina - 1) * productosPorPagina;
-    let query = `
-        SELECT * FROM productos 
-        ORDER BY id DESC 
-        LIMIT ? OFFSET ?
-    `;
-
-    conexion.query(query, [productosPorPagina, offset], function(error, resultados) {
-        if (error) {
-            console.error("❌ Error al obtener todos los productos paginados:", error);
-            return callback(error, null);
-        }
-        callback(null, resultados);
-    });
-},
-
 
 contarProductos: function(conexion, callback) {
   var query = "SELECT COUNT(*) as total FROM productos";
@@ -2238,10 +2204,6 @@ obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorI
   },
 obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, categoriaId) {
   try {
-    // Armamos la consulta en una sola pieza para que el orden de parámetros sea claro:
-    // 1) proveedorId para el subquery del código
-    // 2) proveedorId para p.proveedor_id = ?
-    // 3) proveedorId para el EXISTS (fallback cuando p.proveedor_id es NULL)
     let query = `
       SELECT
         p.id,
