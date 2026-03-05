@@ -366,18 +366,11 @@ module.exports ={
       administrador
     };
   
-    pool.query('INSERT INTO facturas SET ?', datosFactura, function (error, results) {
-      if (error) {
-        console.error("❌ Error al insertar la factura:", error);
-        return callback(null, error);
-      }
-      if (!results.insertId) {
-        console.error("⚠️ La consulta de inserción no devolvió insertId.");
-        return callback(null, new Error("Factura no insertada correctamente."));
-      }
-      console.log("✅ Factura insertada con ID:", results.insertId);
-      callback(results.insertId, null);
-    });
+    // ✅ Así debe quedar
+pool.query('INSERT INTO facturas SET ?', datosFactura, function (error, results) {
+  if (error) return callback(error);
+  callback(null, results.insertId);
+}); 
   },
   insertarItemFactura: function (item, callback) {
   const sql = `
@@ -437,7 +430,7 @@ insertarItemPresupuesto: function(item, callback) {
             WHERE facturas.id = ?
         `;
         pool.query(query, [id], function(error, results) {
-            if (error) throw error;
+  if (error) return callback(error);
             if (results.length > 0) {
                 callback(null, results[0]);
             } else {

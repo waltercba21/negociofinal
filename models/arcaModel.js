@@ -2,13 +2,12 @@
 const pool = require("../config/conexion");
 const util = require("util");
 const crypto = require("crypto");
-const poolDefault = require("../config/conexion");
 const FACT_TIPOS = [1, 6, 11];   
 const NC_TIPOS   = [3, 8, 13];   
 
 
 function getQuery(poolArg) {
-  const p = poolArg || poolDefault;
+  const p = poolArg || pool;
   if (!p || typeof p.promise !== "function") {
     throw new Error("Pool mysql2 inválido (falta .promise())");
   }
