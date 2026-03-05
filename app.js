@@ -18,8 +18,6 @@ const productosRouter = require('./routes/productos');
 const administracionRouter = require('./routes/administracion');
 const carritoRoutes = require('./routes/carrito');
 const pedidosRoutes = require('./routes/pedidos');
-const whatsappRoutes = require('./routes/whatsapp');
-const analyticsRoutes = require('./routes/analytics');
 const reportesRoutes = require('./routes/reportes');
 const arcaRoutes = require('./routes/arcaRoutes');
 
