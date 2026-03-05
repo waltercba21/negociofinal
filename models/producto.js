@@ -342,7 +342,6 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
     await pp.query(`DELETE FROM estadisticas         WHERE producto_id IN (${placeholders})`, ids);
     await pp.query(`DELETE FROM factura_items        WHERE producto_id IN (${placeholders})`, ids);
     await pp.query(`DELETE FROM imagenes_producto    WHERE producto_id IN (${placeholders})`, ids);
-    await pp.query(`DELETE FROM items_presupuesto    WHERE producto_id IN (${placeholders})`, ids);
     await pp.query(`DELETE FROM presupuesto_items    WHERE producto_id IN (${placeholders})`, ids);
     await pp.query(`DELETE FROM presupuesto_productos WHERE producto_id IN (${placeholders})`, ids);
     await pp.query(`DELETE FROM producto_proveedor   WHERE producto_id IN (${placeholders})`, ids);
@@ -1712,7 +1711,7 @@ editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
                             }
                             itemUpdateValues.push(item.id, id);
 
-                            const itemQuery = `UPDATE items_presupuesto SET ${itemUpdateFields.join(', ')} WHERE id = ? AND presupuesto_id = ?`;
+                            const itemQuery = `UPDATE presupuesto_items SET  ${itemUpdateFields.join(', ')} WHERE id = ? AND presupuesto_id = ?`;
                             conexion.query(itemQuery, itemUpdateValues, (error, result) => {
                                 if (error) {
                                     console.error('Error ejecutando query de item:', error);
