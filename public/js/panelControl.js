@@ -121,7 +121,13 @@ function buildEditUrl(id, paginaActual, busquedaActual) {
 
   // Preservar estado de paginado/búsqueda
   if (paginaActual) qs.set('pagina', String(paginaActual));
-  if (busquedaActual) qs.set('busqueda', busquedaActual);
+
+  // Busqueda: prioridad al valor vivo del input (modo búsqueda dinámica JS)
+  // Si no hay, usar el parámetro recibido (modo server-render o URL)
+  const inputBusquedaEl = document.getElementById('entradaBusqueda');
+  const busquedaViva = (inputBusquedaEl?.value || '').trim();
+  const busquedaFinal = busquedaViva || busquedaActual || '';
+  if (busquedaFinal) qs.set('busqueda', busquedaFinal);
 
   const q = qs.toString();
   return `/productos/editar/${id}${q ? `?${q}` : ''}`;

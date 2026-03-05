@@ -233,7 +233,10 @@
               <div id="preview" class="imagen-miniatura-contenedor">
                 <% if (producto && producto.imagenes && producto.imagenes.length > 0) { %>
                   <% producto.imagenes.forEach((imagen) => { %>
-                    <div data-imagen-id="<%= imagen.id %>" class="preview-img">
+                    <div data-imagen-id="<%= imagen.id %>"
+                         data-id="<%= imagen.id %>"
+                         data-type="existente"
+                         class="preview-img">
                       <img class="imagen-miniatura" src="<%= imagen.imagen %>" alt="Imagen del producto">
                     </div>
                   <% }); %>
