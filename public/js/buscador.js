@@ -541,15 +541,11 @@ function mostrarProductos(productos) {
           </p>
           <div class="prov-actions">
             <button type="button"
-                    class="btn-siguiente-proveedor"
+                    class="btn-ver-proveedores"
                     data-producto-id="${producto.id}">
-              Siguiente proveedor
+              <i class="fas fa-store"></i> Ver proveedores
             </button>
-            <small class="prov-idx"
-                   data-producto-id="${producto.id}"
-                   style="display:block;opacity:.7;margin-top:4px"></small>
           </div>
-          <p class="prov-simulacion" data-producto-id="${producto.id}" style="margin-top:6px;font-weight:700;"></p>
         </div>
       ` : ''}
 
@@ -641,24 +637,89 @@ function moverCarrusel(index, direccion) {
 }
 
 
+
+
 /* ==========================================
-   Init botón “Siguiente proveedor”
+   Init botón "Ver proveedores"
 ========================================== */
 async function _initProveedorButton(productoId){
   if (!isAdminUser) return;
-  const btn = document.querySelector(`.btn-siguiente-proveedor[data-producto-id="${productoId}"]`);
+  const btn = document.querySelector(`.btn-ver-proveedores[data-producto-id="${productoId}"]`);
   if (!btn) return;
   const st = await _getOrInitState(productoId);
+  // Si solo tiene 0 o 1 proveedor, ocultamos el botón
   if (!st.lista || st.lista.length < 2){
     btn.style.display = 'none';
   }
 }
 
 /* ==========================================
-   Listener del botón “Siguiente proveedor”
+   Construye el HTML de las tarjetas del modal
+========================================== */
+function _buildProveedoresModalHtml(lista, baseIdx, utilidadPct) {
+  const u = (utilidadPct || 0) / 100;
+
+  const tarjetas = lista.map((prov, idx) => {
+    const esBase = (idx === baseIdx);
+    const costoIva = toNumberSafe(prov.costo_iva);
+    const precioLista = toNumberSafe(prov.precio_lista ?? prov.precioLista ?? 0);
+    const descuento = toNumberSafe(prov.descuento ?? prov.dto ?? 0);
+    const iva = toNumberSafe(prov.iva ?? prov.iva_porcentaje ?? prov.alicuotaIva ?? 0);
+    const ivaMostrar = iva > 0 && iva < 1.5 ? Math.round(iva * 100) : iva;
+
+    const precioVentaSim = (costoIva > 0 && u >= 0)
+      ? _redondearAlCentenar(costoIva * (1 + u))
+      : null;
+
+    const badge = esBase
+      ? `<span style="background:#16a34a;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase;">★ Proveedor Asignado</span>`
+      : `<span style="background:#2563eb;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase;">Alternativa #${idx + 1}</span>`;
+
+    const filas = [];
+    if (prov.proveedor_nombre) filas.push(['Proveedor', `<strong>${_escapeHtml(prov.proveedor_nombre)}</strong>`]);
+    if (prov.codigo && prov.codigo !== '-') filas.push(['Código', _escapeHtml(prov.codigo)]);
+    if (precioLista > 0) filas.push(['Precio lista', `$${formatearNumero(precioLista)}`]);
+    if (descuento > 0) filas.push(['Descuento', `${descuento}%`]);
+    if (ivaMostrar > 0) filas.push(['IVA', `${ivaMostrar}%`]);
+    if (costoIva > 0) filas.push(['Costo c/ IVA', `<strong style="color:#b91c1c;">$${formatearNumero(costoIva)}</strong>`]);
+    if (precioVentaSim) filas.push(['Precio venta estimado', `<strong style="color:#1d4ed8;">$${formatearNumero(precioVentaSim)}</strong>`]);
+
+    const filasHtml = filas.map(([label, val]) => `
+      <tr>
+        <td style="padding:5px 10px 5px 0;color:#6b7280;font-size:12px;white-space:nowrap;vertical-align:top;">${label}</td>
+        <td style="padding:5px 0;font-size:13px;font-weight:600;">${val}</td>
+      </tr>
+    `).join('');
+
+    const bordeColor = esBase ? '#16a34a' : '#2563eb';
+    const bgColor = esBase ? '#f0fdf4' : '#eff6ff';
+
+    return `
+      <div style="border:2px solid ${bordeColor};border-radius:14px;background:${bgColor};padding:14px 16px;flex:1;min-width:180px;max-width:260px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.07);">
+        <div style="margin-bottom:4px;">${badge}</div>
+        <table style="width:100%;border-collapse:collapse;">
+          <tbody>${filasHtml}</tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:4px 0 8px;">
+      ${tarjetas}
+    </div>
+    <p style="font-size:11px;color:#9ca3af;margin-top:10px;text-align:center;">
+      <i class="fas fa-info-circle"></i>
+      El precio de venta estimado se calcula aplicando la utilidad configurada en el producto.
+    </p>
+  `;
+}
+
+/* ==========================================
+   Listener del botón "Ver proveedores"
 ========================================== */
 if (CAN_INIT) contenedorProductos.addEventListener('click', async (ev) => {
-  const btn = ev.target.closest('.btn-siguiente-proveedor');
+  const btn = ev.target.closest('.btn-ver-proveedores');
   if (!btn || !isAdminUser) return;
 
   const productoId = Number(btn.dataset.productoId);
@@ -666,54 +727,29 @@ if (CAN_INIT) contenedorProductos.addEventListener('click', async (ev) => {
 
   const cardEl = btn.closest('.card');
   const utilidadPct = _getUtilidadDeCard(cardEl);
-  const u = utilidadPct / 100;
+  const nombreProducto = cardEl?.querySelector('.nombre, h3')?.textContent?.trim() || 'Proveedores';
 
   const st = await _getOrInitState(productoId);
   if (!st.lista || !st.lista.length) {
     Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
     return;
   }
-  if (st.lista.length < 2) {
-    btn.style.display = 'none';
-    return;
-  }
 
-  let nextIdx;
-  if (st.first) {
-    st.cyclePos = 0;
-    nextIdx = st.orderCycle[st.cyclePos];
-    st.first = false;
-  } else {
-    st.cyclePos = (st.cyclePos + 1) % st.orderCycle.length;
-    nextIdx = st.orderCycle[st.cyclePos];
-  }
+  const htmlModal = _buildProveedoresModalHtml(st.lista, st.baseIdx, utilidadPct);
 
-  if (nextIdx === st.baseIdx && st.orderCycle.length > 1) {
-    st.cyclePos = (st.cyclePos + 1) % st.orderCycle.length;
-    nextIdx = st.orderCycle[st.cyclePos];
-  }
-
-  st.idx = nextIdx;
-  _cacheProveedores.set(productoId, st);
-
-  const provActual = st.lista[st.idx];
-  _renderProveedor(productoId, provActual);
-
-  const costoConIva = toNumberSafe(provActual?.costo_iva);
-
-  if (costoConIva > 0 && u >= 0) {
-    const precioBruto = costoConIva * (1 + u);
-    const precioRedondeado = _redondearAlCentenar(precioBruto);
-
-    if (st.idx === st.baseIdx) {
-      _renderSimulacion(productoId, null);
-    } else {
-      _renderSimulacion(productoId, precioRedondeado);
+  Swal.fire({
+    title: `<span style="font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.4px;">Proveedores — ${_escapeHtml(nombreProducto)}</span>`,
+    html: htmlModal,
+    width: 'min(1000px, 96vw)',
+    showCloseButton: true,
+    confirmButtonText: 'Cerrar',
+    customClass: {
+      popup: 'af-apps-modal',
+      confirmButton: 'af-apps-confirm'
     }
-  } else {
-    _renderSimulacion(productoId, null);
-  }
+  });
 }, { passive: true });
+
 
 /* ==========================================
    Delegado de clicks (analytics)
