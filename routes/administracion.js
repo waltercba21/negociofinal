@@ -1,18 +1,35 @@
 var express = require('express');
 var router = express.Router();
 var administracionController = require('../controllers/administracionController');
-var multer  = require('multer');
+var multer = require('multer');
 var path = require('path');
 
+// ✅ 1. Importar middlewares de protección
+var ensureAuthenticated = require('../middleware/usuarioMiddleware');
+var { setGlobalVariables } = require('../middleware/middlewares');
+
+// ✅ 2. Sanitizar nombre de archivo para evitar path traversal
 var storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, './uploads/comprobantes/')
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.originalname)
-    }
-})
+  destination: function (req, file, cb) {
+    cb(null, './uploads/comprobantes/');
+  },
+  filename: function (req, file, cb) {
+    // Nombre seguro: timestamp + extensión original solamente
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `comprobante_${Date.now()}${ext}`);
+  }
+});
 var upload = multer({ storage: storage });
+
+// ✅ 3. Proteger TODO el router con autenticación + verificación de admin
+router.use(ensureAuthenticated);
+router.use((req, res, next) => {
+  const adminEmails = ['walter@autofaros.com.ar', 'chacho@autofaros.com.ar', 'gera@autofaros.com.ar'];
+  if (!req.session.usuario || !adminEmails.includes(req.session.usuario.email)) {
+    return res.status(403).send('Acceso denegado');
+  }
+  next();
+});
 
 router.get('/', administracionController.administracion);
 
