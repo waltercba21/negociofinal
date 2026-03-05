@@ -166,14 +166,11 @@ guardarFactura: (factura) => {
                     reject(new Error('Error al obtener presupuestos: ' + error.message));
                 } else {
                     const presupuestosFormateados = resultados.map(presupuesto => {
-                        const creadoUTC = new Date(presupuesto.creado_en);
-                        const creadoArgentina = new Date(creadoUTC.getTime() - 3 * 60 * 60 * 1000);
 
                         return {
-                            ...presupuesto,
-                            fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES'),
-                            hora: creadoArgentina.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
-                            total: new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0 }).format(presupuesto.total)
+    ...presupuesto,
+    fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES'),
+    hora: new Date(presupuesto.creado_en).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
                         };
                     });
                     
@@ -202,14 +199,12 @@ guardarFactura: (factura) => {
                     reject(new Error('Error al obtener facturas: ' + error.message));
                 } else {
                     const facturasFormateadas = resultados.map(factura => {
-                        const creadoUTC = new Date(factura.creado_en);
-                        const creadoAR = new Date(creadoUTC.getTime() - 3 * 60 * 60 * 1000); // Ajuste UTC-3
     
                         return {
                             id: factura.id,
                             nombre_cliente: factura.nombre_cliente,
                             fecha: new Date(factura.fecha).toLocaleDateString('es-AR'),
-                            hora: creadoAR.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+                            hora: new Date(factura.creado_en).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
                             total: new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(factura.total),
                             metodos_pago: factura.metodos_pago
                         };
