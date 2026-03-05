@@ -98,8 +98,6 @@ app.use('/productos', productosRouter);
 app.use('/administracion', administracionRouter);
 app.use('/carrito', carritoRoutes);
 app.use('/pedidos', pedidosRoutes);
-app.use('/whatsapp', express.urlencoded({ extended: true }), whatsappRoutes);
-app.use('/analytics', analyticsRoutes);
 app.use('/reportes', reportesRoutes);
 app.use('/arca', arcaRoutes);
 

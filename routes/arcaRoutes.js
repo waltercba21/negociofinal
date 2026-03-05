@@ -3,16 +3,25 @@ const express = require("express");
 const router = express.Router();
 
 const arcaController = require("../controllers/arcaController");
-const adminMiddleware = require("../middleware/adminMiddleware");
+const ensureAuthenticated = require("../middleware/usuarioMiddleware");
+const adminEmails = require("../config/admins");
 
-// ===== PASO 1: Modo seguro PROD (bloqueo de emisión) =====
+// ─── Middleware: solo admins ───────────────────────────────────────────────────
+function soloAdmin(req, res, next) {
+  if (!req.session.usuario || !adminEmails.includes(req.session.usuario.email)) {
+    // API requests → JSON, UI requests → redirect
+    if (req.xhr || (req.headers.accept || '').includes('application/json')) {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+    return res.status(403).send('Acceso denegado');
+  }
+  next();
+}
+
+// ===== Modo seguro PROD (bloqueo de emisión en producción) ===================
 function isTrue(v) {
   return ["1", "true", "yes", "on", "si"].includes(String(v || "").toLowerCase());
 }
-
-const ARCA_ENV = String(process.env.ARCA_ENV || "homo").toLowerCase();
-const IS_PROD = /^prod\b/i.test(ARCA_ENV);
-const PROD_LOCK = isTrue(process.env.ARCA_PROD_LOCK);
 
 function prodEmitLock(req, res, next) {
   const arcaEnv = String(process.env.ARCA_ENV || "").toLowerCase();
@@ -37,16 +46,11 @@ function prodEmitLock(req, res, next) {
   });
 }
 
-// IMPORTANTE: lock antes del adminMiddleware para poder evidenciar con curl aun sin sesión.
-// (Con header SI pasa al adminMiddleware; sin header queda bloqueado 423.)
-router.use(prodEmitLock);
 function normalizeCbteTipoA(req, _res, next) {
   try {
-    const cfgA = Number(process.env.ARCA_CBTE_TIPO_A || 1); // para FAWA debe ser 51
+    const cfgA = Number(process.env.ARCA_CBTE_TIPO_A || 1);
     const b = req.body || {};
     const t = Number(b.cbte_tipo || 0);
-
-    // Si piden “A” (1 o 51), forzamos al tipo configurado (51 en PROD para FAWA)
     if ((t === 1 || t === 51) && cfgA) {
       b.cbte_tipo = cfgA;
       req.body = b;
@@ -55,48 +59,38 @@ function normalizeCbteTipoA(req, _res, next) {
   next();
 }
 
-// Protege TODO /arca (UI + API)
-router.use(adminMiddleware);
+// ===== Orden de middlewares globales =========================================
+// 1) prodEmitLock primero (puede bloquear sin sesión con 423)
+// 2) ensureAuthenticated (redirige al login si no hay sesión)
+// 3) soloAdmin (bloquea con 403 si no es admin)
+router.use(prodEmitLock);
+router.use(ensureAuthenticated);
+router.use(soloAdmin);
 
-// ===== API (JSON) =====
+// ===== API (JSON) =============================================================
 
-// Emitir ARCA desde una factura existente del mostrador
 router.post("/emitir-desde-factura/:facturaId", normalizeCbteTipoA, arcaController.emitirDesdeFacturaMostrador);
-
-
-// Ver estado ARCA (último) por factura mostrador
 router.get("/status/factura/:id", arcaController.statusPorFacturaMostrador);
-
-// Listar últimas facturas del mostrador (para UI)
 router.get("/ui/facturas", arcaController.listarFacturasMostrador);
-
-// Detalle de una factura del mostrador (cabecera + items)
 router.get("/ui/facturas/:id", arcaController.detalleFacturaMostrador);
-
-// Historial ARCA por factura del mostrador
 router.get("/ui/arca-por-factura/:id", arcaController.historialArcaPorFactura);
 
-// ===== Reportes / Cierre diario (JSON) =====
+// Reportes / Cierre diario
 router.get("/reportes/resumen", arcaController.reportesResumen);
 router.get("/reportes/comprobantes", arcaController.reportesComprobantes);
-
 router.post("/cierres-diarios", arcaController.crearCierreDiario);
 router.get("/cierres-diarios", arcaController.listarCierresDiarios);
 router.get("/cierres-diarios/:fecha", arcaController.detalleCierreDiario);
 
-// ===== UI (EJS) =====
+// ===== UI (EJS) ==============================================================
 router.get("/", arcaController.vistaArcaIndex);
-
 router.get("/pdf/:arcaId", arcaController.descargarPDFComprobante);
 router.get("/receptor", arcaController.buscarReceptor);
 router.post("/receptor/cache", arcaController.guardarReceptorCache);
 router.get("/params/cond-iva-receptor", arcaController.paramsCondIvaReceptor);
-
 router.get("/wsfe/consultar/:arcaId", arcaController.auditarWsfePorArcaId);
 router.get("/wsfe/consultas/:arcaId", arcaController.listarWsfeConsultas);
-
 router.post("/emitir-nc/:arcaIdOrigen", arcaController.emitirNotaCreditoPorArcaId);
-
 router.get("/reportes/ventas-diarias.pdf", arcaController.reporteVentasDiariasPdf);
 
 module.exports = router;
