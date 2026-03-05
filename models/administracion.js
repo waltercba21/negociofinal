@@ -440,7 +440,7 @@ insertarItemPresupuesto: function(item, callback) {
     },
     deleteFacturaById : function(id, callback) {
         pool.query('DELETE FROM facturas WHERE id = ?', [id], function(error, results) {
-            if (error) throw error;
+            if (error) return callback(error);
             callback(null, results);
         });
     },
@@ -489,7 +489,7 @@ insertarItemPresupuesto: function(item, callback) {
       },
     getFacturasByProveedorId : function(idProveedor, callback) {
         pool.query('SELECT * FROM facturas WHERE id_proveedor = ?', [idProveedor], function(error, results) {
-            if (error) throw error;
+            if (error) return callback(error);
             callback(null, results);
         });
     },
@@ -501,7 +501,7 @@ insertarItemPresupuesto: function(item, callback) {
             WHERE fai.factura_id = ?
         `;
         pool.query(query, [facturaID], function(error, results) {
-            if (error) throw error;
+            if (error) return callback(error);
             callback(null, results);
         });
     },
@@ -598,9 +598,9 @@ insertarItemPresupuesto: function(item, callback) {
   };
 
   pool.query('INSERT INTO presupuestos SET ?', datos, function (error, results) {
-    if (error) return callback(null, error);
-    if (!results.insertId) return callback(null, new Error("Presupuesto no insertado."));
-    callback(results.insertId, null);
+    if (error) return callback(error);
+if (!results.insertId) return callback(new Error("Presupuesto no insertado."));
+callback(null, results.insertId);
   });
 },
 
