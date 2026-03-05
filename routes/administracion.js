@@ -6,7 +6,6 @@ var path = require('path');
 
 // ✅ 1. Importar middlewares de protección
 var ensureAuthenticated = require('../middleware/usuarioMiddleware');
-var { setGlobalVariables } = require('../middleware/middlewares');
 
 // ✅ 2. Sanitizar nombre de archivo para evitar path traversal
 var storage = multer.diskStorage({
