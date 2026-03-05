@@ -1,9 +1,8 @@
-// middlewares.js
-const adminEmails = ['walter@autofaros.com.ar', 'chacho@autofaros.com.ar', 'gera@autofaros.com.ar'];
+const adminEmails = require('../config/admins');
 
 module.exports = {
   setGlobalVariables: (req, res, next) => {
-    res.locals.isLogged = req.session.usuario ? true : false;
+    res.locals.isLogged = !!req.session.usuario;
     res.locals.isAdminUser = req.session.usuario && adminEmails.includes(req.session.usuario.email);
     next();
   }

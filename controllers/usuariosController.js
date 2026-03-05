@@ -136,62 +136,68 @@ module.exports = {
       res.redirect('/');
     });
   },
-  updateProfile: (req, res) => {
-    const userId = req.session.usuario.id;
-    const updatedData = req.body;
-  
-    // Validación básica (puedes usar una librería como express-validator para mayor robustez)
-    if (!updatedData.nombre || !updatedData.email) {
+updateProfile: (req, res) => {
+  // ✅ Verificar sesión primero
+  if (!req.session || !req.session.usuario) {
+    return res.redirect('/users/login');
+  }
+
+  const userId = req.session.usuario.id;
+  const updatedData = req.body;
+
+  if (!updatedData.nombre || !updatedData.email) {
+    return res.render('profile', {
+      error: 'El nombre y el email son obligatorios',
+      oldData: updatedData,
+    });
+  }
+
+  usuario.actualizar(userId, updatedData, function (error) {
+    if (error) {
+      console.error('Error al actualizar el perfil:', error);
       return res.render('profile', {
-        error: 'El nombre y el email son obligatorios',
+        error: 'Ocurrió un error al actualizar el perfil. Intenta nuevamente.',
         oldData: updatedData,
       });
     }
-  
-    usuario.actualizar(userId, updatedData, function (error) {
-      if (error) {
-        console.error('Error al actualizar el perfil:', error);
+
+    req.session.usuario = { ...req.session.usuario, ...updatedData };
+
+    req.session.save(function (err) {
+      if (err) {
+        console.error('Error al guardar la sesión:', err);
         return res.render('profile', {
-          error: 'Ocurrió un error al actualizar el perfil. Intenta nuevamente.',
+          error: 'Ocurrió un error al actualizar tu sesión. Intenta nuevamente.',
           oldData: updatedData,
         });
       }
-  
-      // Actualizar datos en la sesión
-      req.session.usuario = { ...req.session.usuario, ...updatedData };
-  
-      req.session.save(function (err) {
-        if (err) {
-          console.error('Error al guardar la sesión:', err);
-          return res.render('profile', {
-            error: 'Ocurrió un error al actualizar tu sesión. Intenta nuevamente.',
-            oldData: updatedData,
-          });
-        }
-  
-        res.redirect('/');
-      });
+      res.redirect('/');
     });
-  },  
-  deleteAccount: (req, res, next) => {
-    const userId = req.session.usuario.id;
-  
-    usuario.eliminar(userId, (err) => {
+  });
+},
+
+deleteAccount: (req, res, next) => {
+  // ✅ Verificar sesión primero
+  if (!req.session || !req.session.usuario) {
+    return res.redirect('/users/login');
+  }
+
+  const userId = req.session.usuario.id;
+
+  usuario.eliminar(userId, (err) => {
+    if (err) {
+      console.error('Error al eliminar la cuenta:', err);
+      return next(err);
+    }
+
+    req.session.destroy((err) => {
       if (err) {
-        console.error('Error al eliminar la cuenta:', err);
-        return next(err); // Esto manejará el error globalmente o con middleware de errores.
+        console.error('Error al destruir la sesión:', err);
+        return next(err);
       }
-  
-      req.session.destroy((err) => {
-        if (err) {
-          console.error('Error al destruir la sesión:', err);
-          return next(err);
-        }
-  
-        // Redirigir a una página de confirmación o al inicio
-        res.redirect('/cuenta-eliminada');
-      });
+      res.redirect('/');
     });
-  },  
+  });
+},
  
 }

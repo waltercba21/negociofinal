@@ -23,7 +23,7 @@ var upload = multer({ storage: storage });
 // ✅ 3. Proteger TODO el router con autenticación + verificación de admin
 router.use(ensureAuthenticated);
 router.use((req, res, next) => {
-  const adminEmails = ['walter@autofaros.com.ar', 'chacho@autofaros.com.ar', 'gera@autofaros.com.ar'];
+  const adminEmails = require('../config/admins');
   if (!req.session.usuario || !adminEmails.includes(req.session.usuario.email)) {
     return res.status(403).send('Acceso denegado');
   }
