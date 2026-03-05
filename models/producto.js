@@ -327,51 +327,29 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
     conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
     [proveedor_id, descuento], funcion);
   },
-  eliminar: async (idOrIds) => {
-    return new Promise((resolve, reject) => {
-      const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
-      const idList = ids.join(',');
-  
-      conexion.query(`DELETE FROM pedido_items WHERE producto_id IN (${idList})`, (error, results) => {
-        if (error) {
-          console.error("Error al eliminar de pedido_items:", error);
-          return reject(error);
-        }
-  
-        // Continuar con las demás eliminaciones
-        conexion.query(`DELETE FROM estadisticas WHERE producto_id IN (${idList})`, (error, results) => {
-          if (error) return reject(error);
-          conexion.query(`DELETE FROM factura_items WHERE producto_id IN (${idList})`, (error, results) => {
-            if (error) return reject(error);
-            conexion.query(`DELETE FROM imagenes_producto WHERE producto_id IN (${idList})`, (error, results) => {
-              if (error) return reject(error);
-              conexion.query(`DELETE FROM items_presupuesto WHERE producto_id IN (${idList})`, (error, results) => {
-                if (error) return reject(error);
-                conexion.query(`DELETE FROM presupuesto_items WHERE producto_id IN (${idList})`, (error, results) => {
-                  if (error) return reject(error);
-                  conexion.query(`DELETE FROM presupuesto_productos WHERE producto_id IN (${idList})`, (error, results) => {
-                    if (error) return reject(error);
-                    conexion.query(`DELETE FROM producto_proveedor WHERE producto_id IN (${idList})`, (error, results) => {
-                      if (error) return reject(error);
-  
-                      // Finalmente, eliminar los productos de la tabla productos
-                      conexion.query(`DELETE FROM productos WHERE id IN (${idList})`, (error, results) => {
-                        if (error) {
-                          console.error("Error al eliminar de productos:", error);
-                          return reject(error);
-                        }
-                        resolve(results);
-                      });
-                    });
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
-    });
-  }, 
+ eliminar: async (idOrIds) => {
+    const ids = (Array.isArray(idOrIds) ? idOrIds : [idOrIds])
+      .map(id => parseInt(id, 10))
+      .filter(id => Number.isFinite(id) && id > 0);
+
+    if (!ids.length) throw new Error('No se proporcionaron IDs válidos para eliminar');
+
+    const placeholders = ids.map(() => '?').join(',');
+    const pp = conexion.promise();
+
+    // Borrar en orden para respetar foreign keys
+    await pp.query(`DELETE FROM pedido_items        WHERE producto_id IN (${placeholders})`, ids);
+    await pp.query(`DELETE FROM estadisticas         WHERE producto_id IN (${placeholders})`, ids);
+    await pp.query(`DELETE FROM factura_items        WHERE producto_id IN (${placeholders})`, ids);
+    await pp.query(`DELETE FROM imagenes_producto    WHERE producto_id IN (${placeholders})`, ids);
+    await pp.query(`DELETE FROM items_presupuesto    WHERE producto_id IN (${placeholders})`, ids);
+    await pp.query(`DELETE FROM presupuesto_items    WHERE producto_id IN (${placeholders})`, ids);
+    await pp.query(`DELETE FROM presupuesto_productos WHERE producto_id IN (${placeholders})`, ids);
+    await pp.query(`DELETE FROM producto_proveedor   WHERE producto_id IN (${placeholders})`, ids);
+
+    const [result] = await pp.query(`DELETE FROM productos WHERE id IN (${placeholders})`, ids);
+    return result;
+  },
 actualizar: function (conexion, datos, archivo) {
   return new Promise((resolve, reject) => {
     if (!isSet(datos.id)) {
