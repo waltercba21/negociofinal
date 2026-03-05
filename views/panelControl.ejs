@@ -543,14 +543,9 @@
               </div>
 
               <div class="panel-col">
-                <form
-                  method="get"
-                  action="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? '&busqueda=' + encodeURIComponent(String(busquedaActual)) : '' %><%= (proveedorSeleccionado && String(proveedorSeleccionado) !== 'TODOS') ? '&proveedor=' + encodeURIComponent(String(proveedorSeleccionado)) : '' %><%= (categoriaSeleccionada && String(categoriaSeleccionada) !== '' && String(categoriaSeleccionada) !== 'TODAS') ? '&categoria=' + encodeURIComponent(String(categoriaSeleccionada)) : '' %>"
-                >
-                  <button class="btn-edit" type="submit">
-                    <i class="fas fa-edit"></i> Editar
-                  </button>
-                </form>
+                <a class="btn-edit" href="/productos/editar/<%= producto.id %>?pagina=<%= paginaActual %><%= busquedaActual ? '&busqueda=' + encodeURIComponent(String(busquedaActual)) : '' %><%= (proveedorSeleccionado && String(proveedorSeleccionado) !== 'TODOS') ? '&proveedor=' + encodeURIComponent(String(proveedorSeleccionado)) : '' %><%= (categoriaSeleccionada && String(categoriaSeleccionada) !== '' && String(categoriaSeleccionada) !== 'TODAS') ? '&categoria=' + encodeURIComponent(String(categoriaSeleccionada)) : '' %>">
+                  <i class="fas fa-edit"></i> Editar
+                </a>
               </div>
             </div>
           <% }); %>

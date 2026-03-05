@@ -193,11 +193,9 @@ function renderPanelListado(contenedor, lista, paginaOrOpts, busquedaMaybe) {
         <div class="panel-col panel-price">${precio}</div>
 
         <div class="panel-col">
-          <form method="get" action="${action}">
-            <button class="btn-edit" type="submit">
-              <i class="fas fa-edit"></i> Editar
-            </button>
-          </form>
+          <a href="${action}" class="btn-edit">
+            <i class="fas fa-edit"></i> Editar
+          </a>
         </div>
       </div>
     `;
