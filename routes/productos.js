@@ -42,7 +42,7 @@ router.get('/ofertas', productosController.ofertas);
 router.get('/modelos/:marcaId', productosController.obtenerModelosPorMarca);
 router.get('/api/buscar', productosController.buscar);
 router.get('/ultimos', productosController.ultimos);
-router.get('/:id', productosController.detalle);
+
 
 // ─── RUTAS MOSTRADOR (usuario logueado) ───────────────────────────────────────
 router.get('/presupuestoMostrador', ensureAuthenticated, productosController.presupuestoMostrador);
@@ -95,4 +95,5 @@ router.get('/actualizados/nuevos.pdf', ensureAuthenticated, soloAdmin, productos
 router.get('/api/proveedores/:productoId', ensureAuthenticated, soloAdmin, productosController.apiProveedoresDeProducto);
 router.get('/api/proveedor-siguiente', ensureAuthenticated, soloAdmin, productosController.apiProveedorSiguiente);
 
+router.get('/:id', productosController.detalle);
 module.exports = router;
