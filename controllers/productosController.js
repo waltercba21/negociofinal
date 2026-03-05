@@ -9,7 +9,7 @@ const streamBuffers = require('stream-buffers');
 const xlsx = require('xlsx');
 
 
-const adminEmails = ['walter@autofaros.com.ar'];
+const adminEmails = require('../config/admins');
 
 function normalizarClave(texto) {
   return texto
@@ -528,7 +528,7 @@ lista: async function (req, res) {
       ofertas: async function (req, res) {
         try {
           const isUserLoggedIn = !!req.session.usuario;
-          const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin';
+          const isAdminUser = isUserLoggedIn && adminEmails.includes(req.session.usuario?.email);
       
           const paginaSolicitada = parseInt(req.query.pagina) || 1;
           const productosPorPagina = 20;
@@ -596,7 +596,7 @@ lista: async function (req, res) {
             categoriaSeleccionada: '',
             marcaSeleccionada: '',
             isUserLoggedIn: !!req.session.usuario,
-            isAdminUser: req.session.usuario && req.session.usuario.rol === 'admin',
+            isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
             pagina: 1,
             numeroDePaginas: 1
           });
@@ -764,7 +764,7 @@ buscar: async (req, res) => {
           productoData[0].imagenes = imagenes || [];
       
           const isUserLoggedIn = !!req.session.usuario;
-          const isAdminUser = isUserLoggedIn && req.session.usuario.rol === 'admin';
+          const isAdminUser = isUserLoggedIn && adminEmails.includes(req.session.usuario?.email);
       
           let cantidadCarrito = 0;
       
