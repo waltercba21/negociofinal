@@ -1,5 +1,4 @@
 const conexion = require('../config/conexion')
-const pool = require('../config/conexion');
 const util = require('util');
 const path = require('path');
 
@@ -343,7 +342,6 @@ insertarProductoProveedor: function(conexion, productoProveedor) {
     await pp.query(`DELETE FROM factura_items        WHERE producto_id IN (${placeholders})`, ids);
     await pp.query(`DELETE FROM imagenes_producto    WHERE producto_id IN (${placeholders})`, ids);
     await pp.query(`DELETE FROM presupuesto_items    WHERE producto_id IN (${placeholders})`, ids);
-    await pp.query(`DELETE FROM presupuesto_productos WHERE producto_id IN (${placeholders})`, ids);
     await pp.query(`DELETE FROM producto_proveedor   WHERE producto_id IN (${placeholders})`, ids);
 
     const [result] = await pp.query(`DELETE FROM productos WHERE id IN (${placeholders})`, ids);
@@ -2164,8 +2162,7 @@ obtenerProductoConImagenes: (id_producto, callback) => {
             p.id;
     `;
 
-    // Usar el pool de conexiones directamente
-    pool.query(query, [id_producto], (error, resultados) => {
+    conexion.query(query, [id_producto], (error, resultados) => {
         if (error) {
             callback(error, null);
         } else {
@@ -2425,7 +2422,7 @@ obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
 upsertPedido: function (conexion, pedido, items) {
   return new Promise((resolve, reject) => {
     const getCx = (cb) => {
-      if (conexion && typeof conexion.getConnection === 'function') return conexion.getConnection(cb); // pool
+      if (conexion && typeof conexion.getConnection === 'function') return conexion.getConnection(cb);
       return cb(null, conexion); // conexión directa
     };
 
