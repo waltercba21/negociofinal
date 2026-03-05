@@ -318,12 +318,29 @@ function renderSearchPagination() {
   // Bind delete para el listado inicial server (por si existe botón en HTML)
   bindDeleteButton(document);
 
+
+  // Sincroniza ?busqueda= en la URL sin recargar la página
+  // Así al volver desde Editar, la búsqueda se restaura automáticamente
+  function syncBusquedaEnUrl(busqueda) {
+    const params = new URLSearchParams(window.location.search);
+    if (busqueda) {
+      params.set('busqueda', busqueda);
+    } else {
+      params.delete('busqueda');
+    }
+    const nuevaUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.history.replaceState({}, '', nuevaUrl);
+  }
+
   let timer;
   inputBusqueda?.addEventListener('input', function (e) {
     clearTimeout(timer);
 
     timer = setTimeout(async () => {
       const busqueda = (e.target.value || '').trim();
+
+      // Siempre sincronizar la URL con lo que hay en el input
+      syncBusquedaEnUrl(busqueda);
 
       if (!busqueda) {
         restoreServerPagination();
