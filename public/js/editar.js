@@ -27,7 +27,7 @@ if (!window.__EDITAR_INIT__) {
         el.id = id;
         el.name = id;
         el.value = defaultVal;
-        (document.querySelector('form') || document.body).appendChild(el);
+        (document.querySelector('form[data-producto-id]') || document.body).appendChild(el);
       }
       return el;
     }
@@ -39,13 +39,13 @@ if (!window.__EDITAR_INIT__) {
       ordenExistentesContainer = document.createElement('div');
       ordenExistentesContainer.id = 'orden_existentes_container';
       ordenExistentesContainer.style.display = 'none';
-      (document.querySelector('form') || document.body).appendChild(ordenExistentesContainer);
+      (document.querySelector('form[data-producto-id]') || document.body).appendChild(ordenExistentesContainer);
     }
     if (!eliminarContainer) {
       eliminarContainer = document.createElement('div');
       eliminarContainer.id = 'eliminar_imagenes_container';
       eliminarContainer.style.display = 'none';
-      (document.querySelector('form') || document.body).appendChild(eliminarContainer);
+      (document.querySelector('form[data-producto-id]') || document.body).appendChild(eliminarContainer);
     }
 
     var dt = new DataTransfer();
