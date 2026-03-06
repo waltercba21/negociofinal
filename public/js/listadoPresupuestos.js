@@ -41,7 +41,7 @@ function imprimirTotalPresupuestos(fechaInicio, fechaFin) {
             const cantidadPresupuestos = data.length;
 
             data.forEach(presupuesto => {
-                const totalNumerico = parseFloat(presupuesto.total.replace('.', '').replace(',', '.'));
+                const totalNumerico = parseFloat(presupuesto.total);
                 totalPresupuestos += totalNumerico;
             });
 
@@ -84,14 +84,28 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
             tableBody.innerHTML = ''; 
             let totalPresupuestos = 0;
             data.forEach(presupuesto => {
-                const totalNumerico = parseFloat(presupuesto.total.replace('.', '').replace(',', '.'));
+                const totalNumerico = parseFloat(presupuesto.total);
                 totalPresupuestos += totalNumerico;
+
+                // Corregir hora: creado_en viene en UTC desde MySQL, convertir a hora local argentina (UTC-3)
+                let horaDisplay = presupuesto.hora || '';
+                if (horaDisplay) {
+                    // Si la hora viene como "HH:MM:SS" la ajustamos restando 3 horas para Argentina
+                    const [hh, mm, ss] = horaDisplay.split(':').map(Number);
+                    const fechaTemp = new Date();
+                    fechaTemp.setUTCHours(hh, mm, ss || 0);
+                    horaDisplay = fechaTemp.toLocaleTimeString('es-AR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        timeZone: 'America/Argentina/Buenos_Aires'
+                    });
+                }
                 const row = document.createElement('tr');
                 row.setAttribute('data-id', presupuesto.id);
                 row.innerHTML = `
                     <td class="id">${presupuesto.id}</td>
                     <td class="fecha">${presupuesto.fecha}</td>
-                    <td class="hora">${presupuesto.hora}</td>
+                    <td class="hora">${horaDisplay}</td>
                     <td class="cliente">${presupuesto.nombre_cliente}</td>
                     <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
                     <td>
