@@ -71,37 +71,13 @@ crearCarrito: (usuario_id, callback) => {
   });
 },
 agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
-    id_carrito,
-    id_producto,
-    cantidad
-  });
-
   const queryPrecio = "SELECT precio_venta FROM productos WHERE id = ?";
-
   pool.query(queryPrecio, [id_producto], (error, resultados) => {
-    if (error) {
-      return callback(error);
-    }
-
+    if (error) return callback(error);
     if (resultados.length > 0) {
-      const precio = resultados[0].precio_venta;
-
-        id_producto,
-        precio
-      });
-
-      const query =
-        "INSERT INTO productos_carrito (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)";
-
+      const query = "INSERT INTO productos_carrito (carrito_id, producto_id, cantidad) VALUES (?, ?, ?)";
       pool.query(query, [id_carrito, id_producto, cantidad], (error, resultados) => {
-        if (error) {
-          return callback(error);
-        }
-
-          insertId: resultados?.insertId,
-          affectedRows: resultados?.affectedRows
-        });
-
+        if (error) return callback(error);
         callback(null, resultados);
       });
     } else {
