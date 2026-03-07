@@ -68,20 +68,13 @@ module.exports = {
   // 1) Obtener carrito activo del usuario
   carrito.obtenerCarritoActivo(id_usuario, (error, carritoActivo) => {
     if (error) {
-      console.error("🧪 [CTRL] error obtenerCarritoActivo:", error);
       return res.status(500).json({ error: "Error al obtener carrito" });
     }
-
-    console.log("🧪 [CTRL] obtenerCarritoActivo ->", carritoActivo);
-
     if (!carritoActivo || carritoActivo.length === 0) {
-      console.log("🧪 [CTRL] no hay carrito, creando...");
       carrito.crearCarrito(id_usuario, (error, nuevoCarritoId) => {
         if (error) {
-          console.error("🧪 [CTRL] error crearCarrito:", error);
           return res.status(500).json({ error: "Error al crear carrito" });
         }
-        console.log("🧪 [CTRL] carrito creado:", { nuevoCarritoId });
         agregarConValidacion(nuevoCarritoId);
       });
     } else {
