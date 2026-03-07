@@ -71,7 +71,6 @@ crearCarrito: (usuario_id, callback) => {
   });
 },
 agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
-  console.log("🧪 HIT MODELO carrito.agregarProductoCarrito", {
     id_carrito,
     id_producto,
     cantidad
@@ -81,14 +80,12 @@ agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
 
   pool.query(queryPrecio, [id_producto], (error, resultados) => {
     if (error) {
-      console.log("🧪 ERROR queryPrecio", error);
       return callback(error);
     }
 
     if (resultados.length > 0) {
       const precio = resultados[0].precio_venta;
 
-      console.log("🧪 Producto encontrado en MODELO", {
         id_producto,
         precio
       });
@@ -98,11 +95,9 @@ agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
 
       pool.query(query, [id_carrito, id_producto, cantidad], (error, resultados) => {
         if (error) {
-          console.log("🧪 ERROR INSERT productos_carrito", error);
           return callback(error);
         }
 
-        console.log("🧪 INSERT OK productos_carrito", {
           insertId: resultados?.insertId,
           affectedRows: resultados?.affectedRows
         });
@@ -110,7 +105,6 @@ agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
         callback(null, resultados);
       });
     } else {
-      console.log("🧪 Producto NO encontrado en MODELO", { id_producto });
       callback(new Error("Producto no encontrado"));
     }
   });
@@ -133,7 +127,6 @@ agregarProductoCarrito: (id_carrito, id_producto, cantidad, callback) => {
             return callback(error);
         }
 
-        console.log('✅ Resultados de productos con imágenes:', resultados);
 
         // Agrupar los productos por ID y asignar solo una imagen
         const productosMap = {};
@@ -294,7 +287,6 @@ actualizarEstado: (id_carrito, nuevoEstado, callback) => {
     },
 
     vaciarCarrito: (id_carrito, callback) => {
-        console.log(`🛒 [DEBUG] Intentando vaciar el carrito con ID: ${id_carrito}`);
     
         if (!id_carrito) {
             console.error("❌ [ERROR] No se proporcionó un ID de carrito válido.");
@@ -309,10 +301,8 @@ actualizarEstado: (id_carrito, nuevoEstado, callback) => {
                 return callback(error);
             }
     
-            console.log(`✅ [INFO] Productos eliminados del carrito: ${resultados.affectedRows}`);
     
             if (resultados.affectedRows === 0) {
-                console.warn("⚠️ [WARN] No se eliminaron productos. Puede que el carrito ya esté vacío o que el ID sea incorrecto.");
             }
     
             callback(null, resultados);
