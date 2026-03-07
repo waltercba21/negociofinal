@@ -5,7 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const COSTO_DELIVERY = 5000;
-const pool = require("../config/conexion");
 
 function getIO(req) {
   const io = req.app.get("io");
@@ -916,12 +915,11 @@ if (io) {
     } else {
       console.log(`[${trace}] 🔎 Sin sesión: leyendo pedido directo por id...`);
       pedido = await new Promise((resolve, reject) => {
-        pool.query(
-          "SELECT id AS id_carrito, estado, tipo_envio, direccion, actualizado_en AS fecha_compra, es_pedido FROM carritos WHERE id = ? LIMIT 1",
-          [pedidoId],
-          (err, rows) => (err ? reject(err) : resolve(rows?.[0] || null))
-        );
-      });
+  carrito.obtenerCarritoPorId(pedidoId, (err, row) => {
+    if (err) return reject(err);
+    resolve(row);
+  });
+});
       console.log(`[${trace}] ✅ pedido (directo):`, pedido);
     }
 

@@ -362,5 +362,19 @@ actualizarEnvio: (id_carrito, tipo_envio, direccion, callback) => {
       cb(null, rows && rows.length ? rows[0] : null);
     });
   },
+  obtenerCarritoPorId: (id_carrito, callback) => {
+  const query = `
+    SELECT id AS id_carrito, estado, tipo_envio, direccion, 
+           actualizado_en AS fecha_compra, es_pedido
+    FROM carritos
+    WHERE id = ?
+    LIMIT 1
+  `;
+  pool.query(query, [id_carrito], (err, rows) => {
+    if (err) return callback(err);
+    callback(null, rows?.[0] || null);
+  });
+},
 
 };
+
