@@ -125,7 +125,6 @@ postFactura: function (req, res) {
       console.error("❌ Error al insertar factura:", error);
       return res.status(500).json({ message: 'Error al crear factura' });
     }
-    console.log("✅ Factura creada con ID:", insertId);
     res.json({ message: 'Factura creada exitosamente', insertId });
   });
 },
@@ -136,7 +135,6 @@ postFactura: function (req, res) {
                 console.error(error);
                 res.status(500).send('Error al obtener las facturas');
             } else {
-                console.log('Facturas:', facturas); // Agrega esta línea
                 administracion.getProveedores(function(error, proveedores) {
                     if (error) {
                         console.error(error);
@@ -162,7 +160,6 @@ postFactura: function (req, res) {
         });
     },
     getModificarFactura : function(req, res) {
-        console.log("getModificarFactura called with id:", req.params.id);
         let id = req.params.id;
         administracion.getFacturaById(id, function(err, factura) {
             if (err) {
@@ -225,7 +222,6 @@ postFactura: function (req, res) {
                 console.error('Error al eliminar la factura:', err);
                 res.status(500).send('Error al eliminar la factura');
             } else {
-                console.log('Factura eliminada con éxito:', results);
                 res.redirect('/administracion/listadoFacturas');
             }
         });
@@ -363,7 +359,6 @@ postFactura: function (req, res) {
 generarPDFIndividual : async (req, res) => {
   const tipo = req.params.tipo;
   const id = req.params.id;
-  console.log(`🧾 Generar PDF individual: tipo=${tipo}, id=${id}`);
 
   try {
     let data;
@@ -381,7 +376,6 @@ generarPDFIndividual : async (req, res) => {
       return res.status(400).send('Tipo inválido');
     }
 
-    console.log('✅ Datos obtenidos:', data);
     const productos = data.productos || [];
 
     
@@ -439,7 +433,6 @@ generarResumenPresupuestosPDF : (req, res) => {
   const { desde, hasta, proveedor, condicion } = req.query;
 
 
-  console.log(`📄 Generar PDF resumen presupuestos: desde=${desde}, hasta=${hasta}, proveedor=${proveedor}`);
 
   if (!desde || !hasta) {
     return res.status(400).send('Debés especificar fecha desde y hasta');
@@ -451,7 +444,6 @@ generarResumenPresupuestosPDF : (req, res) => {
       return res.status(500).send('Error al generar el resumen');
     }
 
-    console.log(`✅ ${presupuestos.length} presupuestos encontrados`);
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
     res.setHeader('Content-Type', 'application/pdf');
@@ -506,7 +498,6 @@ doc.text('Importe', colX[4], y);
 generarResumenFacturasPDF : (req, res) => {
   const { desde, hasta, proveedor, condicion } = req.query;
 
-  console.log(`📄 Generar PDF resumen facturas: desde=${desde}, hasta=${hasta}`);
 
   if (!desde || !hasta) {
     return res.status(400).send('Debés especificar fecha desde y hasta');
