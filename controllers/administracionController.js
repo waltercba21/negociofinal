@@ -1,4 +1,4 @@
-// ✅ Después
+
 const administracion = require('../models/administracion');
 const path = require('path');
 const PDFDocument = require('pdfkit');
