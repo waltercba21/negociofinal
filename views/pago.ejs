@@ -527,7 +527,7 @@
         if (loading) loading.style.display = 'none';
 
         if (data && data.preferenceId) {
-          const mp = new MercadoPago('<%= process.env.MP_PUBLIC_KEY %>', { locale: 'es-AR' });
+          const mp = new MercadoPago('<%= publicKey %>', { locale: 'es-AR' });
 
           mp.bricks().create("wallet", "wallet_container", {
             initialization: { preferenceId: data.preferenceId }

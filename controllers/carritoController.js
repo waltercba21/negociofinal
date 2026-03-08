@@ -557,7 +557,8 @@ vistaPago: (req, res) => {
           productos,
           envio,
           subtotal: subtotal.toFixed(2),
-          total
+          total,
+          publicKey: process.env.MP_PUBLIC_KEY
         });
       });
     });
