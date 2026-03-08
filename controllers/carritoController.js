@@ -664,10 +664,10 @@ finalizarCompra: async (req, res) => {
 
     // ✅ Cerrar pedido (NO borrar items)
     await new Promise((resolve, reject) => {
-      carrito.cerrarCarrito(id_carrito, nuevoEstado, (error) => {
-        if (error) return reject(error);
-        resolve();
-      });
+      carrito.cerrarCarrito(id_usuario, id_carrito, nuevoEstado, (error) => {
+    if (error) return reject(error);
+    resolve();
+});
     });
 
     // ✅ Crear un carrito nuevo vacío (pendiente) para seguir comprando
@@ -683,11 +683,11 @@ finalizarCompra: async (req, res) => {
    const io = getIO(req);
 if (io) {
   io.emit("nuevoPedido", {
-    mensaje: `📦 Nuevo pedido recibido (${mpRef})`,
-    id_carrito: mpRef,
-    usuario: id_usuario_carrito,
-    estado: nuevoEstado,
-  });
+  mensaje: `📦 Nuevo pedido recibido (${id_carrito})`,
+  id_carrito: id_carrito,
+  usuario: id_usuario,
+  estado: nuevoEstado,
+});
   io.emit("actualizarNotificacion");
 }
 
@@ -816,11 +816,11 @@ vistaPagoExitoso: async (req, res) => {
              const io = getIO(req);
 if (io) {
   io.emit("nuevoPedido", {
-    mensaje: `📦 Nuevo pedido recibido (${mpRef})`,
-    id_carrito: mpRef,
-    usuario: id_usuario_carrito,
-    estado: nuevoEstado,
-  });
+  mensaje: `📦 Nuevo pedido recibido (${id_carrito})`,
+  id_carrito: id_carrito,
+  usuario: id_usuario,
+  estado: nuevoEstado,
+});
   io.emit("actualizarNotificacion");
 }
 
