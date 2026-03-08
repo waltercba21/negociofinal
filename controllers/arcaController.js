@@ -34,12 +34,6 @@ function isDupKey(err, keyName) {
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
-function isTrue(v) {
-  return ["1","true","yes","on","si"].includes(String(v||"").toLowerCase());
-}
-function receptorCacheWriteEnabled() {
-  return !isTrue(process.env.ARCA_DISABLE_RECEPTOR_CACHE_WRITE);
-}
 
 function claseFromCbteTipo(cbteTipo) {
   const t = Number(cbteTipo);
@@ -2165,9 +2159,6 @@ async function buscarReceptor(req, res) {
     }
 
     if (debug) {
-      console.log("[ARCA][buscarReceptor] query =", req.query);
-      console.log("[ARCA][buscarReceptor] parsed =", { doc_tipo, doc_nro, docNroDigits });
-      console.log("[ARCA][buscarReceptor] resolve =", resolve, "refresh =", refresh);
       console.log("[ARCA][buscarReceptor] cacheWriteEnabled =", receptorCacheWriteEnabled());
     }
 
