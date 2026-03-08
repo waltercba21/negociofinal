@@ -6,7 +6,6 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const session = require('express-session');
-const mercadopago = require('mercadopago');
 
 const adminMiddleware = require('./middleware/adminMiddleware');
 const middlewares = require('./middleware/middlewares');
@@ -31,7 +30,6 @@ app.set('io', io);
 if (!process.env.MP_ACCESS_TOKEN) {
   console.warn('⚠️ Falta MP_ACCESS_TOKEN en .env');
 }
-mercadopago.configure({ access_token: process.env.MP_ACCESS_TOKEN || '' });
 
 // --- Vistas ---
 app.set('views', path.join(__dirname, 'views'));
