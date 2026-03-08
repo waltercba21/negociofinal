@@ -1,5 +1,6 @@
 const carrito = require('../models/carrito'); // ✅ Esta línea debe estar al inicio del archivo
-const mercadopago = require('mercadopago');
+const { MercadoPagoConfig, Preference } = require('mercadopago');
+const mpClient = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const producto = require('../models/producto');
 const fs = require('fs');
 const path = require('path');
@@ -11,10 +12,6 @@ function getIO(req) {
   if (!io) console.log("⚠️ [SOCKET] io no disponible en req.app");
   return io;
 }
-
-mercadopago.configure({
-    access_token: process.env.MP_ACCESS_TOKEN
-});
 
 module.exports = {
     // Crear un carrito nuevo si no existe
@@ -573,19 +570,22 @@ procesarPago: async (req, res) => {
     const carritos = await new Promise((resolve, reject) => {
       carrito.obtenerCarritoActivo(id_usuario, (err, r) => err ? reject(err) : resolve(r));
     });
-    if (!carritos || carritos.length === 0) return res.status(400).json({ error: "No hay un carrito activo" });
+    if (!carritos || carritos.length === 0)
+      return res.status(400).json({ error: "No hay un carrito activo" });
 
     const id_carrito = carritos[0].id;
 
     const productos = await new Promise((resolve, reject) => {
       carrito.obtenerProductosCarrito(id_carrito, (err, r) => err ? reject(err) : resolve(r));
     });
-    if (!productos || productos.length === 0) return res.status(400).json({ error: "No hay productos en el carrito" });
+    if (!productos || productos.length === 0)
+      return res.status(400).json({ error: "No hay productos en el carrito" });
 
     const envio = await new Promise((resolve, reject) => {
       carrito.obtenerEnvioCarrito(id_carrito, (err, r) => err ? reject(err) : resolve(r));
     });
-    if (!envio || !envio.tipo_envio) return res.status(400).json({ error: "Falta seleccionar envío" });
+    if (!envio || !envio.tipo_envio)
+      return res.status(400).json({ error: "Falta seleccionar envío" });
 
     const items = productos.map(p => ({
       title: p.nombre,
@@ -603,26 +603,27 @@ procesarPago: async (req, res) => {
       });
     }
 
-    const preference = {
-      items,
-      external_reference: String(id_carrito),
-      back_urls: {
-        success: "https://www.autofaros.com.ar/carrito/pago-exito",
-        failure: "https://www.autofaros.com.ar/carrito/pago-error",
-        pending: "https://www.autofaros.com.ar/carrito/pago-pendiente"
-      },
-      auto_return: "approved"
-    };
+    const preference = new Preference(mpClient);
+    const response = await preference.create({
+      body: {
+        items,
+        external_reference: String(id_carrito),
+        back_urls: {
+          success: "https://www.autofaros.com.ar/carrito/pago-exito",
+          failure: "https://www.autofaros.com.ar/carrito/pago-error",
+          pending: "https://www.autofaros.com.ar/carrito/pago-pendiente"
+        },
+        auto_return: "approved"
+      }
+    });
 
-    const response = await mercadopago.preferences.create(preference);
-    return res.json({ preferenceId: response.body.id });
+    return res.json({ preferenceId: response.id });
 
   } catch (error) {
-    console.error("❌ Error en `procesarPago`:", error);
+    console.error("❌ Error en procesarPago:", error);
     return res.status(500).json({ error: "Error al procesar el pago" });
   }
 },
-
 finalizarCompra: async (req, res) => {
   try {
     const id_usuario = req.session.usuario.id;
