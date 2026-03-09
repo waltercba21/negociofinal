@@ -1,11 +1,11 @@
 <% var pageCss = '/css/pages/lista.css' %>
 <!DOCTYPE html>
 <html lang="es">
-<%- include('../layouts/head.ejs') %>
+<%- include('./layouts/head.ejs') %>
 <link rel="stylesheet" href="/css/pages/lista.css" />
 <body data-is-admin-user="<%= isAdminUser %>" data-is-user-logged-in="<%= isUserLoggedIn %>">
 
-  <%- include('../layouts/header.ejs') %>
+  <%- include('./layouts/header.ejs') %>
 
   <main class="lista-main">
 
@@ -345,6 +345,6 @@
   <script src="/js/pages/agregarAlCarrito.js?v=20260309" defer></script>
   <script src="/js/pages/lista.js?v=20260309" defer></script>
 
-  <%- include('../layouts/footer.ejs') %>
+  <%- include('./layouts/footer.ejs') %>
 </body>
 </html>
