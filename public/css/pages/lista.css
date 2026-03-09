@@ -239,12 +239,13 @@
 ────────────────────────────────────────────────────────── */
 .pcard {
   position: relative;
-  background: #111c30;
-  border: 1px solid rgba(31, 72, 126, 0.2);
+  background: #16243d;
+  border: 1px solid rgba(31, 72, 126, 0.35);
   border-radius: 18px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
   transition: transform 0.25s cubic-bezier(0.16,1,0.3,1),
               box-shadow 0.25s cubic-bezier(0.16,1,0.3,1),
               border-color 0.25s ease;
@@ -252,11 +253,11 @@
 
 .pcard:hover {
   transform: translateY(-4px);
-  border-color: rgba(31, 72, 126, 0.55);
+  border-color: rgba(31, 72, 126, 0.7);
   box-shadow:
-    0 0 0 1px rgba(31, 72, 126, 0.2),
-    0 20px 48px rgba(0, 0, 0, 0.45),
-    0 4px 12px rgba(31, 72, 126, 0.15);
+    0 0 0 1px rgba(31, 72, 126, 0.25),
+    0 20px 48px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(31, 72, 126, 0.2);
 }
 
 /* Variantes de borde */
@@ -314,14 +315,16 @@
 .pcard__media {
   position: relative;
   background: #ffffff;
-  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: 220px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .pcard__carousel {
+  position: relative;
   width: 100%;
   height: 100%;
-  position: relative;
 }
 
 .pcard__img {
@@ -331,12 +334,11 @@
   height: 100%;
   object-fit: contain;
   padding: 12px;
-  transition: opacity 0.2s ease;
+  display: block;
 }
 
 .pcard__img.hidden {
-  opacity: 0;
-  pointer-events: none;
+  display: none;
 }
 
 .pcard__carousel-btn {
@@ -1099,5 +1101,27 @@
     width: 26px;
     height: 26px;
     font-size: 12px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   CAROUSEL — flechas siempre visibles en touch/mobile
+────────────────────────────────────────────────────────── */
+@media (hover: none) {
+  .pcard__carousel-btn {
+    opacity: 0.75;
+  }
+}
+
+/* Altura de imagen responsive */
+@media (max-width: 480px) {
+  .pcard__media {
+    height: 160px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .pcard__media {
+    height: 240px;
   }
 }

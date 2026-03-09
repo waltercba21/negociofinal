@@ -1,11 +1,13 @@
 // public/js/pages/lista.js
-// Autofaros v2026-03-09 — lógica específica de la vista lista de productos
+// Autofaros v2026-03-09
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[AF] lista.js cargado');
 
   /* ──────────────────────────────────────────────
-     CAROUSEL — actualiza dots al cambiar imagen
+     CAROUSEL
+     Las imágenes usan clase .pcard__img + .hidden
+     Los contenedores tienen id="carousel-{index}"
   ────────────────────────────────────────────── */
   window.moverCarrusel = function (index, direccion) {
     const carousel = document.getElementById('carousel-' + index);
@@ -31,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ──────────────────────────────────────────────
-     QTY BUTTONS — +/- delegado en el grid
+     QTY BUTTONS — delegado en el grid
   ────────────────────────────────────────────── */
   const grid = document.getElementById('contenedor-productos');
   if (!grid) return;
@@ -54,29 +56,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnPlus)  val = Math.min(max, val + 1);
 
     input.value = val;
-    // Disparar evento input para que agregarAlCarrito.js detecte el cambio
+    input.dataset.afRequested = String(val);
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
 
   /* ──────────────────────────────────────────────
-     MODAL APLICACIONES (escobillas)
-     Funciona tanto en SSR como en cards dinámicas
+     MODAL APLICACIONES
   ────────────────────────────────────────────── */
   function escapeHtml(str) {
     return String(str ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   function normalizeAplicaciones(raw) {
     let s = String(raw ?? '').trim();
     if (!s) return { subtitle: '', lines: [] };
-
     s = s.replace(/<br\s*\/?\s*>/gi, '\n').replace(/\r/g, '');
-
     if (!s.includes('\n')) {
       const m = s.match(/\b[A-ZÁÉÍÓÚÑ]{2,}\b/);
       if (m && typeof m.index === 'number' && m.index > 0) {
@@ -87,12 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
         s = s.replace(/\s{2,}/g, '\n');
       }
     }
-
     const lines = s.split('\n').map(x => x.trim()).filter(Boolean);
     let subtitle = '';
-    if (lines.length >= 2 && /^(escobilla|kit|rear)/i.test(lines[0])) {
-      subtitle = lines.shift();
-    }
+    if (lines.length >= 2 && /^(escobilla|kit|rear)/i.test(lines[0])) subtitle = lines.shift();
     return { subtitle, lines };
   }
 
@@ -102,52 +95,37 @@ document.addEventListener('DOMContentLoaded', () => {
       <li class="af-apps-li">
         <span class="af-apps-ico"><i class="fa-solid fa-car"></i></span>
         <span class="af-apps-txt">${escapeHtml(l)}</span>
-      </li>
-    `).join('');
-
-    return `
-      <div class="af-apps-wrap">
-        ${subtitle ? `<div class="af-apps-subtitle">${escapeHtml(subtitle)}</div>` : ''}
-        <ul class="af-apps-ul">${items || '<li class="af-apps-li"><span class="af-apps-txt">Sin aplicaciones cargadas.</span></li>'}</ul>
-      </div>
-    `;
-  }
-
-  function mostrarAplicacionesModal(titulo, raw) {
-    const contenido = String(raw ?? '').trim();
-    if (!contenido) return;
-
-    if (window.Swal) {
-      Swal.fire({
-        title: titulo || 'Aplicaciones',
-        html: buildAplicacionesHtml(contenido),
-        width: 'min(980px, 94vw)',
-        showCloseButton: true,
-        confirmButtonText: 'Cerrar',
-        customClass: {
-          popup: 'af-apps-modal',
-          title: 'af-apps-title',
-          htmlContainer: 'af-apps-body',
-          confirmButton: 'af-apps-confirm'
-        }
-      });
-    }
+      </li>`).join('');
+    return `<div class="af-apps-wrap">
+      ${subtitle ? `<div class="af-apps-subtitle">${escapeHtml(subtitle)}</div>` : ''}
+      <ul class="af-apps-ul">${items || '<li class="af-apps-li"><span class="af-apps-txt">Sin aplicaciones cargadas.</span></li>'}</ul>
+    </div>`;
   }
 
   document.addEventListener('click', (ev) => {
     const btn = ev.target.closest('.btn-aplicaciones');
     if (!btn) return;
-
     const titulo = (btn.dataset.titulo || 'Aplicaciones').toString();
     let texto = (btn.dataset.aplicaciones || '').toString();
     try { texto = JSON.parse(texto); } catch(_) {}
-
-    mostrarAplicacionesModal(titulo, texto);
+    if (!window.Swal) return;
+    Swal.fire({
+      title: titulo,
+      html: buildAplicacionesHtml(texto),
+      width: 'min(980px, 94vw)',
+      showCloseButton: true,
+      confirmButtonText: 'Cerrar',
+      customClass: {
+        popup: 'af-apps-modal',
+        title: 'af-apps-title',
+        htmlContainer: 'af-apps-body',
+        confirmButton: 'af-apps-confirm'
+      }
+    });
   }, { passive: true });
 
   /* ──────────────────────────────────────────────
-     LOADING STATE — reemplaza el texto genérico
-     que usa selectores.js con un spinner
+     LOADING SPINNER — intercepta el texto de selectores.js
   ────────────────────────────────────────────── */
   const observer = new MutationObserver(() => {
     const p = grid.querySelector('p');
@@ -156,10 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="productos-loading">
           <div class="loading-spinner"></div>
           <span>Buscando productos…</span>
-        </div>
-      `;
+        </div>`;
     }
   });
-
   observer.observe(grid, { childList: true, subtree: false });
 });
