@@ -753,3 +753,8 @@
   appearance: none;
   display: none;
 }
+.presupuesto-btn--outline {
+  color: rgba(240, 244, 255, 0.75) !important;
+  border: 1.5px solid rgba(31, 72, 126, 0.35) !important;
+  background: transparent !important;
+}
