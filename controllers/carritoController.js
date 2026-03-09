@@ -5,7 +5,7 @@ const producto = require('../models/producto');
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
-const COSTO_DELIVERY = 5000;
+const COSTO_DELIVERY = Number(process.env.COSTO_DELIVERY || 3000);
 
 function getIO(req) {
   const io = req.app.get("io");
