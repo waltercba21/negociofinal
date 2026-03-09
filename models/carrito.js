@@ -328,9 +328,9 @@ actualizarEnvio: (id_carrito, tipo_envio, direccion, callback) => {
       cb(null, rows && rows.length ? rows[0] : null);
     });
   },
-  obtenerCarritoPorId: (id_carrito, callback) => {
+ obtenerCarritoPorId: (id_carrito, callback) => {
   const query = `
-    SELECT id AS id_carrito, estado, tipo_envio, direccion, 
+    SELECT id AS id_carrito, usuario_id, estado, tipo_envio, direccion, 
            actualizado_en AS fecha_compra, es_pedido
     FROM carritos
     WHERE id = ?
