@@ -1,8 +1,5 @@
 const pool = require('../config/conexion');
 
-const COSTO_DELIVERY = Number(process.env.COSTO_DELIVERY || 3000);
-
-
 module.exports = {
  obtenerPedidos: (callback) => {
     const query = `
@@ -99,7 +96,6 @@ module.exports = {
         };
       });
 
-      const costo_envio = (tipo_envio === 'delivery') ? COSTO_DELIVERY : 0;
       const total = totalProductos + costo_envio;
 
       callback(null, {
