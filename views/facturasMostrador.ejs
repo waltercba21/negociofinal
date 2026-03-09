@@ -1,98 +1,210 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
+<% var pageCss = '/css/pages/facturasMostrador.css' %>
+<!DOCTYPE html>
+<html lang="es">
+<%- include('./layouts/head.ejs') %>
+<link rel="stylesheet" href="/css/pages/facturasMostrador.css" />
 <body>
-   <main>
-    <div class="button-container-presupuesto">
-      <button class="btn-primary-presupuestos" onclick="window.location.href='/productos/listadoFacturas'">Listado de Facturas</button>
+  <%- include('./layouts/header.ejs') %>
+
+  <main class="facturas-main">
+
+    <!-- ══════════════════════════════════════
+         HEADER DE PÁGINA
+    ══════════════════════════════════════ -->
+    <div class="facturas-page-header">
+      <div class="facturas-page-header__left">
+        <span class="facturas-page-header__eyebrow">
+          <i class="fa-solid fa-file-invoice-dollar"></i> Mostrador
+        </span>
+        <h1 class="facturas-page-header__title">Nueva Factura</h1>
+      </div>
+      <div class="facturas-page-header__right">
+        <span class="facturas-numero-badge">
+          <span class="facturas-numero-badge__label">N° Factura</span>
+          <span class="facturas-numero-badge__value">#<%= idFactura %></span>
+        </span>
+        <button class="btn-listado" onclick="window.location.href='/productos/listadoFacturas'">
+          <i class="fa-solid fa-list"></i>
+          <span>Listado de Facturas</span>
+        </button>
+      </div>
     </div>
-    <form id="invoice-form" action="/productos/procesarFormularioFacturas" method="POST">
-      <div id="invoice">
-        <h2>Facturas</h2>
-        <div id="invoice-details">
-          <div class="input-container">
-            <label for="nombre-cliente">Vendedor responsable:</label>
-            <select id="nombre-cliente" name="nombreCliente" required>
+
+    <form id="invoice-form" action="/productos/procesarFormularioFacturas" method="POST" class="facturas-form">
+
+      <!-- ══════════════════════════════════════
+           PANEL SUPERIOR: Vendedor + Fecha + Pago
+      ══════════════════════════════════════ -->
+      <div class="facturas-panel facturas-panel--top">
+
+        <!-- Vendedor -->
+        <div class="facturas-field">
+          <label class="facturas-label" for="nombre-cliente">
+            <i class="fa-solid fa-user-tie"></i> Vendedor responsable
+          </label>
+          <div class="facturas-select-wrap">
+            <select id="nombre-cliente" name="nombreCliente" required class="facturas-select">
               <option value="">Seleccionar vendedor</option>
               <option value="CHACHO">CHACHO</option>
               <option value="GERARDO">GERARDO</option>
               <option value="WALTER">WALTER</option>
             </select>
-          </div>
-          
-          <div class="input-container">
-            <label for="fecha-presupuesto">Fecha:</label>
-            <input type="date" id="fecha-presupuesto" name="fechaPresupuesto">
-          </div>
-          <div class="input-container">
-            <label for="numero-presupuesto">N° Factura</label>
-            <p><%= idFactura %></p>
+            <i class="fa-solid fa-chevron-down facturas-select-arrow"></i>
           </div>
         </div>
 
-        <div id="metodos-pago">
-        <h3>Método de Pago</h3>
-        <label><input type="radio" name="metodosPago" value="EFECTIVO"> Efectivo</label>
-        <label><input type="radio" name="metodosPago" value="CREDITO"> Crédito</label>
-        <label><input type="radio" name="metodosPago" value="DEBITO"> Débito</label>
-        <label><input type="radio" name="metodosPago" value="TRANSFERENCIA"> Transferencia</label>
-        <label><input type="radio" name="metodosPago" value="QR"> QR</label>
+        <!-- Fecha -->
+        <div class="facturas-field">
+          <label class="facturas-label" for="fecha-presupuesto">
+            <i class="fa-solid fa-calendar-days"></i> Fecha
+          </label>
+          <input type="date" id="fecha-presupuesto" name="fechaPresupuesto" class="facturas-input" />
         </div>
 
-        <div class="buscador">
-          <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
-          <div id="resultadosBusqueda"></div>
+        <!-- Método de pago -->
+        <div class="facturas-field facturas-field--pago">
+          <span class="facturas-label">
+            <i class="fa-solid fa-credit-card"></i> Método de pago
+          </span>
+          <div class="metodos-pago">
+            <label class="metodo-pago-item">
+              <input type="radio" name="metodosPago" value="EFECTIVO" />
+              <span class="metodo-pago-pill">
+                <i class="fa-solid fa-money-bill-wave"></i> Efectivo
+              </span>
+            </label>
+            <label class="metodo-pago-item">
+              <input type="radio" name="metodosPago" value="CREDITO" />
+              <span class="metodo-pago-pill">
+                <i class="fa-solid fa-credit-card"></i> Crédito
+              </span>
+            </label>
+            <label class="metodo-pago-item">
+              <input type="radio" name="metodosPago" value="DEBITO" />
+              <span class="metodo-pago-pill">
+                <i class="fa-solid fa-credit-card"></i> Débito
+              </span>
+            </label>
+            <label class="metodo-pago-item">
+              <input type="radio" name="metodosPago" value="TRANSFERENCIA" />
+              <span class="metodo-pago-pill">
+                <i class="fa-solid fa-arrows-rotate"></i> Transferencia
+              </span>
+            </label>
+            <label class="metodo-pago-item">
+              <input type="radio" name="metodosPago" value="QR" />
+              <span class="metodo-pago-pill">
+                <i class="fa-solid fa-qrcode"></i> QR
+              </span>
+            </label>
+          </div>
         </div>
-        <div id="invoice-items">
-          <table id="tabla-factura">
-              <thead>
-                  <tr>
-                      <th>Imagen</th>
-                      <th>Código</th>
-                      <th>Descripción</th>
-                      <th>Precio Unitario</th>
-                      <th>Cantidad</th>
-                      <th>Stock Actual</th>
-                      <th>Subtotal</th>
-                      <th>Eliminar</th>
-                  </tr>
-              </thead>
-              <tbody>
-                <% for(let i = 0; i < 10; i++) { %>
-                    <tr>
-                        <td><img src="" class="miniatura-tabla" style="display: none;"></td>
-                        <td></td> <!-- Código -->
-                        <td></td> <!-- Descripción -->
-                        <td><input type="text" class="precio-editable" disabled></td>
-                        <td><input type="number" min="1" value="0" disabled></td>
-                        <td></td> <!-- Stock -->
-                        <td></td> <!-- Subtotal -->
-                        <td>
-                          <button type="button" class="boton-eliminar-factura" style="display: none;">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </td>
-                        
-                    </tr>
-                <% } %>
+
+      </div>
+
+      <!-- ══════════════════════════════════════
+           BUSCADOR DE PRODUCTOS
+      ══════════════════════════════════════ -->
+      <div class="facturas-panel facturas-panel--buscador">
+        <div class="facturas-buscador-wrap">
+          <i class="fa-solid fa-magnifying-glass facturas-buscador-icon"></i>
+          <input
+            type="text"
+            id="entradaBusqueda"
+            name="searchInput"
+            placeholder="Buscar producto... Ej: Escort, Óptica, Faro, Agile"
+            autocomplete="off"
+            class="facturas-buscador-input"
+          />
+        </div>
+        <div id="resultadosBusqueda" class="facturas-resultados"></div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           TABLA DE ÍTEMS
+      ══════════════════════════════════════ -->
+      <div class="facturas-panel facturas-panel--tabla">
+        <div class="facturas-tabla-wrap">
+          <table id="tabla-factura" class="facturas-tabla">
+            <thead>
+              <tr>
+                <th>Imagen</th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Precio Unitario</th>
+                <th>Cantidad</th>
+                <th>Stock</th>
+                <th>Subtotal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for(let i = 0; i < 10; i++) { %>
+                <tr class="facturas-tabla__row">
+                  <td class="facturas-tabla__img-cell">
+                    <img src="" class="miniatura-tabla" style="display: none;" />
+                  </td>
+                  <td class="facturas-tabla__codigo"></td>
+                  <td class="facturas-tabla__desc"></td>
+                  <td class="facturas-tabla__precio">
+                    <input type="text" class="precio-editable facturas-tabla__input" disabled />
+                  </td>
+                  <td class="facturas-tabla__cant">
+                    <input type="number" min="1" value="0" class="facturas-tabla__input facturas-tabla__input--qty" disabled />
+                  </td>
+                  <td class="facturas-tabla__stock"></td>
+                  <td class="facturas-tabla__subtotal"></td>
+                  <td class="facturas-tabla__delete">
+                    <button type="button" class="boton-eliminar-factura" style="display: none;">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              <% } %>
             </tbody>
-            
           </table>
-      </div>
-        <div id="invoice-total">
-          <div id="invoice-interes">
-            <label>Interés (15%): <input type="text" id="interes-amount" name="interes" readonly></label>
-        </div>
-         <label id="label-total">Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
-        </div>
-        <input type="hidden" id="invoiceItems" name="invoiceItems">
-        <div class="botones-contenedor">
-          <button type="submit">Guardar Factura</button>
-          <button type="button" id="print-button">Imprimir Factura</button>
         </div>
       </div>
+
+      <!-- ══════════════════════════════════════
+           TOTALES + ACCIONES
+      ══════════════════════════════════════ -->
+      <div class="facturas-panel facturas-panel--footer">
+        <div class="facturas-totales">
+          <div class="facturas-total-row">
+            <span class="facturas-total-label">
+              <i class="fa-solid fa-percent"></i> Interés (15% crédito)
+            </span>
+            <input type="text" id="interes-amount" name="interes" readonly class="facturas-total-input" />
+          </div>
+          <div class="facturas-total-row facturas-total-row--main">
+            <span class="facturas-total-label facturas-total-label--main">
+              <i class="fa-solid fa-receipt"></i> Total
+            </span>
+            <input type="text" id="total-amount" name="totalPresupuesto" readonly class="facturas-total-input facturas-total-input--main" />
+          </div>
+        </div>
+
+        <input type="hidden" id="invoiceItems" name="invoiceItems" />
+
+        <div class="facturas-acciones">
+          <button type="button" id="print-button" class="btn-imprimir">
+            <i class="fa-solid fa-print"></i>
+            <span>Imprimir</span>
+          </button>
+          <button type="submit" class="btn-guardar">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Guardar Factura</span>
+          </button>
+        </div>
+      </div>
+
     </form>
-   </main>
-   <%- include ./layouts/footer.ejs %>
-   <script src="/js/buscadorFacturasMostrador.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="/js/pages/buscadorFacturasMostrador.js" defer></script>
+
+  <%- include('./layouts/footer.ejs') %>
 </body>
+</html>
