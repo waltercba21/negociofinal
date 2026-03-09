@@ -114,14 +114,35 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     });
   }
 
+  // Reemplazar celda de cantidad con botones +/-
+  const stockNum = parseInt(stockActual) || 0;
+  filaDisponible.cells[4].innerHTML = `
+    <div class="qty-control">
+      <button type="button" class="qty-btn qty-btn--minus" tabindex="-1"><i class="fa-solid fa-minus"></i></button>
+      <input type="number" min="1" max="${stockNum}" value="1" class="facturas-tabla__input facturas-tabla__input--qty" />
+      <button type="button" class="qty-btn qty-btn--plus" tabindex="-1"><i class="fa-solid fa-plus"></i></button>
+    </div>`;
+
   const inputCantidad = filaDisponible.cells[4].querySelector("input");
-  if (inputCantidad) {
-    inputCantidad.value = 1;
-    inputCantidad.disabled = false;
-    inputCantidad.addEventListener('input', function () {
-      updateSubtotal(filaDisponible);
-    });
-  }
+  const btnMinus = filaDisponible.cells[4].querySelector(".qty-btn--minus");
+  const btnPlus  = filaDisponible.cells[4].querySelector(".qty-btn--plus");
+
+  btnMinus.addEventListener('click', () => {
+    const val = parseInt(inputCantidad.value) || 1;
+    if (val > 1) { inputCantidad.value = val - 1; updateSubtotal(filaDisponible); }
+  });
+
+  btnPlus.addEventListener('click', () => {
+    const val = parseInt(inputCantidad.value) || 1;
+    if (val < stockNum) { inputCantidad.value = val + 1; updateSubtotal(filaDisponible); }
+    else {
+      Swal.fire({ title: 'Stock insuficiente', text: `Solo hay ${stockNum} unidades disponibles.`, icon: 'warning', confirmButtonText: 'Entendido' });
+    }
+  });
+
+  inputCantidad.addEventListener('input', function () {
+    updateSubtotal(filaDisponible);
+  });
 
   filaDisponible.cells[5].textContent = stockActual;
   filaDisponible.cells[6].textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
@@ -136,7 +157,7 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
       filaDisponible.cells[1].textContent = "";
       filaDisponible.cells[2].textContent = "";
       if (inputPrecio) { inputPrecio.value = ""; inputPrecio.disabled = true; }
-      if (inputCantidad) { inputCantidad.value = "0"; inputCantidad.disabled = true; }
+      filaDisponible.cells[4].innerHTML = `<input type="number" min="1" value="0" class="facturas-tabla__input facturas-tabla__input--qty" disabled />`;
       filaDisponible.cells[5].textContent = "";
       filaDisponible.cells[6].textContent = "";
       if (imgElement) imgElement.style.display = "none";

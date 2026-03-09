@@ -745,3 +745,46 @@
   .facturas-buscador-wrap, .boton-eliminar-factura { display: none; }
   .facturas-tabla__input { border: none; background: transparent; color: #000; }
 }
+
+/* ── Qty control +/- ── */
+.qty-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.qty-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(31, 72, 126, 0.4);
+  background: rgba(31, 72, 126, 0.1);
+  color: rgba(240, 244, 255, 0.8);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.qty-btn:hover {
+  background: rgba(31, 72, 126, 0.3);
+  border-color: #1F487E;
+  color: #fff;
+}
+
+.qty-btn:active { transform: scale(0.92); }
+
+.facturas-tabla__input--qty {
+  width: 52px !important;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.facturas-tabla__input--qty::-webkit-inner-spin-button,
+.facturas-tabla__input--qty::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
