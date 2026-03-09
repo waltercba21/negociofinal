@@ -103,17 +103,19 @@ function cargarPresupuestos(fechaInicio, fechaFin) {
                 const row = document.createElement('tr');
                 row.setAttribute('data-id', presupuesto.id);
                 row.innerHTML = `
-                    <td class="id">${presupuesto.id}</td>
+                    <td class="id">#${presupuesto.id}</td>
                     <td class="fecha">${presupuesto.fecha}</td>
                     <td class="hora">${horaDisplay}</td>
                     <td class="cliente">${presupuesto.nombre_cliente}</td>
                     <td class="total">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico)}</td>
                     <td>
-                        <button class="btn-ver" data-id="${presupuesto.id}">Ver Detalle</button>
-                        <button class="btn-editar" data-id="${presupuesto.id}">Editar</button>
-                        <button class="btn-eliminar" data-id="${presupuesto.id}">Eliminar</button>
-                        <button class="btn-guardar" data-id="${presupuesto.id}" style="display:none;">Guardar</button>
-                        <button class="btn-cancelar" data-id="${presupuesto.id}" style="display:none;">Cancelar</button>
+                        <div class="lp-acciones">
+                          <button class="lp-btn lp-btn--outline lp-btn--sm btn-ver" data-id="${presupuesto.id}"><i class="fa-solid fa-eye"></i> Ver</button>
+                          <button class="lp-btn lp-btn--outline lp-btn--sm btn-editar" data-id="${presupuesto.id}"><i class="fa-solid fa-pen"></i> Editar</button>
+                          <button class="lp-btn lp-btn--danger lp-btn--sm btn-eliminar" data-id="${presupuesto.id}"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                          <button class="lp-btn lp-btn--primary lp-btn--sm btn-guardar" data-id="${presupuesto.id}" style="display:none;"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                          <button class="lp-btn lp-btn--outline lp-btn--sm btn-cancelar" data-id="${presupuesto.id}" style="display:none;">Cancelar</button>
+                        </div>
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -210,28 +212,33 @@ function guardarCambios(id) {
         cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
     })
     .catch(error => {
-        alert('Error al actualizar el presupuesto: ' + error.message);
+        Swal.fire({ title: 'Error', text: 'Error al actualizar: ' + error.message, icon: 'error', confirmButtonText: 'Entendido' });
     });
 } 
 function eliminarPresupuesto(id) {
-    if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
-        fetch(`/productos/api/presupuestos/${id}`, {
-            method: 'DELETE',
-        })
+    Swal.fire({
+        title: '¿Eliminar presupuesto?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        fetch(`/productos/api/presupuestos/${id}`, { method: 'DELETE' })
         .then(response => {
-            if (!response.ok) {
-                throw new Error('Respuesta del servidor no es OK');
-            }
+            if (!response.ok) throw new Error('Respuesta del servidor no es OK');
             return response.json();
         })
-        .then(data => {
-            alert('Presupuesto eliminado exitosamente');
-            cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value);
+        .then(() => {
+            Swal.fire({ title: 'Eliminado', text: 'Presupuesto eliminado exitosamente.', icon: 'success', confirmButtonText: 'OK' })
+              .then(() => cargarPresupuestos(document.getElementById('fechaInicio').value, document.getElementById('fechaFin').value));
         })
         .catch(error => {
-            alert('Error al eliminar el presupuesto: ' + error.message);
+            Swal.fire({ title: 'Error', text: 'Error al eliminar: ' + error.message, icon: 'error', confirmButtonText: 'Entendido' });
         });
-    }
+    });
 }
 document.getElementById('btnImprimir').addEventListener('click', function () {
     const { jsPDF } = window.jspdf;
@@ -321,8 +328,3 @@ document.getElementById('btnImprimir').addEventListener('click', function () {
 
     doc.save('detalle_presupuestos_segmentado.pdf');
 });
-
-
-
-
-

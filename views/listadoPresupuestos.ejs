@@ -1,48 +1,86 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
+<% var pageCss = '/css/pages/listadoPresupuestos.css' %>
+<!DOCTYPE html>
+<html lang="es">
+<%- include('./layouts/head.ejs') %>
+<link rel="stylesheet" href="/css/pages/listadoPresupuestos.css?v=1" />
 <body>
-    <main class="container-listadoPresupuesto">
-        <h2 class="titulo-listado">Listado de Presupuestos</h2>
-    
-        <div class="filtros-presupuestos">
-            <div class="filtros-fechas">
-                <label for="fechaInicio">Desde:</label>
-                <input type="date" id="fechaInicio" value="<%= fechaInicio %>">
-                
-                <label for="fechaFin">Hasta:</label>
-                <input type="date" id="fechaFin" value="<%= fechaFin %>">
-            </div>
-    
-            <div class="filtros-botones">
-                <button id="buscar">Buscar</button>
-                <button id="btnImprimir" class="btn btn-primary">Imprimir Detalle</button>
-                <button id="btnImprimirTotal" class="btn btn-secondary">Imprimir Total</button>
-            </div>
+  <%- include('./layouts/header.ejs') %>
+
+  <main class="lp-main">
+
+    <!-- PAGE HEADER -->
+    <div class="lp-page-header">
+      <div class="lp-page-header__left">
+        <span class="lp-page-header__eyebrow">Mostrador</span>
+        <h1 class="lp-page-header__title">Listado de Presupuestos</h1>
+      </div>
+      <a href="/productos/presupuestoMostrador" class="lp-btn lp-btn--primary">
+        <i class="fa-solid fa-plus"></i> Nuevo Presupuesto
+      </a>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="lp-panel lp-panel--filtros">
+      <div class="lp-filtros">
+        <div class="lp-filtros__fechas">
+          <div class="lp-field">
+            <label class="lp-label" for="fechaInicio">Desde</label>
+            <input type="date" id="fechaInicio" class="lp-input" value="<%= fechaInicio %>">
+          </div>
+          <div class="lp-field">
+            <label class="lp-label" for="fechaFin">Hasta</label>
+            <input type="date" id="fechaFin" class="lp-input" value="<%= fechaFin %>">
+          </div>
+          <button id="buscar" class="lp-btn lp-btn--primary">
+            <i class="fa-solid fa-magnifying-glass"></i> Buscar
+          </button>
         </div>
-    
-        <table id="presupuestos-table" class="table-presupuestos">
-            <thead class="thead-presupuestos">
-                <tr>
-                    <th>ID Presupuesto</th>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Cliente</th>
-                    <th>Total</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Aquí se insertarán las filas dinámicamente con JavaScript -->
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="5" class="td-presupuestos"><strong>Total:</strong></td>
-                    <td id="total-presupuestos" class="tfoot-total"></td>
-                </tr>
-            </tfoot>
-        </table>
-    </main>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
-    <script src="/js/listadoPresupuestos.js"></script>
+        <div class="lp-filtros__acciones">
+          <button id="btnImprimir" class="lp-btn lp-btn--outline">
+            <i class="fa-solid fa-print"></i> Imprimir Detalle
+          </button>
+          <button id="btnImprimirTotal" class="lp-btn lp-btn--outline">
+            <i class="fa-solid fa-file-pdf"></i> Imprimir Total
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLA -->
+    <div class="lp-panel lp-panel--tabla">
+      <table id="presupuestos-table" class="lp-tabla">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Cliente</th>
+            <th>Total</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- JS inserta filas -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" class="lp-tabla__tfoot-label">Total del período</td>
+            <td id="total-presupuestos" class="lp-tabla__tfoot-total"></td>
+            <td colspan="1"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div id="lp-empty" class="lp-empty" style="display:none;">
+        <i class="fa-solid fa-receipt lp-empty__icon"></i>
+        <p>No se encontraron presupuestos en el período seleccionado.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <%- include('./layouts/footer.ejs') %>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+  <script src="/js/listadoPresupuestos.js?v=1"></script>
 </body>
+</html>
