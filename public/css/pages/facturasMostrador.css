@@ -801,3 +801,27 @@
   -moz-appearance: textfield;
   appearance: textfield;
 }
+/* ── Fix modal confirmación factura ── */
+.swal2-popup .resumen-factura-modal {
+  color: #1a1a2e;
+  text-align: left;
+}
+
+.swal2-popup .resumen-factura-modal p {
+  color: #1a1a2e;
+  margin: 4px 0;
+}
+
+.swal2-popup .resumen-factura-modal table {
+  color: #1a1a2e;
+}
+
+.swal2-popup .resumen-factura-modal th,
+.swal2-popup .resumen-factura-modal td {
+  color: #1a1a2e;
+  text-align: left;
+}
+
+.swal2-popup .resumen-factura-modal hr {
+  border-color: #ccc;
+}
