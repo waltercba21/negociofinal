@@ -527,11 +527,7 @@
         if (loading) loading.style.display = 'none';
 
         if (data && data.preferenceId) {
-          const mp = new MercadoPago('<%= publicKey %>', { locale: 'es-AR' });
-
-          mp.bricks().create("wallet", "wallet_container", {
-            initialization: { preferenceId: data.preferenceId }
-          });
+          window.location.href = `https://sandbox.mercadopago.com.ar/checkout/v1/redirect?preference-id=${data.preferenceId}`;
         } else {
           alert('Error al generar la preferencia de pago.');
         }
