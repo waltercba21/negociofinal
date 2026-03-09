@@ -1,5 +1,4 @@
 const conexion = require('../config/conexion');
-const bcrypt = require('bcryptjs');
 
 module.exports = {
   obtener: function (funcion) {
@@ -34,7 +33,6 @@ module.exports = {
           return funcion(error);
         }
   
-        console.log('Resultado de la inserción:', result);
         funcion(null, result);
       }
     );
@@ -75,47 +73,5 @@ module.exports = {
       }
       return callback(null);
     });
-  },
-obtenerPorEmailYContraseña: function (email, contraseña, callback) {
-  const query = "SELECT * FROM usuarios WHERE email = ?";
-  const values = [email];
-
-  conexion.query(query, values, function (error, resultados) {
-    if (error) {
-      return callback(error, null);
-    }
-
-    if (resultados.length === 0) {
-      return callback(null, null);
-    }
-
-    const usuario = resultados[0];
-
-    bcrypt.compare(contraseña, usuario.password, function (err, result) {
-      if (err) {
-        return callback(err, null);
-      }
-
-      if (!result) {
-        return callback(null, null);
-      }
-
-      return callback(null, usuario);
-    });
-  });
-},
-buscarPorEmail: function (email, callback) {
-  const query = 'SELECT * FROM usuarios WHERE email = ?';
-  conexion.query(query, [email], function (error, resultados) {
-    if (error) {
-      return callback(error, null);
-    }
-
-    if (resultados.length === 0) {
-      return callback(null, null);
-    }
-
-    return callback(null, resultados[0]);
-  });
-},  
+  }
 };
