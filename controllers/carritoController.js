@@ -739,13 +739,12 @@ vistaPagoExitoso: async (req, res) => {
       console.log(`[${trace}] 🔒 Intentando cierre idempotente de carrito...`);
 
       // 1) obtener el carrito y su usuario_id desde DB (funciona aunque no haya sesión)
-      const carritoDB = await new Promise((resolve, reject) => {
-        pool.query(
-          "SELECT id, usuario_id, estado, es_pedido, actualizado_en FROM carritos WHERE id = ? LIMIT 1",
-          [mpRef],
-          (err, rows) => (err ? reject(err) : resolve(rows?.[0] || null))
-        );
-      });
+     const carritoDB = await new Promise((resolve, reject) => {
+  carrito.obtenerCarritoPorId(mpRef, (err, row) => {
+    if (err) return reject(err);
+    resolve(row);
+  });
+});
 
       console.log(`[${trace}] 📦 carritoDB:`, carritoDB);
 
@@ -787,12 +786,11 @@ vistaPagoExitoso: async (req, res) => {
 
           // Re-leemos para confirmar
           const carritoAfter = await new Promise((resolve, reject) => {
-            pool.query(
-              "SELECT id, usuario_id, estado, es_pedido, actualizado_en FROM carritos WHERE id = ? LIMIT 1",
-              [mpRef],
-              (err, rows) => (err ? reject(err) : resolve(rows?.[0] || null))
-            );
-          });
+  carrito.obtenerCarritoPorId(mpRef, (err, row) => {
+    if (err) return reject(err);
+    resolve(row);
+  });
+});
 
           console.log(`[${trace}] 📦 carritoAfter:`, carritoAfter);
 
