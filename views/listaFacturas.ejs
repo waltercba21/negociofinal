@@ -1,49 +1,87 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
+<% var pageCss = '/css/pages/listaFacturas.css' %>
+<!DOCTYPE html>
+<html lang="es">
+<%- include('./layouts/head.ejs') %>
+<link rel="stylesheet" href="/css/pages/listaFacturas.css?v=1" />
 <body>
- <main class="container-listadoPresupuesto">
-  <h2 class="titulo-listado">Listado de Facturas</h2>
+  <%- include('./layouts/header.ejs') %>
 
-  <div class="filtros-presupuestos">
-    <div class="filtros-fechas">
-      <label for="fechaInicio">Desde:</label>
-      <input type="date" id="fechaInicio" value="<%= fechaInicio %>">
+  <main class="lf-main">
 
-      <label for="fechaFin">Hasta:</label>
-      <input type="date" id="fechaFin" value="<%= fechaFin %>">
+    <!-- PAGE HEADER -->
+    <div class="lf-page-header">
+      <div class="lf-page-header__left">
+        <span class="lf-page-header__eyebrow">Mostrador</span>
+        <h1 class="lf-page-header__title">Listado de Facturas</h1>
+      </div>
+      <a href="/productos/facturasMostrador" class="lf-btn lf-btn--primary">
+        <i class="fa-solid fa-plus"></i> Nueva Factura
+      </a>
     </div>
 
-    <div class="filtros-botones">
-      <button id="buscar">Buscar</button>
-      <button id="btnImprimir" class="btn btn-primary">Imprimir Detalle</button>
-      <button id="btnImprimirTotal" class="btn btn-secondary">Imprimir Total</button>
+    <!-- FILTROS -->
+    <div class="lf-panel lf-panel--filtros">
+      <div class="lf-filtros">
+        <div class="lf-filtros__fechas">
+          <div class="lf-field">
+            <label class="lf-label" for="fechaInicio">Desde</label>
+            <input type="date" id="fechaInicio" class="lf-input" value="<%= fechaInicio %>">
+          </div>
+          <div class="lf-field">
+            <label class="lf-label" for="fechaFin">Hasta</label>
+            <input type="date" id="fechaFin" class="lf-input" value="<%= fechaFin %>">
+          </div>
+          <button id="buscar" class="lf-btn lf-btn--primary">
+            <i class="fa-solid fa-magnifying-glass"></i> Buscar
+          </button>
+        </div>
+        <div class="lf-filtros__acciones">
+          <button id="btnImprimir" class="lf-btn lf-btn--outline">
+            <i class="fa-solid fa-print"></i> Imprimir Detalle
+          </button>
+          <button id="btnImprimirTotal" class="lf-btn lf-btn--outline">
+            <i class="fa-solid fa-file-pdf"></i> Imprimir Total
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <table id="facturas-table" class="table-presupuestos">
-    <thead class="thead-presupuestos">
-      <tr>
-        <th>ID Factura</th>
-        <th>Fecha</th>
-        <th>Hora</th> <!-- NUEVA COLUMNA -->
-        <th>Cliente</th>
-        <th>Total</th>
-        <th>Método de Pago</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Aquí se insertarán las filas dinámicamente con JavaScript -->
-    </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="6" class="td-presupuestos"><strong>Total:</strong></td>
-        <td id="total-presupuestos" class="tfoot-total"></td>
-      </tr>
-    </tfoot>
-  </table>
-</main>
+    <!-- TABLA -->
+    <div class="lf-panel lf-panel--tabla">
+      <table id="facturas-table" class="lf-tabla">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Cliente</th>
+            <th>Total</th>
+            <th>Método de Pago</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- JS inserta filas -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" class="lf-tabla__tfoot-label">Total del período</td>
+            <td id="total-presupuestos" class="lf-tabla__tfoot-total"></td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
-    <script src="/js/listaFacturas.js"></script>
+      <div id="lf-empty" class="lf-empty" style="display:none;">
+        <i class="fa-solid fa-receipt lf-empty__icon"></i>
+        <p>No se encontraron facturas en el período seleccionado.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <%- include('./layouts/footer.ejs') %>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+  <script src="/js/listaFacturas.js?v=1"></script>
 </body>
+</html>
