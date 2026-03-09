@@ -1,0 +1,368 @@
+/* ============================================================
+   listaFacturas.css  —  Autofaros · Vista: Listado de Facturas
+   v2026-03-09
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────
+   1. BASE
+────────────────────────────────────────────────────────── */
+.lf-main {
+  background-color: #0b1220;
+  min-height: 100vh;
+  padding: 96px 24px 64px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   2. PAGE HEADER
+────────────────────────────────────────────────────────── */
+.lf-page-header {
+  max-width: 1200px;
+  margin: 0 auto 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.lf-page-header__eyebrow {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #1F487E;
+  margin-bottom: 4px;
+}
+
+.lf-page-header__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800;
+  color: #f0f4ff;
+  letter-spacing: -0.5px;
+  margin: 0;
+  line-height: 1;
+}
+
+/* ──────────────────────────────────────────────────────────
+   3. BOTONES
+────────────────────────────────────────────────────────── */
+.lf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.lf-btn--primary {
+  background: #1F487E;
+  color: #fff;
+}
+
+.lf-btn--primary:hover {
+  background: #2a5da0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(31, 72, 126, 0.4);
+}
+
+.lf-btn--outline {
+  background: transparent;
+  color: rgba(240, 244, 255, 0.75);
+  border: 1.5px solid rgba(31, 72, 126, 0.35);
+}
+
+.lf-btn--outline:hover {
+  background: rgba(31, 72, 126, 0.12);
+  border-color: #1F487E;
+  color: #f0f4ff;
+}
+
+.lf-btn--danger {
+  background: rgba(217, 4, 41, 0.12);
+  color: #ff4d6d;
+  border: 1.5px solid rgba(217, 4, 41, 0.25);
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.lf-btn--danger:hover {
+  background: rgba(217, 4, 41, 0.22);
+  border-color: #d90429;
+}
+
+.lf-btn--sm {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 7px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   4. PANEL
+────────────────────────────────────────────────────────── */
+.lf-panel {
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  background: rgba(17, 28, 48, 0.8);
+  border: 1px solid rgba(31, 72, 126, 0.18);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+}
+
+.lf-panel--filtros {
+  padding: 20px 24px;
+}
+
+.lf-panel--tabla {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ──────────────────────────────────────────────────────────
+   5. FILTROS
+────────────────────────────────────────────────────────── */
+.lf-filtros {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.lf-filtros__fechas {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lf-filtros__acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lf-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.5);
+}
+
+.lf-input {
+  padding: 9px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(31, 72, 126, 0.25);
+  border-radius: 10px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 0.15s, background 0.15s;
+  color-scheme: dark;
+}
+
+.lf-input:focus {
+  outline: none;
+  border-color: #1F487E;
+  background: rgba(31, 72, 126, 0.1);
+}
+
+/* ──────────────────────────────────────────────────────────
+   6. TABLA
+────────────────────────────────────────────────────────── */
+.lf-tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lf-tabla thead tr {
+  border-bottom: 1px solid rgba(31, 72, 126, 0.25);
+}
+
+.lf-tabla th {
+  padding: 14px 20px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.45);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.lf-tabla tbody tr {
+  border-bottom: 1px solid rgba(31, 72, 126, 0.1);
+  transition: background 0.15s ease;
+}
+
+.lf-tabla tbody tr:last-child {
+  border-bottom: none;
+}
+
+.lf-tabla tbody tr:hover {
+  background: rgba(31, 72, 126, 0.07);
+}
+
+.lf-tabla td {
+  padding: 14px 20px;
+  color: rgba(240, 244, 255, 0.85);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+/* ID */
+.lf-tabla td.id {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: rgba(240, 244, 255, 0.4);
+  letter-spacing: 0.5px;
+}
+
+/* Fecha y hora */
+.lf-tabla td.fecha,
+.lf-tabla td.hora {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(240, 244, 255, 0.65);
+  white-space: nowrap;
+}
+
+/* Cliente */
+.lf-tabla td.cliente {
+  font-weight: 600;
+  color: #f0f4ff;
+}
+
+/* Total */
+.lf-tabla td.total {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #f0f4ff;
+  white-space: nowrap;
+}
+
+/* Método de pago */
+.lf-tabla td.metodos-pago {
+  white-space: nowrap;
+}
+
+.lf-metodo-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.lf-metodo-badge--efectivo  { background: rgba(74, 222, 128, 0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+.lf-metodo-badge--credito   { background: rgba(217, 4, 41, 0.12);   color: #ff4d6d; border: 1px solid rgba(217,4,41,0.25); }
+.lf-metodo-badge--debito    { background: rgba(96, 165, 250, 0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
+.lf-metodo-badge--transferencia { background: rgba(251, 191, 36, 0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.lf-metodo-badge--qr        { background: rgba(167, 139, 250, 0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
+.lf-metodo-badge--otro      { background: rgba(255,255,255,0.06);   color: rgba(240,244,255,0.5); border: 1px solid rgba(255,255,255,0.1); }
+
+/* Acciones */
+.lf-tabla td .lf-acciones {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Inputs edición inline */
+.lf-tabla td input[type="text"],
+.lf-tabla td input[type="date"] {
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(31, 72, 126, 0.35);
+  border-radius: 7px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  width: 100%;
+  color-scheme: dark;
+}
+
+/* TFOOT */
+.lf-tabla tfoot tr {
+  border-top: 1.5px solid rgba(31, 72, 126, 0.3);
+  background: rgba(31, 72, 126, 0.06);
+}
+
+.lf-tabla__tfoot-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.4) !important;
+  text-align: right !important;
+  padding-right: 20px !important;
+}
+
+.lf-tabla__tfoot-total {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: #f0f4ff !important;
+  white-space: nowrap;
+}
+
+/* ──────────────────────────────────────────────────────────
+   7. EMPTY STATE
+────────────────────────────────────────────────────────── */
+.lf-empty {
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.lf-empty__icon {
+  font-size: 48px;
+  color: rgba(31, 72, 126, 0.35);
+  margin-bottom: 16px;
+  display: block;
+}
+
+.lf-empty p {
+  color: rgba(240, 244, 255, 0.35);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   8. RESPONSIVE
+────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .lf-main { padding: 88px 12px 48px; }
+  .lf-filtros { flex-direction: column; align-items: stretch; }
+  .lf-filtros__acciones { justify-content: stretch; }
+  .lf-filtros__acciones .lf-btn { flex: 1; justify-content: center; }
+  .lf-tabla th, .lf-tabla td { padding: 10px 12px; }
+  .lf-page-header { flex-direction: column; align-items: flex-start; }
+}

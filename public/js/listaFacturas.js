@@ -51,21 +51,26 @@ function cargarFacturas(fechaInicio, fechaFin) {
                 const fechaFormateada = factura.fecha; 
                 const totalFormateado = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalNumerico);
 
+                const metodo = (factura.metodos_pago || 'otro').toLowerCase();
+                const metodoClase = ['efectivo','credito','debito','transferencia','qr'].includes(metodo) ? metodo : 'otro';
+
                 const row = document.createElement('tr');
                 row.setAttribute('data-id', factura.id);
                 row.innerHTML = `
-    <td class="id">${factura.id}</td>
+    <td class="id">#${factura.id}</td>
     <td class="fecha">${factura.fecha}</td>
     <td class="hora">${factura.hora || '-'}</td>
     <td class="cliente">${factura.nombre_cliente}</td>
     <td class="total">${totalFormateado}</td>
-    <td class="metodos-pago">${factura.metodos_pago || 'N/A'}</td>
+    <td class="metodos-pago"><span class="lf-metodo-badge lf-metodo-badge--${metodoClase}">${factura.metodos_pago || 'N/A'}</span></td>
     <td>
-        <button class="btn-ver" data-id="${factura.id}">Ver Detalle</button>
-        <button class="btn-editar" data-id="${factura.id}">Editar</button>
-        <button class="btn-eliminar" data-id="${factura.id}">Eliminar</button>
-        <button class="btn-guardar" data-id="${factura.id}" style="display:none;">Guardar</button>
-        <button class="btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
+        <div class="lf-acciones">
+          <button class="lf-btn lf-btn--outline lf-btn--sm btn-ver" data-id="${factura.id}"><i class="fa-solid fa-eye"></i> Ver</button>
+          <button class="lf-btn lf-btn--outline lf-btn--sm btn-editar" data-id="${factura.id}"><i class="fa-solid fa-pen"></i> Editar</button>
+          <button class="lf-btn lf-btn--danger lf-btn--sm btn-eliminar" data-id="${factura.id}"><i class="fa-solid fa-trash"></i> Eliminar</button>
+          <button class="lf-btn lf-btn--primary lf-btn--sm btn-guardar" data-id="${factura.id}" style="display:none;"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+          <button class="lf-btn lf-btn--outline lf-btn--sm btn-cancelar" data-id="${factura.id}" style="display:none;">Cancelar</button>
+        </div>
     </td>
 `;
 
