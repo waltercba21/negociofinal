@@ -1,61 +1,99 @@
+<% var pageCss = '/css/pages/presupuesto.css' %>
+<!DOCTYPE html>
+<html lang="es">
 <%- include('./layouts/head.ejs') %>
-<%- include('./layouts/header.ejs') %>
+<link rel="stylesheet" href="/css/pages/presupuesto.css?v=1" />
 <body>
-    <main>
-        <div class="detalle-presupuesto-container">
-            <table class="tabla-detalle-presupuesto">
-          <thead>
-            <tr>
-              <th colspan="5">Detalle del Presupuesto</th>
-            </tr>
-            <tr>
-              <td><strong>ID Presupuesto:</strong> <%= presupuesto.presupuesto_id %></td>
-              <td><strong>Fecha:</strong> 
-                <%= new Date(presupuesto.fecha).toLocaleDateString('es-AR') %> 
-                <%= new Date(presupuesto.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) %>
-              </td>
-              
-              <td><strong>Vendedor:</strong> <%= presupuesto.nombre_cliente %></td>
-            </tr>
-            <tr>
-              <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Precio Unitario</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% let total = 0; %>
-            <% detalles.forEach(item => { 
-                 const subtotal = item.precio_unitario * item.cantidad;
-                 total += subtotal;
-            %>
-              <tr>
-                <td><%= item.nombre_producto %></td>
-                <td><%= item.cantidad %></td>
-                <td>$<%= item.precio_unitario.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
-                <td>$<%= subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
-              </tr>
-            <% }); %>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
-              <td><strong>$<%= total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></strong></td>
-            </tr>
-          </tfoot>
-        </table>
-    </div>
-    <div class="volver-listado">
-  <form action="/productos/listadoPresupuestos" method="GET">
-    <input type="hidden" name="fechaInicio" value="<%= new Date(presupuesto.fecha).toISOString().split('T')[0] %>">
-    <input type="hidden" name="fechaFin" value="<%= new Date(presupuesto.fecha).toISOString().split('T')[0] %>">
-    <button type="submit" class="btn-aceptar">ACEPTAR</button>
-  </form>
-</div>
+  <%- include('./layouts/header.ejs') %>
 
-      </main>
-      
-<%- include('./layouts/footer.ejs') %>
-<script src="/js/buscadorPresupuesto.js"></script>
+  <main class="pv-main">
+
+    <!-- PAGE HEADER -->
+    <div class="pv-page-header">
+      <div class="pv-page-header__left">
+        <span class="pv-page-header__eyebrow">Mostrador</span>
+        <h1 class="pv-page-header__title">Detalle de Presupuesto <span class="pv-page-header__id">#<%= presupuesto.presupuesto_id %></span></h1>
+      </div>
+      <form action="/productos/listadoPresupuestos" method="GET">
+        <input type="hidden" name="fechaInicio" value="<%= new Date(presupuesto.fecha).toISOString().split('T')[0] %>">
+        <input type="hidden" name="fechaFin" value="<%= new Date(presupuesto.fecha).toISOString().split('T')[0] %>">
+        <button type="submit" class="pv-btn pv-btn--outline">
+          <i class="fa-solid fa-arrow-left"></i> Volver al listado
+        </button>
+      </form>
+    </div>
+
+    <!-- META PANEL -->
+    <div class="pv-panel pv-panel--meta">
+      <div class="pv-meta-grid">
+        <div class="pv-meta-item">
+          <span class="pv-meta-item__label">ID Presupuesto</span>
+          <span class="pv-meta-item__value pv-meta-item__value--id">#<%= presupuesto.presupuesto_id %></span>
+        </div>
+        <div class="pv-meta-item">
+          <span class="pv-meta-item__label">Fecha</span>
+          <span class="pv-meta-item__value">
+            <%= new Date(presupuesto.fecha).toLocaleDateString('es-AR') %>
+          </span>
+        </div>
+        <div class="pv-meta-item">
+          <span class="pv-meta-item__label">Hora</span>
+          <span class="pv-meta-item__value">
+            <%= new Date(presupuesto.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) %>
+          </span>
+        </div>
+        <div class="pv-meta-item">
+          <span class="pv-meta-item__label">Vendedor</span>
+          <span class="pv-meta-item__value"><%= presupuesto.nombre_cliente %></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLA ITEMS -->
+    <div class="pv-panel pv-panel--tabla">
+      <table class="pv-tabla">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% let total = 0; %>
+          <% detalles.forEach((item, index) => {
+               const subtotal = item.precio_unitario * item.cantidad;
+               total += subtotal;
+          %>
+            <tr>
+              <td class="pv-tabla__num"><%= index + 1 %></td>
+              <td class="pv-tabla__producto"><%= item.nombre_producto %></td>
+              <td class="pv-tabla__qty"><%= item.cantidad %></td>
+              <td class="pv-tabla__precio">$<%= item.precio_unitario.toLocaleString('es-AR', { minimumFractionDigits: 0 }) %></td>
+              <td class="pv-tabla__subtotal">$<%= subtotal.toLocaleString('es-AR', { minimumFractionDigits: 0 }) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" class="pv-tabla__tfoot-label">Total</td>
+            <td class="pv-tabla__tfoot-total">$<%= total.toLocaleString('es-AR', { minimumFractionDigits: 0 }) %></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- ACCIONES -->
+    <div class="pv-acciones">
+      <button onclick="window.print()" class="pv-btn pv-btn--outline">
+        <i class="fa-solid fa-print"></i> Imprimir
+      </button>
+    </div>
+
+  </main>
+
+  <%- include('./layouts/footer.ejs') %>
 </body>
+</html>

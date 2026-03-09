@@ -1,0 +1,315 @@
+/* ============================================================
+   presupuesto.css  —  Autofaros · Vista: Detalle de Factura
+   v2026-03-09
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────
+   1. BASE
+────────────────────────────────────────────────────────── */
+.pv-main {
+  background-color: #0b1220;
+  min-height: 100vh;
+  padding: 96px 24px 64px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   2. PAGE HEADER
+────────────────────────────────────────────────────────── */
+.pv-page-header {
+  max-width: 900px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pv-page-header__eyebrow {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #1F487E;
+  margin-bottom: 4px;
+}
+
+.pv-page-header__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 800;
+  color: #f0f4ff;
+  letter-spacing: -0.5px;
+  margin: 0;
+  line-height: 1;
+}
+
+.pv-page-header__id {
+  color: rgba(240, 244, 255, 0.35);
+}
+
+/* ──────────────────────────────────────────────────────────
+   3. BOTONES
+────────────────────────────────────────────────────────── */
+.pv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pv-btn--primary {
+  background: #1F487E;
+  color: #fff;
+}
+
+.pv-btn--primary:hover {
+  background: #2a5da0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(31, 72, 126, 0.4);
+}
+
+.pv-btn--outline {
+  background: transparent;
+  color: rgba(240, 244, 255, 0.75);
+  border: 1.5px solid rgba(31, 72, 126, 0.35);
+}
+
+.pv-btn--outline:hover {
+  background: rgba(31, 72, 126, 0.12);
+  border-color: #1F487E;
+  color: #f0f4ff;
+}
+
+/* ──────────────────────────────────────────────────────────
+   4. PANEL
+────────────────────────────────────────────────────────── */
+.pv-panel {
+  max-width: 900px;
+  margin: 0 auto 20px;
+  background: rgba(17, 28, 48, 0.8);
+  border: 1px solid rgba(31, 72, 126, 0.18);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+}
+
+.pv-panel--meta {
+  padding: 24px 28px;
+}
+
+.pv-panel--tabla {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ──────────────────────────────────────────────────────────
+   5. META GRID
+────────────────────────────────────────────────────────── */
+.pv-meta-grid {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.pv-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pv-meta-item__label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.4);
+}
+
+.pv-meta-item__value {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f0f4ff;
+}
+
+.pv-meta-item__value--id {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: rgba(240, 244, 255, 0.5);
+}
+
+/* ──────────────────────────────────────────────────────────
+   6. BADGES MÉTODO DE PAGO
+────────────────────────────────────────────────────────── */
+.pv-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.pv-badge--efectivo      { background: rgba(74,222,128,0.12);  color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+.pv-badge--credito       { background: rgba(217,4,41,0.12);    color: #ff4d6d; border: 1px solid rgba(217,4,41,0.25); }
+.pv-badge--debito        { background: rgba(96,165,250,0.12);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
+.pv-badge--transferencia { background: rgba(251,191,36,0.12);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.pv-badge--qr            { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
+.pv-badge--otro          { background: rgba(255,255,255,0.06); color: rgba(240,244,255,0.5); border: 1px solid rgba(255,255,255,0.1); }
+
+/* ──────────────────────────────────────────────────────────
+   7. TABLA
+────────────────────────────────────────────────────────── */
+.pv-tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pv-tabla thead tr {
+  border-bottom: 1px solid rgba(31, 72, 126, 0.25);
+}
+
+.pv-tabla th {
+  padding: 14px 20px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.4);
+  text-align: left;
+}
+
+.pv-tabla tbody tr {
+  border-bottom: 1px solid rgba(31, 72, 126, 0.1);
+  transition: background 0.15s;
+}
+
+.pv-tabla tbody tr:last-child { border-bottom: none; }
+
+.pv-tabla tbody tr:hover { background: rgba(31, 72, 126, 0.06); }
+
+.pv-tabla td {
+  padding: 14px 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240, 244, 255, 0.85);
+  vertical-align: middle;
+}
+
+.pv-tabla__num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(240, 244, 255, 0.3) !important;
+  width: 40px;
+}
+
+.pv-tabla__producto {
+  font-weight: 600;
+  color: #f0f4ff !important;
+}
+
+.pv-tabla__qty {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pv-tabla__precio {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(240, 244, 255, 0.6) !important;
+  white-space: nowrap;
+}
+
+.pv-tabla__subtotal {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #f0f4ff !important;
+  white-space: nowrap;
+}
+
+/* TFOOT */
+.pv-tabla tfoot tr {
+  border-top: 1.5px solid rgba(31, 72, 126, 0.3);
+  background: rgba(31, 72, 126, 0.06);
+}
+
+.pv-tabla__tfoot-label {
+  padding: 16px 20px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.4);
+  text-align: right;
+}
+
+.pv-tabla__tfoot-total {
+  padding: 16px 20px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #f0f4ff;
+  white-space: nowrap;
+}
+
+/* ──────────────────────────────────────────────────────────
+   8. ACCIONES
+────────────────────────────────────────────────────────── */
+.pv-acciones {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   9. PRINT
+────────────────────────────────────────────────────────── */
+@media print {
+  .pv-page-header form,
+  .pv-acciones,
+  header,
+  footer { display: none !important; }
+
+  .pv-main { padding: 0; background: #fff; }
+  .pv-panel { border: 1px solid #ddd; background: #fff; border-radius: 0; }
+  .pv-page-header__title,
+  .pv-meta-item__value,
+  .pv-tabla td,
+  .pv-tabla th { color: #000 !important; }
+  .pv-tabla__tfoot-total { color: #000 !important; }
+  .pv-meta-item__label { color: #666 !important; }
+}
+
+/* ──────────────────────────────────────────────────────────
+   10. RESPONSIVE
+────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .pv-main { padding: 88px 12px 48px; }
+  .pv-page-header { flex-direction: column; align-items: flex-start; }
+  .pv-meta-grid { gap: 20px; }
+  .pv-tabla th, .pv-tabla td { padding: 10px 12px; }
+}
