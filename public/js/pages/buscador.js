@@ -253,7 +253,7 @@ async function _getOrInitState(productoId){
 
   if (state.lista.length) {
     const provSpan = document.querySelector(`.prov-nombre[data-producto-id="${productoId}"]`);
-    const cardEl = provSpan ? provSpan.closest('.card') : null;
+    const cardEl = provSpan ? provSpan.closest('.pcard') : null;
     const asignadoId = Number(cardEl?.dataset?.proveedorAsignadoId || 0);
 
     if (asignadoId) {
@@ -397,200 +397,150 @@ if (!CAN_INIT) {
 }
 
 function mostrarProductos(productos) {
+  // AF v2026-03-09-fix4 — clases .pcard
   contenedorProductos.innerHTML = '';
 
   if (!Array.isArray(productos) || productos.length === 0) {
-    const contenedorVacio = document.createElement('div');
-    contenedorVacio.className = 'no-result';
-    contenedorVacio.innerHTML = `
-      <img src="/images/noEncontrado.png" alt="Producto no encontrado" class="imagen-no-result">
-      <p>No se encontraron productos. Probá con otros filtros o palabras clave.</p>
-    `;
-    contenedorProductos.appendChild(contenedorVacio);
+    contenedorProductos.innerHTML = `
+      <div class="no-result">
+        <img src="/images/noEncontrado.png" alt="Sin resultados" class="no-result__img" />
+        <h3 class="no-result__title">Sin resultados</h3>
+        <p class="no-result__text">No encontramos productos con esos filtros.<br>Probá con otras palabras clave.</p>
+      </div>`;
     return;
   }
 
   productos.forEach((producto, index) => {
-    const card = document.createElement('div');
-    card.className = `
-      card 
-      ${producto.calidad_original ? 'calidad-original-fitam' : ''} 
-      ${producto.calidad_vic ? 'calidad_vic' : ''} 
-      ${producto.oferta ? 'producto-oferta' : ''}
-    `;
-    card.setAttribute(
-      'data-label',
-      producto.oferta ? 'OFERTA'
-        : producto.calidad_original ? 'CALIDAD FITAM'
-        : producto.calidad_vic ? 'CALIDAD VIC'
-        : ''
-    );
+    const esOferta = producto.oferta;
+    const esFitam  = producto.calidad_original;
+    const esVic    = producto.calidad_vic;
 
+    const stockActualNum = Number(producto.stock_actual) || 0;
+    const stockMinNum    = Number(producto.stock_minimo) || 0;
+    const puedeComprar   = stockActualNum >= stockMinNum && stockActualNum > 0;
+
+    // Badge
+    let badgeHTML = '';
+    if (esOferta)     badgeHTML = `<span class="pcard__badge badge--oferta">OFERTA</span>`;
+    else if (esFitam) badgeHTML = `<span class="pcard__badge badge--fitam">CALIDAD FITAM</span>`;
+    else if (esVic)   badgeHTML = `<span class="pcard__badge badge--vic">CALIDAD VIC</span>`;
+
+    // Imágenes
+    const imgsRaw = Array.isArray(producto.imagenes) ? producto.imagenes : [];
+    const files = imgsRaw
+      .map(x => (typeof x === 'string' ? x : (x?.imagen || x?.archivo || x?.url)))
+      .filter(Boolean);
+    if (files.length === 0) files.push('');
+
+    const imagenesHTML = files.map((file, i) => {
+      const src = file ? `/uploads/productos/${file}` : '/images/noEncontrado.png';
+      return `<img class="pcard__img${i !== 0 ? ' hidden' : ''}" src="${src}" alt="${producto.nombre}" onerror="this.src='/images/noEncontrado.png'" loading="lazy">`;
+    }).join('');
+
+    const botonesCarousel = files.length > 1 ? `
+      <button class="pcard__carousel-btn pcard__carousel-btn--prev" onclick="moverCarrusel('${index}', -1)" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+      <button class="pcard__carousel-btn pcard__carousel-btn--next" onclick="moverCarrusel('${index}', 1)" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+      <div class="pcard__dots" id="dots-${index}">
+        ${files.map((_, i) => `<span class="pcard__dot${i === 0 ? ' pcard__dot--active' : ''}"></span>`).join('')}
+      </div>` : '';
+
+    // Admin block
+    const adminHTML = isAdminUser ? `
+      <div class="pcard__admin">
+        <div class="pcard__admin-row">
+          <span class="pcard__admin-label">Proveedor</span>
+          <span class="prov-nombre pcard__admin-val" data-producto-id="${producto.id}">${producto.proveedor_nombre || '—'}</span>
+        </div>
+        <div class="pcard__admin-row">
+          <span class="pcard__admin-label">Código</span>
+          <span class="prov-codigo pcard__admin-val" data-producto-id="${producto.id}">${producto.codigo_proveedor || '—'}</span>
+        </div>
+        <div class="pcard__admin-row">
+          <span class="pcard__admin-label">Stock</span>
+          <span class="pcard__admin-val ${stockActualNum < stockMinNum ? 'stock--bajo' : 'stock--ok'}">${stockActualNum}</span>
+        </div>
+        <div class="prov-actions">
+          <button type="button" class="btn-ver-proveedores" data-producto-id="${producto.id}">
+            <i class="fas fa-store"></i> Ver proveedores
+          </button>
+          <small class="prov-idx" data-producto-id="${producto.id}"></small>
+        </div>
+      </div>` : '';
+
+    // Stock semáforo
+    const stockHTML = (isUserLoggedIn && !isAdminUser) ? `
+      <div class="pcard__stock ${puedeComprar ? 'pcard__stock--ok' : 'pcard__stock--bajo'}">
+        <i class="fa-solid fa-circle pcard__stock-dot"></i>
+        <span class="pcard__stock-txt">${puedeComprar ? 'Disponible para entrega inmediata' : 'A pedido / pendiente de ingreso'}</span>
+      </div>` : '';
+
+    // Acciones
+    let accionesHTML = '';
+    if (isUserLoggedIn && !isAdminUser) {
+      accionesHTML = `
+        <div class="pcard__qty-row">
+          <button type="button" class="qty-btn qty-btn--minus" aria-label="Restar"><i class="fa-solid fa-minus"></i></button>
+          <input type="number" class="cantidad-input"
+            value="${puedeComprar ? 1 : 0}" min="${puedeComprar ? 1 : 0}" max="${stockActualNum}"
+            step="1" id="input-cantidad-${producto.id}" ${puedeComprar ? '' : 'disabled'} aria-label="Cantidad">
+          <button type="button" class="qty-btn qty-btn--plus" aria-label="Sumar"><i class="fa-solid fa-plus"></i></button>
+        </div>
+        <button class="btn-agregar agregar-carrito"
+          ${puedeComprar ? '' : 'disabled'}
+          data-id="${producto.id}" data-nombre="${producto.nombre}"
+          data-precio="${producto.precio_venta}" data-stock="${stockActualNum}" data-stockmin="${stockMinNum}">
+          <i class="fa-solid fa-cart-plus"></i>
+          <span>${puedeComprar ? 'Agregar al carrito' : 'Sin stock'}</span>
+        </button>`;
+    }
+
+    // Aplicaciones
+    const descAplic = String(producto.descripcion || '').trim();
+    const esEscobilla = /escobill/i.test(producto.categoria_nombre || '') || /escobill/i.test(producto.nombre || '');
+    const aplicacionesHTML = (esEscobilla && descAplic) ? `
+      <button type="button" class="btn-aplicaciones"
+        data-titulo="${producto.nombre}"
+        data-aplicaciones='${JSON.stringify(descAplic)}'>
+        <i class="fa-solid fa-car"></i> <span>Ver aplicaciones</span>
+      </button>` : '';
+
+    const card = document.createElement('article');
+    card.className = `pcard${esOferta ? ' pcard--oferta' : ''}${esFitam ? ' pcard--fitam' : ''}${esVic ? ' pcard--vic' : ''}`;
     card.dataset.productoId = producto.id;
     card.dataset.precioVenta = producto.precio_venta;
     card.dataset.proveedorAsignadoId = producto.proveedor_id || '';
     card.dataset.utilidad = (producto.utilidad ?? 0);
 
-    // ✅ aplicaciones/descripcion
-    const descAplic = String(producto.descripcion || '').trim();
-    const tieneDescAplic = descAplic.length > 0;
-
-    // galería
-    let imagenesHTML = '';
-    const imgsRaw = Array.isArray(producto.imagenes) ? producto.imagenes : [];
-
-    const files = imgsRaw
-      .map(x => (typeof x === 'string' ? x : (x?.imagen || x?.archivo || x?.url)))
-      .filter(Boolean);
-
-    if (files.length === 0) files.push(''); // para que al menos haya 1 <img> y no rompa
-
-    files.forEach((file, i) => {
-      const src = file ? `/uploads/productos/${file}` : '/images/noEncontrado.png';
-      imagenesHTML += `
-        <img class="carousel__image ${i !== 0 ? 'hidden' : ''}"
-             src="${src}"
-             alt="${producto.nombre}"
-             onerror="this.src='/images/noEncontrado.png'">
-      `;
-    });
-
-    // info stock / acciones
-    let stockInfo = '';
-    if (isUserLoggedIn) {
-      if (isAdminUser) {
-        stockInfo = `
-          <div class="stock-producto ${producto.stock_actual >= producto.stock_minimo ? 'suficiente-stock' : 'bajo-stock'}">
-            <p>Stock Disponible: ${producto.stock_actual}</p>
-          </div>
-          <div class="cantidad-producto">
-            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-          </div>
-        `;
-      } else {
-        const stockActualNum = Number(producto.stock_actual) || 0;
-        const stockMinNum = Number(producto.stock_minimo) || 0;
-        const puedeComprar = stockActualNum >= stockMinNum && stockActualNum > 0;
-
-        stockInfo = `
-          <div class="semaforo-stock">
-            <i class="fa-solid fa-thumbs-${puedeComprar ? 'up verde' : 'down rojo'}"></i>
-            <span class="texto-semaforo">
-              ${puedeComprar ? 'PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA' : 'PRODUCTO PENDIENTE DE INGRESO O A PEDIDO'}
-            </span>
-          </div>
-          <div class="cantidad-producto">
-            <input type="number"
-                   class="cantidad-input"
-                   value="${puedeComprar ? 1 : 0}"
-                   min="${puedeComprar ? 1 : 0}"
-                   max="${stockActualNum}"
-                   step="1"
-                   id="input-cantidad-${producto.id}"
-                   ${puedeComprar ? '' : 'disabled'}>
-            <button class="agregar-carrito"
-              ${puedeComprar ? '' : 'disabled'}
-              data-id="${producto.id}" 
-              data-nombre="${producto.nombre}" 
-              data-precio="${producto.precio_venta}" 
-              data-stock="${stockActualNum}" 
-              data-stockmin="${stockMinNum}">
-              Agregar al carrito
-            </button>
-            <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-          </div>
-        `;
-      }
-    }
-
     card.innerHTML = `
-      <div class="cover-card">
-        <div class="carousel-container">
-          <button class="carousel__button carousel__button--left" onclick="moverCarrusel('${index}', -1)">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <div class="carousel-wrapper">
-            <div class="carousel" id="carousel-${index}">
-              ${imagenesHTML}
-            </div>
-          </div>
-          <button class="carousel__button carousel__button--right" onclick="moverCarrusel('${index}', 1)">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </div>
+      ${badgeHTML}
+      <div class="pcard__media">
+        <div class="pcard__carousel" id="carousel-${index}">${imagenesHTML}</div>
+        ${botonesCarousel}
       </div>
-
-      <div class="titulo-producto"><h3 class="nombre">${producto.nombre}</h3></div>
-      <hr>
-      <div class="categoria-producto"><h6 class="categoria">${producto.categoria_nombre || 'Sin categoría'}</h6></div>
-      <div class="precio-producto"><p class="precio">$${formatearNumero(producto.precio_venta || 0)}</p></div>
-
-      ${isAdminUser ? `
-        <div class="codigo-admin">
-          <p>
-            <strong>Proveedor:</strong>
-            <span class="prov-nombre" data-producto-id="${producto.id}">
-              ${producto.proveedor_nombre || 'Sin proveedor'}
-            </span>
-          </p>
-          <p>
-            <strong>Código:</strong>
-            <span class="prov-codigo" data-producto-id="${producto.id}">
-              ${producto.codigo_proveedor || '-'}
-            </span>
-          </p>
-          <div class="prov-actions">
-            <button type="button"
-                    class="btn-ver-proveedores"
-                    data-producto-id="${producto.id}">
-              <i class="fas fa-store"></i> Ver proveedores
-            </button>
-          </div>
+      <div class="pcard__body">
+        <span class="pcard__categoria">${producto.categoria_nombre || 'Sin categoría'}</span>
+        <h3 class="pcard__nombre">${producto.nombre}</h3>
+        <div class="pcard__precio-row">
+          <span class="pcard__precio">$${formatearNumero(producto.precio_venta || 0)}</span>
+          ${esOferta ? '<span class="pcard__precio-tag"><i class="fa-solid fa-bolt"></i> Oferta</span>' : ''}
         </div>
-      ` : ''}
-
-      ${stockInfo}
-
-      ${tieneDescAplic ? `
-        <div class="acciones-aplicaciones" style="display:flex;justify-content:center;margin-top:10px;">
-          <button type="button" class="btn-aplicaciones"
-            title="Ver vehículos compatibles"
-            style="display:inline-flex;align-items:center;gap:8px;border:2px solid var(--border-strong, #d0d5dd);background:var(--surface, #fff);padding:8px 12px;border-radius:12px;cursor:pointer;font-weight:800;">
-            <i class="fa-solid fa-car"></i>
-            <span>Ver aplicaciones</span>
-          </button>
+        ${aplicacionesHTML}
+        ${adminHTML}
+        ${stockHTML}
+        <div class="pcard__actions">
+          ${accionesHTML}
+          <a href="/productos/${producto.id}" class="btn-detalle card-link">
+            <i class="fa-solid fa-eye"></i> <span>Ver detalles</span>
+          </a>
         </div>
-      ` : ''}
-
-      <div class="acciones-compartir">
-        <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" 
-           title="Consultar por WhatsApp" target="_blank" class="whatsapp">
-          <i class="fab fa-whatsapp"></i>
-        </a>
-        <a href="https://www.facebook.com/profile.php?id=100063665395970" 
-           title="Visitar Facebook" target="_blank" class="facebook">
-          <i class="fab fa-facebook"></i>
-        </a>
-        <a href="https://www.instagram.com/autofaros_cordoba" 
-           title="Visitar Instagram" target="_blank" class="instagram">
-          <i class="fab fa-instagram"></i>
-        </a>
-      </div>
-    `;
+        <div class="pcard__share">
+          <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" class="pcard__share-btn pcard__share-btn--wa" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+          <a href="https://www.facebook.com/profile.php?id=100063665395970" class="pcard__share-btn pcard__share-btn--fb" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://www.instagram.com/autofaros_cordoba" class="pcard__share-btn pcard__share-btn--ig" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>`;
 
     contenedorProductos.appendChild(card);
-
-    // ✅ click para ver aplicaciones
-    if (tieneDescAplic) {
-      const btnApps = card.querySelector('.btn-aplicaciones');
-      if (btnApps) {
-        btnApps.addEventListener('click', (ev) => {
-          ev.preventDefault();
-          mostrarAplicacionesModal(producto.nombre || 'Aplicaciones', descAplic);
-        });
-      }
-    }
-
     _initProveedorButton(producto.id);
   });
 }
@@ -622,11 +572,12 @@ function mostrarAplicacionesModal(titulo, texto) {
 }
 
 function moverCarrusel(index, direccion) {
+  // AF v2026-03-09-fix4 — usa .pcard__img
   const carousel = document.getElementById(`carousel-${index}`);
   if (!carousel) return;
 
-  const imagenes = carousel.querySelectorAll('.carousel__image');
-  if (imagenes.length < 2) return;
+  const imagenes = carousel.querySelectorAll('.pcard__img');
+  if (!imagenes.length) return;
 
   let activa = [...imagenes].findIndex(img => !img.classList.contains('hidden'));
   if (activa < 0) activa = 0;
@@ -634,6 +585,14 @@ function moverCarrusel(index, direccion) {
   imagenes[activa].classList.add('hidden');
   const next = (activa + direccion + imagenes.length) % imagenes.length;
   imagenes[next].classList.remove('hidden');
+
+  // Dots
+  const dots = document.getElementById(`dots-${index}`);
+  if (dots) {
+    dots.querySelectorAll('.pcard__dot').forEach((d, i) => {
+      d.classList.toggle('pcard__dot--active', i === next);
+    });
+  }
 }
 
 
@@ -725,7 +684,7 @@ if (CAN_INIT) contenedorProductos.addEventListener('click', async (ev) => {
   const productoId = Number(btn.dataset.productoId);
   if (!productoId) return;
 
-  const cardEl = btn.closest('.card');
+  const cardEl = btn.closest('.pcard');
   const utilidadPct = _getUtilidadDeCard(cardEl);
   const nombreProducto = cardEl?.querySelector('.nombre, h3')?.textContent?.trim() || 'Proveedores';
 
@@ -770,4 +729,3 @@ if (CAN_INIT) contenedorProductos.addEventListener('click', (ev) => {
   const qActual = (entradaBusqueda?.value || '').trim();
   logBusquedaProducto(productoId, qActual);
 }, { passive: true });
-
