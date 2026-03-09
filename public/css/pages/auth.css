@@ -1,0 +1,383 @@
+/* ============================================================
+   auth.css  —  Autofaros · Login & Register
+   v2026-03-09
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────
+   1. BODY / LAYOUT
+────────────────────────────────────────────────────────── */
+.auth-body {
+  margin: 0;
+  background-color: #0b1220;
+}
+
+.auth-main {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ──────────────────────────────────────────────────────────
+   2. BACKGROUND ORBS
+────────────────────────────────────────────────────────── */
+.auth-bg-orb {
+  position: fixed;
+  border-radius: 999px;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-bg-orb--1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(31, 72, 126, 0.18), transparent 70%);
+  top: -200px;
+  left: -200px;
+}
+
+.auth-bg-orb--2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(217, 4, 41, 0.08), transparent 70%);
+  bottom: -150px;
+  right: -150px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   3. CARD
+────────────────────────────────────────────────────────── */
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  background: rgba(17, 28, 48, 0.85);
+  border: 1px solid rgba(31, 72, 126, 0.2);
+  border-radius: 20px;
+  padding: 36px 40px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  animation: auth-fade-up 0.4s ease both;
+}
+
+.auth-card--wide {
+  max-width: 720px;
+}
+
+@keyframes auth-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ──────────────────────────────────────────────────────────
+   4. BRAND
+────────────────────────────────────────────────────────── */
+.auth-brand {
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.auth-brand__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.auth-brand__logo img {
+  height: 40px;
+  width: auto;
+}
+
+.auth-brand__name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #f0f4ff;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+}
+
+.auth-brand__accent {
+  color: #d90429;
+}
+
+.auth-brand__tagline {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: rgba(240, 244, 255, 0.35);
+  margin: 6px 0 0;
+  letter-spacing: 0.5px;
+}
+
+.auth-divider {
+  height: 1px;
+  background: rgba(31, 72, 126, 0.2);
+  margin: 20px 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   5. TÍTULOS
+────────────────────────────────────────────────────────── */
+.auth-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: #f0f4ff;
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.auth-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240, 244, 255, 0.4);
+  margin: 0 0 24px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   6. FORM
+────────────────────────────────────────────────────────── */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-form--grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   7. FIELDS
+────────────────────────────────────────────────────────── */
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-field--full {
+  grid-column: 1 / -1;
+}
+
+.auth-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.45);
+}
+
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 13px;
+  font-size: 13px;
+  color: rgba(240, 244, 255, 0.3);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.auth-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px 0 38px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(31, 72, 126, 0.25);
+  border-radius: 11px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.auth-input::placeholder {
+  color: rgba(240, 244, 255, 0.2);
+}
+
+.auth-input:focus {
+  border-color: #1F487E;
+  background: rgba(31, 72, 126, 0.1);
+  box-shadow: 0 0 0 3px rgba(31, 72, 126, 0.15);
+}
+
+.auth-select {
+  appearance: none;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+/* Ojo contraseña */
+.auth-eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: rgba(240, 244, 255, 0.3);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  transition: color 0.15s;
+  z-index: 1;
+}
+
+.auth-eye-btn:hover { color: rgba(240, 244, 255, 0.7); }
+
+/* Date input */
+input[type="date"].auth-input {
+  color-scheme: dark;
+}
+
+/* ──────────────────────────────────────────────────────────
+   8. HINT / ERROR
+────────────────────────────────────────────────────────── */
+.auth-hint {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: rgba(240, 244, 255, 0.35);
+  margin-top: 2px;
+}
+
+.auth-error {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: #ff4d6d;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   9. CHECKBOX
+────────────────────────────────────────────────────────── */
+.auth-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240, 244, 255, 0.6);
+}
+
+.auth-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #1F487E;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   10. BOTONES
+────────────────────────────────────────────────────────── */
+.auth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 24px;
+  border-radius: 11px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.auth-btn--primary {
+  background: #1F487E;
+  color: #fff;
+  width: 100%;
+}
+
+.auth-btn--primary:hover {
+  background: #2a5da0;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(31, 72, 126, 0.4);
+}
+
+.auth-btn--primary:active { transform: translateY(0); }
+
+.auth-btn--outline {
+  background: transparent;
+  color: rgba(240, 244, 255, 0.6);
+  border: 1.5px solid rgba(31, 72, 126, 0.3);
+}
+
+.auth-btn--outline:hover {
+  background: rgba(31, 72, 126, 0.1);
+  border-color: #1F487E;
+  color: #f0f4ff;
+}
+
+.auth-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.auth-actions .auth-btn--primary { flex: 1; }
+
+/* ──────────────────────────────────────────────────────────
+   11. FOOTER TEXT / LINKS
+────────────────────────────────────────────────────────── */
+.auth-footer-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240, 244, 255, 0.4);
+  text-align: center;
+  margin: 4px 0 0;
+}
+
+.auth-link {
+  color: #4e80c0;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.auth-link:hover { color: #6fa3e0; text-decoration: underline; }
+
+/* ──────────────────────────────────────────────────────────
+   12. OCULTAR HEADER/FOOTER en auth
+────────────────────────────────────────────────────────── */
+.auth-body header,
+.auth-body footer,
+.auth-body nav {
+  display: none !important;
+}
+
+/* ──────────────────────────────────────────────────────────
+   13. RESPONSIVE
+────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .auth-card { padding: 28px 20px; }
+  .auth-card--wide { max-width: 100%; }
+  .auth-form--grid { grid-template-columns: 1fr; }
+  .auth-field--full { grid-column: 1; }
+  .auth-actions { flex-direction: column; }
+  .auth-actions .auth-btn { width: 100%; }
+}
