@@ -50,8 +50,6 @@ module.exports = {
   },
     
     obtenerDetallePedido: (id_carrito, callback) => {
-      const costo_envio = (tipo_envio === 'delivery') ? COSTO_DELIVERY : 0;
-      const total = totalProductos + costo_envio;
     const query = `
       SELECT
         u.nombre AS cliente,
@@ -100,6 +98,7 @@ module.exports = {
         };
       });
 
+      const costo_envio = (tipo_envio === 'delivery') ? COSTO_DELIVERY : 0;
       const total = totalProductos + costo_envio;
 
       callback(null, {
@@ -224,3 +223,105 @@ module.exports = {
 },
 
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
