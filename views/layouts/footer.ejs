@@ -1,26 +1,91 @@
-<!------------Footer------------>
-<footer>
-    <div class="main-footer">
-      
-      <a href="/">
-        <img class="logo" src="/uploads/productos/logo.png" width="200rem" alt="LOGO" />
-    </a>
+<footer class="site-footer" role="contentinfo">
 
-      <!------------Redes sociales y logo------------>
-      <div class="redes">
-        <h2>Seguinos en nuestras redes</h2>
-        <div class="iconos-redes">
-          <a href="https://www.instagram.com/autofaros_cordoba/" target="_blank"><i class="fab fa-instagram"></i></a>
-          <a href="https://www.facebook.com/profile.php?id=100063665395970/" target="_blank"><i class="fab fa-facebook"></i></a>
-          <a href="#" onclick="abrirMapa(); return false;"><i class="fas fa-map-marker-alt"></i></a> <!-- Icono de ubicación -->
-          <a href="https://wa.me/+543513820440/" target="_blank"><i class="fab fa-whatsapp"></i></a> <!-- Icono de WhatsApp -->
-        </div>
+  <div class="site-footer__inner">
+
+    <!-- ── COLUMNA: MARCA ──────────────────────────── -->
+    <div class="site-footer__brand">
+      <a href="/" aria-label="AUTOFAROS — Inicio">
+        <img class="site-footer__logo"
+             src="/uploads/productos/logo.png"
+             alt="AUTOFAROS"
+             width="160"
+             height="auto"
+             loading="lazy" />
+      </a>
+      <p class="site-footer__tagline">Iluminación automotriz en Córdoba.<br>Faros, ópticas y repuestos de calidad.</p>
+    </div>
+
+    <!-- ── COLUMNA: CONTACTO / REDES ──────────────── -->
+    <div class="site-footer__social">
+      <h2 class="site-footer__heading">Seguinos</h2>
+      <div class="social-icons">
+        <a class="social-icons__link social-icons__link--instagram"
+           href="https://www.instagram.com/autofaros_cordoba/"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Instagram de AUTOFAROS">
+          <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+        </a>
+
+        <a class="social-icons__link social-icons__link--facebook"
+           href="https://www.facebook.com/profile.php?id=100063665395970/"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Facebook de AUTOFAROS">
+          <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+        </a>
+
+        <a class="social-icons__link social-icons__link--whatsapp"
+           href="https://wa.me/+543513820440/"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="WhatsApp de AUTOFAROS">
+          <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+        </a>
+
+        <button class="social-icons__link social-icons__link--mapa"
+                type="button"
+                onclick="abrirMapa()"
+                aria-label="Ver ubicación en mapa">
+          <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+        </button>
       </div>
-      
-     
-    <!------------Autor------------>
-    <div class="autor">
-      <h3><a href="http://www.wcdeveloper.com" target="_blank">DESARROLLADO POR WC DEVELOPER</a></h3>
+    </div>
+
+    <!-- ── COLUMNA: LINKS RÁPIDOS ─────────────────── -->
+    <div class="site-footer__links">
+      <h2 class="site-footer__heading">Accesos</h2>
+      <nav aria-label="Links del pie de página">
+        <ul class="footer-nav">
+          <li><a href="/productos" class="footer-nav__link">Productos</a></li>
+          <li><a href="/productos/ofertas" class="footer-nav__link">Ofertas</a></li>
+          <li><a href="/users/login" class="footer-nav__link">Mi cuenta</a></li>
+          <li>
+            <button type="button" class="footer-nav__link footer-nav__link--btn" onclick="abrirMapa()">
+              Nuestra ubicación
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
   </div>
-    <script src="js/index.js"></script> 
+
+  <!-- ── BARRA INFERIOR ─────────────────────────── -->
+  <div class="site-footer__bottom">
+    <p class="site-footer__copy">
+      &copy; <%= new Date().getFullYear() %> AUTOFAROS · Córdoba, Argentina
+    </p>
+    <p class="site-footer__dev">
+      Desarrollado por
+      <a href="http://www.wcdeveloper.com" target="_blank" rel="noopener noreferrer">WC Developer</a>
+    </p>
+  </div>
+
 </footer>
+
+<!-- JS por vista (inyectado desde cada ruta) -->
+<!-- Uso: res.locals.pageJs = '/js/productos/lista.js' -->
+<% if (typeof pageJs !== 'undefined' && pageJs) { %>
+  <script src="<%= pageJs %>" defer></script>
+<% } %>

@@ -1,182 +1,198 @@
-<header class="<%= isLogged ? 'is-logged' : 'is-guest' %>"
-        data-usuario-id="<%= (userLogged && userLogged.id) ? userLogged.id : '' %>">
+<header class="site-header <%= isLogged ? 'is-logged' : 'is-guest' %> <%= isAdminUser ? 'is-admin' : '' %>"
+        data-usuario-id="<%= (userLogged && userLogged.id) ? userLogged.id : '' %>"
+        data-is-admin="<%= isAdminUser ? 'true' : 'false' %>"
+        role="banner">
 
-  <a href="/">
-    <img class="logo" src="/uploads/productos/logo.png?v=2" alt="LOGO" />
+  <!-- ── MARCA / LOGO ──────────────────────────── -->
+  <a href="/" class="site-header__logo" aria-label="AUTOFAROS — Inicio">
+    <img src="/uploads/productos/logo.png?v=2" alt="AUTOFAROS" width="140" height="auto" loading="eager" />
   </a>
 
-  <button class="hamburger" onclick="toggleMenu()" aria-label="Abrir menú">☰</button>
-
+  <!-- ── BUSCADOR ──────────────────────────────── -->
   <% const qHeader = (typeof req !== 'undefined' && req.query && req.query.q) ? String(req.query.q) : ''; %>
 
-  <form class="header-search" action="/productos" method="GET" role="search" autocomplete="off">
-    <div class="buscador-con-icono">
-      <span class="search-ico" aria-hidden="true">
-  <svg viewBox="0 0 24 24" focusable="false">
-    <circle cx="11" cy="11" r="7"></circle>
-    <path d="M20 20l-3.5-3.5"></path>
-  </svg>
-</span>
+  <form class="site-header__search"
+        action="/productos"
+        method="GET"
+        role="search"
+        autocomplete="off"
+        aria-label="Buscar productos">
 
+    <div class="search-wrapper">
+      <span class="search-wrapper__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M20 20l-3.5-3.5"></path>
+        </svg>
+      </span>
 
       <input
+        class="search-wrapper__input"
         type="text"
         name="q"
         id="headerEntradaBusqueda"
-        placeholder="¿Qué estás buscando? Ej: Escort, Óptica, Faro, Agile"
-        value="<%= qHeader %>">
+        placeholder="Buscá por modelo, marca o pieza…"
+        value="<%= qHeader %>"
+        aria-label="Buscar productos" />
 
-      <button type="button" id="headerBotonLimpiar" class="boton-limpiar" aria-label="Limpiar búsqueda">
-        <i class="fas fa-times"></i>
+      <button
+        type="button"
+        id="headerBotonLimpiar"
+        class="search-wrapper__clear"
+        aria-label="Limpiar búsqueda"
+        hidden>
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
     </div>
   </form>
 
-  <nav class="navbar">
-    <a class="nav-link" href="/">INICIO</a>
-    <a class="nav-link" href="/productos">PRODUCTOS</a>
+  <!-- ── NAVEGACIÓN PRINCIPAL ───────────────────── -->
+  <nav class="site-header__nav" id="mainNav" aria-label="Navegación principal">
+
+    <a class="nav-link" href="/">
+      <i class="fa-solid fa-house" aria-hidden="true"></i>
+      <span>Inicio</span>
+    </a>
+
+    <a class="nav-link" href="/productos">
+      <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+      <span>Productos</span>
+    </a>
 
     <% if (!isAdminUser) { %>
-      <a class="nav-link" href="/productos/ofertas">OFERTAS</a>
-      <a class="nav-link" href="https://wa.me/+543513820440/" target="_blank">WHATSAPP</a>
-      <a class="nav-link" href="#" onclick="abrirMapa(); return false;">UBICACIÓN</a>
+      <a class="nav-link nav-link--ofertas" href="/productos/ofertas">
+        <i class="fa-solid fa-tag" aria-hidden="true"></i>
+        <span>Ofertas</span>
+      </a>
+
+      <a class="nav-link nav-link--whatsapp" href="https://wa.me/+543513820440/" target="_blank" rel="noopener noreferrer" aria-label="Contacto WhatsApp (abre en nueva pestaña)">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+        <span>WhatsApp</span>
+      </a>
+
+      <button class="nav-link nav-link--mapa" type="button" onclick="abrirMapa()" aria-label="Ver ubicación en mapa">
+        <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+        <span>Ubicación</span>
+      </button>
     <% } %>
 
+    <!-- ── ENLACES SOLO ADMIN ─────────────── -->
     <% if (isAdminUser) { %>
-      <a class="nav-link" href="/productos/panelControl">PANEL CONTROL</a>
-      <a class="nav-link" href="/productos/presupuestoMostrador">PRESUPUESTO</a>
-      <a class="nav-link-factura" href="/productos/facturasMostrador">FACTURAS</a>
-      <a class="nav-link" href="/arca">ARCA</a>
-      <a class="nav-link" href="/administracion/gastos" id="gastos-btn">GASTOS</a>
-      <a class="nav-link" href="/administracion" id="admin-btn">ADMINISTRACIÓN</a>
-      <a href="/pedidos" class="nav-link pedidos-link" style="position:relative;">
-  PEDIDOS
-  <span id="badge-pedidos" class="badge-pedidos" style="display:none;">0</span>
-</a>
+      <a class="nav-link nav-link--admin" href="/productos/panelControl">
+        <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
+        <span>Panel</span>
+      </a>
 
+      <a class="nav-link nav-link--admin" href="/productos/presupuestoMostrador">
+        <i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i>
+        <span>Presupuesto</span>
+      </a>
+
+      <a class="nav-link nav-link--admin nav-link--factura" href="/productos/facturasMostrador">
+        <i class="fa-solid fa-receipt" aria-hidden="true"></i>
+        <span>Facturas</span>
+      </a>
+
+      <a class="nav-link nav-link--admin" href="/arca">
+        <i class="fa-solid fa-landmark" aria-hidden="true"></i>
+        <span>ARCA</span>
+      </a>
+
+      <a class="nav-link nav-link--admin" href="/administracion/gastos" id="gastos-btn">
+        <i class="fa-solid fa-coins" aria-hidden="true"></i>
+        <span>Gastos</span>
+      </a>
+
+      <a class="nav-link nav-link--admin" href="/administracion" id="admin-btn">
+        <i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>
+        <span>Admin</span>
+      </a>
+
+      <a class="nav-link nav-link--admin nav-link--pedidos" href="/pedidos" aria-label="Pedidos pendientes">
+        <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
+        <span>Pedidos</span>
+        <span id="badge-pedidos" class="badge-pedidos" aria-live="polite" aria-label="Pedidos pendientes" hidden>0</span>
+      </a>
     <% } %>
 
+    <!-- ── AUTH LINKS (solo mobile dentro del menú) ── -->
     <% if (!isLogged) { %>
-      <!-- SOLO mobile: auth dentro del menú -->
-      <div class="nav-auth">
-        <a class="nav-link" href="/users/login">Iniciar Sesión</a>
-        <a class="nav-link register-link" href="/users/register">Registrarme</a>
-      </div>
-    <% } %>
-  </nav>
-
-  <div class="icons">
-    <% if (isLogged) { %>
-      <div class="logueado">
-        <a href="/users/profile"><p>Hola <%= userLogged.nombre %></p></a>
-
-        <% if (!isAdminUser) { %>
-          <a href="/carrito" class="carrito-icon">
-            <i class="fa-solid fa-cart-shopping"></i>
-            <span id="carrito-notificacion" class="cantidad-alerta"
-              <% if (cantidadCarrito <= 0) { %> style="display: none;" <% } %>>
-              <%= cantidadCarrito %>
-            </span>
-          </a>
-        <% } %>
-
-        <a href="/users/logout">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          <span>Salir</span>
+      <div class="nav-auth-mobile">
+        <a class="nav-link" href="/users/login">
+          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+          <span>Iniciar Sesión</span>
+        </a>
+        <a class="nav-link nav-link--register" href="/users/register">
+          <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+          <span>Registrarme</span>
         </a>
       </div>
-    <% } else { %>
-      <!-- En mobile se ocultan y se usan los del menú -->
-      <a href="/users/login">Iniciar Sesión</a>
-      <a class="register-link" href="/users/register">Registrarme</a>
     <% } %>
+
+  </nav>
+
+  <!-- ── ACCIONES DE USUARIO (iconos derecha) ────── -->
+  <div class="site-header__actions">
+
+    <% if (isLogged) { %>
+
+      <a href="/users/profile" class="user-greeting" aria-label="Ir a mi perfil">
+        <span class="user-greeting__avatar" aria-hidden="true">
+          <%= userLogged.nombre.charAt(0).toUpperCase() %>
+        </span>
+        <span class="user-greeting__name">Hola, <strong><%= userLogged.nombre.split(' ')[0] %></strong></span>
+      </a>
+
+      <% if (!isAdminUser) { %>
+        <a href="/carrito" class="action-btn action-btn--carrito" aria-label="Ver carrito de compras">
+          <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+          <span id="carrito-notificacion"
+                class="action-btn__badge"
+                aria-live="polite"
+                aria-label="<%= cantidadCarrito %> productos en el carrito"
+                <% if (!cantidadCarrito || cantidadCarrito <= 0) { %>hidden<% } %>>
+            <%= cantidadCarrito %>
+          </span>
+        </a>
+      <% } %>
+
+      <a href="/users/logout" class="action-btn action-btn--logout" aria-label="Cerrar sesión">
+        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+        <span class="action-btn__label">Salir</span>
+      </a>
+
+    <% } else { %>
+
+      <div class="auth-buttons">
+        <a href="/users/login" class="btn-auth btn-auth--login">
+          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+          <span>Iniciar Sesión</span>
+        </a>
+        <a href="/users/register" class="btn-auth btn-auth--register">
+          <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+          <span>Registrarme</span>
+        </a>
+      </div>
+
+    <% } %>
+
   </div>
 
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-<script>
-  const socket = io();
-
-  const headerEl = document.querySelector('header[data-usuario-id]');
-  const usuarioId = headerEl ? headerEl.dataset.usuarioId : '';
-
-  if (usuarioId) {
-    socket.emit('register', { usuarioId: Number(usuarioId) });
-  }
-
-  socket.on('pedidoActualizado', (data) => {
-    alert(`Pedido #${data.id_pedido} → ${data.estado}`);
-  });
-
-  // Admin (dejalo, pero solo si existe la función)
-  socket.on('actualizarNotificacion', () => {
-    if (typeof actualizarPedidosPendientes === 'function') {
-      actualizarPedidosPendientes();
-    }
-  });
-</script>
-
-
-  <script>
-    (function () {
-      const input = document.getElementById('headerEntradaBusqueda');
-      const clear = document.getElementById('headerBotonLimpiar');
-      if (!input || !clear) return;
-
-      const sync = () => { clear.style.display = input.value.trim() ? 'block' : 'none'; };
-      sync();
-
-      input.addEventListener('input', sync, { passive: true });
-      clear.addEventListener('click', () => {
-        input.value = '';
-        sync();
-        input.focus();
-      }, { passive: true });
-    })();
-  </script>
-  <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const badge = document.getElementById('badge-pedidos');
-  if (!badge) return; // si esta página no tiene el botón, no hace nada
-
-  async function actualizarBadgePedidos() {
-    try {
-      const res = await fetch('/pedidos/cantidad', { headers: { 'Accept': 'application/json' } });
-      if (!res.ok) return;
-      const data = await res.json();
-      const n = Number(data.cantidad || 0);
-
-      badge.textContent = n;
-      badge.style.display = (n > 0) ? 'inline-flex' : 'none';
-    } catch (_) {}
-  }
-
-  function toastPedido(texto) {
-    if (typeof Swal === 'undefined') return;
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'info',
-      title: texto,
-      showConfirmButton: false,
-      timer: 3200,
-      timerProgressBar: true
-    });
-  }
-
-  actualizarBadgePedidos();
-
-  const socket = io();
-
-  socket.on('nuevoPedido', (payload = {}) => {
-    // payload esperado: { mensaje, id_carrito, usuario, estado } (lo emite carritoController)
-    toastPedido(payload.mensaje || `📦 Nuevo pedido #${payload.id_carrito || ''}`);
-    actualizarBadgePedidos();
-  });
-
-  socket.on('actualizarNotificacion', () => {
-    actualizarBadgePedidos();
-  });
-});
-</script>
+  <!-- ── HAMBURGER (mobile) ──────────────────────── -->
+  <button class="site-header__hamburger"
+          id="hamburgerBtn"
+          type="button"
+          aria-label="Abrir menú de navegación"
+          aria-expanded="false"
+          aria-controls="mainNav">
+    <span class="hamburger__bar"></span>
+    <span class="hamburger__bar"></span>
+    <span class="hamburger__bar"></span>
+  </button>
 
 </header>
+
+<!-- Socket.io — cargado una única vez aquí (se elimina del head) -->
+<script src="/socket.io/socket.io.js"></script>
+<!-- Lógica del header: búsqueda, hamburger, socket, badges -->
+<script src="/js/layout/header.js" defer></script>
