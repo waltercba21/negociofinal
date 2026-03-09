@@ -460,7 +460,6 @@ lista: async function (req, res) {
           }
         }
       } else {
-        console.log("🛑 Sin filtros: no se mostrarán productos.");
       }
 
       const [categorias, marcas] = await Promise.all([
@@ -573,7 +572,6 @@ lista: async function (req, res) {
             });
           }
       
-          console.log(`✅ Mostrando página ${pagina} de ofertas filtradas con ${productosPagina.length} productos`);
       
           res.render("ofertas", {
             productos: productosPagina,
@@ -798,7 +796,6 @@ buscar: async (req, res) => {
           });
       
         } catch (error) {
-          console.log('Error en detalle:', error);
           return res.status(500).send('Error interno del servidor');
         }
       },      
@@ -1204,14 +1201,12 @@ actualizar: async function (req, res) {
           `DELETE FROM ${IMG_TABLE} WHERE id IN (${aEliminarImgs.map(()=>'?').join(',')}) AND producto_id=?`,
           [...aEliminarImgs, productoId]
         );
-        console.log('[ACTUALIZAR] Eliminadas imágenes:', aEliminarImgs);
       }
 
       let ordenExistentes = toArray(req.body.orden_imagenes_existentes).map(numInt).filter(Boolean).filter(id => !delSet.has(id));
 
       let nuevasIds = [];
       if (req.files && req.files.length > 0) {
-        console.log("[ACTUALIZAR] Cant. imágenes nuevas:", req.files.length);
         for (const f of req.files) {
           const r = await producto.insertarImagenProducto(conexion, {
             producto_id: productoId,
@@ -1246,9 +1241,7 @@ actualizar: async function (req, res) {
             [pos++, imgId, productoId]
           );
         }
-        console.log('[ACTUALIZAR] Orden final (posicion):', finalOrder);
       } else {
-        console.log('[ACTUALIZAR] El producto quedó sin imágenes.');
       }
     }
     // ---------- 6) ESCOBILLAS (códigos / kit) ----------
@@ -1276,7 +1269,6 @@ if (proveedor) params.set('proveedor', proveedor);
 const categoria = (typeof req.body.categoriaSeleccionada === 'string' ? req.body.categoriaSeleccionada : (typeof req.query.categoria === 'string' ? req.query.categoria : '')).trim();
 if (categoria) params.set('categoria', categoria);
 
-console.log("===== Fin actualizar (OK) =====");
 return res.redirect(`/productos/panelControl?${params.toString()}`);
 
   } catch (error) {
@@ -1368,7 +1360,6 @@ panelControl: async (req, res) => {
 todos: function (req, res) {
   producto.obtener(conexion, function (error, productos) {
     if (error) {
-      console.log('Error al obtener productos:', error);
     } else {
       productos.forEach(producto => {
         producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('de-DE');
@@ -1383,7 +1374,6 @@ eliminarProveedor: async function (req, res) {
     const proveedorId = Number(req.params.id || req.body.proveedorId || 0);
     const productoId  = Number((req.query && req.query.productoId) || req.body.productoId || 0);
 
-    console.log('🗑️ [CTRL] eliminarProveedor →', { proveedorId, productoId }, 'url=', req.originalUrl);
 
     if (!productoId || !proveedorId) {
       return res.status(400).json({ success:false, message:'Faltan productoId o proveedorId' });
@@ -1399,7 +1389,6 @@ eliminarProveedor: async function (req, res) {
     const paramsNull = [productoId, proveedorId];
     try {
       const [rNull] = await conexion.promise().query(sqlNullRefs, paramsNull);
-      console.log('🗑️ [CTRL] Nullify refs presupuesto_productos:', rNull && rNull.affectedRows);
     } catch (eNull) {
       // No es fatal; seguimos, pero lo logueamos para diagnóstico
       console.warn('⚠️ [CTRL] No se pudo nullificar refs (continuo):', eNull.code || eNull.message);
@@ -1407,7 +1396,6 @@ eliminarProveedor: async function (req, res) {
 
     // 2) Intentar borrar la relación producto_proveedor
     const result = await producto.eliminarProveedor(conexion, proveedorId, productoId);
-    console.log('🗑️ [CTRL] delete producto_proveedor result =', result);
     let affected = (result && (result.affectedRows || (result[0] && result[0].affectedRows))) || 0;
 
     // 3) Si aún está bloqueado por FK, intentamos nullificar y reintentar una vez
@@ -1422,9 +1410,7 @@ eliminarProveedor: async function (req, res) {
         try {
           // por si quedó alguna referencia que no matcheó en el paso 1
           const [rNull2] = await conexion.promise().query(sqlNullRefs, paramsNull);
-          console.log('🔁 [CTRL] Nullify refs (retry) affected=', rNull2 && rNull2.affectedRows);
           const result2 = await producto.eliminarProveedor(conexion, proveedorId, productoId);
-          console.log('🔁 [CTRL] delete (retry) result =', result2);
           affected = (result2 && (result2.affectedRows || (result2[0] && result2[0].affectedRows))) || 0;
         } catch (eRetry) {
           if (eRetry && (eRetry.code === 'ER_ROW_IS_REFERENCED' || eRetry.code === 'ER_ROW_IS_REFERENCED_2' || eRetry.errno === 1451)) {
@@ -1529,7 +1515,6 @@ modificarPorProveedor: async function (req, res) {
 },
 
 actualizarPorProveedor: function (req, res) {
-    console.log("📌 Datos recibidos:", req.body);
 
     const proveedorId = req.body.proveedor && req.body.proveedor !== '' ? Number(req.body.proveedor) : null;
     const tipoCambio = req.body.tipoCambio;
@@ -1577,7 +1562,6 @@ actualizarPrecio: function(req, res) {
 obtenerProveedores: function(req, res) {
     producto.obtenerProveedores(conexion, function(error, proveedores) {
         if (error) {
-            console.log('Error al obtener proveedores:', error);
             return;
         }
         res.render('crear', { proveedores: proveedores });
@@ -1590,7 +1574,6 @@ obtenerModelosPorMarca: function(req, res) {
         res.json(modelos);
       })
       .catch(error => {
-        console.log('Error al obtener modelos:', error);
       });
   },
 generarPDF: async function (req, res) {
@@ -1865,7 +1848,6 @@ presupuestoMostrador: async function(req, res) {
     }
 },
 procesarFormulario: async (req, res) => {
-  console.log("🔍 Datos recibidos en el servidor:", req.body);
 
   try {
       const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
@@ -1906,12 +1888,6 @@ procesarFormulario: async (req, res) => {
   }
 },
 procesarFormularioFacturas: async (req, res) => {
-  console.log("[procesarFormularioFacturas] HIT", new Date().toISOString(), {
-  nombreCliente: req.body?.nombreCliente,
-  sessionKeys: Object.keys(req.session || {}),
-  sessionUsuario: req.session?.usuario,
-  sessionUser: req.session?.user
-});
 
   try {
     const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
@@ -1978,7 +1954,6 @@ const vendedor = vendedorForm
       metodos_pago: metodosPagoString,
       creado_en: creadoEn
     };
-    console.log("[procesarFormularioFacturas] factura:", factura);
 
     const facturaId = await producto.guardarFactura(factura);
 
@@ -2057,10 +2032,8 @@ editPresupuesto : (req, res) => {
     const { id } = req.params;
     const { nombre_cliente, fecha, total, items } = req.body;
 
-    console.log('Request received to edit presupuesto:', { id, nombre_cliente, fecha, total, items });
     producto.editarPresupuesto(id, nombre_cliente, fecha, total, items)
         .then(affectedRows => {
-            console.log('Presupuesto editado exitosamente:', affectedRows);
             res.status(200).json({ message: 'Presupuesto editado exitosamente', affectedRows });
         })
         .catch(error => {
@@ -2071,10 +2044,8 @@ editPresupuesto : (req, res) => {
 editarFacturas : (req, res) => {
     const { id } = req.params;
     const { nombre_cliente, fecha, total, items } = req.body;
-    console.log('Request received to edit presupuesto:', { id, nombre_cliente, fecha, total, items });
     producto.editarFacturas(id, nombre_cliente, fecha, total, items)
         .then(affectedRows => {
-            console.log('Presupuesto editado exitosamente:', affectedRows);
             res.status(200).json({ message: 'Presupuesto editado exitosamente', affectedRows });
         })
         .catch(error => {
@@ -2582,7 +2553,6 @@ descargarPDFNuevos : async (req, res) => {
       if (proveedorMasBarato) {
         await producto.asignarProveedorMasBarato(conexion, productoId, proveedorMasBarato.proveedor_id);
       } else {
-        console.log(`No se encontró ningún proveedor para el producto con ID ${productoId}`);
       }
     } catch (error) {
       console.error(`Error al seleccionar el proveedor más barato para el producto con ID ${productoId}:`, error);
@@ -2923,4 +2893,4 @@ recomendacionesProveedorPDF: async (req, res) => {
   }
 },
 
-} 
+}
