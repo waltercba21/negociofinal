@@ -781,10 +781,21 @@
   width: 52px !important;
   text-align: center;
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .facturas-tabla__input--qty::-webkit-inner-spin-button,
 .facturas-tabla__input--qty::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+.facturas-tabla__input--qty::-webkit-inner-spin-button,
+.facturas-tabla__input--qty::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+.facturas-tabla__input--qty {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
