@@ -1,5 +1,5 @@
 /**
- * AUTOFAROS — index.js (versión corregida)
+ * AUTOFAROS — index.js
  * - Carrusel categorías: autoplay + seguir mouse izquierda/derecha
  * - Carrusel ofertas: autoplay con dots
  */
@@ -15,45 +15,43 @@
 
   /* ════════════════════════════════
      1. CARRUSEL CATEGORÍAS
-     - Autoplay continuo
-     - Mouse sobre el carrusel:
-       mitad izquierda → scroll izquierda
-       mitad derecha   → scroll derecha
   ════════════════════════════════ */
   function setupCatCarousel() {
-    const track = document.getElementById('catTrack');
-    if (!track) return;
+    const track   = document.getElementById('catTrack');
+    const wrapper = document.querySelector('.cat-carousel__track-wrapper');
+    if (!track || !wrapper) return;
 
     const cards = Array.from(track.querySelectorAll('.cat-card'));
     if (cards.length < 2) return;
 
-    let autoId = null;
-    let mouseScrollId = null;
+    // Forzar que el track se expanda
+    track.style.width    = 'max-content';
+    track.style.minWidth = '100%';
+    wrapper.style.overflow = 'hidden';
+
     let isHovering = false;
-    let mouseDir = 0; // -1 izquierda, 1 derecha, 0 parado
+    let mouseDir   = 0;
+    let autoRaf    = null;
+    let mouseRaf   = null;
 
-    const SCROLL_SPEED = 1.2; // px por frame en autoplay
-    const MOUSE_SPEED  = 2.5; // px por frame al seguir mouse
+    const SCROLL_SPEED = 1.2;
+    const MOUSE_SPEED  = 3.0;
 
-    /* ── Autoplay suave con rAF ── */
-    let autoRaf = null;
-
+    /* ── Autoplay ── */
     const autoStep = () => {
-      if (isHovering) { autoRaf = requestAnimationFrame(autoStep); return; }
-
-      // Al llegar al final, vuelve suavemente al inicio
-      const maxScroll = track.scrollWidth - track.clientWidth;
-      if (track.scrollLeft >= maxScroll - 2) {
-        track.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        track.scrollLeft += SCROLL_SPEED;
+      if (!isHovering) {
+        const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+        if (wrapper.scrollLeft >= maxScroll - 2) {
+          wrapper.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          wrapper.scrollLeft += SCROLL_SPEED;
+        }
       }
       autoRaf = requestAnimationFrame(autoStep);
     };
 
     const startAuto = () => {
-      if (prefersReducedMotion()) return;
-      if (autoRaf) return;
+      if (prefersReducedMotion() || autoRaf) return;
       autoRaf = requestAnimationFrame(autoStep);
     };
 
@@ -62,92 +60,72 @@
       autoRaf = null;
     };
 
-    /* ── Scroll por mouse (zona izq/der) ── */
-    let mouseRaf = null;
-
+    /* ── Mouse scroll por zona ── */
     const mouseStep = () => {
       if (!isHovering || mouseDir === 0) { mouseRaf = null; return; }
-      track.scrollLeft += mouseDir * MOUSE_SPEED;
+      wrapper.scrollLeft += mouseDir * MOUSE_SPEED;
       mouseRaf = requestAnimationFrame(mouseStep);
     };
 
-    track.addEventListener('mouseenter', () => {
-      isHovering = true;
-      stopAuto();
-    });
-
-    track.addEventListener('mouseleave', () => {
+    wrapper.addEventListener('mouseenter', () => { isHovering = true; });
+    wrapper.addEventListener('mouseleave', () => {
       isHovering = false;
       mouseDir = 0;
       if (mouseRaf) { cancelAnimationFrame(mouseRaf); mouseRaf = null; }
-      startAuto();
     });
 
-    track.addEventListener('mousemove', (e) => {
-      const rect = track.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const ratio = x / rect.width;
+    wrapper.addEventListener('mousemove', (e) => {
+      const rect  = wrapper.getBoundingClientRect();
+      const ratio = (e.clientX - rect.left) / rect.width;
 
-      // Zona activa: primero y último 35%
-      if (ratio < 0.35) {
-        mouseDir = -1;
-      } else if (ratio > 0.65) {
-        mouseDir = 1;
-      } else {
-        mouseDir = 0;
-      }
+      if (ratio < 0.3)       mouseDir = -1;
+      else if (ratio > 0.7)  mouseDir =  1;
+      else                   mouseDir =  0;
 
       if (mouseDir !== 0 && !mouseRaf) {
         mouseRaf = requestAnimationFrame(mouseStep);
       }
     });
 
-    /* ── Touch: swipe ── */
+    /* ── Touch swipe ── */
     let touchStartX = 0;
-    track.addEventListener('touchstart', (e) => {
+    wrapper.addEventListener('touchstart', (e) => {
       touchStartX = e.touches[0].clientX;
-      stopAuto();
     }, { passive: true });
 
-    track.addEventListener('touchend', () => {
-      setTimeout(startAuto, 1500);
+    wrapper.addEventListener('touchmove', (e) => {
+      const dx = touchStartX - e.touches[0].clientX;
+      wrapper.scrollLeft += dx * 0.5;
     }, { passive: true });
 
     /* ── Drag con pointer ── */
-    let isDragging = false;
-    let dragStartX = 0;
+    let isDragging    = false;
+    let dragStartX    = 0;
     let dragStartScroll = 0;
-    let maxMovement = 0;
+    let maxMovement   = 0;
 
-    track.addEventListener('pointerdown', (e) => {
+    wrapper.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      isDragging = true;
-      dragStartX = e.clientX;
-      dragStartScroll = track.scrollLeft;
-      maxMovement = 0;
-      track.setPointerCapture(e.pointerId);
-      stopAuto();
+      isDragging      = true;
+      dragStartX      = e.clientX;
+      dragStartScroll = wrapper.scrollLeft;
+      maxMovement     = 0;
+      wrapper.setPointerCapture(e.pointerId);
     });
 
-    track.addEventListener('pointermove', (e) => {
+    wrapper.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
       const dx = e.clientX - dragStartX;
       maxMovement = Math.max(maxMovement, Math.abs(dx));
-      track.scrollLeft = dragStartScroll - dx;
+      wrapper.scrollLeft = dragStartScroll - dx;
     });
 
-    const endDrag = () => {
-      if (!isDragging) return;
-      isDragging = false;
-      if (!isHovering) setTimeout(startAuto, 1500);
-    };
+    const endDrag = () => { isDragging = false; };
+    wrapper.addEventListener('pointerup',          endDrag);
+    wrapper.addEventListener('pointercancel',      endDrag);
+    wrapper.addEventListener('lostpointercapture', endDrag);
 
-    track.addEventListener('pointerup', endDrag);
-    track.addEventListener('pointercancel', endDrag);
-    track.addEventListener('lostpointercapture', endDrag);
-
-    // Prevenir click si fue drag
-    track.addEventListener('click', (e) => {
+    wrapper.addEventListener('click', (e) => {
       if (maxMovement > 8) { e.preventDefault(); e.stopPropagation(); }
     }, true);
 
@@ -156,10 +134,6 @@
 
   /* ════════════════════════════════
      2. CARRUSEL OFERTAS
-     - Muestra 2 cards a la vez
-     - Autoplay cada 5s
-     - Dots indicadores
-     - Flechas opcionales
   ════════════════════════════════ */
   function setupOfertasCarousel() {
     const list    = document.getElementById('ofertasList');
@@ -170,11 +144,11 @@
     const cards = Array.from(list.querySelectorAll('.product-card'));
     if (!cards.length) return;
 
-    const perPage = () => window.innerWidth <= 480 ? 1 : 2;
-    let page = 0;
-    let autoId = null;
+    const perPage     = () => window.innerWidth <= 480 ? 1 : 2;
+    let page          = 0;
+    let autoId        = null;
 
-    // Crear dots
+    // Dots
     let dotsEl = null;
     const viewport = document.getElementById('ofertasViewport');
     if (viewport) {
@@ -186,19 +160,17 @@
     const totalPages = () => Math.ceil(cards.length / perPage());
 
     const render = () => {
-      const pp = perPage();
+      const pp    = perPage();
       const start = page * pp;
-      const end = start + pp;
+      const end   = start + pp;
 
       cards.forEach((c, i) => {
         c.classList.toggle('oferta-visible', i >= start && i < end);
       });
 
-      // Flechas
       if (btnPrev) btnPrev.disabled = page === 0;
       if (btnNext) btnNext.disabled = page >= totalPages() - 1;
 
-      // Dots
       if (dotsEl) {
         dotsEl.innerHTML = '';
         const tp = totalPages();
@@ -230,7 +202,7 @@
 
     list.addEventListener('mouseenter', stopAuto);
     list.addEventListener('mouseleave', startAuto);
-    list.addEventListener('touchstart', stopAuto, { passive: true });
+    list.addEventListener('touchstart',  stopAuto, { passive: true });
 
     let resizeT = 0;
     window.addEventListener('resize', () => {
@@ -242,7 +214,6 @@
     startAuto();
   }
 
-  /* ── INIT ── */
   function init() {
     setupCatCarousel();
     setupOfertasCarousel();
