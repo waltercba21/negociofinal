@@ -477,8 +477,10 @@
 }
 
 .presupuesto-tabla__input--qty {
-  width: 72px;
+  width: 52px !important;
   text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .presupuesto-tabla__input:focus {
@@ -744,4 +746,10 @@
   .btn-guardar, .btn-imprimir, .btn-listado,
   .presupuesto-buscador-wrap, .boton-eliminar-factura { display: none; }
   .presupuesto-tabla__input { border: none; background: transparent; color: #000; }
+}
+.presupuesto-tabla__input--qty::-webkit-inner-spin-button,
+.presupuesto-tabla__input--qty::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
 }
