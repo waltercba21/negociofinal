@@ -236,7 +236,6 @@ guardarFactura: (factura) => {
                     reject(error);
                 } else {
                     if (resultados.length > 0) {
-                        console.log(`✅ Producto encontrado: ${JSON.stringify(resultados[0])}`);
                         resolve(resultados[0].id);
                     } else {
                         console.warn(`⚠️ Producto con código ${codigo} y nombre ${nombre} no encontrado.`);
@@ -264,12 +263,6 @@ guardarFactura: (factura) => {
           });
         });
       },      
-obtenerTotal: function (conexion, funcion) {
-  if (typeof funcion !== 'function') {
-      throw new Error('funcion debe ser una función');
-  }
-  conexion.query('SELECT COUNT(*) as total FROM productos', funcion);
-},
 obtenerPorId: function (conexion, id, funcion) {
     conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre, imagenes_producto.imagen FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE productos.id = ?', [id], function(error, resultados) {
         if (error) {
@@ -304,23 +297,6 @@ obtenerPorId: function (conexion, id, funcion) {
         });
     });
 }, 
-insertarProductoProveedor: function(conexion, productoProveedor) {
-    return new Promise((resolve, reject) => {
-        const fila = [productoProveedor.producto_id, productoProveedor.proveedor_id, productoProveedor.precio_lista, productoProveedor.codigo];
-
-        conexion.query('INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo) VALUES (?, ?, ?, ?)', fila, function(error, result) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(result);
-            }
-        });
-    });
-},
-  insertarDescuentos:function(conexion, proveedor_id, descuento, funcion) {
-    conexion.query('INSERT INTO descuentos_proveedor (proveedor_id, descuento) VALUES (?, ?)',
-    [proveedor_id, descuento], funcion);
-  },
  eliminar: async (idOrIds) => {
     const ids = (Array.isArray(idOrIds) ? idOrIds : [idOrIds])
       .map(id => parseInt(id, 10))
@@ -403,49 +379,6 @@ actualizar: function (conexion, datos, archivo) {
     });
   });
 },
-
- actualizarProductoProveedor: function (conexion, datos) {
-    return new Promise((resolve, reject) => {
-      const producto_id  = Number(datos.producto_id) || 0;
-      const proveedor_id = Number(datos.proveedor_id) || 0;
-      const precio_lista = parseDecimal(datos.precio_lista, 0);
-      const codigo       = (typeof datos.codigo === 'string' && datos.codigo.trim() !== '') ? datos.codigo.trim() : null;
-      const iva          = parseDecimal(datos.iva, 21);
-
-      if (!producto_id || !proveedor_id) {
-        return reject(new Error('producto_id y proveedor_id son obligatorios'));
-      }
-
-      const sql = `
-        INSERT INTO producto_proveedor (producto_id, proveedor_id, precio_lista, codigo, iva)
-        VALUES (?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          precio_lista = VALUES(precio_lista),
-          codigo       = VALUES(codigo),
-          iva          = VALUES(iva)
-      `;
-      const params = [producto_id, proveedor_id, precio_lista, codigo, iva];
-
-      conexion.query(sql, params, (error, results) => {
-        if (error) return reject(error);
-        resolve(results);
-      });
-    });
-  },
-actualizarArchivo: function(conexion, datosProducto, archivo) {
-    return new Promise((resolve, reject) => {
-        const query = 'INSERT INTO imagenes_producto (imagen, producto_id) VALUES (?, ?)';
-        const params = [archivo.filename, datosProducto.id]; // Asume que 'archivo' es un objeto con una propiedad 'filename'
-
-        conexion.query(query, params, (error, results) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(results);
-            }
-        });
-    });
-},
 obtenerUltimos: function (conexion, cantidad, funcion) {
     conexion.query(`
       SELECT productos.*, categorias.nombre AS categoria_nombre, 
@@ -468,57 +401,8 @@ obtenerUltimos: function (conexion, cantidad, funcion) {
       }
     );
   },
-actualizarPreciosPorProveedor: function (proveedorId, porcentajeCambio, callback) {
-    proveedorId = Number(proveedorId);
-    porcentajeCambio = Number(porcentajeCambio);
-
-    console.log(`📌 Actualizando precios para proveedor ID: ${proveedorId}, Incremento: ${porcentajeCambio * 100}%`);
-
-    if (isNaN(proveedorId) || isNaN(porcentajeCambio)) {
-        console.error("❌ Error: proveedorId o porcentajeCambio no válido.");
-        return callback(new Error("Datos inválidos"));
-    }
-
-    const query = `
-        UPDATE producto_proveedor pp
-        JOIN productos p ON pp.producto_id = p.id AND pp.proveedor_id = p.proveedor_id
-        LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-        SET 
-            pp.precio_lista = ROUND(pp.precio_lista * (1 + ?), 2),
-            p.costo_neto = ROUND(pp.precio_lista - (pp.precio_lista * IFNULL(dp.descuento, 0) / 100), 2),
-            p.costo_iva = ROUND((pp.precio_lista - (pp.precio_lista * IFNULL(dp.descuento, 0) / 100)) * 1.21, 2),
-            p.precio_venta = ROUND(
-                ((pp.precio_lista - (pp.precio_lista * IFNULL(dp.descuento, 0) / 100)) * 1.21)
-                * (1 + p.utilidad / 100), 
-                2
-            )
-        WHERE pp.proveedor_id = ?;
-    `;
-
-    const params = [porcentajeCambio, proveedorId];
-
-    conexion.getConnection((err, conexion) => {
-        if (err) {
-            console.error('❌ Error al obtener la conexión:', err);
-            return callback(err);
-        }
-
-        conexion.query(query, params, function (error, results) {
-            conexion.release();
-
-            if (error) {
-                console.error('❌ Error en la consulta:', error);
-                return callback(error);
-            }
-
-            console.log(`✅ ${results.affectedRows} productos actualizados para el proveedor ${proveedorId}`);
-            callback(null, results.affectedRows);
-        });
-    });
-},
 actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, porcentaje, callback) {
   try {
-    console.log(`🔧 Iniciando actualización completa para proveedor ID: ${proveedorId} con ${porcentaje * 100}%`);
 
     function redondearAlCentenar(valor) {
       let n = Number(valor) || 0;
@@ -618,8 +502,6 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
       }
     }
 
-    console.log(`✅ producto_proveedor actualizados: ${actualizadosPP}`);
-    console.log(`✅ productos actualizados (solo asignados): ${actualizadosProductos}`);
 
     // mantenemos el "count" como antes: cantidad procesada para ese proveedor
     return callback(null, actualizadosPP);
@@ -773,26 +655,6 @@ actualizarPreciosPDF: async function (precio_lista, codigo, proveedor_id) {
     return null;
   }
 },
-
-obtenerProductoPorCodigo: function(codigo) {
-        return new Promise((resolve, reject) => {
-            const sql = 'SELECT * FROM producto_proveedor WHERE codigo = ?';
-            conexion.getConnection((err, conexion) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    conexion.query(sql, [codigo], (error, results) => {
-                        conexion.release();
-                        if (error) {
-                            reject(error);
-                        } else {
-                            resolve(results[0]); 
-                        }
-                    });
-                }
-            });
-        });
-    },
     buscar : async (busqueda, categoria_id, marca_id, modelo_id) => {
         let query = `
             SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
@@ -833,34 +695,6 @@ obtenerProductoPorCodigo: function(codigo) {
     
         return Object.values(productos);
     },
-    actualizarStock: function(conexion, idProducto, stockMinimo, stockActual) {
-        return new Promise((resolve, reject) => {
-            const sql = 'UPDATE productos SET stock_minimo = ?, stock_actual = ? WHERE id = ?';
-            conexion.query(sql, [stockMinimo, stockActual, idProducto], (error, results) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(results);
-                }
-            });
-        });
-    },
-ajustarStockPorOperacion: function(conexion, productoId, cantidad) {
-    return new Promise((resolve, reject) => {
-        const sql = `
-            UPDATE productos
-            SET stock_actual = stock_actual + ?
-            WHERE id = ?
-        `;
-        conexion.query(sql, [cantidad, productoId], (error, results) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(results);
-            }
-        });
-    });
-},
 
     obtenerStock: function(conexion, idProducto) {
         return new Promise((resolve, reject) => {
@@ -881,7 +715,6 @@ ajustarStockPorOperacion: function(conexion, productoId, cantidad) {
                     console.error('Error al actualizar el stock:', error);
                     reject(error);
                 } else {
-                    console.log('Stock actualizado correctamente:', resultado);
                     resolve(resultado);
                 }
             });
@@ -1011,46 +844,6 @@ obtenerProveedores: function(conexion) {
             }
         });
     });
-},
-buscarPorProveedor: function (conexion, proveedorId, q) {
-  return new Promise((resolve, reject) => {
-    const like = `%${q}%`;
-
-    const sql = `
-      SELECT
-        p.id,
-        p.nombre,
-        MAX(pp.codigo)       AS codigo,
-        MAX(pp.precio_lista) AS precio_lista,
-        MAX(pp.descuento)    AS descuento,
-        MAX(pp.costo_neto)   AS costo_neto,
-        MAX(pp.costo_iva)    AS costo_iva,
-        MAX(pp.iva)          AS iva,
-        MAX(pp.presentacion) AS presentacion,
-        MAX(pp.factor_unidad) AS factor_unidad,
-        GROUP_CONCAT(i.imagen) AS imagenes
-      FROM productos p
-      JOIN producto_proveedor pp
-        ON pp.producto_id = p.id
-       AND pp.proveedor_id = ?
-      LEFT JOIN imagenes_producto i
-        ON i.producto_id = p.id
-      WHERE (p.nombre LIKE ? OR pp.codigo LIKE ?)
-      GROUP BY p.id, p.nombre
-      ORDER BY p.nombre ASC
-      LIMIT 30
-    `;
-
-    conexion.query(sql, [proveedorId, like, like], (error, rows) => {
-      if (error) return reject(error);
-
-      rows.forEach(r => {
-        r.imagenes = r.imagenes ? r.imagenes.split(',') : [];
-      });
-
-      resolve(rows);
-    });
-  });
 },
 obtenerPorFiltrosYProveedor: function (
   conexion,
@@ -1187,26 +980,6 @@ obtenerMarcas: function(conexion) {
         });
     });
   },
-obtenerModeloPorId: function (conexion, id, callback) {
-  conexion.query('SELECT * FROM modelos WHERE id = ?', [id], function (error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados);
-      }
-  });
-},
-
-contarPorProveedor: function(conexion, proveedor, callback) {
-  var query = "SELECT COUNT(*) as total FROM productos WHERE proveedor_id = ?";
-  conexion.query(query, [proveedor], function(error, resultado) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultado);
-      }
-  });
-},
 obtenerCategorias: function(conexion) {
     return new Promise((resolve, reject) => {
         let query = 'SELECT * FROM categorias ORDER BY nombre ASC';
@@ -1217,49 +990,6 @@ obtenerCategorias: function(conexion) {
                 reject(error);
             } else {
                 resolve(resultados);
-            }
-        });
-    });
-},
-obtenerProductosPorIds: async function(conexion, categoriaId, marcaId, modeloId) {
-    let query = `
-        SELECT productos.*, 
-        GROUP_CONCAT(imagenes_producto.imagen) AS imagenes 
-        FROM productos 
-        LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
-        WHERE 1=1
-    `;
-    let params = [];
-
-    if (categoriaId !== undefined && categoriaId !== null) {
-        query += ' AND categoria_id = ?';
-        params.push(categoriaId);
-    }
-
-    if (marcaId !== undefined && marcaId !== null) {
-        query += ' AND marca_id = ?';
-        params.push(marcaId);
-    }
-
-    if (modeloId !== undefined && modeloId !== null) {
-        query += ' AND modelo_id IN (SELECT id FROM modelos WHERE id_marca = ?)';
-        params.push(modeloId);
-    }
-
-    query += ' GROUP BY productos.id';
-
-    return new Promise((resolve, reject) => {
-        conexion.query(query, params, (error, results) => {
-            if (error) {
-                console.error('Error al ejecutar la consulta:', error);
-                reject(error);
-            } else {
-                // Convertir la cadena de imágenes en un array
-                results = results.map(producto => {
-                    producto.imagenes = producto.imagenes ? producto.imagenes.split(',') : [];
-                    return producto;
-                });
-                resolve(results);
             }
         });
     });
@@ -1283,17 +1013,7 @@ obtenerProductosPorCategoria: function(conexion, categoriaId) {
     });
   });
 },
-
-contarProductos: function(conexion, callback) {
-  var query = "SELECT COUNT(*) as total FROM productos";
-  conexion.query(query, function(error, resultado) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultado);
-      }
-  });
-},  
+  
 obtenerProductosPorProveedorYCategoria: function (conexion, proveedor, categoria) {
   // Normalizo parámetros para facilitar las condiciones
   const prov = (!proveedor || proveedor === 'TODOS') ? null : proveedor;
@@ -1331,96 +1051,7 @@ obtenerProductosPorProveedorYCategoria: function (conexion, proveedor, categoria
   const queryPromise = require('util').promisify(conexion.query).bind(conexion);
   return queryPromise(query, params);
 },
-
-
-obtenerProductosPorProveedorConStock: function(conexion, proveedor) {
-    if (!proveedor) {
-        const query = `
-            SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
-            FROM productos p
-            INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-            WHERE 
-                p.id NOT IN (
-                    SELECT DISTINCT producto_id 
-                    FROM producto_proveedor 
-                    WHERE proveedor_id != pp.proveedor_id
-                )
-            ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
-        `;
-        const queryPromise = util.promisify(conexion.query).bind(conexion);
-        return queryPromise(query)
-            .then(result => {
-                return result;
-            })
-            .catch(error => {
-                throw error;
-            });
-    } else {
-        const query = `
-            SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual
-            FROM productos p
-            INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-            WHERE 
-                pp.proveedor_id = ? 
-                AND (p.id, pp.precio_lista - (pp.precio_lista * p.descuentos_proveedor_id / 100) + (pp.precio_lista - (pp.precio_lista * p.descuentos_proveedor_id / 100)) * 0.21) 
-                IN (
-                    SELECT p2.id, MIN(pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100) + (pp2.precio_lista - (pp2.precio_lista * p2.descuentos_proveedor_id / 100)) * 0.21)
-                    FROM productos p2
-                    INNER JOIN producto_proveedor pp2 ON p2.id = pp2.producto_id
-                    GROUP BY p2.id
-                )
-            ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
-        `;
-        const queryPromise = util.promisify(conexion.query).bind(conexion);
-        return queryPromise(query, [proveedor])
-            .then(result => {
-                return result;
-            })
-            .catch(error => {
-                throw error;
-            });
-    }
-},
-obtenerProductosParaPedidoPorProveedorConStock: function(conexion, proveedor, categoria) {
-
-    const query = `
-        SELECT pp.codigo AS codigo_proveedor, p.nombre, p.stock_minimo, p.stock_actual, c.nombre AS categoria
-        FROM productos p
-        INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-        INNER JOIN categorias c ON p.categoria_id = c.id
-        WHERE ${proveedor ? 'pp.proveedor_id = ?' : '1=1'}
-        ${categoria ? 'AND p.categoria_id = ?' : ''}
-        AND p.stock_actual < p.stock_minimo
-        ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
-    `;
-
-    const params = [];
-    if (proveedor) params.push(proveedor);
-    if (categoria) params.push(categoria);
-
-    const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return queryPromise(query, params)
-        .then(result => {
-            return result;
-        })
-        .catch(error => {
-            throw error;
-        });
-},
-
-  contarTodos: function (conexion, parametro, callback) {
-  const query = 'SELECT COUNT(*) AS total FROM productos';
-  conexion.query(query, function (error, resultados) {
-      if (error) {
-          callback(error, null);
-      } else {
-          callback(null, resultados);
-      }
-  });
-},
-  contarPorCategoria: function(conexion, categoria, callback) {
-  conexion.query('SELECT COUNT(*) as total FROM productos WHERE categoria_id = ?', [categoria], callback);
-}, 
+ 
 obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
   return new Promise((resolve, reject) => {
     let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original FROM productos'; 
@@ -1810,17 +1441,6 @@ editarFactura: (id, nombre_cliente, fecha, total, items) => {
         });
     });
 },
-
-  obtenerPorCategoriaMarcaModelo: function(conexion, categoria, marca, modelo, callback) {
-  var query = "SELECT id, nombre, codigo, imagen, descripcion, precio_venta, modelo, categoria_id, marca_id, proveedor_id, modelo_id FROM productos WHERE categoria_id = ? AND marca_id = ? AND modelo_id = ?";
-  conexion.query(query, [categoria, marca, modelo], function(error, resultados) {
-      if (error) {
-          callback(error, null); 
-      } else {
-          callback(null, resultados);
-      }
-  });
-},
 retornarDatosId: function(conexion, id) { 
   return new Promise((resolve, reject) => {
     const sql = `
@@ -1875,24 +1495,6 @@ obtenerImagenesProducto: function(conexion, ids) {
         conexion.query(query, ids, function(error, resultados) {
             if (error) {
                 console.error('Error al obtener las imágenes del producto:', error);
-                reject(error);
-            } else {
-                resolve(resultados);
-            }
-        });
-    });
-},
-
-  obtenerProveedoresProducto: function(conexion, id) {
-    return new Promise((resolve, reject) => {
-        conexion.query(`
-            SELECT pp.proveedor_id, pp.codigo, pp.precio_lista, dp.descuento
-            FROM producto_proveedor pp
-            LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-            WHERE pp.producto_id = ?
-        `, [id], function(error, resultados) {
-            if (error) {
-                console.error('Error al obtener los proveedores del producto:', error);
                 reject(error);
             } else {
                 resolve(resultados);
@@ -1987,29 +1589,6 @@ insertarImagenProducto(conexion, { producto_id, imagen, posicion = null }) {
   `;
   return conexion.promise().query(sql, [producto_id, imagen, posicion]);
 },
-   obtenerProveedoresDeProducto: function (conexion, producto_id) {
-    return new Promise((resolve, reject) => {
-      const pid = Number(producto_id) || 0;
-      if (!pid) return reject(new Error('producto_id inválido'));
-
-      const sql = `
-        SELECT
-          pp.producto_id,
-          pp.proveedor_id,
-          pp.precio_lista,
-          pp.codigo,
-          pp.iva,
-          pp.actualizado_en
-        FROM producto_proveedor pp
-        WHERE pp.producto_id = ?
-        ORDER BY pp.proveedor_id ASC
-      `;
-      conexion.query(sql, [pid], (error, rows) => {
-        if (error) return reject(error);
-        resolve(rows || []);
-      });
-    });
-  },
 eliminarImagen : function(id) {
     return new Promise((resolve, reject) => {
         const sql = 'DELETE FROM imagenes_producto WHERE id = ?';
@@ -2291,27 +1870,6 @@ obtenerProveedoresPorProducto: async (conexion, producto_id) => {
     });
   });
 },
-
-  obtenerHistorialPedidos: async function (conexion) {
-    const query = `
-      SELECT 
-        pedidos.id AS pedido_id,
-        pedidos.fecha,
-        pedidos.total,
-        proveedores.nombre AS proveedor
-      FROM pedidos
-      JOIN proveedores ON pedidos.proveedor_id = proveedores.id
-      ORDER BY pedidos.fecha DESC
-    `;
-  
-    try {
-      const [rows] = await conexion.promise().query(query);
-      return rows;
-    } catch (error) {
-      console.error('❌ Error al obtener historial de pedidos:', error);
-      return [];
-    }
-  },
   obtenerHistorialPedidosFiltrado: async function (conexion, fechaDesde, fechaHasta, proveedorId) {
     let query = `
       SELECT 
@@ -2665,19 +2223,7 @@ obtenerMasVendidos: function (
     conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
   });
 },
-// Inserta búsqueda de texto
-insertarBusquedaTexto: function (conexion, { q, origen, user_id, ip }) {
-  return new Promise((resolve, reject) => {
-    const sql = `INSERT INTO busquedas_texto (q, origen, user_id, ip) VALUES (?, ?, ?, ?)`;
-    conexion.query(sql, [q, origen || 'texto', user_id, ip], (err, r) => err ? reject(err) : resolve(r.insertId));
-  });
-},
-insertarBusquedaProducto: function (conexion, { producto_id, q, user_id, ip }) {
-  return new Promise((resolve, reject) => {
-    const sql = `INSERT INTO busquedas_producto (producto_id, q, user_id, ip) VALUES (?, ?, ?, ?)`;
-    conexion.query(sql, [producto_id, q, user_id, ip], (err, r) => err ? reject(err) : resolve(r.insertId));
-  });
-},
+
 obtenerMasBuscadosDetallado: function (
   conexion,
   { categoria_id = null, desde = null, hasta = null, limit = 50, weightText = 0.3 }
@@ -3035,44 +2581,6 @@ obtenerMasVendidosPorProveedor: function (conexion, { proveedor_id, desde = null
   });
 },
 
-// 3) Más buscados/consultados del proveedor (entre fechas) — usa busquedas_producto_log
-obtenerMasBuscadosPorProveedor: function (conexion, { proveedor_id, desde = null, hasta = null, limit = 100 }) {
-  return new Promise((resolve, reject) => {
-    const prov = parseInt(proveedor_id, 10);
-    if (!prov) return resolve([]);
-
-    const filtros = [];
-    const params = [prov];
-
-    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
-    const d1 = isDate(desde) ? desde : null;
-    const d2 = isDate(hasta) ? hasta : null;
-
-    if (d1 && d2) { filtros.push(`b.fecha BETWEEN ? AND ?`); params.push(d1, d2); }
-    else if (d1)  { filtros.push(`b.fecha >= ?`);           params.push(d1); }
-    else if (d2)  { filtros.push(`b.fecha <= ?`);           params.push(d2); }
-
-    const whereFechas = filtros.length ? `AND ${filtros.join(' AND ')}` : '';
-    const safeLimit = Math.max(1, Math.min(parseInt(limit, 10) || 100, 500));
-
-    const sql = `
-      SELECT
-        p.id,
-        p.nombre,
-        COUNT(*) AS total_buscado
-      FROM busquedas_producto_log b
-      INNER JOIN productos p ON p.id = b.producto_id
-      INNER JOIN producto_proveedor pp ON pp.producto_id = p.id AND pp.proveedor_id = ?
-      WHERE 1=1
-      ${whereFechas}
-      GROUP BY p.id, p.nombre
-      ORDER BY total_buscado DESC
-      LIMIT ${safeLimit}
-    `;
-
-    conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
-  });
-},
 
 // 4) Registrar consultas de búsqueda (consultados)
 registrarConsultasBusqueda: function (conexion, { productoIds = [], termino = null, usuario_id = null }) {
