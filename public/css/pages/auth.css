@@ -381,3 +381,11 @@ input[type="date"].auth-input {
   .auth-actions { flex-direction: column; }
   .auth-actions .auth-btn { width: 100%; }
 }
+.auth-actions {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-actions .auth-btn {
+  width: 100%;
+}
