@@ -335,11 +335,12 @@ input[type="date"].auth-input {
 
 .auth-actions {
   display: flex;
-  gap: 12px;
-  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
 }
 
-.auth-actions .auth-btn--primary { flex: 1; }
+.auth-actions .auth-btn { width: 100%; }
 
 /* ──────────────────────────────────────────────────────────
    11. FOOTER TEXT / LINKS
@@ -380,12 +381,4 @@ input[type="date"].auth-input {
   .auth-field--full { grid-column: 1; }
   .auth-actions { flex-direction: column; }
   .auth-actions .auth-btn { width: 100%; }
-}
-.auth-actions {
-  flex-direction: column;
-  gap: 10px;
-}
-
-.auth-actions .auth-btn {
-  width: 100%;
 }
