@@ -2,6 +2,7 @@ const administracion = require('../models/administracion')
 const path = require('path');
 const PDFDocument = require('pdfkit');
 
+// Formato DD/MM/YYYY — usado en vistas y PDFs
 function formatFechaDMY(date) {
   const d = new Date(date);
   const day = String(d.getDate()).padStart(2, '0');
@@ -10,26 +11,13 @@ function formatFechaDMY(date) {
   return `${day}/${month}/${year}`;
 }
 
-
+// Formato YYYY-MM-DD — usado para queries SQL
 function formatDate(date) {
-    var d = new Date(date),
-        month = '' + (d.getMonth() + 1),
-        day = '' + d.getDate(),
-        year = d.getFullYear();
-
-    if (month.length < 2) 
-        month = '0' + month;
-    if (day.length < 2) 
-        day = '0' + day;
-
-    return [year, month, day].join('-');
-}
-function formatFechaDMY(date) {
   const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, '0');
   const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
   const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
+  return [year, month, day].join('-');
 }
 
 module.exports = {
@@ -234,18 +222,9 @@ postFactura: function (req, res) {
                 return res.status(500).send('Error al obtener la factura');
             }
     
-            // Formatear las fechas antes de pasar a la vista
-            const formatDate = (date) => {
-                const d = new Date(date);
-                const day = String(d.getDate()).padStart(2, '0');
-                const month = String(d.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
-                const year = d.getFullYear();
-                return `${day}/${month}/${year}`;
-            };
-    
             // Formatear las fechas de la factura
-            factura.fecha = formatDate(factura.fecha);
-            factura.fecha_pago = formatDate(factura.fecha_pago);
+            factura.fecha = formatFechaDMY(factura.fecha);
+            factura.fecha_pago = formatFechaDMY(factura.fecha_pago);
     
             administracion.getProductosByFacturaId(facturaID, (error, productos) => {
                 if (error) {
