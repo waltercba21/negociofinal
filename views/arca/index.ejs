@@ -1,624 +1,196 @@
-<!doctype html>
+<% var pageCss = '/css/pages/arca.css' %>
+<!DOCTYPE html>
 <html lang="es">
-<head>
-  <%- include('../layouts/head', { pageCss: null }) %>
-<style>
-    /* =========================
-       ARCA UI — Moderno/Prolijo
-       - Scoped: solo aplica en esta página
-       - Colores por tipo de acción (primaria / warning / peligrosa)
-       ========================= */
-
-    :root{
-      --bg:#f7f8fc;
-      --surface:#ffffff;
-      --surface2:#fbfcff;
-
-      --text:#0b1220;
-      --muted:#475467;
-      --muted2:#667085;
-
-      --border:#e4e7ec;
-      --border2:#eef2f6;
-
-      --primary:#2563eb;
-      --primaryHover:#1d4ed8;
-      --danger:#dc2626;
-      --dangerHover:#b91c1c;
-      --warn:#d97706;
-      --warnHover:#b45309;
-      --ok:#067647;
-
-      --shadowSm: 0 1px 2px rgba(16,24,40,.06);
-      --shadowMd: 0 12px 28px rgba(16,24,40,.12);
-      --radius:16px;
-      --radiusSm:12px;
-      --ring: 0 0 0 4px rgba(37,99,235,.18);
-    }
-
-    /* Scope para no pisar header/footer del sitio */
-    body.arca-page{
-      margin:0;
-      background:
-        radial-gradient(1100px 520px at 10% -10%, rgba(37,99,235,.10), transparent 55%),
-        radial-gradient(900px 520px at 110% 0%, rgba(6,118,71,.08), transparent 55%),
-        var(--bg);
-      color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-      -webkit-font-smoothing:antialiased;
-      text-rendering:optimizeLegibility;
-    }
-
-    .arca-page *{box-sizing:border-box}
-    .arca-page a{color:var(--primary);text-decoration:none}
-    .arca-page a:hover{text-decoration:underline}
-    .arca-page .wrap{max-width:1480px;margin:0 auto;padding:18px}
-
-    .arca-page .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:12px}
-    .arca-page h1{margin:0;font-size:20px;letter-spacing:-.3px}
-    .arca-page .sub{margin:6px 0 0;color:var(--muted2);font-size:13px}
-
-    .arca-page .grid{display:grid;grid-template-columns:1fr 480px;gap:14px;align-items:start}
-    @media (max-width:1150px){ .arca-page .grid{grid-template-columns:1fr} }
-
-    .arca-page .card{
-      background:var(--surface);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadowSm);
-      overflow:hidden;
-    }
-    .arca-page .hd{
-      padding:12px 14px;
-      border-bottom:1px solid var(--border2);
-      background:linear-gradient(180deg,var(--surface2),var(--surface));
-      display:flex;justify-content:space-between;align-items:center;gap:10px
-    }
-    .arca-page .bd{padding:12px 14px}
-
-    .arca-page .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-
-    .arca-page .inp,
-    .arca-page input[type="date"],
-    .arca-page select{
-      height:40px;
-      border:1px solid var(--border);
-      border-radius:var(--radiusSm);
-      padding:0 12px;
-      outline:none;
-      background:var(--surface);
-      color:var(--text);
-      box-shadow:var(--shadowSm);
-    }
-    .arca-page .inp::placeholder{color:#98a2b3}
-    .arca-page .inp:focus,
-    .arca-page input[type="date"]:focus,
-    .arca-page select:focus{border-color:rgba(37,99,235,.45);box-shadow:var(--ring),var(--shadowSm)}
-    .arca-page .inp:focus-visible,
-    .arca-page input[type="date"]:focus-visible,
-    .arca-page select:focus-visible{outline:none}
-
-    .arca-page .btn{
-      height:40px;
-      border:1px solid var(--border);
-      border-radius:var(--radiusSm);
-      background:var(--surface);
-      padding:0 14px;
-      font-weight:900;
-      letter-spacing:-.2px;
-      cursor:pointer;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      box-shadow:var(--shadowSm);
-      user-select:none;
-    }
-    .arca-page .btn:hover{border-color:#d0d5dd}
-    .arca-page .btn:active{transform:translateY(1px)}
-    .arca-page .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
-    .arca-page .btn:focus-visible{outline:none;box-shadow:var(--ring),var(--shadowSm);border-color:rgba(37,99,235,.45)}
-
-    .arca-page .btnP, .arca-page .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-    .arca-page .btnP:hover, .arca-page .btn.primary:hover{background:var(--primaryHover);border-color:var(--primaryHover)}
-
-    .arca-page .btn.secondary{background:#f2f4f7}
-    .arca-page .btn.warn{background:var(--warn);border-color:var(--warn);color:#fff}
-    .arca-page .btn.warn:hover{background:var(--warnHover);border-color:var(--warnHover)}
-    .arca-page .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
-    .arca-page .btn.danger:hover{background:var(--dangerHover);border-color:var(--dangerHover)}
-
-    /* Botones compactos (prev/next) */
-    .arca-page #arcaPrev, .arca-page #arcaNext{width:42px;padding:0}
-
-    /* Tabla listado */
-    .arca-page .tableWrap{max-height:72vh;overflow:auto;border-top:1px solid var(--border2)}
-    .arca-page table{width:100%;border-collapse:separate;border-spacing:0}
-    .arca-page th,.arca-page td{padding:10px 12px;border-bottom:1px solid var(--border2);font-size:13px;vertical-align:top}
-    .arca-page th{position:sticky;top:0;background:var(--surface2);z-index:1;text-align:left;color:var(--muted);font-weight:900}
-    .arca-page tbody tr.arca-row{cursor:pointer}
-.arca-page tbody tr.arca-row:nth-child(even) td{background:#fcfdff}
-.arca-page tbody tr.arca-row:hover td{background:#f5f8ff}
-.arca-page tbody tr.arca-row.is-selected td{background:rgba(37,99,235,.10)}
-.arca-page tbody tr.arca-row.is-selected td:first-child{box-shadow:inset 4px 0 0 var(--primary)}
-
-
-    .arca-page .muted{color:var(--muted2)}
-
-    .arca-page .badge{
-      display:inline-flex;align-items:center;
-      padding:4px 10px;
-      border-radius:999px;
-      font-weight:900;
-      font-size:12px;
-      border:1px solid var(--border);
-      gap:8px;
-    }
-    .arca-page .badge::before{content:"";width:8px;height:8px;border-radius:999px;background:currentColor;opacity:.9}
-    .arca-page .b-ok{background:#ecfdf3;border-color:#abefc6;color:var(--ok)}
-    .arca-page .b-bad{background:#fef3f2;border-color:#fecdca;color:#b42318}
-    .arca-page .b-pend{background:#fffaeb;border-color:#fedf89;color:var(--warn)}
-    .arca-page .b-none{background:#f2f4f7;border-color:#e4e7ec;color:#344054}
-
-    /* Detalle */
-    .arca-page .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px}
-    .arca-page .k{color:var(--muted);font-weight:900}
-    .arca-page .v{color:var(--text);font-weight:900}
-    .arca-page .hr{height:1px;background:var(--border2);margin:12px 0}
-
-    .arca-page .items th,.arca-page .items td{font-size:12.5px;padding:8px}
-    .arca-page .hist{display:flex;flex-direction:column;gap:8px}
-    .arca-page .histItem{border:1px solid var(--border2);border-radius:14px;padding:10px;background:var(--surface)}
-    .arca-page .histTop{display:flex;justify-content:space-between;gap:10px;align-items:center}
-    .arca-page .histMeta{font-size:12.5px;color:var(--muted2)}
-    .arca-page .histObs{margin-top:6px;font-size:12.5px;color:#344054}
-
-    /* Reportes */
-    .arca-page .section-title{padding:14px 14px 0}
-    .arca-page .kicker{color:var(--muted);font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
-    .arca-page .section-title h2{margin:6px 0 0;font-size:18px;letter-spacing:-.2px}
-    .arca-page .repRow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;padding:14px}
-    @media (max-width:1150px){ .arca-page .repRow{grid-template-columns:1fr 1fr;} }
-    .arca-page .field label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin-bottom:6px}
-    .arca-page .actions{display:flex;gap:8px;align-items:flex-end;justify-content:flex-end}
-    .arca-page .hint{padding:0 14px 14px;color:var(--muted2);font-size:13px}
-
-    .arca-page .dangerZone{border-top:1px solid var(--border2);background:rgba(220,38,38,.04)}
-
-    /* Grillas (render por JS) */
-    .arca-page .gtable{padding:0 14px 14px;overflow:auto}
-    .arca-page .gtable .thead, .arca-page .gtable .tr{
-      display:grid;
-      grid-template-columns:var(--cols);
-      gap:12px;
-      align-items:center;
-      min-width:980px; /* fuerza scroll horizontal si hace falta */
-    }
-    .arca-page .gtable .thead{
-      padding:10px;
-      border:1px solid var(--border2);
-      border-radius:14px;
-      background:var(--surface2);
-      color:var(--muted);
-      font-weight:900;
-    }
-    .arca-page .gtable .tr{
-      padding:10px;
-      border:1px solid var(--border2);
-      border-radius:14px;
-      background:var(--surface);
-      margin-top:8px;
-    }
-
-    /* SweetAlert2 (mismo look que la UI) */
-    .arca-page .swal2-popup{border-radius:18px !important;box-shadow:var(--shadowMd) !important}
-    .arca-page .swal2-title{letter-spacing:-.2px}
-    .arca-page .swal2-html-container{color:var(--text)}
-    .arca-page .swal2-input,
-    .arca-page .swal2-select,
-    .arca-page .swal2-textarea{
-      border-radius:var(--radiusSm) !important;
-      border:1px solid var(--border) !important;
-      box-shadow:var(--shadowSm) !important;
-      height:40px !important;
-      padding:0 12px !important;
-    }
-    .arca-page .swal2-actions{gap:8px}
-    .arca-page .swal2-styled{border-radius:var(--radiusSm) !important;font-weight:900 !important}
-
-    /* Forzar que el layout del sitio NO achique el módulo ARCA */
-.arca-page main{
-  display:block !important;
-  width:100% !important;
-}
-
-/* Si main es flex en el CSS global, esto evita el shrink-to-fit */
-.arca-page .wrap{
-  width:100% !important;
-  max-width:1440px;
-  margin:0 auto;
-  padding:18px;
-  align-self:stretch;
-  flex:1 1 auto;
-}
-
-/* Asegurar que las tarjetas ocupen ancho disponible */
-.arca-page .card{ width:100% !important; }
-
-/* Reportes: evitar que 5 columnas aplasten los labels */
-.arca-page .repRow{
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
-}
-.arca-page .repRow .actions{
-  grid-column: 1 / -1;
-  justify-content:flex-end;
-}
-/* ================= SweetAlert2 — Modal emisión (compacto) ================= */
-.arca-page .swal2-popup{
-  width: 760px !important;
-  max-width: 92vw !important;
-  border-radius: 18px !important;
-  box-shadow: var(--shadowMd) !important;
-  padding: 14px 16px 12px !important;
-}
-
-.arca-page .swal2-title{
-  letter-spacing: -.2px;
-  font-size: 22px;
-  margin: 4px 0 6px !important;
-}
-
-.arca-page .swal2-html-container{
-  margin: 10px 0 0 !important;
-  padding: 0 !important;
-  color: var(--text);
-}
-
-/* Form en 2 columnas */
-.arca-page .arca-swal-form{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 14px;
-  text-align: left;
-}
-
-.arca-page .arca-swal-form .f{
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.arca-page .arca-swal-form .full{
-  grid-column: 1 / -1;
-}
-
-.arca-page .arca-swal-form label{
-  font-weight: 900;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-/* Inputs sin borde y sin sombra, distinguibles por fondo */
-.arca-page .swal2-input,
-.arca-page .swal2-select,
-.arca-page .swal2-textarea{
-  height: 40px !important;
-  padding: 0 12px !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  background: #f2f4f7 !important;
-  border-radius: var(--radiusSm) !important;
-  font-weight: 900 !important;
-}
-
-.arca-page .swal2-input:focus,
-.arca-page .swal2-select:focus,
-.arca-page .swal2-textarea:focus{
-  outline: none !important;
-  box-shadow: var(--ring) !important;
-  background: #eef4ff !important;
-}
-
-.arca-page .swal2-actions{ gap: 8px; }
-
-/* En pantallas chicas: 1 columna */
-@media (max-width: 720px){
-  .arca-page .arca-swal-form{ grid-template-columns: 1fr; }
-}
-/* Modal: que nunca se salga del viewport */
-.arca-page .swal2-popup{
-  max-height: 90vh !important;
-  overflow: hidden !important;
-  width: 720px !important;
-  max-width: 92vw !important;
-  padding: 12px 14px 10px !important;
-}
-
-.arca-page .swal2-title{
-  font-size: 20px !important;
-  margin: 2px 0 6px !important;
-}
-
-/* Scroll SOLO del contenido */
-.arca-page .swal2-html-container{
-  max-height: calc(90vh - 150px) !important; /* title + actions */
-  overflow: auto !important;
-  padding: 0 4px 0 0 !important;
-}
-/* ===== Modal emisión: tipografía y orden ===== */
-.arca-page .arca-swal-form{
-  gap: 12px 16px !important;
-  align-items: start;
-}
-
-/* Labels: más grandes, más contraste y en negrita */
-.arca-page .arca-swal-form label{
-  font-size: 13px !important;
-  font-weight: 900 !important;
-  color: #1f2937 !important; /* más contraste */
-  line-height: 1.2 !important;
-  margin: 0 !important;
-}
-
-/* Inputs/selects: texto un poco más chico que label, mismo alto */
-.arca-page .swal2-input,
-.arca-page .swal2-select{
-  height: 42px !important;
-  min-height: 42px !important;
-  font-size: 12px !important;
-  font-weight: 800 !important;
-  line-height: 42px !important;
-  padding: 0 12px !important;
-  border-radius: 12px !important;
-  background: #f2f4f7 !important;
-  width: 100% !important;
-}
-
-/* Para que input no quede “pill” raro en algunos browsers */
-.arca-page .swal2-input{ box-sizing: border-box !important; }
-
-/* Campos: misma altura de bloque para alinear filas */
-.arca-page .arca-swal-form .f{
-  min-width: 0;
-}
-
-/* Doc nro: que no quede más grande */
-.arca-page #sw_doc_nro{
-  text-align: left !important;
-}
-
-/* Botones del bloque inferior alineados y mismo tamaño */
-.arca-page .arca-swal-form .full{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-
-.arca-page #sw_cache_btn,
-.arca-page #sw_resolve_btn{
-  height: 38px;
-  padding: 0 12px;
-  font-size: 12px;
-  font-weight: 900;
-}
-
-/* Hint/estado con buena lectura */
-.arca-page #sw_cache_status,
-.arca-page #sw_hint{
-  font-size: 12px !important;
-  color: #475467 !important;
-  font-weight: 800 !important;
-}
-/* Modal: sin scroll interno (y sin barra horizontal) */
-.arca-page .swal2-html-container{
-  overflow: visible !important;
-  overflow-x: hidden !important;
-  max-height: none !important;
-}
-
-/* Grid: que todo estire al ancho de su celda */
-.arca-page .arca-swal-form{
-  width: 100% !important;
-  justify-items: stretch !important;
-}
-
-.arca-page .arca-swal-form .f{
-  width: 100% !important;
-  align-items: stretch !important;
-  min-width: 0 !important;
-}
-
-/* SweetAlert mete margins por defecto: sacarlos y forzar 100% */
-.arca-page .swal2-input,
-.arca-page .swal2-select{
-  margin: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-</style>
-
-</head>
-
+<%- include('../layouts/head.ejs') %>
+<link rel="stylesheet" href="/css/pages/arca.css?v=1" />
 <body class="arca-page">
   <%- include('../layouts/header') %>
 
-  <main>
-  <div class="wrap">
-    <div class="top">
-      <div>
-        <h1>ARCA — Emisión desde facturas del mostrador</h1>
-        <p class="sub">Módulo paralelo: emite y audita en arca_* (no toca stock).</p>
-      </div>
-      <div class="controls">
-        <input id="arcaSearch" class="inp" placeholder="Buscar por ID o vendedor..." />
-        <button id="arcaReload" class="btn">Recargar</button>
-      </div>
-    </div>
+  <main class="arca-main">
+    <div class="arca-wrap">
 
-    <div class="grid">
-      <!-- LISTA -->
-      <section class="card">
-        <div class="hd">
-          <strong>Últimas facturas</strong>
-          <div class="controls">
-            <button id="arcaPrev" class="btn">‹</button>
-            <span id="arcaPage" class="muted">0–0</span>
-            <button id="arcaNext" class="btn">›</button>
-          </div>
+      <!-- PAGE HEADER -->
+      <div class="arca-page-header">
+        <div class="arca-page-header__left">
+          <span class="arca-page-header__eyebrow">Facturación Electrónica</span>
+          <h1 class="arca-page-header__title">ARCA</h1>
+          <p class="arca-page-header__sub">Emisión desde facturas del mostrador · módulo paralelo (no toca stock)</p>
         </div>
-
-        <div class="tableWrap">
-          <table>
-           <thead>
-  <tr>
-    <th style="width:86px">ID</th>
-    <th style="width:110px">Fecha</th>
-    <th>Vendedor</th>
-    <th>Cliente</th>
-    <th style="width:70px">Tipo</th>
-    <th style="width:110px">Total</th>
-    <th style="width:120px">Pago</th>
-    <th style="width:150px">ARCA</th>
-  </tr>
-</thead>
-
-            <tbody id="arcaTbody">
-  <tr><td colspan="8" class="muted">Cargando…</td></tr>
-</tbody>
-
-          </table>
+        <div class="arca-controls">
+          <input id="arcaSearch" class="arca-input" placeholder="Buscar por ID o vendedor…" />
+          <button id="arcaReload" class="arca-btn arca-btn--outline">
+            <i class="fa-solid fa-rotate-right"></i> Recargar
+          </button>
         </div>
-      </section>
+      </div>
 
-      <!-- DETALLE -->
-      <aside class="card">
-        <div class="hd">
-  <strong>Detalle</strong>
-  <div class="controls">
-  <a id="btnPDF" class="btn" href="#" target="_blank" style="display:none">PDF</a>
-  <button id="btnAnular" class="btn danger" disabled>Anular (NC)</button>
-  <button id="btnEmitir" class="btn btnP" disabled>Emitir ARCA</button>
-</div>
-</div>
+      <!-- GRID PRINCIPAL -->
+      <div class="arca-grid">
 
-        <div class="bd">
-          <div id="arcaEmpty" class="muted">Seleccioná una factura del listado.</div>
-
-          <div id="arcaDetail" style="display:none">
-            <div class="kv">
-              <div class="k">Factura ID</div><div class="v" id="dId">-</div>
-              <div class="k">Fecha</div><div class="v" id="dFecha">-</div>
-              <div class="k">Vendedor</div><div class="v" id="dVend">-</div>
-              <div class="k">Pago</div><div class="v" id="dPago">-</div>
-              <div class="k">Total</div><div class="v" id="dTotal">-</div>
+        <!-- LISTA -->
+        <section class="arca-panel">
+          <div class="arca-panel__hd">
+            <strong>Últimas facturas</strong>
+            <div class="arca-controls">
+              <button id="arcaPrev" class="arca-btn arca-btn--icon">‹</button>
+              <span id="arcaPage" class="arca-muted">0–0</span>
+              <button id="arcaNext" class="arca-btn arca-btn--icon">›</button>
             </div>
-
-            <div class="hr"></div>
-
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-  <strong style="font-size:13px">Auditoría WSFE</strong>
-  <div class="controls">
-    <span id="wsfeBadge" class="badge b-none" style="display:none">—</span>
-    <button id="btnAuditarWsfe" class="btn" disabled>Auditar WSFE</button>
-  </div>
-</div>
-
-<div id="wsfeHist" class="hist" style="margin-top:8px"></div>
-            <strong style="font-size:13px">Items</strong>
-<table class="items" style="width:100%;margin-top:8px">
-             <thead>
-               <tr>
-                  <th>Descripción</th>
-                  <th style="width:90px;text-align:right">Cant</th>
-                  <th style="width:130px;text-align:right">Unitario</th>
-                  <th style="width:130px;text-align:right">Subtotal</th>
+          </div>
+          <div class="arca-table-wrap">
+            <table class="arca-tabla">
+              <thead>
+                <tr>
+                  <th style="width:80px">ID</th>
+                  <th style="width:108px">Fecha</th>
+                  <th>Vendedor</th>
+                  <th>Cliente</th>
+                  <th style="width:65px">Tipo</th>
+                  <th style="width:110px">Total</th>
+                  <th style="width:110px">Pago</th>
+                  <th style="width:160px">ARCA</th>
                 </tr>
               </thead>
-
-              <tbody id="itemsTbody"></tbody>
+              <tbody id="arcaTbody">
+                <tr><td colspan="8" class="arca-muted">Cargando…</td></tr>
+              </tbody>
             </table>
+          </div>
+        </section>
 
-            <div class="hr"></div>
+        <!-- DETALLE -->
+        <aside class="arca-panel">
+          <div class="arca-panel__hd">
+            <strong>Detalle</strong>
+            <div class="arca-controls">
+              <a id="btnPDF" class="arca-btn arca-btn--outline" href="#" target="_blank" style="display:none">
+                <i class="fa-solid fa-file-pdf"></i> PDF
+              </a>
+              <button id="btnAnular" class="arca-btn arca-btn--danger" disabled>Anular (NC)</button>
+              <button id="btnEmitir" class="arca-btn arca-btn--primary" disabled>Emitir ARCA</button>
+            </div>
+          </div>
+          <div class="arca-panel__bd">
+            <div id="arcaEmpty" class="arca-empty">
+              <i class="fa-solid fa-file-invoice arca-empty__icon"></i>
+              <p>Seleccioná una factura del listado.</p>
+            </div>
 
-            <strong style="font-size:13px">Historial ARCA</strong>
-            <div id="arcaHist" class="hist" style="margin-top:8px"></div>
+            <div id="arcaDetail" style="display:none">
+              <div class="arca-kv">
+                <div class="arca-k">Factura ID</div><div class="arca-v" id="dId">-</div>
+                <div class="arca-k">Fecha</div><div class="arca-v" id="dFecha">-</div>
+                <div class="arca-k">Vendedor</div><div class="arca-v" id="dVend">-</div>
+                <div class="arca-k">Pago</div><div class="arca-v" id="dPago">-</div>
+                <div class="arca-k">Total</div><div class="arca-v" id="dTotal">-</div>
+              </div>
+
+              <div class="arca-hr"></div>
+
+              <div class="arca-section-row">
+                <strong class="arca-section-label">Auditoría WSFE</strong>
+                <div class="arca-controls">
+                  <span id="wsfeBadge" class="arca-badge" style="display:none">—</span>
+                  <button id="btnAuditarWsfe" class="arca-btn arca-btn--outline arca-btn--sm" disabled>Auditar WSFE</button>
+                </div>
+              </div>
+              <div id="wsfeHist" class="arca-hist" style="margin-top:8px"></div>
+
+              <div class="arca-hr"></div>
+
+              <strong class="arca-section-label">Items</strong>
+              <table class="arca-tabla arca-tabla--items" style="margin-top:8px">
+                <thead>
+                  <tr>
+                    <th>Descripción</th>
+                    <th style="width:80px;text-align:right">Cant</th>
+                    <th style="width:120px;text-align:right">Unitario</th>
+                    <th style="width:120px;text-align:right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTbody"></tbody>
+              </table>
+
+              <div class="arca-hr"></div>
+
+              <strong class="arca-section-label">Historial ARCA</strong>
+              <div id="arcaHist" class="arca-hist" style="margin-top:8px"></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- REPORTES Y CIERRES -->
+      <div class="arca-panel" style="margin-top:16px">
+        <div class="arca-panel__hd">
+          <div>
+            <span class="arca-eyebrow">Control</span>
+            <strong style="display:block;font-size:15px;margin-top:2px">Reportes y cierres</strong>
           </div>
         </div>
-      </aside>
+
+        <!-- Reportes -->
+        <div class="arca-rep-row">
+          <div class="arca-field">
+            <label class="arca-label">Desde</label>
+            <input type="date" id="repDesde" class="arca-input">
+          </div>
+          <div class="arca-field">
+            <label class="arca-label">Hasta</label>
+            <input type="date" id="repHasta" class="arca-input">
+          </div>
+          <div class="arca-field">
+            <label class="arca-label">Tipo</label>
+            <select id="repTipo" class="arca-input">
+              <option value="">Todos</option>
+              <option value="1">Factura A</option>
+              <option value="6">Factura B</option>
+              <option value="3">Nota de Crédito A</option>
+              <option value="8">Nota de Crédito B</option>
+            </select>
+          </div>
+          <div class="arca-field">
+            <label class="arca-label">Estado</label>
+            <select id="repEstado" class="arca-input">
+              <option value="">Todos</option>
+              <option value="EMITIDO">EMITIDO</option>
+              <option value="RECHAZADO">RECHAZADO</option>
+              <option value="PENDIENTE">PENDIENTE</option>
+            </select>
+          </div>
+          <div class="arca-rep-actions">
+            <button class="arca-btn arca-btn--outline" id="btnRepResumen">Ver resumen</button>
+            <button class="arca-btn arca-btn--primary" id="btnRepListar">Listar comprobantes</button>
+          </div>
+        </div>
+
+        <!-- Cierre diario -->
+        <div class="arca-rep-row arca-rep-row--danger">
+          <div class="arca-field">
+            <label class="arca-label">Fecha de cierre</label>
+            <input type="date" id="cierreFecha" class="arca-input">
+          </div>
+          <div class="arca-rep-actions">
+            <button class="arca-btn arca-btn--danger" id="btnCierre">
+              <i class="fa-solid fa-lock"></i> Crear cierre diario
+            </button>
+            <button type="button" id="btnInformePdf" class="arca-btn arca-btn--outline">
+              <i class="fa-solid fa-file-pdf"></i> Informe PDF del día
+            </button>
+          </div>
+        </div>
+
+        <p class="arca-hint">El cierre diario guarda un snapshot interno (no se informa a ARCA). Sirve para control y conciliación.</p>
+
+        <div class="arca-gtable" id="tblResumen"></div>
+        <div class="arca-gtable" id="tblComprobantes" style="margin-top:10px"></div>
+      </div>
+
     </div>
-<div class="card" style="margin-top:14px;">
-  <div class="section-title">
-    <div class="kicker">Control</div>
-    <h2>Reportes y cierres</h2>
-  </div>
-
-  <!-- FILA 1 (normal): reportes -->
-  <div class="repRow">
-    <div class="field">
-      <label>Desde</label>
-      <input type="date" id="repDesde">
-    </div>
-
-    <div class="field">
-      <label>Hasta</label>
-      <input type="date" id="repHasta">
-    </div>
-
-    <div class="field">
-      <label>Tipo</label>
-      <select id="repTipo">
-        <option value="">Todos</option>
-        <option value="1">Factura A </option>
-        <option value="6">Factura B </option>
-        <option value="3">Nota de Crédito A </option>
-        <option value="8">Nota de Crédito B </option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Estado</label>
-      <select id="repEstado">
-        <option value="">Todos</option>
-        <option value="EMITIDO">EMITIDO</option>
-        <option value="RECHAZADO">RECHAZADO</option>
-        <option value="PENDIENTE">PENDIENTE</option>
-      </select>
-    </div>
-
-    <div class="actions">
-      <button class="btn secondary" id="btnRepResumen">Ver resumen</button>
-      <button class="btn primary" id="btnRepListar">Listar comprobantes</button>
-    </div>
-  </div>
-
-  <!-- FILA 2 (SENSIBLE): cierre -->
-  <div class="repRow dangerZone" style="margin-top:10px;">
-    <div class="field">
-      <label>Fecha de cierre</label>
-      <input type="date" id="cierreFecha">
-    </div>
-    <div class="actions">
-      <button class="btn danger" id="btnCierre">Crear cierre diario</button>
-      <button type="button" id="btnInformePdf" class="btn secondary">Informe PDF del día</button>
-    </div>
-  </div>
-
-  <div class="hint">
-    El cierre diario guarda un snapshot interno (no se informa a ARCA). Sirve para control y conciliación.
-  </div>
-
-  <div class="table" id="tblResumen"></div>
-  <div class="table" id="tblComprobantes" style="margin-top:10px;"></div>
-</div>
-
   </main>
 
   <%- include('../layouts/footer') %>
-
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="/js/arca/index.js?v=20260221_1"></script>
-
 </body>
 </html>

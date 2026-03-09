@@ -1,0 +1,624 @@
+/* ============================================================
+   arca.css  —  Autofaros · Vista: ARCA Facturación Electrónica
+   v2026-03-09
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────
+   1. BASE
+────────────────────────────────────────────────────────── */
+.arca-page body,
+body.arca-page {
+  background-color: #0b1220 !important;
+  color: #f0f4ff;
+}
+
+.arca-main {
+  background-color: #0b1220;
+  min-height: 100vh;
+  padding: 96px 24px 64px;
+}
+
+.arca-wrap {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* ──────────────────────────────────────────────────────────
+   2. PAGE HEADER
+────────────────────────────────────────────────────────── */
+.arca-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.arca-page-header__eyebrow {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #1F487E;
+  margin-bottom: 4px;
+}
+
+.arca-page-header__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 800;
+  color: #f0f4ff;
+  letter-spacing: -0.5px;
+  margin: 0 0 4px;
+  line-height: 1;
+}
+
+.arca-page-header__sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240, 244, 255, 0.4);
+  margin: 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   3. CONTROLES Y BOTONES
+────────────────────────────────────────────────────────── */
+.arca-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.arca-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 16px;
+  height: 38px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.arca-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.arca-btn:active:not(:disabled) { transform: translateY(1px); }
+
+.arca-btn--primary {
+  background: #1F487E;
+  color: #fff;
+}
+.arca-btn--primary:hover:not(:disabled) {
+  background: #2a5da0;
+  box-shadow: 0 4px 16px rgba(31,72,126,0.4);
+}
+
+.arca-btn--outline {
+  background: transparent;
+  color: rgba(240, 244, 255, 0.75);
+  border: 1.5px solid rgba(31, 72, 126, 0.35);
+}
+.arca-btn--outline:hover:not(:disabled) {
+  background: rgba(31, 72, 126, 0.12);
+  border-color: #1F487E;
+  color: #f0f4ff;
+}
+
+.arca-btn--danger {
+  background: rgba(217, 4, 41, 0.12);
+  color: #ff4d6d;
+  border: 1.5px solid rgba(217, 4, 41, 0.3);
+}
+.arca-btn--danger:hover:not(:disabled) {
+  background: rgba(217, 4, 41, 0.22);
+  border-color: #d90429;
+}
+
+.arca-btn--icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  color: rgba(240, 244, 255, 0.5);
+  border: 1.5px solid rgba(31, 72, 126, 0.25);
+  font-size: 16px;
+}
+.arca-btn--icon:hover:not(:disabled) {
+  background: rgba(31, 72, 126, 0.12);
+  color: #f0f4ff;
+}
+
+.arca-btn--sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   4. INPUT
+────────────────────────────────────────────────────────── */
+.arca-input {
+  height: 38px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(31, 72, 126, 0.25);
+  border-radius: 10px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 0.15s, background 0.15s;
+  color-scheme: dark;
+  outline: none;
+}
+
+.arca-input::placeholder { color: rgba(240, 244, 255, 0.3); }
+.arca-input:focus {
+  border-color: #1F487E;
+  background: rgba(31, 72, 126, 0.1);
+}
+
+#arcaSearch { width: 240px; }
+
+/* ──────────────────────────────────────────────────────────
+   5. GRID PRINCIPAL
+────────────────────────────────────────────────────────── */
+.arca-grid {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1150px) {
+  .arca-grid { grid-template-columns: 1fr; }
+}
+
+/* ──────────────────────────────────────────────────────────
+   6. PANEL
+────────────────────────────────────────────────────────── */
+.arca-panel {
+  background: rgba(17, 28, 48, 0.8);
+  border: 1px solid rgba(31, 72, 126, 0.18);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.arca-panel__hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(31, 72, 126, 0.15);
+  background: rgba(31, 72, 126, 0.05);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f0f4ff;
+}
+
+.arca-panel__bd {
+  padding: 16px 18px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   7. TABLA
+────────────────────────────────────────────────────────── */
+.arca-table-wrap {
+  max-height: 68vh;
+  overflow: auto;
+}
+
+.arca-table-wrap::-webkit-scrollbar { width: 4px; }
+.arca-table-wrap::-webkit-scrollbar-track { background: transparent; }
+.arca-table-wrap::-webkit-scrollbar-thumb { background: rgba(31,72,126,0.4); border-radius: 2px; }
+
+.arca-tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.arca-tabla thead tr {
+  border-bottom: 1px solid rgba(31, 72, 126, 0.2);
+}
+
+.arca-tabla th {
+  position: sticky;
+  top: 0;
+  padding: 12px 14px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.4);
+  text-align: left;
+  background: rgba(17, 28, 48, 0.98);
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.arca-tabla td {
+  padding: 11px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240, 244, 255, 0.8);
+  border-bottom: 1px solid rgba(31, 72, 126, 0.08);
+  vertical-align: middle;
+}
+
+.arca-tabla tbody tr.arca-row {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.arca-tabla tbody tr.arca-row:hover td {
+  background: rgba(31, 72, 126, 0.08);
+}
+
+.arca-tabla tbody tr.arca-row.is-selected td {
+  background: rgba(31, 72, 126, 0.15);
+}
+
+.arca-tabla tbody tr.arca-row.is-selected td:first-child {
+  box-shadow: inset 3px 0 0 #1F487E;
+}
+
+/* Items tabla en detalle */
+.arca-tabla--items th,
+.arca-tabla--items td {
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   8. BADGES
+────────────────────────────────────────────────────────── */
+.arca-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  border: 1px solid;
+}
+
+.arca-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.arca-badge--ok,
+.b-ok   { background: rgba(6,118,71,0.12);  color: #4ade80; border-color: rgba(74,222,128,0.25); }
+.arca-badge--bad,
+.b-bad  { background: rgba(217,4,41,0.12);  color: #ff4d6d; border-color: rgba(217,4,41,0.25); }
+.arca-badge--pend,
+.b-pend { background: rgba(217,119,6,0.12); color: #fbbf24; border-color: rgba(251,191,36,0.25); }
+.arca-badge--none,
+.b-none { background: rgba(255,255,255,0.06); color: rgba(240,244,255,0.45); border-color: rgba(255,255,255,0.1); }
+
+/* ──────────────────────────────────────────────────────────
+   9. DETALLE KV
+────────────────────────────────────────────────────────── */
+.arca-kv {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px 12px;
+}
+
+.arca-k {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.4);
+  padding-top: 2px;
+}
+
+.arca-v {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0f4ff;
+}
+
+.arca-hr {
+  height: 1px;
+  background: rgba(31, 72, 126, 0.2);
+  margin: 14px 0;
+}
+
+.arca-section-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.arca-section-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: rgba(240, 244, 255, 0.6);
+}
+
+.arca-muted {
+  color: rgba(240, 244, 255, 0.35);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ──────────────────────────────────────────────────────────
+   10. HISTORIAL
+────────────────────────────────────────────────────────── */
+.arca-hist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.arca-hist-item {
+  border: 1px solid rgba(31, 72, 126, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(31, 72, 126, 0.05);
+}
+
+.arca-hist-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.arca-hist-meta {
+  font-size: 12px;
+  color: rgba(240, 244, 255, 0.4);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.arca-hist-obs {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(240, 244, 255, 0.65);
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ──────────────────────────────────────────────────────────
+   11. EMPTY STATE
+────────────────────────────────────────────────────────── */
+.arca-empty {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.arca-empty__icon {
+  font-size: 40px;
+  color: rgba(31, 72, 126, 0.3);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.arca-empty p {
+  color: rgba(240, 244, 255, 0.3);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  margin: 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   12. REPORTES
+────────────────────────────────────────────────────────── */
+.arca-eyebrow {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #1F487E;
+}
+
+.arca-rep-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 16px 18px;
+  align-items: flex-end;
+}
+
+.arca-rep-row--danger {
+  border-top: 1px solid rgba(217, 4, 41, 0.15);
+  background: rgba(217, 4, 41, 0.03);
+}
+
+.arca-rep-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  justify-content: flex-end;
+  grid-column: 1 / -1;
+}
+
+.arca-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.arca-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.4);
+}
+
+.arca-hint {
+  padding: 0 18px 16px;
+  font-size: 12px;
+  color: rgba(240, 244, 255, 0.3);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.arca-gtable {
+  padding: 0 18px 18px;
+  overflow: auto;
+}
+
+/* ──────────────────────────────────────────────────────────
+   13. SWEETALERT2 — Modal emisión (preservado)
+────────────────────────────────────────────────────────── */
+.arca-page .swal2-popup {
+  border-radius: 18px !important;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.5) !important;
+  background: #111c30 !important;
+  width: 720px !important;
+  max-width: 92vw !important;
+  max-height: 90vh !important;
+  overflow: hidden !important;
+  padding: 14px 16px 12px !important;
+}
+
+.arca-page .swal2-title {
+  font-size: 20px !important;
+  letter-spacing: -.2px;
+  color: #f0f4ff !important;
+  margin: 4px 0 6px !important;
+}
+
+.arca-page .swal2-html-container {
+  color: rgba(240, 244, 255, 0.85) !important;
+  margin: 10px 0 0 !important;
+  padding: 0 4px 0 0 !important;
+  max-height: calc(90vh - 150px) !important;
+  overflow: auto !important;
+}
+
+.arca-page .swal2-input,
+.arca-page .swal2-select,
+.arca-page .swal2-textarea {
+  height: 42px !important;
+  min-height: 42px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 0 12px !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,0.06) !important;
+  border: 1.5px solid rgba(31,72,126,0.3) !important;
+  color: #f0f4ff !important;
+  width: 100% !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.arca-page .swal2-input:focus,
+.arca-page .swal2-select:focus {
+  border-color: #1F487E !important;
+  background: rgba(31,72,126,0.12) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(31,72,126,0.2) !important;
+}
+
+.arca-page .swal2-actions { gap: 8px; }
+
+.arca-page .swal2-styled {
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  height: 40px !important;
+  padding: 0 18px !important;
+}
+
+.arca-page .swal2-confirm { background: #1F487E !important; }
+.arca-page .swal2-confirm:hover { background: #2a5da0 !important; }
+.arca-page .swal2-deny,
+.arca-page .swal2-cancel { background: rgba(255,255,255,0.08) !important; color: rgba(240,244,255,0.75) !important; }
+
+/* Form en 2 columnas */
+.arca-page .arca-swal-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  text-align: left;
+  width: 100% !important;
+}
+
+.arca-page .arca-swal-form .f {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100% !important;
+  min-width: 0;
+}
+
+.arca-page .arca-swal-form .full { grid-column: 1 / -1; }
+
+.arca-page .arca-swal-form label {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: rgba(240,244,255,0.5) !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0 !important;
+}
+
+.arca-page #sw_cache_status,
+.arca-page #sw_hint {
+  font-size: 12px !important;
+  color: rgba(240,244,255,0.4) !important;
+  font-weight: 600 !important;
+}
+
+.arca-page #sw_doc_nro { text-align: left !important; }
+
+.arca-page #sw_cache_btn,
+.arca-page #sw_resolve_btn {
+  height: 38px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .arca-page .arca-swal-form { grid-template-columns: 1fr; }
+}
+
+/* ──────────────────────────────────────────────────────────
+   14. RESPONSIVE
+────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .arca-main { padding: 88px 12px 48px; }
+  .arca-page-header { flex-direction: column; }
+  .arca-rep-row { grid-template-columns: 1fr; }
+  #arcaSearch { width: 100%; }
+}
