@@ -1,87 +1,125 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
+<% var pageCss = '/css/pages/presupuestoMostrador.css' %>
+<!DOCTYPE html>
+<html lang="es">
+<%- include('./layouts/head.ejs') %>
+<link rel="stylesheet" href="/css/pages/presupuestoMostrador.css?v=1" />
 <body>
-   <main>
-    <div class="button-container-presupuesto">
-      <button class="btn-primary-presupuestos" onclick="window.location.href='/productos/listadoPresupuestos'">Listado de Presupuestos</button>
+  <%- include('./layouts/header.ejs') %>
+
+  <main class="presupuesto-main">
+
+    <!-- PAGE HEADER -->
+    <div class="presupuesto-page-header">
+      <div class="presupuesto-page-header__left">
+        <span class="presupuesto-page-header__eyebrow">Mostrador</span>
+        <h1 class="presupuesto-page-header__title">
+          Nuevo Presupuesto <span class="presupuesto-page-header__id">#<%= idPresupuesto %></span>
+        </h1>
+      </div>
+      <a href="/productos/listadoPresupuestos" class="presupuesto-btn presupuesto-btn--outline">
+        <i class="fa-solid fa-list"></i> Listado de Presupuestos
+      </a>
     </div>
-    <form id="invoice-form" action="/productos/procesarFormulario" method="POST">
-      <div id="invoice">
-        <h2>Presupuestos</h2>
-        <div id="invoice-details">
-          <div class="input-container">
-            <label for="nombre-cliente">Vendedor:</label>
-            <select id="nombre-cliente" name="nombreCliente" required>
+
+    <form id="invoice-form">
+
+      <!-- PANEL TOP: vendedor / fecha -->
+      <div class="presupuesto-panel presupuesto-panel--top">
+        <div class="presupuesto-top-grid">
+
+          <div class="presupuesto-field">
+            <label class="presupuesto-label" for="nombre-cliente">
+              <i class="fa-solid fa-user"></i> Vendedor Responsable
+            </label>
+            <select id="nombre-cliente" name="nombreCliente" class="presupuesto-select" required>
               <option value="">Seleccionar vendedor</option>
               <option value="CHACHO">CHACHO</option>
               <option value="GERARDO">GERARDO</option>
               <option value="WALTER">WALTER</option>
             </select>
           </div>
-          
-          <div class="input-container">
-            <label for="fecha-presupuesto">Fecha:</label>
-            <input type="date" id="fecha-presupuesto" name="fechaPresupuesto">
-          </div>
-          <div class="input-container">
-            <label for="numero-presupuesto">N° Presupuesto</label>
-            <p><%= idPresupuesto%></p>
-          </div>
-        </div>
 
-        <div class="buscador">
-          <input type="text" id="entradaBusqueda" name="searchInput" placeholder="Qué estás buscando? Ej: Escort, Óptica, Faro, Agile" autocomplete="off">
-          <div id="resultadosBusqueda"></div>
-        </div>
-        
-        <div id="invoice-items">
-          <table id="tabla-factura">
-              <thead>
-                  <tr>
-                      <th>Imagen</th>
-                      <th>Código</th>
-                      <th>Descripción</th>
-                      <th>Precio Unitario</th>
-                      <th>Cantidad</th>
-                      <th>Stock Actual</th>
-                      <th>Subtotal</th>
-                      <th>Eliminar</th>
-                  </tr>
-              </thead>
-              <tbody>
-                <% for(let i = 0; i < 10; i++) { %>
-                    <tr>
-                        <td><img src="" class="miniatura-tabla" style="display: none;"></td>
-                        <td></td> <!-- Código -->
-                        <td></td> <!-- Descripción -->
-                        <td><input type="text" class="precio-editable" disabled></td>
-                        <td><input type="number" min="1" value="0" disabled></td>
-                        <td></td> <!-- Stock -->
-                        <td></td> <!-- Subtotal -->
-                        <td>
-                          <button type="button" class="boton-eliminar-factura" style="display: none;">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </td>
-                        
-                    </tr>
-                <% } %>
-            </tbody>
-            
-          </table>
-      </div>
-        <div id="invoice-total">
-         <label id="label-total">Total: <input type="text" id="total-amount" name="totalPresupuesto" readonly></label>
+          <div class="presupuesto-field">
+            <label class="presupuesto-label" for="fecha-presupuesto">
+              <i class="fa-solid fa-calendar"></i> Fecha
+            </label>
+            <input type="date" id="fecha-presupuesto" name="fechaPresupuesto" class="presupuesto-input" />
+          </div>
 
         </div>
-        <input type="hidden" id="invoiceItems" name="invoiceItems">
-        <div class="botones-contenedor">
-          <button type="submit">Guardar Presupuesto</button>
+      </div>
+
+      <!-- PANEL BUSCADOR -->
+      <div class="presupuesto-panel presupuesto-panel--buscador">
+        <div class="presupuesto-buscador-wrap">
+          <i class="fa-solid fa-magnifying-glass presupuesto-buscador-icon"></i>
+          <input
+            type="text"
+            id="entradaBusqueda"
+            name="searchInput"
+            placeholder="Buscar producto... Ej: Escort, Óptica, Faro, Agile"
+            autocomplete="off"
+            class="presupuesto-buscador-input"
+          />
+        </div>
+        <div id="resultadosBusqueda" class="presupuesto-resultados"></div>
+      </div>
+
+      <!-- PANEL TABLA -->
+      <div class="presupuesto-panel presupuesto-panel--tabla">
+        <table id="tabla-factura" class="presupuesto-tabla">
+          <thead>
+            <tr>
+              <th style="width:80px">Imagen</th>
+              <th style="width:130px">Código</th>
+              <th>Descripción</th>
+              <th style="width:160px">Precio Unitario</th>
+              <th style="width:160px">Cantidad</th>
+              <th style="width:90px">Stock</th>
+              <th style="width:150px">Subtotal</th>
+              <th style="width:60px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for(let i = 0; i < 10; i++) { %>
+              <tr>
+                <td><img src="" class="miniatura-tabla" style="display:none;"></td>
+                <td class="presupuesto-tabla__codigo"></td>
+                <td class="presupuesto-tabla__desc"></td>
+                <td><input type="text" class="presupuesto-tabla__input presupuesto-tabla__input--precio precio-editable" disabled></td>
+                <td><input type="number" min="1" value="0" class="presupuesto-tabla__input presupuesto-tabla__input--qty" disabled></td>
+                <td class="presupuesto-tabla__stock">0</td>
+                <td class="presupuesto-tabla__subtotal"></td>
+                <td>
+                  <button type="button" class="presupuesto-tabla__btn-eliminar" style="display:none;">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PANEL FOOTER -->
+      <div class="presupuesto-panel presupuesto-panel--footer">
+        <div class="presupuesto-footer-totales">
+          <div class="presupuesto-total-row">
+            <span class="presupuesto-total-label">Total</span>
+            <input type="text" id="total-amount" name="totalPresupuesto" class="presupuesto-total-input" readonly>
+          </div>
+        </div>
+        <div class="presupuesto-footer-acciones">
+          <button type="submit" class="presupuesto-btn presupuesto-btn--primary presupuesto-btn--lg">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar Presupuesto
+          </button>
         </div>
       </div>
+
     </form>
-   </main>
-   <%- include ./layouts/footer.ejs %>
-   <script src="/js/buscadorPresupuesto.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </main>
+
+  <%- include('./layouts/footer.ejs') %>
+  <script src="/js/pages/buscadorPresupuesto.js?v=1"></script>
 </body>
+</html>

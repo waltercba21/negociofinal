@@ -1,0 +1,747 @@
+/* ============================================================
+   presupuestoMostrador.css  —  Autofaros · Vista: Factura Mostrador
+   v2026-03-09
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────
+   1. BASE
+────────────────────────────────────────────────────────── */
+.presupuesto-main {
+  background-color: #0b1220;
+  min-height: 100vh;
+  padding: 32px 24px 64px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   2. PAGE HEADER
+────────────────────────────────────────────────────────── */
+.presupuesto-page-header {
+  max-width: 1200px;
+  margin: 0 auto 28px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.presupuesto-page-header__left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.presupuesto-page-header__eyebrow {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #1F487E;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.presupuesto-page-header__eyebrow i { color: #d90429; }
+
+.presupuesto-page-header__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800;
+  color: #f0f4ff;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.presupuesto-page-header__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Badge N° Factura */
+.presupuesto-numero-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.presupuesto-numero-badge__label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.4);
+}
+
+.presupuesto-numero-badge__value {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: #1F487E;
+  letter-spacing: -0.5px;
+}
+
+/* Botón listado */
+.btn-listado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: rgba(31, 72, 126, 0.12);
+  border: 1.5px solid rgba(31, 72, 126, 0.4);
+  border-radius: 10px;
+  color: rgba(240, 244, 255, 0.8);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-listado:hover {
+  background: rgba(31, 72, 126, 0.25);
+  border-color: #1F487E;
+  color: #f0f4ff;
+  transform: translateY(-1px);
+}
+
+/* ──────────────────────────────────────────────────────────
+   3. FORM + PANELES
+────────────────────────────────────────────────────────── */
+.presupuesto-form {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.presupuesto-panel {
+  background: #16243d;
+  border: 1px solid rgba(31, 72, 126, 0.35);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ──────────────────────────────────────────────────────────
+   4. PANEL SUPERIOR (vendedor + fecha + pago)
+────────────────────────────────────────────────────────── */
+.presupuesto-panel--top {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.presupuesto-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.presupuesto-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.presupuesto-label i { color: #1F487E; }
+
+/* Select */
+.presupuesto-select-wrap {
+  position: relative;
+}
+
+.presupuesto-select {
+  width: 100%;
+  padding: 11px 38px 11px 14px;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(31, 72, 126, 0.35);
+  border-radius: 10px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.presupuesto-select:focus {
+  outline: none;
+  border-color: #1F487E;
+  background: rgba(31, 72, 126, 0.1);
+}
+
+.presupuesto-select option {
+  background: #111c30;
+  color: #f0f4ff;
+}
+
+.presupuesto-select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(240, 244, 255, 0.3);
+  font-size: 11px;
+  pointer-events: none;
+}
+
+/* Input fecha */
+.presupuesto-input {
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(31, 72, 126, 0.35);
+  border-radius: 10px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  transition: border-color 0.2s, background 0.2s;
+  color-scheme: dark;
+}
+
+.presupuesto-input:focus {
+  outline: none;
+  border-color: #1F487E;
+  background: rgba(31, 72, 126, 0.1);
+}
+
+/* ──── Métodos de pago ──── */
+.presupuesto-field--pago {
+  grid-column: 3;
+}
+
+.metodos-pago {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.metodo-pago-item {
+  position: relative;
+  cursor: pointer;
+}
+
+.metodo-pago-item input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.metodo-pago-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(31, 72, 126, 0.3);
+  background: rgba(31, 72, 126, 0.06);
+  color: rgba(240, 244, 255, 0.6);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.metodo-pago-pill i { font-size: 12px; }
+
+.metodo-pago-item input[type="radio"]:checked + .metodo-pago-pill {
+  background: rgba(31, 72, 126, 0.25);
+  border-color: #1F487E;
+  color: #f0f4ff;
+  box-shadow: 0 0 0 3px rgba(31, 72, 126, 0.15);
+}
+
+.metodo-pago-item input[type="radio"][value="CREDITO"]:checked + .metodo-pago-pill {
+  background: rgba(217, 4, 41, 0.15);
+  border-color: #d90429;
+  color: #f0f4ff;
+  box-shadow: 0 0 0 3px rgba(217, 4, 41, 0.1);
+}
+
+.metodo-pago-pill:hover {
+  border-color: rgba(31, 72, 126, 0.6);
+  color: #f0f4ff;
+}
+
+/* ──────────────────────────────────────────────────────────
+   5. BUSCADOR
+────────────────────────────────────────────────────────── */
+.presupuesto-panel--buscador {
+  padding: 20px 24px;
+  position: relative;
+}
+
+.presupuesto-buscador-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.presupuesto-buscador-icon {
+  position: absolute;
+  left: 16px;
+  color: rgba(240, 244, 255, 0.3);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.presupuesto-buscador-input {
+  width: 100%;
+  padding: 13px 16px 13px 44px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(31, 72, 126, 0.35);
+  border-radius: 10px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.presupuesto-buscador-input::placeholder { color: rgba(240, 244, 255, 0.3); }
+
+.presupuesto-buscador-input:focus {
+  outline: none;
+  border-color: #1F487E;
+  background: rgba(31, 72, 126, 0.1);
+  box-shadow: 0 0 0 4px rgba(31, 72, 126, 0.12);
+}
+
+/* Dropdown resultados */
+.presupuesto-resultados {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 24px;
+  right: 24px;
+  background: #1a2d4a;
+  border: 1px solid rgba(31, 72, 126, 0.4);
+  border-radius: 12px;
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.presupuesto-resultados::-webkit-scrollbar { width: 4px; }
+.presupuesto-resultados::-webkit-scrollbar-track { background: transparent; }
+.presupuesto-resultados::-webkit-scrollbar-thumb { background: rgba(31, 72, 126, 0.5); border-radius: 2px; }
+
+/* Cada resultado */
+.resultado-busqueda {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(31, 72, 126, 0.15);
+  transition: background 0.15s ease;
+}
+
+.resultado-busqueda:last-child { border-bottom: none; }
+.resultado-busqueda:hover,
+.resultado-busqueda.hover-activo {
+  background: rgba(31, 72, 126, 0.2);
+}
+
+.resultado-contenedor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.miniatura {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.resultado-contenedor span {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(240, 244, 255, 0.9);
+}
+
+/* ──────────────────────────────────────────────────────────
+   6. TABLA DE ÍTEMS
+────────────────────────────────────────────────────────── */
+.presupuesto-panel--tabla {
+  padding: 0;
+  overflow: hidden;
+}
+
+.presupuesto-tabla-wrap {
+  overflow-x: auto;
+}
+
+.presupuesto-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+}
+
+.presupuesto-tabla thead tr {
+  background: rgba(31, 72, 126, 0.15);
+  border-bottom: 1px solid rgba(31, 72, 126, 0.3);
+}
+
+.presupuesto-tabla thead th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.5);
+  white-space: nowrap;
+}
+
+.presupuesto-tabla tbody tr {
+  border-bottom: 1px solid rgba(31, 72, 126, 0.1);
+  transition: background 0.15s ease;
+}
+
+.presupuesto-tabla tbody tr:last-child {
+  border-bottom: none;
+}
+
+.presupuesto-tabla tbody tr:hover {
+  background: rgba(31, 72, 126, 0.05);
+}
+
+.presupuesto-tabla td {
+  padding: 10px 16px;
+  color: rgba(240, 244, 255, 0.85);
+  vertical-align: middle;
+}
+
+/* Imagen miniatura en tabla */
+.miniatura-tabla {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+  padding: 3px;
+}
+
+/* Código */
+.presupuesto-tabla__codigo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4e80c0;
+  white-space: nowrap;
+}
+
+/* Descripción */
+.presupuesto-tabla__desc {
+  min-width: 200px;
+  font-weight: 600;
+}
+
+/* Inputs dentro de la tabla */
+.presupuesto-tabla__input {
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(31, 72, 126, 0.25);
+  border-radius: 8px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  width: 110px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.presupuesto-tabla__input--qty {
+  width: 72px;
+  text-align: center;
+}
+
+.presupuesto-tabla__input:focus {
+  outline: none;
+  border-color: #1F487E;
+  background: rgba(31, 72, 126, 0.12);
+}
+
+.presupuesto-tabla__input:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Stock */
+.presupuesto-tabla__stock {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #4ade80;
+  text-align: center;
+}
+
+/* Subtotal */
+.presupuesto-tabla__subtotal {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #f0f4ff;
+  white-space: nowrap;
+}
+
+/* Botón eliminar */
+.boton-eliminar-factura {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(217, 4, 41, 0.12);
+  color: #f87171;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+
+.boton-eliminar-factura:hover {
+  background: rgba(217, 4, 41, 0.25);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* ──────────────────────────────────────────────────────────
+   7. PANEL FOOTER (totales + acciones)
+────────────────────────────────────────────────────────── */
+.presupuesto-panel--footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* Totales */
+.presupuesto-totales {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  max-width: 480px;
+}
+
+.presupuesto-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(31, 72, 126, 0.2);
+  border-radius: 10px;
+}
+
+.presupuesto-total-row--main {
+  background: rgba(31, 72, 126, 0.12);
+  border-color: rgba(31, 72, 126, 0.4);
+}
+
+.presupuesto-total-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(240, 244, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.presupuesto-total-label i { color: #1F487E; }
+
+.presupuesto-total-label--main {
+  font-size: 15px;
+  font-weight: 800;
+  color: rgba(240, 244, 255, 0.9);
+}
+
+.presupuesto-total-input {
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: rgba(240, 244, 255, 0.7);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: right;
+  width: 160px;
+  cursor: default;
+}
+
+.presupuesto-total-input--main {
+  color: #f0f4ff;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+/* Botones acción */
+.presupuesto-acciones {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-imprimir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(31, 72, 126, 0.4);
+  background: transparent;
+  color: rgba(240, 244, 255, 0.7);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-imprimir:hover {
+  border-color: #1F487E;
+  background: rgba(31, 72, 126, 0.12);
+  color: #f0f4ff;
+  transform: translateY(-1px);
+}
+
+.btn-guardar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 10px;
+  border: none;
+  background: #1F487E;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 16px rgba(31, 72, 126, 0.4);
+}
+
+.btn-guardar:hover {
+  background: #2a5fa0;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(31, 72, 126, 0.5);
+}
+
+.btn-guardar:active {
+  transform: scale(0.98);
+}
+
+/* ──────────────────────────────────────────────────────────
+   8. SWEETALERT2 CUSTOM
+────────────────────────────────────────────────────────── */
+.resumen-factura-modal {
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  color: rgba(240, 244, 255, 0.85);
+}
+
+/* ──────────────────────────────────────────────────────────
+   9. RESPONSIVE
+────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .presupuesto-panel--top {
+    grid-template-columns: 1fr 1fr;
+  }
+  .presupuesto-field--pago {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .presupuesto-main { padding: 20px 16px 48px; }
+
+  .presupuesto-panel--top {
+    grid-template-columns: 1fr;
+  }
+  .presupuesto-field--pago { grid-column: 1; }
+
+  .presupuesto-panel--footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .presupuesto-totales { max-width: 100%; }
+
+  .presupuesto-acciones {
+    justify-content: flex-end;
+  }
+
+  .presupuesto-page-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .presupuesto-page-header__right {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .presupuesto-acciones {
+    flex-direction: column;
+  }
+  .btn-guardar, .btn-imprimir {
+    width: 100%;
+    justify-content: center;
+  }
+  .metodos-pago {
+    gap: 6px;
+  }
+  .metodo-pago-pill {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   10. PRINT
+────────────────────────────────────────────────────────── */
+@media print {
+  .presupuesto-main { background: #fff; padding: 0; }
+  .presupuesto-panel { background: #fff; border: 1px solid #ddd; box-shadow: none; }
+  .presupuesto-page-header__title,
+  .presupuesto-tabla thead th,
+  .presupuesto-tabla td { color: #000; }
+  .btn-guardar, .btn-imprimir, .btn-listado,
+  .presupuesto-buscador-wrap, .boton-eliminar-factura { display: none; }
+  .presupuesto-tabla__input { border: none; background: transparent; color: #000; }
+}
