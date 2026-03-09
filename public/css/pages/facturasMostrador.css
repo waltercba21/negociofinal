@@ -417,7 +417,9 @@
   color: rgba(240, 244, 255, 0.5);
   white-space: nowrap;
 }
-
+.facturas-tabla th {
+  text-align: center;
+}  
 .facturas-tabla tbody tr {
   border-bottom: 1px solid rgba(31, 72, 126, 0.1);
   transition: background 0.15s ease;
@@ -435,12 +437,12 @@
   padding: 10px 16px;
   color: rgba(240, 244, 255, 0.85);
   vertical-align: middle;
+  text-align: center;
 }
-
 /* Imagen miniatura en tabla */
 .miniatura-tabla {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
   border-radius: 6px;
   background: #fff;
@@ -450,7 +452,7 @@
 /* Código */
 .facturas-tabla__codigo {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: #4e80c0;
   white-space: nowrap;
