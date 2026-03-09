@@ -28,7 +28,6 @@ module.exports = {
                     if (error) {
                         return res.status(500).send('Error al crear el carrito');
                     }
-                    console.log(`Carrito creado con ID: ${nuevoCarritoId}`);
                     res.redirect('/carrito'); 
                 });
             } else {
@@ -250,8 +249,6 @@ actualizarCantidad: (req, res) => {
     return res.status(400).json({ error: 'Datos inválidos.' });
   }
 
-  console.log(`Actualizando producto con ID: ${id}, Acción: ${accion}`);
-
   // Verificar si el producto existe en el carrito (con stock)
   carrito.obtenerProductoCarritoConStock(id, (error, producto) => {
     if (error) {
@@ -263,8 +260,6 @@ actualizarCantidad: (req, res) => {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
-    console.log('✅ Producto encontrado:', producto);
-
     const cantidadActual = Number(producto.cantidad) || 0;
     const stockActual = Number(producto.stock_actual) || 0;
     const stockMinimo = Number(producto.stock_minimo) || 0;
@@ -273,8 +268,6 @@ actualizarCantidad: (req, res) => {
     let nuevaCantidad = cantidadActual;
     if (accion === 'aumentar') nuevaCantidad = cantidadActual + 1;
     if (accion === 'disminuir') nuevaCantidad = Math.max(1, cantidadActual - 1);
-
-    console.log(`🔢 Nueva cantidad calculada: ${nuevaCantidad}`);
 
     // ✅ VALIDACIÓN STOCK (solo aplica al aumentar)
     if (accion === 'aumentar') {
@@ -313,8 +306,6 @@ actualizarCantidad: (req, res) => {
         return res.status(500).json({ error: 'Error al actualizar la cantidad' });
       }
 
-      console.log(`✅ Cantidad actualizada con éxito: ${nuevaCantidad}`);
-
       // Obtener el carrito activo del usuario
       carrito.obtenerCarritoActivo(req.session.usuario.id, (error, carritoActivo) => {
         if (error || !carritoActivo || carritoActivo.length === 0) {
@@ -340,7 +331,6 @@ actualizarCantidad: (req, res) => {
           });
 
           const cantidadTotal = productos.reduce((acc, p) => acc + (Number(p.cantidad) || 0), 0);
-          console.log(`🛒 Cantidad total actualizada en el carrito: ${cantidadTotal}, Total del carrito: $${totalCarrito.toFixed(2)}`);
 
           // Enviar la respuesta con los datos actualizados
           res.status(200).json({
@@ -406,7 +396,6 @@ guardarEnvio: (req, res) => {
   const traceId = req.body?.traceId || `srv_${Date.now()}`;
 
   if (!req.body || !req.body.tipo_envio) {
-    console.log(`[${traceId}] ❌ guardarEnvio: falta tipo_envio`, req.body);
     return res.status(400).json({ error: "Debe seleccionar un tipo de envío." });
   }
 
@@ -414,25 +403,20 @@ guardarEnvio: (req, res) => {
   const tipo_envio = String(req.body.tipo_envio);
   let direccion = req.body.direccion ? String(req.body.direccion).trim() : null;
 
-  console.log(`[${traceId}] ▶ guardarEnvio body`, { id_usuario, tipo_envio, direccion });
-
   if (tipo_envio === "delivery" && (!direccion || direccion.length < 5)) {
-    console.log(`[${traceId}] ❌ guardarEnvio: dirección inválida`);
     return res.status(400).json({ error: "Debe ingresar una dirección válida para delivery." });
   }
 
   carrito.obtenerCarritoActivo(id_usuario, (error, carritos) => {
     if (error) {
-      console.log(`[${traceId}] ❌ obtenerCarritoActivo error`, error);
+      console.error(`[guardarEnvio] Error al obtener carrito:`, error);
       return res.status(500).json({ error: "Error al obtener carrito" });
     }
     if (!carritos || carritos.length === 0) {
-      console.log(`[${traceId}] ❌ no hay carrito activo`);
       return res.status(400).json({ error: "No hay un carrito activo" });
     }
 
     const id_carrito = carritos[0].id;
-    console.log(`[${traceId}] ✅ carrito activo`, carritos[0]);
 
     // retiro => direccion null
     if (tipo_envio !== "delivery") {
@@ -441,15 +425,12 @@ guardarEnvio: (req, res) => {
 
     carrito.guardarEnvio(id_carrito, tipo_envio, direccion, (errSave) => {
       if (errSave) {
-        console.log(`[${traceId}] ❌ guardarEnvio(modelo) error`, errSave);
+        console.error(`[guardarEnvio] Error al guardar envío:`, errSave);
         return res.status(500).json({ error: "Error al guardar envío" });
       }
 
-      // leer lo guardado para verificar
       carrito.obtenerEnvioCarrito(id_carrito, (errE, envioDB) => {
-        if (errE) console.log(`[${traceId}] ⚠ obtenerEnvioCarrito error`, errE);
-
-        console.log(`[${traceId}] ✅ envio guardado DB`, { id_carrito, envioDB });
+        if (errE) console.error(`[guardarEnvio] Error al obtener envío:`, errE);
 
         return res.status(200).json({
           success: true,
@@ -705,17 +686,7 @@ vistaPagoExitoso: async (req, res) => {
   const trace = `payok_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
   try {
-    console.log(`\n================ [${trace}] /carrito/pago-exito =================`);
-    console.log(`[${trace}] ✅ ENTER vistaPagoExitoso`);
-    console.log(`[${trace}] ✅ req.originalUrl:`, req.originalUrl);
-    console.log(`[${trace}] ✅ req.method:`, req.method);
-    console.log(`[${trace}] ✅ req.query:`, req.query);
-    console.log(`[${trace}] ✅ req.session exists:`, !!req.session);
-    console.log(
-      `[${trace}] ✅ session.usuario:`,
-      req.session?.usuario ? { id: req.session.usuario.id, email: req.session.usuario.email || null } : null
-    );
-    console.log(`[${trace}] ✅ sessionID:`, req.sessionID || null);
+
 
     // ✅ MercadoPago suele devolver status/collection_status + external_reference
     const mpApproved =
@@ -731,12 +702,9 @@ vistaPagoExitoso: async (req, res) => {
       Number(req.session?.ultimoPedidoId) ||
       null;
 
-    console.log(`[${trace}] ✅ mpApproved:`, mpApproved);
-    console.log(`[${trace}] ✅ mpRef (external_reference/pedido/session):`, mpRef);
 
     // ✅ Si MP aprobó y tenemos referencia, intentamos cerrar el carrito seguro
     if (mpApproved && mpRef) {
-      console.log(`[${trace}] 🔒 Intentando cierre idempotente de carrito...`);
 
       // 1) obtener el carrito y su usuario_id desde DB (funciona aunque no haya sesión)
      const carritoDB = await new Promise((resolve, reject) => {
@@ -746,14 +714,9 @@ vistaPagoExitoso: async (req, res) => {
   });
 });
 
-      console.log(`[${trace}] 📦 carritoDB:`, carritoDB);
-
       if (!carritoDB) {
-        console.log(`[${trace}] ❌ No existe carrito con id=mpRef (${mpRef}). No cierro.`);
       } else if (carritoDB.estado !== "carrito") {
-        console.log(
-          `[${trace}] ⚠️ Carrito id=${mpRef} NO está en 'carrito' (estado=${carritoDB.estado}, es_pedido=${carritoDB.es_pedido}). Nada que cerrar.`
-        );
+        console.error(`[vistaPagoExitoso] Carrito id=${mpRef} ya procesado (estado=${carritoDB.estado})`);
       } else {
         const id_usuario_carrito = Number(carritoDB.usuario_id);
         const lockKey = `pagoCerrado_${mpRef}`;
@@ -761,12 +724,9 @@ vistaPagoExitoso: async (req, res) => {
         const canUseSession = !!(req.session && req.session.usuario);
         const alreadyLocked = canUseSession ? !!req.session[lockKey] : false;
 
-        console.log(`[${trace}] ✅ canUseSession:`, canUseSession);
-        console.log(`[${trace}] ✅ alreadyLocked:`, alreadyLocked);
 
         if (!alreadyLocked) {
           const nuevoEstado = "pendiente";
-          console.log(`[${trace}] ✅ Cerrando carrito -> estado='${nuevoEstado}', es_pedido=1`);
 
           let affected = 0;
           try {
@@ -782,73 +742,48 @@ vistaPagoExitoso: async (req, res) => {
             throw e;
           }
 
-          console.log(`[${trace}] ✅ cerrarCarrito affectedRows:`, affected);
 
-          // Re-leemos para confirmar
-          const carritoAfter = await new Promise((resolve, reject) => {
-  carrito.obtenerCarritoPorId(mpRef, (err, row) => {
-    if (err) return reject(err);
-    resolve(row);
-  });
-});
-
-          console.log(`[${trace}] 📦 carritoAfter:`, carritoAfter);
 
           if (affected > 0) {
-            console.log(`[${trace}] 🛒 Creando nuevo carrito vacío para usuario_id=${id_usuario_carrito}...`);
 
             const newId = await new Promise((resolve, reject) => {
               carrito.crearCarrito(id_usuario_carrito, (err, insertId) => (err ? reject(err) : resolve(insertId)));
             });
 
-            console.log(`[${trace}] ✅ crearCarrito insertId:`, newId);
-
             if (canUseSession) {
               req.session.ultimoPedidoId = mpRef;
               req.session[lockKey] = true;
-              console.log(`[${trace}] ✅ session.ultimoPedidoId set:`, req.session.ultimoPedidoId);
-              console.log(`[${trace}] ✅ session lock set:`, req.session[lockKey]);
+
             }
 
             // 🔔 admin
             try {
-              console.log(`[${trace}] 🔔 Emitiendo sockets (nuevoPedido + actualizarNotificacion)...`);
              const io = getIO(req);
 if (io) {
   io.emit("nuevoPedido", {
-  mensaje: `📦 Nuevo pedido recibido (${id_carrito})`,
-  id_carrito: id_carrito,
-  usuario: id_usuario,
-  estado: nuevoEstado,
-});
+    mensaje: `📦 Nuevo pedido recibido (${mpRef})`,
+    id_carrito: mpRef,
+    usuario: id_usuario_carrito,
+    estado: nuevoEstado,
+  });
   io.emit("actualizarNotificacion");
 }
-
-              console.log(`[${trace}] ✅ sockets emit OK`);
             } catch (e) {
-              console.log(`[${trace}] ⚠️ io emit falló/no disponible:`, e?.message || e);
             }
           } else {
-            console.log(
-              `[${trace}] ⚠️ affected=0: No se cerró nada. Posibles causas: el modelo cerrarCarrito no está actualizado (WHERE), o el carrito ya cambió de estado.`
-            );
+            console.error(`[${trace}] ⚠️ affected=0: cerrarCarrito no cerró ninguna fila para id=${mpRef}`);
           }
         } else {
-          console.log(`[${trace}] ⚠️ Ya estaba lockeado por sesión, no cierro de nuevo.`);
         }
       }
     } else {
-      console.log(
-        `[${trace}] ⚠️ No cierro: mpApproved=${mpApproved} y mpRef=${mpRef}. Si mpApproved=false o mpRef=null, NO hay creación de pedido.`
-      );
+      // mpApproved=false o mpRef=null — no hay pedido que cerrar
     }
 
     // ✅ Render: si hay sesión, mostramos el pedido y productos. Si no hay sesión, mostramos igual por mpRef.
     const pedidoId = mpRef || null;
-    console.log(`[${trace}] ✅ Render pedidoId:`, pedidoId);
 
     if (!pedidoId) {
-      console.log(`[${trace}] ⚠️ No hay pedidoId, render vacío.`);
       return res.render("pagoExito", { productos: [], estadoCarrito: null, total: 0, pedidoId: null });
     }
 
@@ -856,7 +791,6 @@ if (io) {
 
     if (req.session?.usuario?.id) {
       const id_usuario = req.session.usuario.id;
-      console.log(`[${trace}] 🔎 Buscando pedido por usuario (obtenerPedidoUsuarioPorId):`, { id_usuario, pedidoId });
 
       pedido = await new Promise((resolve, reject) => {
         carrito.obtenerPedidoUsuarioPorId(id_usuario, pedidoId, (err, row) => {
@@ -864,25 +798,18 @@ if (io) {
           resolve(row);
         });
       });
-
-      console.log(`[${trace}] ✅ pedido (por usuario):`, pedido);
     } else {
-      console.log(`[${trace}] 🔎 Sin sesión: leyendo pedido directo por id...`);
       pedido = await new Promise((resolve, reject) => {
   carrito.obtenerCarritoPorId(pedidoId, (err, row) => {
     if (err) return reject(err);
     resolve(row);
   });
 });
-      console.log(`[${trace}] ✅ pedido (directo):`, pedido);
     }
 
     if (!pedido) {
-      console.log(`[${trace}] ⚠️ No se encontró pedido para render. Render vacío con pedidoId.`);
       return res.render("pagoExito", { productos: [], estadoCarrito: null, total: 0, pedidoId });
     }
-
-    console.log(`[${trace}] 🧾 obtenerProductosCarrito carrito_id=${pedido.id_carrito}...`);
     const productos = await new Promise((resolve, reject) => {
       carrito.obtenerProductosCarrito(pedido.id_carrito, (err, rows) => {
         if (err) return reject(err);
@@ -890,13 +817,9 @@ if (io) {
       });
     });
 
-    console.log(`[${trace}] ✅ productos.length:`, productos.length);
-    if (productos.length) console.log(`[${trace}] ✅ productos sample[0]:`, productos[0]);
 
     const total = productos.reduce((acc, p) => acc + (Number(p.total) || 0), 0).toFixed(2);
-    console.log(`[${trace}] ✅ total:`, total);
 
-    console.log(`[${trace}] ✅ Render OK pagoExito`);
     return res.render("pagoExito", {
       productos,
       estadoCarrito: pedido.estado,
@@ -908,7 +831,6 @@ if (io) {
     console.error(`[${trace}] ❌ Error al cargar la vista de pago exitoso:`, error);
     res.status(500).send("Error al cargar la página de pago exitoso.");
   } finally {
-    console.log(`================ [${trace}] END =================\n`);
   }
 },
 
