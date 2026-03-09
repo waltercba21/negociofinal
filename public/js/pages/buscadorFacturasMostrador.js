@@ -8,14 +8,16 @@ function formatCurrencyCL(valor) {
   return num.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
 
-document.getElementById('invoice-form').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    return false;
-  }
-});
+document.addEventListener('DOMContentLoaded', function() {
 
-document.getElementById('invoice-form').addEventListener('submit', async function(e) {
+  document.getElementById('invoice-form').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  document.getElementById('invoice-form').addEventListener('submit', async function(e) {
   e.preventDefault();
 
   // Validar que al menos un método de pago esté seleccionado
@@ -201,9 +203,8 @@ document.getElementById('invoice-form').addEventListener('submit', async functio
       confirmButtonText: 'Entendido'
     });
   }
-});
+  // submit listener end
 
-document.addEventListener('DOMContentLoaded', () => {
   // 🔥 Establecer la fecha actual SOLO si está vacía (no pisa fechas existentes)
   const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
   if (fechaPresupuestoInput) {
@@ -448,36 +449,36 @@ function calcularTotal() {
   totalAmountInput.value = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
 
-// 🔥 Asociar eventos a los inputs de cantidad y precio para actualizar dinámicamente
-document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
-  const inputCantidad = row.cells[4].querySelector('input');
-  const inputPrecio = row.cells[3].querySelector('input');
+  // 🔥 Asociar eventos a los inputs de cantidad y precio para actualizar dinámicamente
+  document.querySelectorAll('#tabla-factura tbody tr').forEach(row => {
+    const inputCantidad = row.cells[4].querySelector('input');
+    const inputPrecio = row.cells[3].querySelector('input');
 
-  if (inputCantidad) {
-    inputCantidad.addEventListener('input', function () {
-      updateSubtotal(row);
-    });
-  }
+    if (inputCantidad) {
+      inputCantidad.addEventListener('input', function () {
+        updateSubtotal(row);
+      });
+    }
 
-  if (inputPrecio) {
-    inputPrecio.addEventListener('input', function () {
-      updateSubtotal(row, false); // 🔥 Evita la validación de stock cuando se cambia el precio
-    });
-  }
-});
-
-// 🔥 Actualizar el total cuando se cambian los métodos de pago
-document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
-  checkbox.addEventListener('change', calcularTotal);
-});
-
-
-document.querySelectorAll('input:not(#entradaBusqueda):not(#headerEntradaBusqueda)').forEach(input => {
-  input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      return false;
+    if (inputPrecio) {
+      inputPrecio.addEventListener('input', function () {
+        updateSubtotal(row, false);
+      });
     }
   });
-});
 
+  // 🔥 Actualizar el total cuando se cambian los métodos de pago
+  document.querySelectorAll('input[name="metodosPago"]').forEach(checkbox => {
+    checkbox.addEventListener('change', calcularTotal);
+  });
+
+  document.querySelectorAll('input:not(#entradaBusqueda):not(#headerEntradaBusqueda)').forEach(input => {
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        return false;
+      }
+    });
+  });
+
+}); // ── END DOMContentLoaded
