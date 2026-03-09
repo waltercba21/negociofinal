@@ -1,22 +1,70 @@
+<% var pageCss = '/css/pages/factura.css' %>
+<!DOCTYPE html>
+<html lang="es">
 <%- include('./layouts/head.ejs') %>
-<%- include('./layouts/header.ejs') %>
+<link rel="stylesheet" href="/css/pages/factura.css?v=1" />
 <body>
-  <main>
-    <div class="detalle-presupuesto-container">
-      <table class="tabla-detalle-presupuesto">
+  <%- include('./layouts/header.ejs') %>
+
+  <main class="fv-main">
+
+    <!-- PAGE HEADER -->
+    <div class="fv-page-header">
+      <div class="fv-page-header__left">
+        <span class="fv-page-header__eyebrow">Mostrador</span>
+        <h1 class="fv-page-header__title">Detalle de Factura <span class="fv-page-header__id">#<%= factura.id %></span></h1>
+      </div>
+      <form action="/productos/listadoFacturas" method="GET">
+        <input type="hidden" name="fechaInicio" value="<%= new Date(factura.creado_en).toISOString().split('T')[0] %>">
+        <input type="hidden" name="fechaFin" value="<%= new Date(factura.creado_en).toISOString().split('T')[0] %>">
+        <button type="submit" class="fv-btn fv-btn--outline">
+          <i class="fa-solid fa-arrow-left"></i> Volver al listado
+        </button>
+      </form>
+    </div>
+
+    <!-- META PANEL -->
+    <div class="fv-panel fv-panel--meta">
+      <div class="fv-meta-grid">
+        <div class="fv-meta-item">
+          <span class="fv-meta-item__label">ID Factura</span>
+          <span class="fv-meta-item__value fv-meta-item__value--id">#<%= factura.id %></span>
+        </div>
+        <div class="fv-meta-item">
+          <span class="fv-meta-item__label">Fecha</span>
+          <span class="fv-meta-item__value">
+            <%= new Date(factura.creado_en).toLocaleDateString('es-AR') %>
+          </span>
+        </div>
+        <div class="fv-meta-item">
+          <span class="fv-meta-item__label">Hora</span>
+          <span class="fv-meta-item__value">
+            <%= new Date(factura.creado_en).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) %>
+          </span>
+        </div>
+        <div class="fv-meta-item">
+          <span class="fv-meta-item__label">Vendedor</span>
+          <span class="fv-meta-item__value"><%= factura.nombre_cliente %></span>
+        </div>
+        <% if (factura.metodos_pago) { %>
+        <div class="fv-meta-item">
+          <span class="fv-meta-item__label">Método de Pago</span>
+          <span class="fv-meta-item__value">
+            <% const metodo = factura.metodos_pago.toLowerCase(); %>
+            <% const claseMetodo = ['efectivo','credito','debito','transferencia','qr'].includes(metodo) ? metodo : 'otro'; %>
+            <span class="fv-badge fv-badge--<%= claseMetodo %>"><%= factura.metodos_pago %></span>
+          </span>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- TABLA ITEMS -->
+    <div class="fv-panel fv-panel--tabla">
+      <table class="fv-tabla">
         <thead>
           <tr>
-            <th colspan="5">Detalle de la Factura</th>
-          </tr>
-          <tr>
-            <td><strong>ID Factura:</strong> <%= factura.id %></td>
-            <td><strong>Fecha:</strong> 
-              <%= new Date(factura.creado_en).toLocaleDateString('es-AR') %>
-              <%= new Date(factura.creado_en).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) %>
-            </td>
-            <td><strong>Vendedor:</strong> <%= factura.nombre_cliente %></td>
-          </tr>
-          <tr>
+            <th>#</th>
             <th>Producto</th>
             <th>Cantidad</th>
             <th>Precio Unitario</th>
@@ -25,35 +73,37 @@
         </thead>
         <tbody>
           <% let total = 0; %>
-          <% detalles.forEach(item => { 
+          <% detalles.forEach((item, index) => {
                const subtotal = item.precio_unitario * item.cantidad;
                total += subtotal;
           %>
             <tr>
-              <td><%= item.nombre_producto %></td>
-              <td><%= item.cantidad %></td>
-              <td>$<%= item.precio_unitario.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
-              <td>$<%= subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></td>
+              <td class="fv-tabla__num"><%= index + 1 %></td>
+              <td class="fv-tabla__producto"><%= item.nombre_producto %></td>
+              <td class="fv-tabla__qty"><%= item.cantidad %></td>
+              <td class="fv-tabla__precio">$<%= item.precio_unitario.toLocaleString('es-AR', { minimumFractionDigits: 0 }) %></td>
+              <td class="fv-tabla__subtotal">$<%= subtotal.toLocaleString('es-AR', { minimumFractionDigits: 0 }) %></td>
             </tr>
           <% }); %>
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
-            <td><strong>$<%= total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) %></strong></td>
+            <td colspan="4" class="fv-tabla__tfoot-label">Total</td>
+            <td class="fv-tabla__tfoot-total">$<%= total.toLocaleString('es-AR', { minimumFractionDigits: 0 }) %></td>
           </tr>
         </tfoot>
       </table>
     </div>
 
-    <div class="volver-listado">
-      <form action="/productos/listadoFacturas" method="GET">
-        <input type="hidden" name="fechaInicio" value="<%= new Date(factura.creado_en).toISOString().split('T')[0] %>">
-        <input type="hidden" name="fechaFin" value="<%= new Date(factura.creado_en).toISOString().split('T')[0] %>">
-        <button type="submit" class="btn-aceptar">ACEPTAR</button>
-      </form>
+    <!-- ACCIONES -->
+    <div class="fv-acciones">
+      <button onclick="window.print()" class="fv-btn fv-btn--outline">
+        <i class="fa-solid fa-print"></i> Imprimir
+      </button>
     </div>
+
   </main>
 
   <%- include('./layouts/footer.ejs') %>
 </body>
+</html>
