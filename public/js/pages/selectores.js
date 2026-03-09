@@ -1,3 +1,6 @@
+// public/js/pages/selectores.js
+// AF v2026-03-09-fix4 — clases actualizadas a .pcard
+
 document.addEventListener("DOMContentLoaded", function () {
   const categoriaSelect = document.getElementById("categoria_id");
   const marcaSelect = document.getElementById("marca_id");
@@ -18,6 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
       body: JSON.stringify({ q, origen })
     }).catch(() => {});
   }
+
   function logBusquedaProducto(producto_id, qActual) {
     if (!producto_id) return;
     fetch("/analytics/busqueda-producto", {
@@ -26,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
       body: JSON.stringify({ producto_id: Number(producto_id), q: qActual || null })
     }).catch(() => {});
   }
+
   function buildQueryDesc() {
     return `categoria=${categoriaSelect.value||''};marca=${marcaSelect.value||''};modelo=${modeloSelect.value||''}`;
   }
@@ -63,14 +68,13 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((err) => console.error("Error al cargar modelos:", err));
   });
 
-  // === Cambio en cualquier selector => buscar productos + log de búsqueda ===
+  // === Cambio en cualquier selector => buscar productos ===
   [categoriaSelect, marcaSelect, modeloSelect].forEach((selector) => {
     selector.addEventListener("change", async () => {
       const categoria_id = categoriaSelect.value;
       const marca_id = marcaSelect.value;
       const modelo_id = modeloSelect.value;
 
-      // Log de búsqueda (selectores)
       logBusquedaTexto(buildQueryDesc(), "selectores");
 
       contenedorProductos.innerHTML = "<p>Cargando productos...</p>";
@@ -87,9 +91,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // === Delegado: click en cards para loguear selección de producto (sin interferir con tu lógica) ===
+  // === Delegado: log de click en cards ===
   contenedorProductos.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('.agregar-carrito');
+    const btn  = ev.target.closest('.agregar-carrito');
     const link = ev.target.closest('.card-link');
     if (!btn && !link) return;
 
@@ -100,14 +104,13 @@ document.addEventListener("DOMContentLoaded", function () {
       if (m) productoId = m[1];
     }
     if (!productoId) return;
-
     logBusquedaProducto(productoId, buildQueryDesc());
   }, { passive: true });
 
   /* =========================
-     NUEVO: Siguiente proveedor
-     ========================= */
-  const _cacheProveedores = new Map(); // productoId -> { lista: [], idx: number }
+     Siguiente proveedor (admin)
+  ========================= */
+  const _cacheProveedores = new Map();
 
   async function _getListaProveedores(productoId) {
     if (_cacheProveedores.has(productoId)) return _cacheProveedores.get(productoId).lista;
@@ -135,7 +138,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!isAdminUser) return;
     const st = _cacheProveedores.get(producto.id);
     if (!st || !st.lista?.length) return;
-
     const actualNombre = (document.querySelector(`.prov-nombre[data-producto-id="${producto.id}"]`)?.textContent || '').trim();
     const idx = st.lista.findIndex(p => (p.proveedor_nombre || '').trim() === actualNombre);
     st.idx = idx >= 0 ? idx : 0;
@@ -143,207 +145,195 @@ document.addEventListener("DOMContentLoaded", function () {
     _renderProveedor(producto.id, st.lista[st.idx]);
   }
 
-  // Delegado de click SOLO para “Siguiente proveedor”
   contenedorProductos.addEventListener('click', async (ev) => {
-    const btn = ev.target.closest('.btn-siguiente-proveedor');
+    const btn = ev.target.closest('.btn-ver-proveedores');
     if (!btn || !isAdminUser) return;
-
     const productoId = Number(btn.dataset.productoId);
     if (!productoId) return;
-
     const lista = await _getListaProveedores(productoId);
     if (!lista || !lista.length) {
-      Swal.fire({ icon:'info', title:'Sin proveedores', text:'Este producto no tiene proveedores cargados.' });
+      Swal.fire({ icon: 'info', title: 'Sin proveedores', text: 'Este producto no tiene proveedores cargados.' });
       return;
     }
-
     const state = _cacheProveedores.get(productoId) || { lista, idx: 0 };
-    state.idx = (state.idx + 1) % state.lista.length; // avance cíclico
+    state.idx = (state.idx + 1) % state.lista.length;
     _cacheProveedores.set(productoId, state);
     _renderProveedor(productoId, state.lista[state.idx]);
   }, { passive: true });
 
-  // === Render de resultados ===
+  /* =========================
+     RENDER DE CARDS — clases .pcard (v2026-03-09-fix4)
+  ========================= */
   function mostrarProductos(productos) {
     contenedorProductos.innerHTML = "";
 
     if (!Array.isArray(productos) || productos.length === 0) {
-      const contenedorVacio = document.createElement("div");
-      contenedorVacio.className = "no-result";
-      contenedorVacio.innerHTML = `
-        <img src="/images/noEncontrado.png" alt="Producto no encontrado" class="imagen-no-result">
-        <p>No se encontraron productos. Probá con otros filtros o palabras clave.</p>
-      `;
-      contenedorProductos.appendChild(contenedorVacio);
+      contenedorProductos.innerHTML = `
+        <div class="no-result">
+          <img src="/images/noEncontrado.png" alt="Sin resultados" class="no-result__img" />
+          <h3 class="no-result__title">Sin resultados</h3>
+          <p class="no-result__text">No encontramos productos con esos filtros.<br>Probá con otras palabras clave o categorías.</p>
+        </div>`;
       return;
     }
 
     productos.forEach((producto, index) => {
-      const card = document.createElement("div");
-      card.className = `
-        card 
-        ${producto.calidad_original ? "calidad-original-fitam" : ""} 
-        ${producto.calidad_vic ? "calidad_vic" : ""} 
-        ${producto.oferta ? "producto-oferta" : ""}
-      `;
-      card.setAttribute("data-label",
-        producto.oferta ? "OFERTA" :
-        producto.calidad_original ? "CALIDAD FITAM" :
-        producto.calidad_vic ? "CALIDAD VIC" : ""
-      );
+      const esOferta = producto.oferta;
+      const esFitam  = producto.calidad_original;
+      const esVic    = producto.calidad_vic;
+      const puedeComprar = (producto.stock_actual >= producto.stock_minimo) && (producto.stock_actual > 0);
 
-      const imagenesHTML = (producto.imagenes || []).map((img, i) => `
-        <img class="carousel__image ${i !== 0 ? "hidden" : ""}" src="/uploads/productos/${img.imagen}" alt="${producto.nombre}">
-      `).join("");
+      let badgeHTML = '';
+      if (esOferta)     badgeHTML = `<span class="pcard__badge badge--oferta">OFERTA</span>`;
+      else if (esFitam) badgeHTML = `<span class="pcard__badge badge--fitam">CALIDAD FITAM</span>`;
+      else if (esVic)   badgeHTML = `<span class="pcard__badge badge--vic">CALIDAD VIC</span>`;
 
-      // Bloque admin (proveedor/código + botón)
-      const adminProveedorHTML = isAdminUser ? `
-        <div class="codigo-admin">
-          <p>
-            <strong>Proveedor:</strong>
-            <span class="prov-nombre" data-producto-id="${producto.id}">
-              ${producto.proveedor_nombre || 'Sin proveedor'}
-            </span>
-          </p>
-          <p>
-            <strong>Código:</strong>
-            <span class="prov-codigo" data-producto-id="${producto.id}">
-              ${producto.codigo_proveedor || '-'}
-            </span>
-          </p>
+      // Carousel de imágenes
+      const imagenes = producto.imagenes || [];
+      const imagenesHTML = imagenes.map((img, i) =>
+        `<img class="pcard__img${i !== 0 ? ' hidden' : ''}" src="/uploads/productos/${img.imagen}" alt="${producto.nombre}" loading="lazy" />`
+      ).join('');
+
+      const botonesCarousel = imagenes.length > 1 ? `
+        <button class="pcard__carousel-btn pcard__carousel-btn--prev" onclick="moverCarrusel('${index}', -1)" aria-label="Anterior">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="pcard__carousel-btn pcard__carousel-btn--next" onclick="moverCarrusel('${index}', 1)" aria-label="Siguiente">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        <div class="pcard__dots" id="dots-${index}">
+          ${imagenes.map((_, i) => `<span class="pcard__dot${i === 0 ? ' pcard__dot--active' : ''}"></span>`).join('')}
+        </div>` : '';
+
+      const mediaHTML = `
+        <div class="pcard__media">
+          <div class="pcard__carousel" id="carousel-${index}">
+            ${imagenesHTML || `<img class="pcard__img" src="/images/noEncontrado.png" alt="${producto.nombre}" />`}
+          </div>
+          ${botonesCarousel}
+        </div>`;
+
+      // Admin block
+      const adminHTML = isAdminUser ? `
+        <div class="pcard__admin">
+          <div class="pcard__admin-row">
+            <span class="pcard__admin-label">Proveedor</span>
+            <span class="prov-nombre pcard__admin-val" data-producto-id="${producto.id}">${producto.proveedor_nombre || '—'}</span>
+          </div>
+          <div class="pcard__admin-row">
+            <span class="pcard__admin-label">Código</span>
+            <span class="prov-codigo pcard__admin-val" data-producto-id="${producto.id}">${producto.codigo_proveedor || '—'}</span>
+          </div>
+          <div class="pcard__admin-row">
+            <span class="pcard__admin-label">Stock</span>
+            <span class="pcard__admin-val ${producto.stock_actual < producto.stock_minimo ? 'stock--bajo' : 'stock--ok'}">${producto.stock_actual}</span>
+          </div>
           <div class="prov-actions">
-            <button type="button"
-                    class="btn-siguiente-proveedor"
-                    data-producto-id="${producto.id}">
-              Siguiente proveedor
+            <button type="button" class="btn-ver-proveedores" data-producto-id="${producto.id}">
+              <i class="fas fa-store"></i> Ver proveedores
             </button>
-            <small class="prov-idx"
-                   data-producto-id="${producto.id}"
-                   style="display:block;opacity:.7;margin-top:4px"></small>
+            <small class="prov-idx" data-producto-id="${producto.id}"></small>
           </div>
-        </div>
-      ` : '';
+        </div>` : '';
 
-      const stockHTML = isUserLoggedIn
-        ? (isAdminUser
-          ? `
-            <div class="stock-producto ${producto.stock_actual >= producto.stock_minimo ? "suficiente-stock" : "bajo-stock"}">
-              <p>Stock Disponible: ${producto.stock_actual}</p>
-            </div>
-            <div class="cantidad-producto">
-              <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-            </div>
-          `
-          : `
-            <div class="semaforo-stock">
-              <i class="fa-solid fa-thumbs-${producto.stock_actual >= producto.stock_minimo ? "up verde" : "down rojo"}"></i>
-              <span class="texto-semaforo">
-                ${producto.stock_actual >= producto.stock_minimo
-                  ? "PRODUCTO DISPONIBLE PARA ENTREGA INMEDIATA"
-                  : "PRODUCTO PENDIENTE DE INGRESO O A PEDIDO"}
-              </span>
-            </div>
-            <div class="cantidad-producto">
-              <input type="number" class="cantidad-input" value="0" min="0" id="input-cantidad-${producto.id}">
-              <button class="agregar-carrito"
-                data-id="${producto.id}" 
-                data-nombre="${producto.nombre}" 
-                data-precio="${producto.precio_venta}" 
-                data-stock="${producto.stock_actual}" 
-                data-stockmin="${producto.stock_minimo}">
-                Agregar al carrito
-              </button>
-              <a href="/productos/${producto.id}" class="card-link">Ver detalles</a>
-            </div>
-          `)
-        : `<div class="cantidad-producto"><a href="/productos/${producto.id}" class="card-link">Ver detalles</a></div>`;
+      // Stock semáforo
+      const stockHTML = (isUserLoggedIn && !isAdminUser) ? `
+        <div class="pcard__stock ${puedeComprar ? 'pcard__stock--ok' : 'pcard__stock--bajo'}">
+          <i class="fa-solid fa-circle pcard__stock-dot"></i>
+          <span class="pcard__stock-txt">${puedeComprar ? 'Disponible para entrega inmediata' : 'A pedido / pendiente de ingreso'}</span>
+        </div>` : '';
 
-      card.innerHTML = `
-        <div class="cover-card">
-          <div class="carousel-container">
-            <button class="carousel__button carousel__button--left" onclick="moverCarrusel('${index}', -1)">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            <div class="carousel-wrapper">
-              <div class="carousel" id="carousel-${index}">
-                ${imagenesHTML}
-              </div>
-            </div>
-            <button class="carousel__button carousel__button--right" onclick="moverCarrusel('${index}', 1)">
-              <i class="fas fa-chevron-right"></i>
-            </button>
+      // Acciones
+      let accionesHTML = '';
+      if (isUserLoggedIn && !isAdminUser) {
+        accionesHTML = `
+          <div class="pcard__qty-row">
+            <button type="button" class="qty-btn qty-btn--minus" aria-label="Restar"><i class="fa-solid fa-minus"></i></button>
+            <input type="number" class="cantidad-input"
+              value="${puedeComprar ? 1 : 0}"
+              min="${puedeComprar ? 1 : 0}"
+              max="${producto.stock_actual}"
+              step="1"
+              ${puedeComprar ? '' : 'disabled'}
+              aria-label="Cantidad" />
+            <button type="button" class="qty-btn qty-btn--plus" aria-label="Sumar"><i class="fa-solid fa-plus"></i></button>
           </div>
-        </div>
-        <div class="titulo-producto"><h3 class="nombre">${producto.nombre}</h3></div>
-        <hr>
-        <div class="categoria-producto"><h6 class="categoria">${producto.categoria_nombre || "Sin categoría"}</h6></div>
-        <div class="precio-producto"><p class="precio">$${formatearNumero(producto.precio_venta || 0)}</p></div>
-
-        ${adminProveedorHTML}
-        ${stockHTML}
-
-        <div class="acciones-compartir">
-          <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" class="whatsapp" target="_blank">
-            <i class="fab fa-whatsapp"></i>
-          </a>
-          <a href="https://www.facebook.com/profile.php?id=100063665395970" class="facebook" target="_blank">
-            <i class="fab fa-facebook"></i>
-          </a>
-          <a href="https://www.instagram.com/autofaros_cordoba" class="instagram" target="_blank">
-            <i class="fab fa-instagram"></i>
-          </a>
-        </div>
-      `;
-
-      contenedorProductos.appendChild(card);
-
-      // Lógica de validación/dispatch para agregar al carrito (igual que tenías)
-      if (!isAdminUser && isUserLoggedIn) {
-        const botonAgregar = card.querySelector('.agregar-carrito');
-        const inputCantidad = card.querySelector('.cantidad-input');
-
-        botonAgregar.addEventListener('click', (e) => {
-          e.preventDefault();
-          const cantidad = parseInt(inputCantidad.value);
-          const stockDisponible = parseInt(producto.stock_actual);
-
-          if (!cantidad || cantidad <= 0 || isNaN(cantidad)) {
-            Swal.fire({ icon: 'error', title: 'Cantidad inválida', text: 'Debes ingresar una cantidad mayor a 0.' });
-            return;
-          }
-
-          if (cantidad > stockDisponible) {
-            Swal.fire({ icon: 'warning', title: 'Cantidades no disponibles', text: 'Si deseas más unidades comunicate con nosotros 3513820440' });
-            inputCantidad.value = stockDisponible;
-            return;
-          }
-
-          const eventoAgregar = new CustomEvent("agregarAlCarritoDesdeBuscador", {
-            detail: {
-              id: producto.id,
-              nombre: producto.nombre,
-              precio: producto.precio_venta,
-              cantidad: cantidad
-            }
-          });
-
-          document.dispatchEvent(eventoAgregar);
-        });
+          <button class="btn-agregar agregar-carrito"
+            ${puedeComprar ? '' : 'disabled'}
+            data-id="${producto.id}"
+            data-nombre="${producto.nombre}"
+            data-precio="${producto.precio_venta}"
+            data-stock="${producto.stock_actual}"
+            data-stockmin="${producto.stock_minimo}">
+            <i class="fa-solid fa-cart-plus"></i>
+            <span>${puedeComprar ? 'Agregar al carrito' : 'Sin stock'}</span>
+          </button>`;
       }
 
-      // Inicializar proveedor actual si ya hay lista cacheada
+      // Descripción / aplicaciones
+      const descAplica = (producto.descripcion || '').trim();
+      const esEscobilla = /escobill/i.test(producto.categoria_nombre || '') || /escobill/i.test(producto.nombre || '');
+      const aplicacionesHTML = (esEscobilla && descAplica) ? `
+        <button type="button" class="btn-aplicaciones"
+          data-titulo="${producto.nombre}"
+          data-aplicaciones='${JSON.stringify(descAplica)}'>
+          <i class="fa-solid fa-car"></i> <span>Ver aplicaciones</span>
+        </button>` : '';
+
+      const card = document.createElement('article');
+      card.className = `pcard${esOferta ? ' pcard--oferta' : ''}${esFitam ? ' pcard--fitam' : ''}${esVic ? ' pcard--vic' : ''}`;
+
+      card.innerHTML = `
+        ${badgeHTML}
+        ${mediaHTML}
+        <div class="pcard__body">
+          <span class="pcard__categoria">${producto.categoria_nombre || 'Sin categoría'}</span>
+          <h3 class="pcard__nombre">${producto.nombre}</h3>
+          <div class="pcard__precio-row">
+            <span class="pcard__precio">$${formatearNumero(producto.precio_venta || 0)}</span>
+            ${esOferta ? '<span class="pcard__precio-tag"><i class="fa-solid fa-bolt"></i> Oferta</span>' : ''}
+          </div>
+          ${aplicacionesHTML}
+          ${adminHTML}
+          ${stockHTML}
+          <div class="pcard__actions">
+            ${accionesHTML}
+            <a href="/productos/${producto.id}" class="btn-detalle card-link">
+              <i class="fa-solid fa-eye"></i> <span>Ver detalles</span>
+            </a>
+          </div>
+          <div class="pcard__share">
+            <a href="https://wa.me/543513820440?text=QUIERO CONSULTAR POR ESTE PRODUCTO: https://www.autofaros.com.ar/productos/${producto.id}" class="pcard__share-btn pcard__share-btn--wa" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            <a href="https://www.facebook.com/profile.php?id=100063665395970" class="pcard__share-btn pcard__share-btn--fb" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/autofaros_cordoba" class="pcard__share-btn pcard__share-btn--ig" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>`;
+
+      contenedorProductos.appendChild(card);
       _inicializarProveedorActual(producto);
     });
   }
 
-  // === Helpers existentes ===
+  /* =========================
+     moverCarrusel — clases .pcard__img (v2026-03-09-fix4)
+  ========================= */
   window.moverCarrusel = function (index, direccion) {
-    const carousel = document.getElementById(`carousel-${index}`);
-    const imagenes = carousel.querySelectorAll(".carousel__image");
-    let activa = [...imagenes].findIndex(img => !img.classList.contains("hidden"));
-    imagenes[activa].classList.add("hidden");
+    const carousel = document.getElementById('carousel-' + index);
+    if (!carousel) return;
+    const imagenes = carousel.querySelectorAll('.pcard__img');
+    if (!imagenes.length) return;
+    let activa = Array.from(imagenes).findIndex(img => !img.classList.contains('hidden'));
+    if (activa < 0) activa = 0;
+    imagenes[activa].classList.add('hidden');
     activa = (activa + direccion + imagenes.length) % imagenes.length;
-    imagenes[activa].classList.remove("hidden");
+    imagenes[activa].classList.remove('hidden');
+    // Dots
+    const dots = document.getElementById('dots-' + index);
+    if (dots) {
+      dots.querySelectorAll('.pcard__dot').forEach((d, i) => {
+        d.classList.toggle('pcard__dot--active', i === activa);
+      });
+    }
   };
 
   function formatearNumero(num) {
