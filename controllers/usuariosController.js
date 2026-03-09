@@ -3,7 +3,7 @@ const bcryptjs = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const conexion = require('../config/conexion')
 const crypto = require('crypto');
-const adminEmails = ['walter@autofaros.com.ar', 'chacho@autofaros.com.ar', 'gera@autofaros.com.ar'];
+const adminEmails = require('../config/admins');
 
 module.exports = {
   register: (req, res) => {
@@ -13,14 +13,9 @@ module.exports = {
     const resultValidation = validationResult(req);
   
     if (!resultValidation.isEmpty()) {
-      const provincias = await obtenerProvincias(); // Método para obtener provincias
-      const localidades = await obtenerLocalidades(); // Método para obtener localidades
-  
       return res.render('register', {
         errors: resultValidation.mapped(),
         oldData: req.body,
-        provincias,
-        localidades,
       });
     }
   
@@ -35,14 +30,9 @@ module.exports = {
       }
   
       if (datos.length > 0) {
-        const provincias = await obtenerProvincias();
-        const localidades = await obtenerLocalidades();
-  
         return res.render('register', {
           errors: { emailExists: { msg: 'El email ya está registrado' } },
           oldData: req.body,
-          provincias,
-          localidades,
         });
       }
   
