@@ -106,11 +106,17 @@
           <% productos.forEach(function(producto, index) { %>
 
             <%
-              const esOferta   = producto.oferta;
-              const esFitam    = producto.calidad_original;
-              const esVic      = producto.calidad_vic;
-              const esMM       = producto.calidad_mm;
-              const esPremium  = producto.calidad_original_premium;
+              const esOferta = producto.oferta == 1;
+
+              // Normalizar calidades: solo una puede ser activa (jerarquía: premium > mm > vic > fitam)
+              const _fitam   = producto.calidad_original         == 1;
+              const _vic     = producto.calidad_vic              == 1;
+              const _mm      = producto.calidad_mm               == 1;
+              const _premium = producto.calidad_original_premium == 1;
+              const esPremium = _premium;
+              const esMM      = !_premium && _mm;
+              const esVic     = !_premium && !_mm && _vic;
+              const esFitam   = !_premium && !_mm && !_vic && _fitam;
 
               const badges = [];
               if (esOferta)  badges.push({ label: 'OFERTA',           cls: 'badge--oferta'  });

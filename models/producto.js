@@ -361,8 +361,6 @@ actualizar: function (conexion, datos, archivo) {
 
     if (isSet(datos.calidad_original)) add("calidad_original=?", datos.calidad_original ? 1 : 0);
     if (isSet(datos.calidad_vic)) add("calidad_vic=?", datos.calidad_vic ? 1 : 0);
-    if (isSet(datos.calidad_mm)) add("calidad_mm=?", datos.calidad_mm ? 1 : 0);
-    if (isSet(datos.calidad_original_premium)) add("calidad_original_premium=?", datos.calidad_original_premium ? 1 : 0);
 
     if (isSet(datos.proveedor_id)) add("proveedor_id=?", datos.proveedor_id);
 
@@ -875,6 +873,8 @@ obtenerPorFiltrosYProveedor: function (
         p.oferta,
         p.calidad_original,
         p.calidad_vic,
+        p.calidad_mm,
+        p.calidad_original_premium,
 
         pp.codigo        AS codigo,
         pp.precio_lista  AS precio_lista,
@@ -1056,7 +1056,7 @@ obtenerProductosPorProveedorYCategoria: function (conexion, proveedor, categoria
  
 obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
   return new Promise((resolve, reject) => {
-    let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.calidad_original FROM productos'; 
+    let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.oferta, productos.calidad_original, productos.calidad_vic, productos.calidad_mm, productos.calidad_original_premium FROM productos'; 
     sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
     sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
     sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';

@@ -98,6 +98,25 @@ function _redondearAlCentenar(valor) {
   return (resto < 50) ? (n - resto) : (n + (100 - resto));
 }
 
+// Normaliza los flags de calidad de un producto: garantiza que solo uno sea truthy.
+// Jerarquía de prioridad: premium > mm > vic > fitam
+// Esto protege contra datos inconsistentes en la BD donde más de uno esté en 1.
+function _normalizarCalidades(p) {
+  const fitam   = p.calidad_original          == 1;
+  const vic     = p.calidad_vic               == 1;
+  const mm      = p.calidad_mm                == 1;
+  const premium = p.calidad_original_premium  == 1;
+
+  // Si hay más de uno activo, dejar solo el de mayor jerarquía
+  const alguno = fitam || vic || mm || premium;
+  if (!alguno) return { fitam: false, vic: false, mm: false, premium: false };
+
+  if (premium) return { fitam: false, vic: false, mm: false, premium: true  };
+  if (mm)      return { fitam: false, vic: false, mm: true,  premium: false };
+  if (vic)     return { fitam: false, vic: true,  mm: false, premium: false };
+  /* fitam */  return { fitam: true,  vic: false, mm: false, premium: false };
+}
+
 /* ==========================================
    Detección flexible de claves
    (solo para encontrar el "Precio de costo con IVA" real)
@@ -411,11 +430,12 @@ function mostrarProductos(productos) {
   }
 
   productos.forEach((producto, index) => {
-    const esOferta  = producto.oferta;
-    const esFitam   = producto.calidad_original;
-    const esVic     = producto.calidad_vic;
-    const esMM      = producto.calidad_mm;
-    const esPremium = producto.calidad_original_premium;
+    const esOferta  = producto.oferta == 1;
+    const _cal      = _normalizarCalidades(producto);
+    const esFitam   = _cal.fitam;
+    const esVic     = _cal.vic;
+    const esMM      = _cal.mm;
+    const esPremium = _cal.premium;
 
     const stockActualNum = Number(producto.stock_actual) || 0;
     const stockMinNum    = Number(producto.stock_minimo) || 0;
