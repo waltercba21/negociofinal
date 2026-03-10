@@ -303,7 +303,22 @@ document.addEventListener('DOMContentLoaded', function () {
         })
       });
 
-      const data = await response.json();
+      // Leer como texto primero para detectar si el servidor devolvió HTML (error 500)
+      const rawText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (_) {
+        console.error('[Factura] Respuesta no-JSON del servidor:', rawText.substring(0, 500));
+        Swal.fire({
+          title: 'Error del servidor',
+          html: `<p>El servidor devolvió una respuesta inesperada.</p>
+                 <pre style="text-align:left;font-size:11px;max-height:200px;overflow:auto;background:#111c30;color:#f0f4ff;padding:10px;border-radius:8px;">${rawText.substring(0, 600)}</pre>`,
+          icon: 'error',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
       if (response.ok) {
         Swal.fire({ title: '¡Factura guardada!', text: data.message, icon: 'success', confirmButtonText: 'Ir a productos' })
           .then(() => { window.location.href = '/productos'; });
