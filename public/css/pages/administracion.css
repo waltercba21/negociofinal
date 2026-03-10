@@ -186,8 +186,7 @@
 ────────────────────────────────────────────────────────── */
 
 /* Override Bootstrap modal para tema dark */
-.adm-main .modal-content,
-.af-admin .modal-content {
+.modal-content {
   background: #111c30 !important;
   border: 1px solid rgba(31,72,126,0.25) !important;
   border-radius: 18px !important;
@@ -196,15 +195,13 @@
   color: #f0f4ff;
 }
 
-.adm-main .modal-header,
-.af-admin .modal-header {
+.modal-header {
   background: rgba(31,72,126,0.12) !important;
   border-bottom: 1px solid rgba(31,72,126,0.2) !important;
   padding: 16px 20px;
 }
 
-.adm-main .modal-title,
-.af-admin .modal-title {
+.modal-title {
   font-family: 'Barlow Condensed', sans-serif !important;
   font-size: 18px !important;
   font-weight: 800 !important;
@@ -213,23 +210,19 @@
   margin: 0;
 }
 
-.adm-main .btn-close,
-.af-admin .btn-close {
+.modal .btn-close {
   filter: invert(1) !important;
   opacity: 0.6 !important;
 }
 
-.adm-main .btn-close:hover,
-.af-admin .btn-close:hover { opacity: 1 !important; }
+.modal .btn-close:hover { opacity: 1 !important; }
 
-.adm-main .modal-body,
-.af-admin .modal-body {
+.modal-body {
   background: transparent !important;
   padding: 20px !important;
 }
 
-.adm-main .modal-footer,
-.af-admin .modal-footer {
+.modal-footer {
   background: rgba(0,0,0,0.15) !important;
   border-top: 1px solid rgba(31,72,126,0.15) !important;
   padding: 14px 20px !important;
@@ -239,8 +232,7 @@
 /* ──────────────────────────────────────────────────────────
    7. FORMULARIOS DENTRO DE MODALES
 ────────────────────────────────────────────────────────── */
-.adm-main .form-label,
-.af-admin .form-label {
+.modal .form-label {
   font-family: 'Barlow Condensed', sans-serif !important;
   font-size: 11px !important;
   font-weight: 700 !important;
@@ -251,10 +243,8 @@
   display: block;
 }
 
-.adm-main .form-control,
-.adm-main .form-select,
-.af-admin .form-control,
-.af-admin .form-select {
+.modal .form-control,
+.modal .form-select {
   background: rgba(255,255,255,0.05) !important;
   border: 1.5px solid rgba(31,72,126,0.25) !important;
   border-radius: 10px !important;
@@ -266,31 +256,26 @@
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.adm-main .form-control::placeholder,
-.af-admin .form-control::placeholder {
+.modal .form-control::placeholder {
   color: rgba(240,244,255,0.2) !important;
 }
 
-.adm-main .form-control:focus,
-.adm-main .form-select:focus,
-.af-admin .form-control:focus,
-.af-admin .form-select:focus {
+.modal .form-control:focus,
+.modal .form-select:focus {
   border-color: #1F487E !important;
   box-shadow: 0 0 0 3px rgba(31,72,126,0.18) !important;
   background: rgba(31,72,126,0.1) !important;
   outline: none;
 }
 
-.adm-main .form-select option,
-.af-admin .form-select option {
+.modal .form-select option {
   background: #111c30;
   color: #f0f4ff;
 }
 
 /* Paneles internos de catálogos */
-.adm-main .modal-body [style*="border-radius:18px"],
-.adm-main .modal-body [style*="border-radius: 18px"],
-.af-admin .modal-body .af-modal-panel {
+.modal-body [style*="border-radius:18px"],
+.modal-body [style*="border-radius: 18px"] {
   background: rgba(31,72,126,0.06) !important;
   border: 1px solid rgba(31,72,126,0.18) !important;
   border-radius: 12px !important;
@@ -298,8 +283,7 @@
 }
 
 /* Detalle proveedor */
-.adm-main #detalleProveedor,
-.af-admin #detalleProveedor {
+#detalleProveedor {
   background: rgba(31,72,126,0.06) !important;
   border: 1px dashed rgba(31,72,126,0.3) !important;
   border-radius: 10px !important;
@@ -308,10 +292,8 @@
 }
 
 /* Resultados búsqueda dropdown */
-.adm-main #resultadosBusqueda,
-.adm-main #resultadosBusquedaPresupuesto,
-.af-admin #resultadosBusqueda,
-.af-admin #resultadosBusquedaPresupuesto {
+#resultadosBusqueda,
+#resultadosBusquedaPresupuesto {
   background: #0e1929 !important;
   border: 1px solid rgba(31,72,126,0.3) !important;
   border-radius: 10px !important;
@@ -320,10 +302,8 @@
   overflow-y: auto;
 }
 
-.adm-main #resultadosBusqueda .list-group-item,
-.adm-main #resultadosBusquedaPresupuesto .list-group-item,
-.af-admin #resultadosBusqueda .list-group-item,
-.af-admin #resultadosBusquedaPresupuesto .list-group-item {
+#resultadosBusqueda .list-group-item,
+#resultadosBusquedaPresupuesto .list-group-item {
   background: transparent !important;
   color: rgba(240,244,255,0.8) !important;
   border: none !important;
@@ -335,18 +315,15 @@
   transition: background 0.1s;
 }
 
-.adm-main #resultadosBusqueda .list-group-item:hover,
-.adm-main #resultadosBusquedaPresupuesto .list-group-item:hover,
-.af-admin #resultadosBusqueda .list-group-item:hover,
-.af-admin #resultadosBusquedaPresupuesto .list-group-item:hover {
+#resultadosBusqueda .list-group-item:hover,
+#resultadosBusquedaPresupuesto .list-group-item:hover {
   background: rgba(31,72,126,0.15) !important;
 }
 
 /* ──────────────────────────────────────────────────────────
    8. TABLAS EN MODALES
 ────────────────────────────────────────────────────────── */
-.adm-main .table,
-.af-admin .table {
+.modal .table {
   background: transparent !important;
   color: rgba(240,244,255,0.85) !important;
   border-color: rgba(31,72,126,0.15) !important;
@@ -354,8 +331,7 @@
   overflow: hidden;
 }
 
-.adm-main .table thead th,
-.af-admin .table thead th {
+.modal .table thead th {
   background: rgba(31,72,126,0.12) !important;
   color: rgba(240,244,255,0.45) !important;
   font-family: 'Barlow Condensed', sans-serif !important;
@@ -367,8 +343,7 @@
   padding: 10px 12px !important;
 }
 
-.adm-main .table td,
-.af-admin .table td {
+.modal .table td {
   border-color: rgba(31,72,126,0.1) !important;
   vertical-align: middle;
   padding: 10px 12px !important;
@@ -376,19 +351,16 @@
   font-size: 13px;
 }
 
-.adm-main .table tbody tr:hover td,
-.af-admin .table tbody tr:hover td {
+.modal .table tbody tr:hover td {
   background: rgba(31,72,126,0.08) !important;
 }
 
-.adm-main .table-light,
-.af-admin .table-light { background: transparent !important; }
+.modal .table-light { background: transparent !important; }
 
 /* ──────────────────────────────────────────────────────────
    9. BOTONES EN MODALES (override Bootstrap)
 ────────────────────────────────────────────────────────── */
-.adm-main .modal .btn,
-.af-admin .modal .btn {
+.modal .btn {
   border-radius: 9px !important;
   font-family: 'DM Sans', sans-serif !important;
   font-size: 13px !important;
@@ -404,67 +376,56 @@
   letter-spacing: normal !important;
 }
 
-.adm-main .modal .btn:hover { transform: translateY(-1px) !important; }
-.adm-main .modal .btn:active { transform: none !important; }
+.modal .btn:hover { transform: translateY(-1px) !important; }
+.modal .btn:active { transform: none !important; }
 
-.adm-main .modal .btn-primary,
-.adm-main .modal .btn-success,
-.af-admin .modal .btn-primary,
-.af-admin .modal .btn-success {
+.modal .btn-primary,
+.modal .btn-success {
   background: #1F487E !important;
   border-color: #1F487E !important;
   color: #fff !important;
 }
 
-.adm-main .modal .btn-primary:hover,
-.adm-main .modal .btn-success:hover,
-.af-admin .modal .btn-primary:hover,
-.af-admin .modal .btn-success:hover {
+.modal .btn-primary:hover,
+.modal .btn-success:hover {
   background: #2a5da0 !important;
   border-color: #2a5da0 !important;
   box-shadow: 0 4px 14px rgba(31,72,126,0.4) !important;
 }
 
-.adm-main .modal .btn-outline-secondary,
-.af-admin .modal .btn-outline-secondary {
+.modal .btn-outline-secondary {
   background: transparent !important;
   border: 1.5px solid rgba(31,72,126,0.3) !important;
   color: rgba(240,244,255,0.6) !important;
 }
 
-.adm-main .modal .btn-outline-secondary:hover,
-.af-admin .modal .btn-outline-secondary:hover {
+.modal .btn-outline-secondary:hover {
   background: rgba(31,72,126,0.1) !important;
   color: #f0f4ff !important;
 }
 
-.adm-main .modal .btn-warning,
-.af-admin .modal .btn-warning {
+.modal .btn-warning {
   background: rgba(217,119,6,0.12) !important;
   border: 1.5px solid rgba(217,119,6,0.3) !important;
   color: #fbbf24 !important;
 }
 
-.adm-main .modal .btn-danger,
-.af-admin .modal .btn-danger {
+.modal .btn-danger {
   background: rgba(217,4,41,0.1) !important;
   border: 1.5px solid rgba(217,4,41,0.3) !important;
   color: #ff4d6d !important;
 }
 
-.adm-main .modal .btn-danger:hover,
-.af-admin .modal .btn-danger:hover { background: rgba(217,4,41,0.2) !important; }
+.modal .btn-danger:hover { background: rgba(217,4,41,0.2) !important; }
 
-.adm-main .modal .btn-sm,
-.af-admin .modal .btn-sm {
+.modal .btn-sm {
   height: 32px !important;
   padding: 0 12px !important;
   font-size: 12px !important;
 }
 
 /* Botón disabled */
-.adm-main .modal .btn:disabled,
-.af-admin .modal .btn:disabled { opacity: 0.35 !important; cursor: not-allowed; }
+.modal .btn:disabled { opacity: 0.35 !important; cursor: not-allowed; }
 
 /* ──────────────────────────────────────────────────────────
    10. RESPONSIVE
