@@ -1,0 +1,475 @@
+/* ============================================================
+   administracion.css  —  Autofaros · Panel de Administración
+   v2026-03-09
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────
+   1. BASE
+────────────────────────────────────────────────────────── */
+.adm-main {
+  background: #0b1220;
+  min-height: 100vh;
+  padding: 96px 24px 64px;
+}
+
+.adm-wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   2. PAGE HEADER
+────────────────────────────────────────────────────────── */
+.adm-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.adm-eyebrow {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #1F487E;
+  margin-bottom: 4px;
+}
+
+.adm-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 800;
+  color: #f0f4ff;
+  margin: 0;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+/* ──────────────────────────────────────────────────────────
+   3. BOTONES GENERALES
+────────────────────────────────────────────────────────── */
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 18px;
+  height: 40px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.adm-btn--outline {
+  background: transparent;
+  color: rgba(240,244,255,0.75);
+  border: 1.5px solid rgba(31,72,126,0.35);
+}
+.adm-btn--outline:hover {
+  background: rgba(31,72,126,0.12);
+  border-color: #1F487E;
+  color: #f0f4ff;
+}
+
+/* ──────────────────────────────────────────────────────────
+   4. DASHBOARD GRID (tiles)
+────────────────────────────────────────────────────────── */
+.adm-dash {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 900px) { .adm-dash { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .adm-dash { grid-template-columns: 1fr; } }
+
+/* ──────────────────────────────────────────────────────────
+   5. TILE
+────────────────────────────────────────────────────────── */
+.adm-tile {
+  background: rgba(17,28,48,0.8);
+  border: 1px solid rgba(31,72,126,0.18);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 140px;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.adm-tile:hover {
+  border-color: rgba(31,72,126,0.45);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(31,72,126,0.12);
+  transform: translateY(-2px);
+}
+
+.adm-tile__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(31,72,126,0.15);
+  border: 1px solid rgba(31,72,126,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: #4e80c0;
+  flex-shrink: 0;
+}
+
+.adm-tile__icon--red    { background: rgba(217,4,41,0.1);  border-color: rgba(217,4,41,0.2);  color: #ff4d6d; }
+.adm-tile__icon--green  { background: rgba(6,118,71,0.1);  border-color: rgba(6,118,71,0.2);  color: #4ade80; }
+.adm-tile__icon--yellow { background: rgba(217,119,6,0.1); border-color: rgba(217,119,6,0.2); color: #fbbf24; }
+.adm-tile__icon--purple { background: rgba(124,58,237,0.1);border-color: rgba(124,58,237,0.2);color: #a78bfa; }
+
+.adm-tile__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0f4ff;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+.adm-tile__desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240,244,255,0.4);
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+}
+
+.adm-tile__action {
+  margin-top: auto;
+}
+
+.adm-tile__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #1F487E;
+  border: none;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.adm-tile__btn:hover {
+  background: #2a5da0;
+  box-shadow: 0 4px 14px rgba(31,72,126,0.4);
+}
+
+/* ──────────────────────────────────────────────────────────
+   6. MODALES — TEMA OSCURO
+────────────────────────────────────────────────────────── */
+
+/* Override Bootstrap modal para tema dark */
+.adm-main .modal-content,
+.af-admin .modal-content {
+  background: #111c30 !important;
+  border: 1px solid rgba(31,72,126,0.25) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6) !important;
+  overflow: hidden;
+  color: #f0f4ff;
+}
+
+.adm-main .modal-header,
+.af-admin .modal-header {
+  background: rgba(31,72,126,0.12) !important;
+  border-bottom: 1px solid rgba(31,72,126,0.2) !important;
+  padding: 16px 20px;
+}
+
+.adm-main .modal-title,
+.af-admin .modal-title {
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px;
+  color: #f0f4ff !important;
+  margin: 0;
+}
+
+.adm-main .btn-close,
+.af-admin .btn-close {
+  filter: invert(1) !important;
+  opacity: 0.6 !important;
+}
+
+.adm-main .btn-close:hover,
+.af-admin .btn-close:hover { opacity: 1 !important; }
+
+.adm-main .modal-body,
+.af-admin .modal-body {
+  background: transparent !important;
+  padding: 20px !important;
+}
+
+.adm-main .modal-footer,
+.af-admin .modal-footer {
+  background: rgba(0,0,0,0.15) !important;
+  border-top: 1px solid rgba(31,72,126,0.15) !important;
+  padding: 14px 20px !important;
+  gap: 10px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   7. FORMULARIOS DENTRO DE MODALES
+────────────────────────────────────────────────────────── */
+.adm-main .form-label,
+.af-admin .form-label {
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240,244,255,0.45) !important;
+  margin-bottom: 6px !important;
+  display: block;
+}
+
+.adm-main .form-control,
+.adm-main .form-select,
+.af-admin .form-control,
+.af-admin .form-select {
+  background: rgba(255,255,255,0.05) !important;
+  border: 1.5px solid rgba(31,72,126,0.25) !important;
+  border-radius: 10px !important;
+  color: #f0f4ff !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  padding: 10px 12px !important;
+  color-scheme: dark;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.adm-main .form-control::placeholder,
+.af-admin .form-control::placeholder {
+  color: rgba(240,244,255,0.2) !important;
+}
+
+.adm-main .form-control:focus,
+.adm-main .form-select:focus,
+.af-admin .form-control:focus,
+.af-admin .form-select:focus {
+  border-color: #1F487E !important;
+  box-shadow: 0 0 0 3px rgba(31,72,126,0.18) !important;
+  background: rgba(31,72,126,0.1) !important;
+  outline: none;
+}
+
+.adm-main .form-select option,
+.af-admin .form-select option {
+  background: #111c30;
+  color: #f0f4ff;
+}
+
+/* Paneles internos de catálogos */
+.adm-main .modal-body [style*="border-radius:18px"],
+.adm-main .modal-body [style*="border-radius: 18px"],
+.af-admin .modal-body .af-modal-panel {
+  background: rgba(31,72,126,0.06) !important;
+  border: 1px solid rgba(31,72,126,0.18) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+/* Detalle proveedor */
+.adm-main #detalleProveedor,
+.af-admin #detalleProveedor {
+  background: rgba(31,72,126,0.06) !important;
+  border: 1px dashed rgba(31,72,126,0.3) !important;
+  border-radius: 10px !important;
+  color: rgba(240,244,255,0.7) !important;
+  padding: 12px !important;
+}
+
+/* Resultados búsqueda dropdown */
+.adm-main #resultadosBusqueda,
+.adm-main #resultadosBusquedaPresupuesto,
+.af-admin #resultadosBusqueda,
+.af-admin #resultadosBusquedaPresupuesto {
+  background: #0e1929 !important;
+  border: 1px solid rgba(31,72,126,0.3) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.adm-main #resultadosBusqueda .list-group-item,
+.adm-main #resultadosBusquedaPresupuesto .list-group-item,
+.af-admin #resultadosBusqueda .list-group-item,
+.af-admin #resultadosBusquedaPresupuesto .list-group-item {
+  background: transparent !important;
+  color: rgba(240,244,255,0.8) !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(31,72,126,0.12) !important;
+  padding: 10px 14px !important;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  transition: background 0.1s;
+}
+
+.adm-main #resultadosBusqueda .list-group-item:hover,
+.adm-main #resultadosBusquedaPresupuesto .list-group-item:hover,
+.af-admin #resultadosBusqueda .list-group-item:hover,
+.af-admin #resultadosBusquedaPresupuesto .list-group-item:hover {
+  background: rgba(31,72,126,0.15) !important;
+}
+
+/* ──────────────────────────────────────────────────────────
+   8. TABLAS EN MODALES
+────────────────────────────────────────────────────────── */
+.adm-main .table,
+.af-admin .table {
+  background: transparent !important;
+  color: rgba(240,244,255,0.85) !important;
+  border-color: rgba(31,72,126,0.15) !important;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.adm-main .table thead th,
+.af-admin .table thead th {
+  background: rgba(31,72,126,0.12) !important;
+  color: rgba(240,244,255,0.45) !important;
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-color: rgba(31,72,126,0.2) !important;
+  padding: 10px 12px !important;
+}
+
+.adm-main .table td,
+.af-admin .table td {
+  border-color: rgba(31,72,126,0.1) !important;
+  vertical-align: middle;
+  padding: 10px 12px !important;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+}
+
+.adm-main .table tbody tr:hover td,
+.af-admin .table tbody tr:hover td {
+  background: rgba(31,72,126,0.08) !important;
+}
+
+.adm-main .table-light,
+.af-admin .table-light { background: transparent !important; }
+
+/* ──────────────────────────────────────────────────────────
+   9. BOTONES EN MODALES (override Bootstrap)
+────────────────────────────────────────────────────────── */
+.adm-main .modal .btn,
+.af-admin .modal .btn {
+  border-radius: 9px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  height: 38px !important;
+  padding: 0 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.15s !important;
+  min-height: unset !important;
+  box-shadow: none !important;
+  letter-spacing: normal !important;
+}
+
+.adm-main .modal .btn:hover { transform: translateY(-1px) !important; }
+.adm-main .modal .btn:active { transform: none !important; }
+
+.adm-main .modal .btn-primary,
+.adm-main .modal .btn-success,
+.af-admin .modal .btn-primary,
+.af-admin .modal .btn-success {
+  background: #1F487E !important;
+  border-color: #1F487E !important;
+  color: #fff !important;
+}
+
+.adm-main .modal .btn-primary:hover,
+.adm-main .modal .btn-success:hover,
+.af-admin .modal .btn-primary:hover,
+.af-admin .modal .btn-success:hover {
+  background: #2a5da0 !important;
+  border-color: #2a5da0 !important;
+  box-shadow: 0 4px 14px rgba(31,72,126,0.4) !important;
+}
+
+.adm-main .modal .btn-outline-secondary,
+.af-admin .modal .btn-outline-secondary {
+  background: transparent !important;
+  border: 1.5px solid rgba(31,72,126,0.3) !important;
+  color: rgba(240,244,255,0.6) !important;
+}
+
+.adm-main .modal .btn-outline-secondary:hover,
+.af-admin .modal .btn-outline-secondary:hover {
+  background: rgba(31,72,126,0.1) !important;
+  color: #f0f4ff !important;
+}
+
+.adm-main .modal .btn-warning,
+.af-admin .modal .btn-warning {
+  background: rgba(217,119,6,0.12) !important;
+  border: 1.5px solid rgba(217,119,6,0.3) !important;
+  color: #fbbf24 !important;
+}
+
+.adm-main .modal .btn-danger,
+.af-admin .modal .btn-danger {
+  background: rgba(217,4,41,0.1) !important;
+  border: 1.5px solid rgba(217,4,41,0.3) !important;
+  color: #ff4d6d !important;
+}
+
+.adm-main .modal .btn-danger:hover,
+.af-admin .modal .btn-danger:hover { background: rgba(217,4,41,0.2) !important; }
+
+.adm-main .modal .btn-sm,
+.af-admin .modal .btn-sm {
+  height: 32px !important;
+  padding: 0 12px !important;
+  font-size: 12px !important;
+}
+
+/* Botón disabled */
+.adm-main .modal .btn:disabled,
+.af-admin .modal .btn:disabled { opacity: 0.35 !important; cursor: not-allowed; }
+
+/* ──────────────────────────────────────────────────────────
+   10. RESPONSIVE
+────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .adm-main { padding: 88px 12px 48px; }
+}
