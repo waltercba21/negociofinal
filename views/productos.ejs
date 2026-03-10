@@ -106,14 +106,18 @@
           <% productos.forEach(function(producto, index) { %>
 
             <%
-              const esOferta = producto.oferta;
-              const esFitam  = producto.calidad_original;
-              const esVic    = producto.calidad_vic;
-              let badgeLabel = '';
-              let badgeClass = '';
-              if (esOferta)     { badgeLabel = 'OFERTA';         badgeClass = 'badge--oferta'; }
-              else if (esFitam) { badgeLabel = 'CALIDAD FITAM';  badgeClass = 'badge--fitam';  }
-              else if (esVic)   { badgeLabel = 'CALIDAD VIC';    badgeClass = 'badge--vic';    }
+              const esOferta   = producto.oferta;
+              const esFitam    = producto.calidad_original;
+              const esVic      = producto.calidad_vic;
+              const esMM       = producto.calidad_mm;
+              const esPremium  = producto.calidad_original_premium;
+
+              const badges = [];
+              if (esOferta)  badges.push({ label: 'OFERTA',           cls: 'badge--oferta'  });
+              if (esFitam)   badges.push({ label: 'FITAM',            cls: 'badge--fitam'   });
+              if (esVic)     badges.push({ label: 'VIC',              cls: 'badge--vic'     });
+              if (esMM)      badges.push({ label: 'MAGNETTI MARELLI', cls: 'badge--mm'      });
+              if (esPremium) badges.push({ label: '★ ORIGINAL',       cls: 'badge--premium' });
 
               const puedeComprar = (producto.stock_actual >= producto.stock_minimo) && (producto.stock_actual > 0);
               const descAplicSSR = (producto.descripcion || '').trim();
@@ -121,11 +125,20 @@
               const tieneAplicSSR  = esEscobillaSSR && descAplicSSR.length > 0;
             %>
 
-            <article class="pcard <%= esOferta ? 'pcard--oferta' : '' %> <%= esFitam ? 'pcard--fitam' : '' %> <%= esVic ? 'pcard--vic' : '' %>">
+            <article class="pcard
+              <%= esOferta  ? 'pcard--oferta'  : '' %>
+              <%= esFitam   ? 'pcard--fitam'   : '' %>
+              <%= esVic     ? 'pcard--vic'     : '' %>
+              <%= esMM      ? 'pcard--mm'      : '' %>
+              <%= esPremium ? 'pcard--premium' : '' %>">
 
-              <!-- Badge -->
-              <% if (badgeLabel) { %>
-                <span class="pcard__badge <%= badgeClass %>"><%= badgeLabel %></span>
+              <!-- Badges (múltiples) -->
+              <% if (badges.length) { %>
+                <div class="pcard__badges">
+                  <% badges.forEach(function(b) { %>
+                    <span class="pcard__badge <%= b.cls %>"><%= b.label %></span>
+                  <% }); %>
+                </div>
               <% } %>
 
               <!-- Imagen / Carousel -->
