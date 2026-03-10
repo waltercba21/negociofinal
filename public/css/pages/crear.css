@@ -482,3 +482,125 @@
   .cr-main { padding: 88px 12px 48px; }
   .cr-prov-grid { grid-template-columns: 1fr; }
 }
+/* ──────────────────────────────────────────────────────────
+   15. PROVEEDOR CARD — compatibilidad con .form-group-crear
+   (usado tanto por EJS como por el template dinámico del JS)
+────────────────────────────────────────────────────────── */
+
+/* El wrapper legacy se comporta igual que .cr-field */
+.proveedor .form-group-crear {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+/* Labels dentro de card proveedor */
+.proveedor .form-group-crear > label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240,244,255,0.45);
+  margin: 0;
+}
+
+/* Radio "Usar este proveedor" — no uppercase */
+.proveedor .radio-elige-proveedor {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  background: rgba(31,72,126,0.08);
+  border: 1.5px solid rgba(31,72,126,0.2);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: rgba(240,244,255,0.7) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.proveedor .proveedor-designado-radio:checked ~ .radio-elige-proveedor,
+.proveedor:has(.proveedor-designado-radio:checked) .radio-elige-proveedor {
+  border-color: #1F487E;
+  background: rgba(31,72,126,0.18);
+  color: #f0f4ff !important;
+}
+
+/* Inputs/selects dentro de card — Bootstrap override */
+.proveedor .form-group-crear input,
+.proveedor .form-group-crear select {
+  width: 100% !important;
+  padding: 0 12px !important;
+  height: 38px !important;
+  background: rgba(255,255,255,0.05) !important;
+  border: 1.5px solid rgba(31,72,126,0.25) !important;
+  border-radius: 10px !important;
+  color: #f0f4ff !important;
+  -webkit-text-fill-color: #f0f4ff !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  outline: none;
+  box-sizing: border-box !important;
+  color-scheme: dark;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.proveedor .form-group-crear input:focus,
+.proveedor .form-group-crear select:focus {
+  border-color: #1F487E !important;
+  background: rgba(31,72,126,0.1) !important;
+  box-shadow: 0 0 0 3px rgba(31,72,126,0.15) !important;
+}
+
+.proveedor .form-group-crear input[readonly] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.proveedor .form-group-crear input::placeholder {
+  color: rgba(240,244,255,0.2) !important;
+}
+
+/* Opciones del select */
+.proveedor .form-group-crear select option {
+  background: #111c30 !important;
+  color: #f0f4ff !important;
+}
+
+/* Botón eliminar */
+.proveedor .eliminar-proveedor {
+  width: 100% !important;
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  background: rgba(217,4,41,0.1) !important;
+  color: #ff4d6d !important;
+  border: 1.5px solid rgba(217,4,41,0.25) !important;
+  border-radius: 10px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background 0.15s !important;
+}
+
+.proveedor .eliminar-proveedor:hover {
+  background: rgba(217,4,41,0.2) !important;
+  border-color: #d90429 !important;
+}
+
+/* Textos pequeños de hint */
+.proveedor .form-group-crear small {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: rgba(240,244,255,0.3);
+}
