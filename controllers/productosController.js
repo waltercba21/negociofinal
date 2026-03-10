@@ -859,7 +859,9 @@ guardar: async function (req, res) {
       stock_actual: numOr0(req.body.stock_actual),
       oferta: Number(req.body.oferta) === 1 ? 1 : 0,
       calidad_original: req.body.calidad_original ? 1 : 0,
-      calidad_vic: req.body.calidad_vic ? 1 : 0
+      calidad_vic: req.body.calidad_vic ? 1 : 0,
+      calidad_mm: req.body.calidad_mm ? 1 : 0,
+      calidad_original_premium: req.body.calidad_original_premium ? 1 : 0
     };
     const ins = await producto.insertarProducto(conexion, datosProducto);
     const productoId = ins && ins.insertId;
@@ -943,8 +945,10 @@ editar: async function (req, res) {
     productoResult.costo_iva    = Math.round(Number(productoResult.costo_iva    || 0));
     productoResult.utilidad     = Math.round(Number(productoResult.utilidad     || 0));
     productoResult.precio_venta = Math.round(Number(productoResult.precio_venta || 0));
-    productoResult.calidad_original_fitam = result.calidad_original_fitam;
-    productoResult.calidad_vic            = result.calidad_vic;
+    productoResult.calidad_original_fitam    = result.calidad_original_fitam;
+    productoResult.calidad_vic               = result.calidad_vic;
+    productoResult.calidad_mm                = result.calidad_mm;
+    productoResult.calidad_original_premium  = result.calidad_original_premium;
 
     // params navegación (evitar undefined)
     productoResult.paginaActual = req.query.pagina   || '';
@@ -1053,9 +1057,11 @@ actualizar: async function (req, res) {
       estado           : (req.body.estado ?? 'activo'),
       stock_minimo     : numInt(req.body.stock_minimo),
       stock_actual     : numInt(req.body.stock_actual),
-      oferta           : Number(req.body.oferta) === 1 ? 1 : 0,
-      calidad_original : req.body.calidad_original ? 1 : 0,
-      calidad_vic      : req.body.calidad_vic ? 1 : 0
+      oferta                   : Number(req.body.oferta) === 1 ? 1 : 0,
+      calidad_original         : req.body.calidad_original ? 1 : 0,
+      calidad_vic              : req.body.calidad_vic ? 1 : 0,
+      calidad_mm               : req.body.calidad_mm ? 1 : 0,
+      calidad_original_premium : req.body.calidad_original_premium ? 1 : 0
       // IVA del producto lo seteamos más abajo
     };
     await producto.actualizar(conexion, datosProducto);

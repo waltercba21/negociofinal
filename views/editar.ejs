@@ -91,17 +91,6 @@
               <textarea id="descripcion" name="descripcion" rows="5" class="cr-input cr-textarea"><%= producto ? producto.descripcion : '' %></textarea>
             </div>
 
-            <!-- Oferta -->
-            <div class="cr-field cr-field--inline">
-              <label class="cr-label" for="oferta">En oferta</label>
-              <label class="cr-toggle">
-                <input type="hidden" name="oferta" value="0">
-                <input type="checkbox" id="oferta" name="oferta" value="1" class="cr-toggle__input"
-                  <%= producto.oferta ? 'checked' : '' %>>
-                <span class="cr-toggle__slider"></span>
-              </label>
-            </div>
-
             <!-- Categoría -->
             <div class="cr-field">
               <label class="cr-label" for="categoria">Categoría</label>
@@ -198,22 +187,55 @@
           </div>
           <div class="cr-panel__bd">
 
-            <!-- Calidades -->
-            <div class="cr-field cr-field--inline">
-              <label class="cr-label" for="calidad_original">Calidad FITAM</label>
-              <label class="cr-toggle">
-                <input type="checkbox" id="calidad_original" name="calidad_original" value="1" class="cr-toggle__input"
-                  <%= producto.calidad_original === 1 ? 'checked' : '' %>>
-                <span class="cr-toggle__slider"></span>
-              </label>
-            </div>
-            <div class="cr-field cr-field--inline">
-              <label class="cr-label" for="calidad_vic">Calidad VIC</label>
-              <label class="cr-toggle">
-                <input type="checkbox" id="calidad_vic" name="calidad_vic" value="1" class="cr-toggle__input"
-                  <%= producto.calidad_vic === 1 ? 'checked' : '' %>>
-                <span class="cr-toggle__slider"></span>
-              </label>
+            <!-- Calidades + Oferta -->
+            <div class="cr-calidades-group">
+              <span class="cr-label cr-calidades-group__title">Calidades y estado</span>
+
+              <div class="cr-field cr-field--inline">
+                <label class="cr-label" for="calidad_original">Calidad FITAM</label>
+                <label class="cr-toggle cr-toggle--fitam">
+                  <input type="checkbox" id="calidad_original" name="calidad_original" value="1" class="cr-toggle__input"
+                    <%= producto.calidad_original === 1 ? 'checked' : '' %>>
+                  <span class="cr-toggle__slider"></span>
+                </label>
+              </div>
+
+              <div class="cr-field cr-field--inline">
+                <label class="cr-label" for="calidad_vic">Calidad VIC</label>
+                <label class="cr-toggle cr-toggle--vic">
+                  <input type="checkbox" id="calidad_vic" name="calidad_vic" value="1" class="cr-toggle__input"
+                    <%= producto.calidad_vic === 1 ? 'checked' : '' %>>
+                  <span class="cr-toggle__slider"></span>
+                </label>
+              </div>
+
+              <div class="cr-field cr-field--inline">
+                <label class="cr-label" for="calidad_mm">Magnetti Marelli</label>
+                <label class="cr-toggle cr-toggle--mm">
+                  <input type="checkbox" id="calidad_mm" name="calidad_mm" value="1" class="cr-toggle__input"
+                    <%= producto.calidad_mm === 1 ? 'checked' : '' %>>
+                  <span class="cr-toggle__slider"></span>
+                </label>
+              </div>
+
+              <div class="cr-field cr-field--inline">
+                <label class="cr-label" for="calidad_original_premium">Original</label>
+                <label class="cr-toggle cr-toggle--premium">
+                  <input type="checkbox" id="calidad_original_premium" name="calidad_original_premium" value="1" class="cr-toggle__input"
+                    <%= producto.calidad_original_premium === 1 ? 'checked' : '' %>>
+                  <span class="cr-toggle__slider"></span>
+                </label>
+              </div>
+
+              <div class="cr-field cr-field--inline">
+                <label class="cr-label" for="oferta">En oferta</label>
+                <label class="cr-toggle cr-toggle--oferta">
+                  <input type="hidden" name="oferta" value="0">
+                  <input type="checkbox" id="oferta" name="oferta" value="1" class="cr-toggle__input"
+                    <%= producto.oferta ? 'checked' : '' %>>
+                  <span class="cr-toggle__slider"></span>
+                </label>
+              </div>
             </div>
 
             <!-- Proveedor asignado -->

@@ -361,6 +361,8 @@ actualizar: function (conexion, datos, archivo) {
 
     if (isSet(datos.calidad_original)) add("calidad_original=?", datos.calidad_original ? 1 : 0);
     if (isSet(datos.calidad_vic)) add("calidad_vic=?", datos.calidad_vic ? 1 : 0);
+    if (isSet(datos.calidad_mm)) add("calidad_mm=?", datos.calidad_mm ? 1 : 0);
+    if (isSet(datos.calidad_original_premium)) add("calidad_original_premium=?", datos.calidad_original_premium ? 1 : 0);
 
     if (isSet(datos.proveedor_id)) add("proveedor_id=?", datos.proveedor_id);
 
