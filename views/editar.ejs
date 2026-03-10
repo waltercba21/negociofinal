@@ -1,720 +1,509 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
-
-<style>
-/* =====================================================================
-   ----------------------------- EDITAR (scoped) ------------------------
-   ===================================================================== */
-.container-editar{
-  padding: 20px;
-  background-color: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-.container-editar .titulo-editar{
-  text-align: center;
-  font-size: 24px;
-  font-weight: 800;
-  margin-bottom: 16px;
-  color: var(--primary);
-}
-.container-editar .card-body-editar{
-  padding: 0;
-  background-color: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-/* Tres columnas (características | proveedores | utilidades) */
-.container-editar .contenido-editar{
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px;
-  width: 100%;
-}
-.container-editar .caracteristicas,
-.container-editar #proveedoresContainer,
-.container-editar .utilidades{
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 16px;
-}
-/* Inputs/Selects (reutiliza clases del JS) */
-.container-editar .form-group-crear{
-  margin-bottom: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: stretch;
-}
-.container-editar .form-group-crear label{
-  display: block;
-  color: var(--label);
-  font-weight: 700;
-  font-size: 13px;
-  margin-bottom: 2px;
-}
-.container-editar .form-group-crear input,
-.container-editar .form-group-crear select,
-.container-editar .form-group-crear .form-control{
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  background: var(--surface);
-  border: 2px solid var(--border-strong);
-  border-radius: 10px;
-  box-shadow: var(--shadow-inset);
-  outline: none;
-}
-.container-editar .form-group-crear input:focus,
-.container-editar .form-group-crear select:focus,
-.container-editar .form-group-crear .form-control:focus{
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0,63,125,0.12), var(--shadow-inset);
-}
-/* Grilla de proveedores */
-.container-editar #proveedoresContainer{
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-  align-items: start;
-}
-/* Tarjeta proveedor + “pill” radio */
-.container-editar .proveedor{
-  position: relative;
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 18px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: box-shadow .2s ease, border-color .2s ease, transform .06s ease-in;
-  padding-top: 58px; /* espacio para pill del radio */
-}
-.container-editar .proveedor:hover{
-  box-shadow: var(--shadow-hover);
-  border-color: var(--border-strong);
-}
-.container-editar .proveedor > .form-group-crear:first-child{
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  margin: 0;
-  align-items: flex-end;
-}
-.container-editar .proveedor > .form-group-crear:first-child label{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--surface-muted);
-  border: 2px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  color: var(--text);
-  box-shadow: var(--shadow);
-  user-select: none;
-}
-.container-editar .proveedor-designado-radio{
-  transform: scale(1.15);
-  accent-color: var(--primary);
-  margin: 0;
-}
-.container-editar .proveedor:has(.proveedor-designado-radio:checked){
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0,63,125,0.10), var(--shadow-hover);
-}
-/* FIX: select Proveedores ancho completo y sin solapar */
-.container-editar .proveedor .form-group-crear > label.label-proveedor{
-  display: block;
-  width: 100%;
-  margin: 0 0 6px 0;
-  line-height: 1.2;
-}
-.container-editar .proveedor .form-group-crear > select.proveedores{
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  position: static !important;
-  float: none !important;
-  clear: both !important;
-  flex: 0 0 auto !important;
-  align-self: stretch !important;
-  box-sizing: border-box !important;
-}
-/* Miniaturas */
-.container-editar .imagen-miniatura-contenedor{
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-  align-items: flex-start;
-}
-/* Wrapper de tamaño fijo — ni crece ni se encoge */
-.container-editar .preview-img{
-  position: relative;
-  cursor: pointer;
-  width: 80px;
-  height: 80px;
-  flex: 0 0 80px;
-  overflow: hidden;
-  border-radius: 6px;
-  box-shadow: var(--shadow);
-  border: 2px solid var(--border);
-  box-sizing: border-box;
-}
-/* La imagen siempre llena el wrapper sin desbordarse */
-.container-editar .imagen-miniatura,
-.container-editar .preview-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 4px;
-  display: block;
-}
-.container-editar .preview-img::after{
-  content: '✕';
-  position: absolute; top: 4px; right: 4px;
-  background: rgba(0,0,0,0.55); color:#fff;
-  padding: 2px 5px; border-radius: 50%;
-  font-size: 11px;
-  line-height: 1;
-  pointer-events: none;
-}
-/* Botón + proveedor */
-.container-editar #addProveedor{
-  background-color: #22A35A;
-  color: white;
-  border: 2px solid #1e8c4d;
-  padding: 10px 16px;
-  font-size: 14px;
-  line-height: 1;
-  border-radius: 999px;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
-  justify-self: center;
-}
-.container-editar #addProveedor:hover{
-  background-color: #2EDB77;
-  color: #0b1729;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-hover);
-}
-/* Botonera */
-.container-editar .botones-crear{
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 20px;
-}
-.container-editar .botones-crear .btn{
-  padding: 10px 16px;
-  font-size: 14px;
-  border-radius: 10px;
-  font-weight: 800;
-  box-shadow: var(--shadow);
-  border: 2px solid var(--primary-600);
-  background: var(--primary);
-  color: #fff;
-}
-/* Responsive */
-@media (max-width: 992px){
-  .container-editar .contenido-editar{ grid-template-columns: 1fr; }
-}
-</style>
-
+<% var pageCss = '/css/pages/crear.css' %>
+<!DOCTYPE html>
+<html lang="es">
+<%- include('./layouts/head.ejs') %>
+<link rel="stylesheet" href="/css/pages/crear.css?v=1" />
 <body>
-  <main>
-    <div class="container-editar">
-      <div class="titulo-editar">Editar Producto</div>
+<%- include('./layouts/header.ejs') %>
 
-      <div class="card-body-editar">
-        <form class="contenido-editar" method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data" data-producto-id="<%= producto.id %>">
-          <input type="hidden" name="pagina" value="<%= producto.paginaActual %>">
-          <input type="hidden" name="busqueda" value="<%= producto.busqueda || '' %>">
-          <input type="hidden" name="id" value="<%= producto.id %>">
-          <input type="hidden" name="paginaActual" value="<%= producto.paginaActual %>">
-          <input type="hidden" id="iva_producto" name="IVA_producto" value="<%= producto.IVA || 21 %>">
+<%
+  const _escCod   = Array.isArray(escobillasCodigos) ? escobillasCodigos : [];
+  const _escKit   = (escobillasKit && typeof escobillasKit === 'object') ? escobillasKit : null;
+  const _tipoInit = _escKit ? 'kit' : 'unidad';
+  const _uniTec   = (_escCod[0] && _escCod[0].tecnologia) ? String(_escCod[0].tecnologia) : 'FLEX';
+  const _uniCod   = (_escCod[0] && _escCod[0].codigo)     ? String(_escCod[0].codigo)     : '';
+  const _kitTec   = (_escKit && _escKit.tecnologia)  ? String(_escKit.tecnologia)  : 'FLEX';
+  const _kitCon   = (_escKit && _escKit.conductor)   ? String(_escKit.conductor)   : '';
+  const _kitAco   = (_escKit && _escKit.acompanante) ? String(_escKit.acompanante) : '';
+  const _codJsonInit = JSON.stringify(_escCod || []);
+  const _kitJsonInit = JSON.stringify(_escKit || {});
+%>
 
-          <!-- Hidden preferencia del proveedor -->
-          <input type="hidden" id="proveedor_designado" name="proveedor_designado" value="<%= producto.proveedor_id || '' %>">
+<main class="cr-main">
+  <div class="cr-wrap">
 
-          <!-- ============ CARACTERÍSTICAS ============ -->
-          <div class="caracteristicas">
-            <div class="form-group-crear">
-              <label for="imagen">Imagen</label>
-              <input id="imagen" class="form-control-file" type="file" name="archivos[]" multiple>
+    <!-- PAGE HEADER -->
+    <div class="cr-page-header">
+      <div>
+        <span class="cr-eyebrow">Productos</span>
+        <h1 class="cr-title">Editar Producto <span style="color:#1F487E;font-size:0.65em;">#<%= producto.id %></span></h1>
+      </div>
+      <a href="/productos/panelControl?pagina=<%= producto.paginaActual %>&busqueda=<%= encodeURIComponent(producto.busqueda || '') %>" class="cr-btn cr-btn--outline">
+        <i class="fa-solid fa-arrow-left"></i> Volver al panel
+      </a>
+    </div>
 
+    <form class="cr-form" method="POST" action="/productos/actualizar/<%= producto.id %>" enctype="multipart/form-data" data-producto-id="<%= producto.id %>">
+
+      <!-- Hiddens de navegación -->
+      <input type="hidden" name="pagina"       value="<%= producto.paginaActual %>">
+      <input type="hidden" name="busqueda"     value="<%= producto.busqueda || '' %>">
+      <input type="hidden" name="id"           value="<%= producto.id %>">
+      <input type="hidden" name="paginaActual" value="<%= producto.paginaActual %>">
+      <input type="hidden" id="iva_producto"   name="IVA_producto" value="<%= producto.IVA || 21 %>">
+      <input type="hidden" id="proveedor_designado" name="proveedor_designado" value="<%= producto.proveedor_id || '' %>">
+
+      <div class="cr-grid">
+
+        <!-- ══════════════════════════════
+             COLUMNA 1: CARACTERÍSTICAS
+        ══════════════════════════════ -->
+        <div class="cr-panel">
+          <div class="cr-panel__hd">
+            <i class="fa-solid fa-tag"></i>
+            <strong>Características</strong>
+          </div>
+          <div class="cr-panel__bd">
+
+            <!-- Imágenes existentes -->
+            <div class="cr-field">
+              <label class="cr-label">Imágenes</label>
               <div id="preview" class="imagen-miniatura-contenedor">
                 <% if (producto && producto.imagenes && producto.imagenes.length > 0) { %>
                   <% producto.imagenes.forEach((imagen) => { %>
                     <div data-imagen-id="<%= imagen.id %>"
                          data-id="<%= imagen.id %>"
                          data-type="existente"
-                         class="preview-img">
+                         class="preview-img thumb">
                       <img class="imagen-miniatura" src="<%= imagen.imagen %>" alt="Imagen del producto">
                     </div>
                   <% }); %>
                 <% } %>
               </div>
+              <label class="cr-file-zone" for="imagen" style="margin-top:8px">
+                <i class="fa-solid fa-cloud-arrow-up cr-file-zone__icon"></i>
+                <span class="cr-file-zone__text">Agregar más imágenes</span>
+                <input id="imagen" type="file" name="archivos[]" multiple class="cr-file-input">
+              </label>
+              <p class="cr-hint">• Clic: marcar portada &nbsp;•&nbsp; Clic en ✕: eliminar &nbsp;•&nbsp; Arrastrar: reordenar</p>
             </div>
 
-            <div class="form-group-crear">
-              <label for="nombre">Nombre</label>
-              <input id="nombre" class="form-control" type="text" name="nombre" value="<%= producto ? producto.nombre : '' %>" required>
+            <!-- Nombre -->
+            <div class="cr-field">
+              <label class="cr-label" for="nombre">Nombre</label>
+              <input id="nombre" type="text" name="nombre" required class="cr-input"
+                value="<%= producto ? producto.nombre : '' %>">
             </div>
 
-            <div class="form-group-crear">
-              <label for="descripcion">Descripción</label>
-              <textarea id="descripcion" class="form-control" name="descripcion" rows="6"><%= producto ? producto.descripcion : '' %></textarea>
-
+            <!-- Descripción -->
+            <div class="cr-field">
+              <label class="cr-label" for="descripcion">Descripción</label>
+              <textarea id="descripcion" name="descripcion" rows="5" class="cr-input cr-textarea"><%= producto ? producto.descripcion : '' %></textarea>
             </div>
 
-            <div class="form-group-crear">
-              <label for="oferta">Oferta</label>
-              <input type="hidden" name="oferta" value="0">
-              <input type="checkbox" id="oferta" name="oferta" value="1" class="form-check-input" <%= producto.oferta ? 'checked' : '' %>>
+            <!-- Oferta -->
+            <div class="cr-field cr-field--inline">
+              <label class="cr-label" for="oferta">En oferta</label>
+              <label class="cr-toggle">
+                <input type="hidden" name="oferta" value="0">
+                <input type="checkbox" id="oferta" name="oferta" value="1" class="cr-toggle__input"
+                  <%= producto.oferta ? 'checked' : '' %>>
+                <span class="cr-toggle__slider"></span>
+              </label>
             </div>
 
-            <div class="form-group-crear">
-              <label for="categoria">Categoría</label>
-              <select id="categoria" name="categoria" class="form-control">
-                <option value="" <%= !producto || !producto.categoria_id ? 'selected' : '' %>>Selecciona una categoría...</option>
+            <!-- Categoría -->
+            <div class="cr-field">
+              <label class="cr-label" for="categoria">Categoría</label>
+              <select id="categoria" name="categoria" class="cr-select">
+                <option value="" <%= !producto || !producto.categoria_id ? 'selected' : '' %>>Seleccioná una categoría</option>
                 <% categorias.forEach(function(categoria) { %>
                   <option value="<%= categoria.id %>" <%= producto && producto.categoria_id == categoria.id ? 'selected' : '' %>><%= categoria.nombre %></option>
                 <% }); %>
               </select>
-            </div> 
-<%
-  const _escCod = Array.isArray(escobillasCodigos) ? escobillasCodigos : [];
-  const _escKit = (escobillasKit && typeof escobillasKit === 'object') ? escobillasKit : null;
+            </div>
 
-  // defaults para que no explote la vista
-  const _tipoInit = _escKit ? 'kit' : 'unidad';
+            <!-- Escobillas (condicional) -->
+            <div id="escobillasSection" class="cr-escobillas" style="display:none">
+              <div class="cr-escobillas__hd">
+                <i class="fa-solid fa-wiper"></i> Datos de Escobillas (TRICO)
+              </div>
+              <input type="hidden" id="escobillas_tipo"         name="escobillas_tipo"         value="<%= _tipoInit %>">
+              <input type="hidden" id="escobillas_codigos_json" name="escobillas_codigos_json" value="<%= _codJsonInit %>">
+              <input type="hidden" id="escobillas_kit_json"     name="escobillas_kit_json"     value="<%= _kitJsonInit %>">
 
-  // unidad
-  const _uniTec = (_escCod[0] && _escCod[0].tecnologia) ? String(_escCod[0].tecnologia) : 'FLEX';
-  const _uniCod = (_escCod[0] && _escCod[0].codigo) ? String(_escCod[0].codigo) : '';
+              <div class="cr-field" style="padding:10px 14px 0">
+                <label class="cr-label" for="esc_formato">Formato</label>
+                <select id="esc_formato" name="esc_formato" class="cr-select">
+                  <option value="unidad" <%= (!_tipoInit || _tipoInit === 'unidad') ? 'selected' : '' %>>Unidad</option>
+                  <option value="kit"    <%= (_tipoInit === 'kit') ? 'selected' : '' %>>Kit (Conductor + Acompañante)</option>
+                </select>
+              </div>
 
-  // kit
-  const _kitTec = (_escKit && _escKit.tecnologia) ? String(_escKit.tecnologia) : 'FLEX';
-  const _kitCon = (_escKit && _escKit.conductor) ? String(_escKit.conductor) : '';
-  const _kitAco = (_escKit && _escKit.acompanante) ? String(_escKit.acompanante) : '';
+              <div id="esc_unidad_block" style="padding:0 14px 10px">
+                <div class="cr-field" style="margin-top:10px">
+                  <label class="cr-label" for="esc_tecnologia">Tecnología</label>
+                  <select id="esc_tecnologia" name="esc_tecnologia" class="cr-select">
+                    <option value="FLEX"  <%= String(_uniTec).toUpperCase()==='FLEX'  ? 'selected' : '' %>>FLEX</option>
+                    <option value="STEEL" <%= String(_uniTec).toUpperCase()==='STEEL' ? 'selected' : '' %>>STEEL</option>
+                    <option value="REAR"  <%= String(_uniTec).toUpperCase()==='REAR'  ? 'selected' : '' %>>REAR (Trasera)</option>
+                  </select>
+                </div>
+                <div class="cr-field" style="margin-top:10px">
+                  <label class="cr-label" for="esc_codigo">Código TRICO</label>
+                  <input type="text" id="esc_codigo" name="esc_codigo" placeholder="Ej: 10707" autocomplete="off" class="cr-input" value="<%= _uniCod %>">
+                </div>
+              </div>
 
-  // IMPORTANT: no mencionar tags EJS dentro de este bloque (rompe el parser)
-  const _codJsonInit = JSON.stringify(_escCod || []);
-  const _kitJsonInit = JSON.stringify(_escKit || {});
-%>
+              <div id="esc_kit_block" style="display:none;padding:0 14px 10px">
+                <div class="cr-field" style="margin-top:10px">
+                  <label class="cr-label" for="esc_kit_tecnologia">Tecnología del kit</label>
+                  <select id="esc_kit_tecnologia" name="esc_kit_tecnologia" class="cr-select">
+                    <option value="FLEX"  <%= String(_kitTec).toUpperCase()==='FLEX'  ? 'selected' : '' %>>FLEX</option>
+                    <option value="STEEL" <%= String(_kitTec).toUpperCase()==='STEEL' ? 'selected' : '' %>>STEEL</option>
+                  </select>
+                </div>
+                <div class="cr-field" style="margin-top:10px">
+                  <label class="cr-label" for="esc_kit_conductor">Código TRICO Conductor</label>
+                  <input type="text" id="esc_kit_conductor" name="esc_kit_conductor" placeholder="Ej: 10707" autocomplete="off" class="cr-input" value="<%= _kitCon %>">
+                </div>
+                <div class="cr-field" style="margin-top:10px">
+                  <label class="cr-label" for="esc_kit_acompanante">Código TRICO Acompañante</label>
+                  <input type="text" id="esc_kit_acompanante" name="esc_kit_acompanante" placeholder="Ej: 10708" autocomplete="off" class="cr-input" value="<%= _kitAco %>">
+                </div>
+              </div>
+            </div>
 
-
-
-<div id="escobillasSection" class="form-group-crear" style="display:none; margin-top:12px;">
-  <div style="padding:12px; border:1px solid #e6e6e6; border-radius:10px;">
-    <h4 style="margin:0 0 10px 0;">Datos de Escobillas (TRICO)</h4>
-
-    <!-- Hidden payload que usa el backend -->
-    <input type="hidden" id="escobillas_tipo" name="escobillas_tipo" value="<%= _tipoInit %>">
-    <input type="hidden" id="escobillas_codigos_json" name="escobillas_codigos_json" value="<%= _codJsonInit %>">
-    <input type="hidden" id="escobillas_kit_json" name="escobillas_kit_json" value="<%= _kitJsonInit %>">
-
-    <div class="form-group-crear">
-      <label for="esc_formato">Formato:</label>
-      <select id="esc_formato" class="form-control" name="esc_formato">
-        <option value="unidad" <%= (!_tipoInit || _tipoInit === 'unidad') ? 'selected' : '' %>>Unidad</option>
-        <option value="kit" <%= (_tipoInit === 'kit') ? 'selected' : '' %>>Kit (Conductor + Acompañante)</option>
-      </select>
-    </div>
-
-    <!-- Unidad -->
-    <div id="esc_unidad_block">
-      <div class="form-group-crear">
-        <label for="esc_tecnologia">Tecnología:</label>
-        <select id="esc_tecnologia" class="form-control" name="esc_tecnologia">
-          <option value="FLEX"  <%= String(_uniTec).toUpperCase()==='FLEX' ? 'selected' : '' %>>FLEX</option>
-          <option value="STEEL" <%= String(_uniTec).toUpperCase()==='STEEL' ? 'selected' : '' %>>STEEL</option>
-          <option value="REAR"  <%= String(_uniTec).toUpperCase()==='REAR' ? 'selected' : '' %>>REAR (Trasera)</option>
-        </select>
-      </div>
-
-      <div class="form-group-crear">
-        <label for="esc_codigo">Código TRICO:</label>
-        <input
-          type="text"
-          id="esc_codigo"
-          class="form-control"
-          name="esc_codigo"
-          placeholder="Ej: 10707"
-          autocomplete="off"
-          value="<%= _uniCod %>"
-        />
-      </div>
-    </div>
-
-    <!-- Kit -->
-    <div id="esc_kit_block" style="display:none;">
-      <div class="form-group-crear">
-        <label for="esc_kit_tecnologia">Tecnología del kit:</label>
-        <select id="esc_kit_tecnologia" class="form-control" name="esc_kit_tecnologia">
-          <option value="FLEX"  <%= String(_kitTec).toUpperCase()==='FLEX' ? 'selected' : '' %>>FLEX</option>
-          <option value="STEEL" <%= String(_kitTec).toUpperCase()==='STEEL' ? 'selected' : '' %>>STEEL</option>
-        </select>
-      </div>
-
-      <div class="form-group-crear">
-        <label for="esc_kit_conductor">Código TRICO Conductor:</label>
-        <input
-          type="text"
-          id="esc_kit_conductor"
-          class="form-control"
-          name="esc_kit_conductor"
-          placeholder="Ej: 10707"
-          autocomplete="off"
-          value="<%= _kitCon %>"
-        />
-      </div>
-
-      <div class="form-group-crear">
-        <label for="esc_kit_acompanante">Código TRICO Acompañante:</label>
-        <input
-          type="text"
-          id="esc_kit_acompanante"
-          class="form-control"
-          name="esc_kit_acompanante"
-          placeholder="Ej: 10708"
-          autocomplete="off"
-          value="<%= _kitAco %>"
-        />
-      </div>
-    </div>
-  </div>
-</div>
-
-
-            <div class="form-group-crear">
-              <label for="marca">Marca</label>
-              <select id="marca" name="marca" class="form-control">
-                <option value="" <%= !producto || !producto.marca_id ? 'selected' : '' %>>Selecciona una marca...</option>
+            <!-- Marca / Modelo -->
+            <div class="cr-field">
+              <label class="cr-label" for="marca">Marca</label>
+              <select id="marca" name="marca" class="cr-select">
+                <option value="" <%= !producto || !producto.marca_id ? 'selected' : '' %>>Seleccioná una marca</option>
                 <% marcas.forEach(function(marca) { %>
                   <option value="<%= marca.id %>" <%= producto && producto.marca_id == marca.id ? 'selected' : '' %>><%= marca.nombre %></option>
                 <% }); %>
               </select>
             </div>
 
-            <div class="form-group-crear">
-              <label for="modelo_id">Modelo</label>
-              <select id="modelo_id" name="modelo_id" class="form-control" data-selected="<%= producto ? producto.modelo_id : '' %>">
-                <option value="" <%= !producto || !producto.modelo_id ? 'selected' : '' %>>Selecciona un modelo...</option>
+            <div class="cr-field">
+              <label class="cr-label" for="modelo_id">Modelo</label>
+              <select id="modelo_id" name="modelo_id" class="cr-select" data-selected="<%= producto ? producto.modelo_id : '' %>">
+                <option value="" <%= !producto || !producto.modelo_id ? 'selected' : '' %>>Seleccioná un modelo</option>
                 <% modelos.forEach(function(modelo) { %>
                   <option value="<%= modelo.id %>" <%= producto && producto.modelo_id == modelo.id ? 'selected' : '' %>><%= modelo.nombre %></option>
                 <% }); %>
               </select>
             </div>
+
           </div>
+        </div>
 
-          <!-- ============ PROVEEDORES ============ -->
-          <div id="proveedoresContainer">
-            <div class="form-group-crear">
-              <label for="calidad_original">Calidad FITAM</label>
-              <input type="checkbox" id="calidad_original" name="calidad_original" value="1" <%= producto.calidad_original === 1 ? 'checked' : '' %>>
+        <!-- ══════════════════════════════
+             COLUMNA 2: PROVEEDORES
+        ══════════════════════════════ -->
+        <div class="cr-panel">
+          <div class="cr-panel__hd">
+            <i class="fa-solid fa-truck"></i>
+            <strong>Proveedores y costos</strong>
+          </div>
+          <div class="cr-panel__bd">
+
+            <!-- Calidades -->
+            <div class="cr-field cr-field--inline">
+              <label class="cr-label" for="calidad_original">Calidad FITAM</label>
+              <label class="cr-toggle">
+                <input type="checkbox" id="calidad_original" name="calidad_original" value="1" class="cr-toggle__input"
+                  <%= producto.calidad_original === 1 ? 'checked' : '' %>>
+                <span class="cr-toggle__slider"></span>
+              </label>
+            </div>
+            <div class="cr-field cr-field--inline">
+              <label class="cr-label" for="calidad_vic">Calidad VIC</label>
+              <label class="cr-toggle">
+                <input type="checkbox" id="calidad_vic" name="calidad_vic" value="1" class="cr-toggle__input"
+                  <%= producto.calidad_vic === 1 ? 'checked' : '' %>>
+                <span class="cr-toggle__slider"></span>
+              </label>
             </div>
 
-            <div class="form-group-crear">
-              <label for="calidad_vic">Calidad VIC</label>
-              <input type="checkbox" id="calidad_vic" name="calidad_vic" value="1" <%= producto.calidad_vic === 1 ? 'checked' : '' %>>
+            <!-- Proveedor asignado -->
+            <div class="cr-field">
+              <label class="cr-label">Proveedor asignado <span class="cr-hint-inline">(costo IVA más bajo)</span></label>
+              <div id="proveedorAsignado" class="cr-input cr-input--readonly"></div>
             </div>
 
-            <div class="form-group-crear">
-              <label>Proveedor asignado:</label>
-              <div id="proveedorAsignado" class="form-control" readonly></div>
-            </div>
+            <div class="cr-sep"></div>
 
-            <% if (productoProveedores && productoProveedores.length > 0) { %>
-              <% productoProveedores.forEach(function(productoProveedor) { 
-                 const _ivaProv = Number(String(productoProveedor.iva ?? producto.IVA ?? 21).replace(',', '.')) || 21;
-                 const _pres    = (productoProveedor.presentacion || 'unidad').toLowerCase();
-                 const _factor  = _pres === 'juego' ? 0.5 : 1;
-                 const _civaSrv = (typeof productoProveedor.costo_iva === 'number'
-                                   ? productoProveedor.costo_iva
-                                   : parseFloat(productoProveedor.costo_iva || 0));
-              %>
-                <div class="proveedor" data-proveedor-id="<%= productoProveedor.proveedor_id %>">
-                  <!-- Pill radio -->
-                  <div class="form-group-crear">
-                    <label class="radio-elige-proveedor">
-                      <input
-                        type="radio"
-                        name="proveedor_designado_radio"
-                        class="proveedor-designado-radio"
-                        value="<%= productoProveedor.proveedor_id %>"
-                        <%= (producto.proveedor_id === productoProveedor.proveedor_id) ? 'checked' : '' %> />
-                      Usar este proveedor
+            <!-- Bloques de proveedores existentes -->
+            <div id="proveedoresContainer">
+
+              <% if (productoProveedores && productoProveedores.length > 0) { %>
+                <% productoProveedores.forEach(function(productoProveedor) {
+                   const _ivaProv = Number(String(productoProveedor.iva ?? producto.IVA ?? 21).replace(',', '.')) || 21;
+                   const _pres    = (productoProveedor.presentacion || 'unidad').toLowerCase();
+                   const _factor  = _pres === 'juego' ? 0.5 : 1;
+                   const _civaSrv = (typeof productoProveedor.costo_iva === 'number'
+                                     ? productoProveedor.costo_iva
+                                     : parseFloat(productoProveedor.costo_iva || 0));
+                %>
+                  <div class="proveedor cr-prov-card" data-proveedor-id="<%= productoProveedor.proveedor_id %>">
+
+                    <!-- Radio proveedor designado -->
+                    <div class="form-group-crear cr-field cr-field--inline">
+                      <label class="cr-label">Usar este proveedor</label>
+                      <label class="cr-toggle">
+                        <input type="radio" name="proveedor_designado_radio" class="proveedor-designado-radio cr-toggle__input"
+                          value="<%= productoProveedor.proveedor_id %>"
+                          <%= (producto.proveedor_id === productoProveedor.proveedor_id) ? 'checked' : '' %> />
+                        <span class="cr-toggle__slider"></span>
+                      </label>
+                    </div>
+
+                    <div class="form-group-crear cr-field">
+                      <label class="label-proveedor cr-label">Proveedor <span class="nombre_proveedor cr-prov-nombre"></span></label>
+                      <select class="proveedores cr-select form-control" name="proveedores[]">
+                        <% proveedores.forEach(function(proveedor) { %>
+                          <option value="<%= proveedor.id %>"
+                                  data-descuento="<%= proveedor.descuento %>"
+                                  <%= productoProveedor.proveedor_id === proveedor.id ? 'selected' : '' %>>
+                            <%= proveedor.nombre %>
+                          </option>
+                        <% }); %>
+                      </select>
+                    </div>
+
+                    <div class="form-group-crear cr-field">
+                      <label class="label-codigo cr-label">Código proveedor</label>
+                      <input class="codigo cr-input form-control" type="text" name="codigo[]" value="<%= productoProveedor.codigo %>">
+                    </div>
+
+                    <div class="cr-prov-grid">
+                      <div class="form-group-crear cr-field">
+                        <label class="label-precio-lista cr-label">Precio de lista</label>
+                        <input class="precio_lista cr-input form-control" type="number" step="0.01" name="precio_lista[]" value="<%= productoProveedor.precio_lista %>">
+                      </div>
+                      <div class="form-group-crear cr-field">
+                        <label class="label-descuento cr-label">Descuento prov.</label>
+                        <input class="descuentos_proveedor_id cr-input cr-input--readonly form-control" type="text" name="descuentos_proveedor_id[]" value="<%= productoProveedor.descuento %>" readonly>
+                      </div>
+                    </div>
+
+                    <div class="form-group-crear cr-field">
+                      <label class="cr-label">Precio de costo (Neto)</label>
+                      <input class="costo_neto cr-input cr-input--readonly form-control" type="number" name="costo_neto[]" value="<%= productoProveedor.costo_neto %>" readonly>
+                    </div>
+
+                    <div class="cr-prov-grid">
+                      <div class="form-group-crear cr-field">
+                        <label class="cr-label">Presentación</label>
+                        <select class="presentacion cr-select form-control" name="presentacion[]">
+                          <option value="unidad" <%= _pres === 'unidad' ? 'selected' : '' %>>Unidad</option>
+                          <option value="juego"  <%= _pres === 'juego'  ? 'selected' : '' %>>Juego (par)</option>
+                        </select>
+                        <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="<%= _factor %>">
+                      </div>
+                      <div class="form-group-crear cr-field">
+                        <label class="cr-label">IVA</label>
+                        <select class="IVA cr-select form-control" name="IVA[]">
+                          <option value="21"   <%= _ivaProv === 21   ? 'selected' : '' %>>21%</option>
+                          <option value="10.5" <%= _ivaProv === 10.5 ? 'selected' : '' %>>10.5%</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="form-group-crear cr-field campo-costo-iva">
+                      <label class="cr-label">Costo con IVA (por unidad)</label>
+                      <input class="costo_iva_vis cr-input cr-input--readonly form-control" type="number" step="0.01" value="" readonly>
+                      <input class="costo_iva" type="hidden" name="costo_iva[]" value="<%= isFinite(_civaSrv) ? _civaSrv.toFixed(2) : '0.00' %>">
+                    </div>
+
+                    <button class="eliminar-proveedor cr-btn cr-btn--danger cr-btn--sm" type="button" data-proveedor-id="<%= productoProveedor.proveedor_id %>">
+                      <i class="fa-solid fa-trash"></i> Eliminar proveedor
+                    </button>
+                  </div>
+                <% }); %>
+              <% } else { %>
+                <%
+                  const _ivaProv0 = Number(String(producto.IVA ?? 21).replace(',', '.')) || 21;
+                  const _pres0    = 'unidad';
+                  const _factor0  = 1;
+                  const _civaSrv0 = 0;
+                %>
+                <div class="proveedor cr-prov-card" data-proveedor-id="">
+                  <div class="form-group-crear cr-field cr-field--inline">
+                    <label class="cr-label">Usar este proveedor</label>
+                    <label class="cr-toggle">
+                      <input type="radio" name="proveedor_designado_radio" class="proveedor-designado-radio cr-toggle__input" value="">
+                      <span class="cr-toggle__slider"></span>
                     </label>
                   </div>
 
-                  <div class="form-group-crear">
-                    <label class="label-proveedor">Proveedor <span class="nombre_proveedor"></span></label>
-                    <select class="proveedores form-control" name="proveedores[]">
+                  <div class="form-group-crear cr-field">
+                    <label class="label-proveedor cr-label">Proveedor <span class="nombre_proveedor cr-prov-nombre"></span></label>
+                    <select class="proveedores cr-select form-control" name="proveedores[]">
+                      <option value="">Seleccioná proveedor...</option>
                       <% proveedores.forEach(function(proveedor) { %>
-                        <option value="<%= proveedor.id %>"
-                                data-descuento="<%= proveedor.descuento %>"
-                                <%= productoProveedor.proveedor_id === proveedor.id ? 'selected' : '' %>>
-                          <%= proveedor.nombre %>
-                        </option>
+                        <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>"><%= proveedor.nombre %></option>
                       <% }); %>
                     </select>
                   </div>
 
-                  <div class="form-group-crear">
-                    <label class="label-codigo">Código</label>
-                    <input class="codigo form-control" type="text" name="codigo[]" value="<%= productoProveedor.codigo %>">
+                  <div class="form-group-crear cr-field">
+                    <label class="label-codigo cr-label">Código proveedor</label>
+                    <input class="codigo cr-input form-control" type="text" name="codigo[]" value="">
                   </div>
 
-                  <div class="form-group-crear">
-                    <label class="label-precio-lista">Precio de Lista</label>
-                    <input class="precio_lista form-control" type="number" step="0.01" name="precio_lista[]" value="<%= productoProveedor.precio_lista %>">
+                  <div class="cr-prov-grid">
+                    <div class="form-group-crear cr-field">
+                      <label class="label-precio-lista cr-label">Precio de lista</label>
+                      <input class="precio_lista cr-input form-control" type="number" step="0.01" name="precio_lista[]" value="">
+                    </div>
+                    <div class="form-group-crear cr-field">
+                      <label class="label-descuento cr-label">Descuento prov.</label>
+                      <input class="descuentos_proveedor_id cr-input cr-input--readonly form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
+                    </div>
                   </div>
 
-                  <div class="form-group-crear">
-                    <label class="label-descuento">Descuento</label>
-                    <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="<%= productoProveedor.descuento %>" readonly>
+                  <div class="form-group-crear cr-field">
+                    <label class="cr-label">Precio de costo (Neto)</label>
+                    <input class="costo_neto cr-input cr-input--readonly form-control" type="number" name="costo_neto[]" value="0" readonly>
                   </div>
 
-                  <div class="form-group-crear">
-                    <label>Precio de costo (Neto)</label>
-                    <input class="costo_neto form-control" type="number" name="costo_neto[]" value="<%= productoProveedor.costo_neto %>" readonly>
+                  <div class="cr-prov-grid">
+                    <div class="form-group-crear cr-field">
+                      <label class="cr-label">Presentación</label>
+                      <select class="presentacion cr-select form-control" name="presentacion[]">
+                        <option value="unidad">Unidad</option>
+                        <option value="juego">Juego (par)</option>
+                      </select>
+                      <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="1">
+                    </div>
+                    <div class="form-group-crear cr-field">
+                      <label class="cr-label">IVA</label>
+                      <select class="IVA cr-select form-control" name="IVA[]">
+                        <option value="21"   <%= _ivaProv0 === 21   ? 'selected' : '' %>>21%</option>
+                        <option value="10.5" <%= _ivaProv0 === 10.5 ? 'selected' : '' %>>10.5%</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div class="form-group-crear">
-                    <label>IVA</label>
-                    <select class="IVA form-control" name="IVA[]">
-                      <option value="21"   <%= _ivaProv === 21 ? 'selected' : '' %>>21%</option>
-                      <option value="10.5" <%= _ivaProv === 10.5 ? 'selected' : '' %>>10,5%</option>
-                    </select>
+                  <div class="form-group-crear cr-field campo-costo-iva">
+                    <label class="cr-label">Costo con IVA (por unidad)</label>
+                    <input class="costo_iva_vis cr-input cr-input--readonly form-control" type="number" step="0.01" value="" readonly>
+                    <input class="costo_iva" type="hidden" name="costo_iva[]" value="<%= _civaSrv0.toFixed(2) %>">
                   </div>
 
-                  <!-- NUEVO: Presentación del precio -->
-                  <div class="form-group-crear">
-                    <label>Presentación del precio</label>
-                    <select class="presentacion form-control" name="presentacion[]">
-                      <option value="unidad" <%= _pres === 'unidad' ? 'selected' : '' %>>Unidad</option>
-                      <option value="juego"  <%= _pres === 'juego'  ? 'selected' : '' %>>Juego (par)</option>
-                    </select>
-                    <small>Si es "juego", se divide a la mitad (por unidad) para comparar y calcular.</small>
-                    <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="<%= _factor %>">
-                  </div>
-
-                  <!-- Visible (por UNIDAD) -->
-                  <div class="form-group-crear campo-costo-iva">
-                    <label>Costo con IVA (por unidad)</label>
-                    <input class="costo_iva_vis form-control" type="number" step="0.01" value="">
-                  </div>
-
-                  <!-- Hidden normalizado a UNIDAD -->
-                  <input class="costo_iva" type="hidden" name="costo_iva[]" value="<%= isFinite(_civaSrv) ? _civaSrv.toFixed(2) : '0.00' %>">
-
-                  <div class="form-group-crear">
-                    <button class="eliminar-proveedor btn btn-outline-danger" type="button" data-proveedor-id="<%= productoProveedor.proveedor_id %>">
-                      Eliminar proveedor
-                    </button>
-                  </div>
-                </div>
-              <% }); %>
-            <% } else { %>
-              <!-- Plantilla base si no hay proveedores -->
-              <% 
-                const _ivaProv0 = Number(String(producto.IVA ?? 21).replace(',', '.')) || 21;
-                const _pres0    = 'unidad';
-                const _factor0  = 1;
-                const _civaSrv0 = 0;
-              %>
-              <div class="proveedor" data-proveedor-id="">
-                <div class="form-group-crear">
-                  <label class="radio-elige-proveedor">
-                    <input type="radio" name="proveedor_designado_radio" class="proveedor-designado-radio" value="">
-                    Usar este proveedor
-                  </label>
-                </div>
-
-                <div class="form-group-crear">
-                  <label class="label-proveedor">Proveedor <span class="nombre_proveedor"></span></label>
-                  <select class="proveedores form-control" name="proveedores[]">
-                    <option value="">Selecciona proveedor...</option>
-                    <% proveedores.forEach(function(proveedor) { %>
-                      <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>"><%= proveedor.nombre %></option>
-                    <% }); %>
-                  </select>
-                </div>
-
-                <div class="form-group-crear">
-                  <label class="label-codigo">Código</label>
-                  <input class="codigo form-control" type="text" name="codigo[]" value="">
-                </div>
-
-                <div class="form-group-crear">
-                  <label class="label-precio-lista">Precio de Lista</label>
-                  <input class="precio_lista form-control" type="number" step="0.01" name="precio_lista[]" value="">
-                </div>
-
-                <div class="form-group-crear">
-                  <label class="label-descuento">Descuento</label>
-                  <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
-                </div>
-
-                <div class="form-group-crear">
-                  <label>Precio de costo (Neto)</label>
-                  <input class="costo_neto form-control" type="number" name="costo_neto[]" value="0" readonly>
-                </div>
-
-                <div class="form-group-crear">
-                  <label>IVA</label>
-                  <select class="IVA form-control" name="IVA[]">
-                    <option value="21"   <%= _ivaProv0 === 21 ? 'selected' : '' %>>21%</option>
-                    <option value="10.5" <%= _ivaProv0 === 10.5 ? 'selected' : '' %>>10,5%</option>
-                  </select>
-                </div>
-
-                <!-- NUEVO: Presentación del precio -->
-                <div class="form-group-crear">
-                  <label>Presentación del precio</label>
-                  <select class="presentacion form-control" name="presentacion[]">
-                    <option value="unidad" <%= _pres0 === 'unidad' ? 'selected' : '' %>>Unidad</option>
-                    <option value="juego"  <%= _pres0 === 'juego'  ? 'selected' : '' %>>Juego (par)</option>
-                  </select>
-                  <small>Si es "juego", se divide a la mitad (por unidad) para comparar y calcular.</small>
-                  <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="<%= _factor0 %>">
-                </div>
-
-                <!-- Visible (por UNIDAD) -->
-                <div class="form-group-crear campo-costo-iva">
-                  <label>Costo con IVA (por unidad)</label>
-                  <input class="costo_iva_vis form-control" type="number" step="0.01" value="" readonly>
-                </div>
-
-                <!-- Hidden normalizado a UNIDAD -->
-                <input class="costo_iva" type="hidden" name="costo_iva[]" value="<%= _civaSrv0.toFixed(2) %>">
-
-                <div class="form-group-crear">
-                  <button class="eliminar-proveedor btn btn-outline-danger" type="button">
-                    Eliminar proveedor
+                  <button class="eliminar-proveedor cr-btn cr-btn--danger cr-btn--sm" type="button">
+                    <i class="fa-solid fa-trash"></i> Eliminar proveedor
                   </button>
                 </div>
-              </div>
-            <% } %>
+              <% } %>
 
-            <!-- Botón + SIEMPRE fuera del bloque .proveedor -->
-            <div class="form-group-crear">
-              <button id="addProveedor" type="button" class="btn btn-secondary">+ Agregar proveedor</button>
             </div>
+
+            <button id="addProveedor" type="button" class="cr-btn cr-btn--outline cr-btn--full">
+              <i class="fa-solid fa-plus"></i> Agregar proveedor
+            </button>
+
           </div>
+        </div>
 
-          <!-- ============ UTILIDADES / ESTADO / STOCK ============ -->
-          <div class="utilidades">
-            <div class="form-group-crear">
-              <label for="utilidad">Utilidad</label>
-              <input id="utilidad" class="form-control" type="number" name="utilidad" value="<%= producto ? producto.utilidad : '' %>">
+        <!-- ══════════════════════════════
+             COLUMNA 3: PRECIO Y STOCK
+        ══════════════════════════════ -->
+        <div class="cr-panel">
+          <div class="cr-panel__hd">
+            <i class="fa-solid fa-chart-pie"></i>
+            <strong>Precio y stock</strong>
+          </div>
+          <div class="cr-panel__bd">
+
+            <div class="cr-field">
+              <label class="cr-label" for="utilidad">Utilidad (%)</label>
+              <input id="utilidad" type="number" name="utilidad" class="cr-input"
+                value="<%= producto ? producto.utilidad : '' %>">
             </div>
 
-            <div class="form-group-crear">
-              <label for="precio_venta">Precio Venta</label>
-              <input id="precio_venta" class="form-control" type="number" name="precio_venta" data-manual="false" value="<%= producto ? producto.precio_venta : '' %>">
+            <div class="cr-field">
+              <label class="cr-label" for="precio_venta">Precio de venta</label>
+              <div class="cr-input-prefix-wrap">
+                <span class="cr-input-prefix">$</span>
+                <input id="precio_venta" type="number" name="precio_venta" class="cr-input cr-input--prefixed"
+                  data-manual="false"
+                  value="<%= producto ? producto.precio_venta : '' %>">
+              </div>
             </div>
 
-            <div class="form-group-crear">
-              <label for="estado">Estado</label>
-              <select id="estado" class="form-control" name="estado">
-                <option value="" <%= !producto || !producto.estado ? 'selected' : '' %>>Selecciona un estado...</option>
-                <option value="activo" <%= producto && producto.estado == 'activo' ? 'selected' : '' %>>Activo</option>
+            <div class="cr-sep"></div>
+
+            <div class="cr-field">
+              <label class="cr-label" for="estado">Estado</label>
+              <select id="estado" name="estado" class="cr-select">
+                <option value="" <%= !producto || !producto.estado ? 'selected' : '' %>>Seleccioná un estado...</option>
+                <option value="activo"   <%= producto && producto.estado == 'activo'   ? 'selected' : '' %>>Activo</option>
                 <option value="inactivo" <%= producto && producto.estado == 'inactivo' ? 'selected' : '' %>>Inactivo</option>
               </select>
             </div>
 
-            <div class="form-group-crear">
-              <label for="stock_minimo">Stock Mínimo</label>
-              <input type="number" id="stock_minimo" class="form-control" name="stock_minimo" min="0" value="<%= stock.stock_minimo %>" required>
+            <div class="cr-field">
+              <label class="cr-label" for="stock_minimo">Stock mínimo</label>
+              <input type="number" id="stock_minimo" name="stock_minimo" min="0" required class="cr-input"
+                value="<%= stock.stock_minimo %>">
             </div>
 
-            <div class="form-group-crear">
-              <label for="stock_actual">Stock Actual</label>
-              <input type="number" id="stock_actual" class="form-control" name="stock_actual" min="0" value="<%= stock.stock_actual %>" required>
+            <div class="cr-field">
+              <label class="cr-label" for="stock_actual">Stock actual</label>
+              <input type="number" id="stock_actual" name="stock_actual" min="0" required class="cr-input"
+                value="<%= stock.stock_actual %>">
             </div>
 
-            <div class="botones-crear">
-              <button class="btn btn-success" type="submit">Guardar</button>
-              <a class="btn btn-primary" href="/productos/panelControl?pagina=<%= producto.paginaActual %>&busqueda=<%= encodeURIComponent(producto.busqueda || '') %>">Cancelar</a>
+            <div class="cr-sep"></div>
+
+            <div class="cr-actions">
+              <button type="submit" class="cr-btn cr-btn--primary cr-btn--full">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
+              </button>
+              <a href="/productos/panelControl?pagina=<%= producto.paginaActual %>&busqueda=<%= encodeURIComponent(producto.busqueda || '') %>" class="cr-btn cr-btn--outline cr-btn--full">
+                Cancelar
+              </a>
             </div>
+
           </div>
-        </form>
+        </div>
+
       </div>
-    </div> 
-  </main>
+    </form>
+  </div>
+</main>
 
-  <%- include ./layouts/footer.ejs %>
-</body>
+<%- include('./layouts/footer.ejs') %>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.10.2/Sortable.min.js"></script>
+<script src="/js/editar.js?v=1"></script>
 
-
-  <!-- Libs -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.10.2/Sortable.min.js"></script>
-
-  <!-- JS de edición -->
-  <script src="/js/editar.js"></script>
-
-  <script>
-    // Si al entrar la marca ya está seleccionada, refrescamos modelos por marca
-    (function initModeloSeleccionado() {
-      var marcaEl = document.getElementById('marca');
-      var modeloEl = document.getElementById('modelo_id');
-      var marcaSel = marcaEl ? marcaEl.value : '';
-      var modeloSel = modeloEl ? modeloEl.getAttribute('data-selected') : '';
-      if (!marcaSel || !modeloSel) return;
-
-      $.get('/productos/modelos/' + marcaSel, function (modelosPorMarca) {
-        var $modelo = $('#modelo_id');
-        $modelo.empty().append('<option value="">Selecciona un modelo...</option>');
-        (modelosPorMarca || []).forEach(function (m) {
-          var selected = (String(m.id) === String(modeloSel)) ? 'selected' : '';
-          $modelo.append('<option value="' + m.id + '" ' + selected + '>' + m.nombre + '</option>');
-        });
-      });
-    })();
-</script>
-
-<!-- ✅ FIX ENTER EN DESCRIPCIÓN -->
 <script>
+  // Refrescar modelos si la marca ya está seleccionada al entrar
+  (function initModeloSeleccionado() {
+    var marcaEl  = document.getElementById('marca');
+    var modeloEl = document.getElementById('modelo_id');
+    var marcaSel  = marcaEl  ? marcaEl.value  : '';
+    var modeloSel = modeloEl ? modeloEl.getAttribute('data-selected') : '';
+    if (!marcaSel || !modeloSel) return;
+    $.get('/productos/modelos/' + marcaSel, function (modelosPorMarca) {
+      var $modelo = $('#modelo_id');
+      $modelo.empty().append('<option value="">Seleccioná un modelo...</option>');
+      (modelosPorMarca || []).forEach(function (m) {
+        var sel = (String(m.id) === String(modeloSel)) ? 'selected' : '';
+        $modelo.append('<option value="' + m.id + '" ' + sel + '>' + m.nombre + '</option>');
+      });
+    });
+  })();
+
+  // Fix Enter en textarea descripción
   (function () {
     var ta = document.getElementById('descripcion');
     if (!ta) return;
-
     ta.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
-
-      // Forzamos salto de línea aunque algún script global bloquee Enter
       e.preventDefault();
       e.stopImmediatePropagation();
-
-      var start = ta.selectionStart;
-      var end = ta.selectionEnd;
-
-      if (typeof start !== 'number' || typeof end !== 'number') {
-        ta.value += "\n";
-        return;
-      }
-
+      var start = ta.selectionStart, end = ta.selectionEnd;
       ta.value = ta.value.slice(0, start) + "\n" + ta.value.slice(end);
       ta.selectionStart = ta.selectionEnd = start + 1;
-
       ta.dispatchEvent(new Event('input', { bubbles: true }));
     }, true);
   })();
 </script>
-
 </body>
-
+</html>
