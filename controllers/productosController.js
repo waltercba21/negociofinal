@@ -600,6 +600,59 @@ lista: async function (req, res) {
           });
         }
       },      
+
+// ==============================
+// Reordenamiento visual por tipo de producto
+// Lógica: faros TRASEROS → derecho antes que izquierdo (visión desde atrás del auto)
+//         faros DELANTEROS / OPTICAS → izquierdo antes que derecho (visión desde adelante)
+// ==============================
+function reordenarPorLado(productos, busqueda) {
+  const q = (busqueda || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Detectar si es búsqueda de producto TRASERO
+  const esTrasero = /trase(ro|ra|ros|ras)|stop|posterior|rear/.test(q);
+
+  // Solo reordenar si hay productos con "derecho" o "izquierdo" en el nombre
+  const tienePareja = productos.some(p => {
+    const n = (p.nombre || '').toLowerCase();
+    return /\bderecho\b|\bizquierdo\b|\bder\b|\bizq\b/.test(n);
+  });
+
+  if (!tienePareja) return productos; // sin pareja, no tocamos el orden
+
+  // Función que extrae la "clave base" sin el lado (para agrupar pares)
+  function claveBase(nombre) {
+    return nombre
+      .toLowerCase()
+      .replace(/derecho|der|izquierdo|izq/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Valor de orden para el lado: depende de si es trasero o delantero
+  function pesoLado(nombre) {
+    const n = nombre.toLowerCase();
+    const esDer = /derecho|der/.test(n);
+    const esIzq = /izquierdo|izq/.test(n);
+    if (!esDer && !esIzq) return 1; // sin lado especificado, va al medio
+    if (esTrasero) return esDer ? 0 : 2; // trasero: derecho primero
+    return esIzq ? 0 : 2;               // delantero: izquierdo primero
+  }
+
+  // Ordenar preservando el agrupado por nombre base y poniendo el lado correcto primero
+  return [...productos].sort((a, b) => {
+    const baseA = claveBase(a.nombre || '');
+    const baseB = claveBase(b.nombre || '');
+
+    // Primero ordenar por nombre base (mantiene los pares juntos)
+    if (baseA < baseB) return -1;
+    if (baseA > baseB) return 1;
+
+    // Dentro del mismo par, ordenar por lado
+    return pesoLado(a.nombre || '') - pesoLado(b.nombre || '');
+  });
+}
+
 buscar: async (req, res) => {
   try {
     const { q, categoria_id, marca_id, modelo_id, proveedor_id } = req.query;
@@ -731,6 +784,9 @@ buscar: async (req, res) => {
       prod.proveedor_asignado_id = prod.proveedor_id ?? null;
       prod.utilidad = Number(prod.utilidad) || 0;
     }
+
+    // Reordenar por lado (derecho/izquierdo) según el tipo de producto buscado
+    productos = reordenarPorLado(productos || [], busqueda_nombre);
 
     registrarLogBusqueda();
     return res.json(productos);
