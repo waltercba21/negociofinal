@@ -1,0 +1,335 @@
+/* ============================================================
+   productosActualizados.css — Autofaros
+   v2026-03-10
+   ============================================================ */
+
+/* ── 1. BASE ───────────────────────────────────────────────── */
+.pa-main {
+  background: #0b1220;
+  min-height: 100vh;
+  padding: 96px 24px 64px;
+}
+
+.pa-wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── 2. PAGE HEADER ────────────────────────────────────────── */
+.pa-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pa-eyebrow {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #1F487E;
+  margin-bottom: 4px;
+}
+
+.pa-eyebrow i { color: #d90429; margin-right: 4px; }
+
+.pa-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 800;
+  color: #f0f4ff;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.pa-subtitle { margin: 0; }
+
+.pa-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(31,72,126,0.15);
+  border: 1px solid rgba(31,72,126,0.25);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4e80c0;
+  letter-spacing: 0.3px;
+}
+
+.pa-count-badge--warning {
+  background: rgba(217,119,6,0.12);
+  border-color: rgba(217,119,6,0.25);
+  color: #fbbf24;
+}
+
+.pa-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ── 3. BOTONES ────────────────────────────────────────────── */
+.pa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.pa-btn--outline {
+  background: transparent;
+  color: rgba(240,244,255,0.7);
+  border: 1.5px solid rgba(31,72,126,0.3);
+}
+.pa-btn--outline:hover {
+  background: rgba(31,72,126,0.1);
+  border-color: #1F487E;
+  color: #f0f4ff;
+}
+
+.pa-btn--primary {
+  background: #1F487E;
+  color: #fff;
+  border: none;
+}
+.pa-btn--primary:hover { background: #2a5da0; box-shadow: 0 4px 14px rgba(31,72,126,0.4); }
+.pa-btn--primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── 4. PANEL ──────────────────────────────────────────────── */
+.pa-panel {
+  background: rgba(17,28,48,0.8);
+  border: 1px solid rgba(31,72,126,0.18);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.pa-panel--warning {
+  border-color: rgba(217,119,6,0.25);
+}
+
+.pa-panel__hd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(31,72,126,0.15);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(240,244,255,0.5);
+}
+
+.pa-panel__hd i { color: #1F487E; }
+
+.pa-panel__hd--warning {
+  border-bottom-color: rgba(217,119,6,0.15);
+  color: rgba(240,244,255,0.5);
+}
+.pa-panel__hd--warning i { color: #fbbf24; }
+
+.pa-warning-desc {
+  padding: 14px 20px 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240,244,255,0.5);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.pa-warning-desc strong { color: #fbbf24; }
+
+.pa-warning-total {
+  padding: 12px 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240,244,255,0.4);
+  margin: 0;
+  border-top: 1px solid rgba(31,72,126,0.12);
+}
+
+.pa-warning-total strong { color: rgba(240,244,255,0.8); }
+
+/* ── 5. TABLA ──────────────────────────────────────────────── */
+.pa-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+}
+
+.pa-table thead tr {
+  border-bottom: 1px solid rgba(31,72,126,0.2);
+}
+
+.pa-table thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240,244,255,0.35);
+  white-space: nowrap;
+  background: rgba(31,72,126,0.06);
+}
+
+.pa-table__row {
+  border-bottom: 1px solid rgba(31,72,126,0.08);
+  transition: background 0.12s;
+}
+
+.pa-table__row:hover { background: rgba(31,72,126,0.08); }
+.pa-table__row:last-child { border-bottom: none; }
+.pa-row--neutro { opacity: 0.55; }
+.pa-row--neutro:hover { opacity: 0.75; }
+
+.pa-td {
+  padding: 11px 16px;
+  color: rgba(240,244,255,0.8);
+  vertical-align: middle;
+}
+
+.pa-td--code code {
+  font-family: 'Fira Mono', 'Courier New', monospace;
+  font-size: 11px;
+  background: rgba(31,72,126,0.15);
+  border: 1px solid rgba(31,72,126,0.2);
+  color: #93b4e0;
+  padding: 2px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.pa-td--nombre {
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  color: #f0f4ff;
+}
+
+.pa-td--precio {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: rgba(240,244,255,0.7);
+}
+
+.pa-td--old {
+  color: rgba(240,244,255,0.35);
+  text-decoration: line-through;
+  text-decoration-color: rgba(240,244,255,0.2);
+}
+
+.pa-td--new {
+  color: #f0f4ff;
+}
+
+/* ── 6. BADGES DIFERENCIA ──────────────────────────────────── */
+.pa-diff {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pa-diff--positivo {
+  background: rgba(217,4,41,0.12);
+  border: 1px solid rgba(217,4,41,0.25);
+  color: #ff4d6d;
+}
+
+.pa-diff--negativo {
+  background: rgba(74,222,128,0.1);
+  border: 1px solid rgba(74,222,128,0.2);
+  color: #4ade80;
+}
+
+.pa-diff--neutro {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(240,244,255,0.3);
+}
+
+/* ── 7. BADGES ESTADO ──────────────────────────────────────── */
+.pa-estado {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pa-estado--modifica {
+  background: rgba(31,72,126,0.15);
+  border: 1px solid rgba(31,72,126,0.3);
+  color: #4e80c0;
+}
+
+.pa-estado--no-modifica {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  color: rgba(240,244,255,0.25);
+}
+
+.pa-estado--oferta {
+  background: rgba(217,4,41,0.1);
+  border: 1px solid rgba(217,4,41,0.25);
+  color: #ff4d6d;
+}
+
+/* ── 8. FOOTER ─────────────────────────────────────────────── */
+.pa-footer-actions {
+  display: flex;
+  justify-content: flex-start;
+  padding-bottom: 8px;
+}
+
+/* ── 9. RESPONSIVE ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .pa-main { padding: 88px 12px 48px; }
+  .pa-page-header { flex-direction: column; gap: 14px; }
+  .pa-header-actions { width: 100%; }
+  .pa-td--nombre { max-width: 140px; }
+}

@@ -1,97 +1,150 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
+<% var pageCss = '/css/pages/productosActualizados.css' %>
+<!DOCTYPE html>
+<html lang="es">
+<%- include('./layouts/head.ejs') %>
+<link rel="stylesheet" href="/css/pages/productosActualizados.css?v=1" />
 <body>
-  <main>
-    <h1>Productos Actualizados</h1>
+<%- include('./layouts/header.ejs') %>
 
-    <!-- Botonera superior -->
-    <div style="display:flex; gap:10px; align-items:center; margin: 10px 0 20px;">
-      <a href="/productos/panelControl" class="btn btn-primary">← Volver al Panel de Control</a>
+<main class="pa-main">
+  <div class="pa-wrap">
 
-      <% if (typeof cantidadNuevos !== 'undefined' && Number(cantidadNuevos) > 0) { %>
-        <a href="/productos/actualizados/nuevos.pdf" class="btn btn-secondary">
-          📄 PRODUCTOS NUEVOS (<%= cantidadNuevos %>)
+    <!-- ══════════════════════════════════════
+         HEADER
+    ══════════════════════════════════════ -->
+    <div class="pa-page-header">
+      <div>
+        <span class="pa-eyebrow"><i class="fa-solid fa-arrows-rotate"></i> Lista de precios</span>
+        <h1 class="pa-title">Productos Actualizados</h1>
+        <p class="pa-subtitle">
+          <span class="pa-count-badge"><%= (productos || []).length %> productos procesados</span>
+        </p>
+      </div>
+      <div class="pa-header-actions">
+        <a href="/productos/panelControl" class="pa-btn pa-btn--outline">
+          <i class="fa-solid fa-arrow-left"></i> Panel de Control
         </a>
-      <% } else { %>
-        <button class="btn btn-secondary" disabled title="No se detectaron productos nuevos">
-          📄 PRODUCTOS NUEVOS (0)
-        </button>
-      <% } %>
+        <% if (typeof cantidadNuevos !== 'undefined' && Number(cantidadNuevos) > 0) { %>
+          <a href="/productos/actualizados/nuevos.pdf" class="pa-btn pa-btn--primary">
+            <i class="fa-solid fa-file-pdf"></i> Productos Nuevos (<%= cantidadNuevos %>)
+          </a>
+        <% } else { %>
+          <button class="pa-btn pa-btn--primary" disabled>
+            <i class="fa-solid fa-file-pdf"></i> Productos Nuevos (0)
+          </button>
+        <% } %>
+      </div>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Nombre</th>
-          <th>Precio Lista Viejo</th>
-          <th>Precio Lista Nuevo</th>
-          <th>Precio De Venta</th>
-          <th>Diferencia</th>
-          <th>Modificación</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% (productos || []).forEach(producto => {
-          let viejo = parseFloat(producto.precio_lista_antiguo || 0);
-          let nuevo = parseFloat(producto.precio_lista_nuevo || 0);
-          let diferencia = viejo > 0 ? ((nuevo - viejo) / viejo) * 100 : 0;
-          let diferenciaRedondeada = diferencia.toFixed(2);
-          let diferenciaClass = diferencia > 0 ? 'positivo' : (diferencia < 0 ? 'negativo' : 'neutro');
-          let modificacion = producto.sin_cambio ? 'NO MODIFICA' : 'MODIFICA';
-        %>
-        <tr>
-          <td><%= producto.codigo %></td>
-          <td><%= producto.nombre %></td>
-          <td>$<%= viejo.toLocaleString('es-AR') %></td>
-          <td>$<%= nuevo.toLocaleString('es-AR') %></td>
-          <td>$<%= parseFloat(producto.precio_venta || 0).toLocaleString('es-AR') %></td>
-          <td class="<%= diferenciaClass %>"><%= diferenciaRedondeada %> %</td>
-          <td><%= modificacion %></td>
-        </tr>
-        <% }); %>
-      </tbody>
-    </table>
-
-    <p>Total de productos actualizados: <%= (productos || []).length %></p>
-
-    <% if (ofertasFaltantes && ofertasFaltantes.length) { %>
-      <hr style="margin: 30px 0;">
-      <h2>⚠️ Productos que <u>NO</u> vinieron en el último Excel de <strong>DISTRIMAR OFERTAS</strong></h2>
-      <p style="margin-top:6px">
-        Revisalos: probablemente debas quitarles la bandera de oferta y volver al precio de lista habitual.
-      </p>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Precio Lista (OFERTA) en DB</th>
-            <th>Precio de Venta Actual</th>
-            <th>Marcado como Oferta</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% ofertasFaltantes.forEach(p => { %>
+    <!-- ══════════════════════════════════════
+         TABLA PRINCIPAL
+    ══════════════════════════════════════ -->
+    <div class="pa-panel">
+      <div class="pa-panel__hd">
+        <i class="fa-solid fa-table-list"></i>
+        <span>Detalle de actualización</span>
+      </div>
+      <div class="pa-table-wrap">
+        <table class="pa-table">
+          <thead>
             <tr>
-              <td><%= p.codigo %></td>
-              <td><%= p.nombre %></td>
-              <td>$<%= Number(p.precio_lista_oferta || 0).toLocaleString('es-AR') %></td>
-              <td>$<%= Number(p.precio_venta || 0).toLocaleString('es-AR') %></td>
-              <td><%= p.oferta_flag %></td>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Precio Lista Viejo</th>
+              <th>Precio Lista Nuevo</th>
+              <th>Precio de Venta</th>
+              <th>Diferencia</th>
+              <th>Estado</th>
             </tr>
-          <% }); %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <% (productos || []).forEach(producto => {
+              let viejo = parseFloat(producto.precio_lista_antiguo || 0);
+              let nuevo = parseFloat(producto.precio_lista_nuevo || 0);
+              let diferencia = viejo > 0 ? ((nuevo - viejo) / viejo) * 100 : 0;
+              let diferenciaRedondeada = diferencia.toFixed(2);
+              let diferenciaClass = diferencia > 0 ? 'positivo' : (diferencia < 0 ? 'negativo' : 'neutro');
+              let modificacion = producto.sin_cambio ? 'NO MODIFICA' : 'MODIFICA';
+            %>
+            <tr class="pa-table__row <%= producto.sin_cambio ? 'pa-row--neutro' : '' %>">
+              <td class="pa-td pa-td--code"><code><%= producto.codigo %></code></td>
+              <td class="pa-td pa-td--nombre"><%= producto.nombre %></td>
+              <td class="pa-td pa-td--precio pa-td--old">$<%= viejo.toLocaleString('es-AR') %></td>
+              <td class="pa-td pa-td--precio pa-td--new">$<%= nuevo.toLocaleString('es-AR') %></td>
+              <td class="pa-td pa-td--precio">$<%= parseFloat(producto.precio_venta || 0).toLocaleString('es-AR') %></td>
+              <td class="pa-td">
+                <span class="pa-diff pa-diff--<%= diferenciaClass %>">
+                  <% if (diferencia > 0) { %><i class="fa-solid fa-arrow-trend-up"></i><% } %>
+                  <% if (diferencia < 0) { %><i class="fa-solid fa-arrow-trend-down"></i><% } %>
+                  <% if (diferencia === 0) { %><i class="fa-solid fa-minus"></i><% } %>
+                  <%= diferenciaRedondeada %>%
+                </span>
+              </td>
+              <td class="pa-td">
+                <span class="pa-estado pa-estado--<%= producto.sin_cambio ? 'no-modifica' : 'modifica' %>">
+                  <%= modificacion %>
+                </span>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-      <p style="margin-top: 8px">Total fuera de la nueva lista de OFERTAS: <strong><%= ofertasFaltantes.length %></strong></p>
+    <!-- ══════════════════════════════════════
+         OFERTAS FALTANTES (condicional)
+    ══════════════════════════════════════ -->
+    <% if (ofertasFaltantes && ofertasFaltantes.length) { %>
+    <div class="pa-panel pa-panel--warning">
+      <div class="pa-panel__hd pa-panel__hd--warning">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>Productos fuera del Excel de DISTRIMAR OFERTAS</span>
+        <span class="pa-count-badge pa-count-badge--warning"><%= ofertasFaltantes.length %></span>
+      </div>
+      <p class="pa-warning-desc">
+        Estos productos <strong>no vinieron en el último Excel de ofertas</strong>. Revisalos: probablemente debas quitarles la bandera de oferta y volver al precio de lista habitual.
+      </p>
+      <div class="pa-table-wrap">
+        <table class="pa-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Precio Lista (OFERTA) en DB</th>
+              <th>Precio de Venta Actual</th>
+              <th>Marcado como Oferta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% ofertasFaltantes.forEach(p => { %>
+            <tr class="pa-table__row">
+              <td class="pa-td pa-td--code"><code><%= p.codigo %></code></td>
+              <td class="pa-td pa-td--nombre"><%= p.nombre %></td>
+              <td class="pa-td pa-td--precio">$<%= Number(p.precio_lista_oferta || 0).toLocaleString('es-AR') %></td>
+              <td class="pa-td pa-td--precio">$<%= Number(p.precio_venta || 0).toLocaleString('es-AR') %></td>
+              <td class="pa-td">
+                <span class="pa-estado pa-estado--oferta"><%= p.oferta_flag %></span>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <p class="pa-warning-total">Total fuera de la nueva lista: <strong><%= ofertasFaltantes.length %></strong> productos</p>
+    </div>
     <% } %>
-  </main>
 
-  <div style="margin-top: 20px; text-align: center;">
-    <a href="/productos/panelControl" class="btn btn-primary">← Volver al Panel de Control</a>
+    <!-- Footer -->
+    <div class="pa-footer-actions">
+      <a href="/productos/panelControl" class="pa-btn pa-btn--outline">
+        <i class="fa-solid fa-arrow-left"></i> Volver al Panel de Control
+      </a>
+    </div>
+
   </div>
+</main>
 
-  <%- include ./layouts/footer.ejs %>
+<%- include('./layouts/footer.ejs') %>
 </body>
+</html>
