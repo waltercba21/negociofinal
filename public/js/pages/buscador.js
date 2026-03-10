@@ -411,19 +411,26 @@ function mostrarProductos(productos) {
   }
 
   productos.forEach((producto, index) => {
-    const esOferta = producto.oferta;
-    const esFitam  = producto.calidad_original;
-    const esVic    = producto.calidad_vic;
+    const esOferta  = producto.oferta;
+    const esFitam   = producto.calidad_original;
+    const esVic     = producto.calidad_vic;
+    const esMM      = producto.calidad_mm;
+    const esPremium = producto.calidad_original_premium;
 
     const stockActualNum = Number(producto.stock_actual) || 0;
     const stockMinNum    = Number(producto.stock_minimo) || 0;
     const puedeComprar   = stockActualNum >= stockMinNum && stockActualNum > 0;
 
-    // Badge
-    let badgeHTML = '';
-    if (esOferta)     badgeHTML = `<span class="pcard__badge badge--oferta">OFERTA</span>`;
-    else if (esFitam) badgeHTML = `<span class="pcard__badge badge--fitam">CALIDAD FITAM</span>`;
-    else if (esVic)   badgeHTML = `<span class="pcard__badge badge--vic">CALIDAD VIC</span>`;
+    // Badges — múltiples, todos los que apliquen
+    const _badgeItems = [];
+    if (esOferta)  _badgeItems.push('<span class="pcard__badge badge--oferta">OFERTA</span>');
+    if (esFitam)   _badgeItems.push('<span class="pcard__badge badge--fitam">FITAM</span>');
+    if (esVic)     _badgeItems.push('<span class="pcard__badge badge--vic">VIC</span>');
+    if (esMM)      _badgeItems.push('<span class="pcard__badge badge--mm">MAGNETTI MARELLI</span>');
+    if (esPremium) _badgeItems.push('<span class="pcard__badge badge--premium">&#9733; ORIGINAL</span>');
+    const badgeHTML = _badgeItems.length
+      ? '<div class="pcard__badges">' + _badgeItems.join('') + '</div>'
+      : '';
 
     // Imágenes
     const imgsRaw = Array.isArray(producto.imagenes) ? producto.imagenes : [];
@@ -505,15 +512,22 @@ function mostrarProductos(productos) {
       </button>` : '';
 
     const card = document.createElement('article');
-    card.className = `pcard${esOferta ? ' pcard--oferta' : ''}${esFitam ? ' pcard--fitam' : ''}${esVic ? ' pcard--vic' : ''}`;
+    card.className = [
+      'pcard',
+      esOferta  ? 'pcard--oferta'  : '',
+      esFitam   ? 'pcard--fitam'   : '',
+      esVic     ? 'pcard--vic'     : '',
+      esMM      ? 'pcard--mm'      : '',
+      esPremium ? 'pcard--premium' : ''
+    ].filter(Boolean).join(' ');
     card.dataset.productoId = producto.id;
     card.dataset.precioVenta = producto.precio_venta;
     card.dataset.proveedorAsignadoId = producto.proveedor_id || '';
     card.dataset.utilidad = (producto.utilidad ?? 0);
 
     card.innerHTML = `
-      ${badgeHTML}
       <div class="pcard__media">
+        ${badgeHTML}
         <div class="pcard__carousel" id="carousel-${index}">${imagenesHTML}</div>
         ${botonesCarousel}
       </div>

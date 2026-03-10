@@ -158,11 +158,12 @@
             <!-- Calidades + Oferta -->
             <div class="cr-calidades-group">
               <span class="cr-label cr-calidades-group__title">Calidades y estado</span>
+              <p class="cr-hint" style="margin:0 0 4px;">Solo una calidad puede estar activa a la vez.</p>
 
               <div class="cr-field cr-field--inline">
                 <label class="cr-label" for="calidad_original">Calidad FITAM</label>
                 <label class="cr-toggle cr-toggle--fitam">
-                  <input type="checkbox" id="calidad_original" name="calidad_original" value="1" class="cr-toggle__input">
+                  <input type="radio" id="calidad_original" name="calidad_grupo" value="fitam" class="cr-toggle__input">
                   <span class="cr-toggle__slider"></span>
                 </label>
               </div>
@@ -170,7 +171,7 @@
               <div class="cr-field cr-field--inline">
                 <label class="cr-label" for="calidad_vic">Calidad VIC</label>
                 <label class="cr-toggle cr-toggle--vic">
-                  <input type="checkbox" id="calidad_vic" name="calidad_vic" value="1" class="cr-toggle__input">
+                  <input type="radio" id="calidad_vic" name="calidad_grupo" value="vic" class="cr-toggle__input">
                   <span class="cr-toggle__slider"></span>
                 </label>
               </div>
@@ -178,7 +179,7 @@
               <div class="cr-field cr-field--inline">
                 <label class="cr-label" for="calidad_mm">Magnetti Marelli</label>
                 <label class="cr-toggle cr-toggle--mm">
-                  <input type="checkbox" id="calidad_mm" name="calidad_mm" value="1" class="cr-toggle__input">
+                  <input type="radio" id="calidad_mm" name="calidad_grupo" value="mm" class="cr-toggle__input">
                   <span class="cr-toggle__slider"></span>
                 </label>
               </div>
@@ -186,10 +187,18 @@
               <div class="cr-field cr-field--inline">
                 <label class="cr-label" for="calidad_original_premium">Original</label>
                 <label class="cr-toggle cr-toggle--premium">
-                  <input type="checkbox" id="calidad_original_premium" name="calidad_original_premium" value="1" class="cr-toggle__input">
+                  <input type="radio" id="calidad_original_premium" name="calidad_grupo" value="premium" class="cr-toggle__input">
                   <span class="cr-toggle__slider"></span>
                 </label>
               </div>
+
+              <!-- Hiddens para compatibilidad con el backend (se actualizan via JS) -->
+              <input type="hidden" id="h_calidad_original" name="calidad_original" value="0">
+              <input type="hidden" id="h_calidad_vic" name="calidad_vic" value="0">
+              <input type="hidden" id="h_calidad_mm" name="calidad_mm" value="0">
+              <input type="hidden" id="h_calidad_original_premium" name="calidad_original_premium" value="0">
+
+              <div class="cr-sep" style="margin:8px 0"></div>
 
               <div class="cr-field cr-field--inline">
                 <label class="cr-label" for="oferta">En oferta</label>
@@ -371,6 +380,30 @@
       ta.dispatchEvent(new Event('input', { bubbles: true }));
     }, true);
   })();
+</script>
+
+<script>
+// Sincronizar radio calidad_grupo → hidden fields del backend
+(function() {
+  const radios = document.querySelectorAll('input[name="calidad_grupo"]');
+  const hiddenMap = {
+    fitam:   document.getElementById('h_calidad_original'),
+    vic:     document.getElementById('h_calidad_vic'),
+    mm:      document.getElementById('h_calidad_mm'),
+    premium: document.getElementById('h_calidad_original_premium')
+  };
+
+  function sync() {
+    // Reset todos a 0
+    Object.values(hiddenMap).forEach(h => { if (h) h.value = '0'; });
+    // Activar el seleccionado
+    const checked = document.querySelector('input[name="calidad_grupo"]:checked');
+    if (checked && hiddenMap[checked.value]) hiddenMap[checked.value].value = '1';
+  }
+
+  radios.forEach(r => r.addEventListener('change', sync));
+  sync(); // ejecutar al cargar para estado inicial correcto
+})();
 </script>
 </body>
 </html>
