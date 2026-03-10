@@ -359,8 +359,10 @@ actualizar: function (conexion, datos, archivo) {
 
     if (archivo && isSet(archivo.filename)) add("imagen=?", archivo.filename);
 
-    if (isSet(datos.calidad_original)) add("calidad_original=?", datos.calidad_original ? 1 : 0);
-    if (isSet(datos.calidad_vic)) add("calidad_vic=?", datos.calidad_vic ? 1 : 0);
+    if (isSet(datos.calidad_original))         add("calidad_original=?",         Number(datos.calidad_original)         === 1 ? 1 : 0);
+    if (isSet(datos.calidad_vic))              add("calidad_vic=?",              Number(datos.calidad_vic)              === 1 ? 1 : 0);
+    if (isSet(datos.calidad_mm))               add("calidad_mm=?",               Number(datos.calidad_mm)               === 1 ? 1 : 0);
+    if (isSet(datos.calidad_original_premium)) add("calidad_original_premium=?", Number(datos.calidad_original_premium) === 1 ? 1 : 0);
 
     if (isSet(datos.proveedor_id)) add("proveedor_id=?", datos.proveedor_id);
 

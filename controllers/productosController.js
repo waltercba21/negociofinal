@@ -858,10 +858,10 @@ guardar: async function (req, res) {
       stock_minimo: numOr0(req.body.stock_minimo),
       stock_actual: numOr0(req.body.stock_actual),
       oferta: Number(req.body.oferta) === 1 ? 1 : 0,
-      calidad_original: req.body.calidad_original ? 1 : 0,
-      calidad_vic: req.body.calidad_vic ? 1 : 0,
-      calidad_mm: req.body.calidad_mm ? 1 : 0,
-      calidad_original_premium: req.body.calidad_original_premium ? 1 : 0
+      calidad_original:         Number(req.body.calidad_original)         === 1 ? 1 : 0,
+      calidad_vic:              Number(req.body.calidad_vic)              === 1 ? 1 : 0,
+      calidad_mm:               Number(req.body.calidad_mm)               === 1 ? 1 : 0,
+      calidad_original_premium: Number(req.body.calidad_original_premium) === 1 ? 1 : 0
     };
     const ins = await producto.insertarProducto(conexion, datosProducto);
     const productoId = ins && ins.insertId;
@@ -1058,10 +1058,10 @@ actualizar: async function (req, res) {
       stock_minimo     : numInt(req.body.stock_minimo),
       stock_actual     : numInt(req.body.stock_actual),
       oferta                   : Number(req.body.oferta) === 1 ? 1 : 0,
-      calidad_original         : req.body.calidad_original ? 1 : 0,
-      calidad_vic              : req.body.calidad_vic ? 1 : 0,
-      calidad_mm               : req.body.calidad_mm ? 1 : 0,
-      calidad_original_premium : req.body.calidad_original_premium ? 1 : 0
+      calidad_original         : Number(req.body.calidad_original)         === 1 ? 1 : 0,
+      calidad_vic              : Number(req.body.calidad_vic)              === 1 ? 1 : 0,
+      calidad_mm               : Number(req.body.calidad_mm)               === 1 ? 1 : 0,
+      calidad_original_premium : Number(req.body.calidad_original_premium) === 1 ? 1 : 0
       // IVA del producto lo seteamos más abajo
     };
     await producto.actualizar(conexion, datosProducto);
