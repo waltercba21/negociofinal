@@ -1,376 +1,356 @@
-<%- include ./layouts/head.ejs %>
-<%- include ./layouts/header.ejs %>
-
+<% var pageCss = '/css/pages/crear.css' %>
+<!DOCTYPE html>
+<html lang="es">
+<%- include('./layouts/head.ejs') %>
+<link rel="stylesheet" href="/css/pages/crear.css?v=1" />
 <body>
-  <!-- ======= CSS ESPECÍFICO DE ESTA VISTA ======= -->
-  <style>
-    /* Layout general */
-    .container-crear{display:flex;flex-direction:column;align-items:center;padding:20px;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .titulo-crear{font-weight:800;text-align:center;margin-bottom:18px;font-size:28px;color:var(--primary)}
-    .contenido-crear,.card-body{display:flex;flex-direction:row;justify-content:center;align-items:stretch;flex-wrap:wrap;gap:20px;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-    .form-crear{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:start;justify-items:stretch}
-    .form-crear>div{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-    .form-crear>div:last-child{border-right:2px solid var(--border)}
-    .caracteristicas,.utilidades,.form-crear>.proveedores{display:flex;flex-direction:column;gap:12px;min-width:0}
-    .form-crear>.proveedores{margin:0}
+<%- include('./layouts/header.ejs') %>
 
-    /* Grilla de tarjetas de proveedores */
-    #proveedoresContainer{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-items:start}
+<main class="cr-main">
+  <div class="cr-wrap">
 
-    /* Tarjeta de proveedor */
-    .proveedor{position:relative;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 16px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .2s ease,border-color .2s ease,transform .06s ease-in;padding-top:18px}
-    .proveedor:has(.proveedor-designado-radio) { padding-top:58px; }
-    .proveedor:has(.proveedor-designado-radio) > .form-group-crear:first-child{position:absolute;top:10px;right:10px;margin:0;align-items:flex-end}
-    .proveedor:has(.proveedor-designado-radio) > .form-group-crear:first-child label{
-      display:inline-flex;align-items:center;gap:8px;background:var(--surface-muted);border:2px solid var(--border);
-      border-radius:999px;padding:6px 10px;font-size:12px;color:var(--text);box-shadow:var(--shadow);user-select:none
-    }
-    .proveedor:not(:has(.proveedor-designado-radio)) > .form-group-crear:first-child{position:static;margin-bottom:10px;align-items:stretch}
-    .proveedor:hover{box-shadow:var(--shadow-hover);border-color:var(--border-strong)}
-    .proveedor-designado-radio{transform:scale(1.15);accent-color:var(--primary);margin:0}
-    .proveedor:has(.proveedor-designado-radio:checked){border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,63,125,.1),var(--shadow-hover)}
+    <!-- PAGE HEADER -->
+    <div class="cr-page-header">
+      <div>
+        <span class="cr-eyebrow">Productos</span>
+        <h1 class="cr-title">Crear Producto</h1>
+      </div>
+      <a href="/productos" class="cr-btn cr-btn--outline">
+        <i class="fa-solid fa-arrow-left"></i> Volver al panel
+      </a>
+    </div>
 
-    /* Grupos */
-    .form-group-crear{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;align-items:stretch}
-    .form-group-crear>label{display:block;width:100%;text-align:left;margin:0 0 6px 0;line-height:1.2;font-weight:700;color:var(--label);font-size:13px}
-    .label-proveedor{display:block;font-weight:700}
+    <form class="cr-form" method="POST" action="/productos" enctype="multipart/form-data">
 
-    /* Inputs/selects generales */
-    .form-group-crear input,.form-group-crear select{width:100%;max-width:100%;padding:10px 12px;font-size:13px;font-weight:600;text-align:left;background:var(--surface);border:2px solid var(--border-strong);border-radius:10px;box-shadow:var(--shadow-inset);outline:none}
-    .form-group-crear input:focus,.form-group-crear select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,63,125,.12),var(--shadow-inset)}
+      <div class="cr-grid">
 
-    /* 🔒 Blindaje extra select proveedores */
-    .proveedor .form-group-crear > select.proveedores{
-      display:block !important;width:100% !important;max-width:100% !important;
-      position:static !important;float:none !important;clear:both !important;
-      flex:0 0 auto !important;align-self:stretch !important;box-sizing:border-box !important;z-index:1
-    }
+        <!-- ══════════════════════════════
+             COLUMNA 1: CARACTERÍSTICAS
+        ══════════════════════════════ -->
+        <div class="cr-panel">
+          <div class="cr-panel__hd">
+            <i class="fa-solid fa-tag"></i>
+            <strong>Características</strong>
+          </div>
+          <div class="cr-panel__bd">
 
-    /* Botones */
-    #addProveedor{background:#22A35A;color:#fff;border:2px solid #1e8c4d;padding:10px 16px;font-size:14px;line-height:1;border-radius:999px;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s,background-color .15s;justify-self:center}
-    #addProveedor:hover{background:#2EDB77;color:#0b1729;transform:translateY(-1px);box-shadow:var(--shadow-hover)}
-    .eliminar-proveedor{background:#b30000;color:#fff;border:2px solid #941010;padding:10px 14px;border-radius:10px;width:100%;cursor:pointer;transition:background-color .15s,transform .06s;box-shadow:var(--shadow)}
-    .eliminar-proveedor:hover{background:#e11d1d;transform:translateY(-1px)}
-
-    .botones-crear{width:100%;display:flex;justify-content:space-between;gap:12px;margin-top:20px}
-    .botones-crear button,.botones-crear a{border:2px solid var(--primary-600);background:var(--primary);color:#fff;padding:10px 20px;font-weight:800;text-decoration:none;border-radius:var(--radius-sm);box-shadow:var(--shadow)}
-
-    /* Miniaturas */
-    .imagen-miniatura-contenedor{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-    .thumb{position:relative;width:90px;height:90px;border:2px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);cursor:grab;background:#111}
-    .thumb:active{cursor:grabbing}
-    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-    .badge-portada{position:absolute;left:6px;top:6px;font-size:10px;font-weight:800;background:var(--primary);color:#fff;padding:3px 6px;border-radius:999px;box-shadow:var(--shadow);display:none}
-    .thumb.is-cover .badge-portada{display:inline-block}
-    .hint{font-size:12px;opacity:.85}
-  </style>
-  <!-- ======= /CSS ESPECÍFICO ======= -->
-
-  <main>
-    <div class="container-crear">
-      <div class="titulo-crear">Crear Producto</div>
-
-      <div class="contenido-crear">
-        <div class="card-body">
-          <form class="form-crear" method="POST" action="/productos" enctype="multipart/form-data">
-            <!-- Columna 1: Características -->
-            <div class="caracteristicas">
-              <div class="form-group-crear">
-                <label for="imagen">Imágenes</label>
-                <input id="imagen" class="form-control-file" type="file" name="archivos[]" multiple>
-                <!-- guardamos el índice de portada por si preferís leerlo en el server -->
+            <!-- Imágenes -->
+            <div class="cr-field">
+              <label class="cr-label">Imágenes</label>
+              <label class="cr-file-zone" for="imagen">
+                <i class="fa-solid fa-cloud-arrow-up cr-file-zone__icon"></i>
+                <span class="cr-file-zone__text">Clic para seleccionar imágenes</span>
+                <input id="imagen" type="file" name="archivos[]" multiple class="cr-file-input">
                 <input type="hidden" id="portada_index" name="portada_index" value="0">
-                <div class="hint">• Clic: marcar portada • Doble-clic: eliminar • Arrastrar: reordenar</div>
-              </div>
-
+              </label>
+              <p class="cr-hint">• Clic: marcar portada &nbsp;•&nbsp; Doble-clic: eliminar &nbsp;•&nbsp; Arrastrar: reordenar</p>
               <div id="preview" class="imagen-miniatura-contenedor"></div>
+            </div>
 
-              <div class="form-group-crear">
-                <label for="nombre">Nombre</label>
-                <input id="nombre" class="form-control" type="text" name="nombre">
-              </div>
+            <!-- Nombre -->
+            <div class="cr-field">
+              <label class="cr-label" for="nombre">Nombre</label>
+              <input id="nombre" type="text" name="nombre" class="cr-input">
+            </div>
 
-              <div class="form-group-crear">
-                <label for="descripcion">Descripción</label>
-                <textarea id="descripcion" class="form-control" name="descripcion" rows="6"></textarea>
+            <!-- Descripción -->
+            <div class="cr-field">
+              <label class="cr-label" for="descripcion">Descripción</label>
+              <textarea id="descripcion" name="descripcion" rows="5" class="cr-input cr-textarea"></textarea>
+            </div>
 
-              </div>
-
-              <div class="form-group-crear">
-                <label for="oferta">Oferta</label>
+            <!-- Oferta -->
+            <div class="cr-field cr-field--inline">
+              <label class="cr-label" for="oferta">En oferta</label>
+              <label class="cr-toggle">
                 <input type="hidden" name="oferta" value="0">
-                <input type="checkbox" id="oferta" name="oferta" value="1" class="form-check-input" <%= producto && producto.oferta === 1 ? 'checked' : '' %>>
+                <input type="checkbox" id="oferta" name="oferta" value="1" class="cr-toggle__input"
+                  <%= producto && producto.oferta === 1 ? 'checked' : '' %>>
+                <span class="cr-toggle__slider"></span>
+              </label>
+            </div>
+
+            <!-- Categoría -->
+            <div class="cr-field">
+              <label class="cr-label" for="categoria">Categoría</label>
+              <select id="categoria" name="categoria" required class="cr-select">
+                <option value="">Seleccioná una categoría</option>
+                <% categorias.forEach(function(categoria) { %>
+                  <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
+                <% }); %>
+              </select>
+            </div>
+
+            <!-- Escobillas (condicional) -->
+            <div id="escobillasSection" class="cr-escobillas" style="display:none">
+              <div class="cr-escobillas__hd">
+                <i class="fa-solid fa-wiper"></i> Datos de Escobillas (TRICO)
               </div>
+              <input type="hidden" id="escobillas_tipo" name="escobillas_tipo" value="">
+              <input type="hidden" id="escobillas_codigos_json" name="escobillas_codigos_json" value="">
+              <input type="hidden" id="escobillas_kit_json" name="escobillas_kit_json" value="">
 
-              <div class="form-group-crear">
-  <label for="categoria">Categoría:</label>
-  <select id="categoria" name="categoria" required>
-    <option value="">Seleccione una categoría</option>
-    <% categorias.forEach(function(categoria) { %>
-      <option value="<%= categoria.id %>"><%= categoria.nombre %></option>
-    <% }); %>
-  </select>
-</div>
-
-<!-- =========================
-     ESCOBILLAS (TRICO)
-     Se muestra solo si la categoría elegida contiene "escobill"
-========================= -->
-<div id="escobillasSection" class="form-group-crear" style="display:none; margin-top:12px;">
-  <div style="padding:12px; border:1px solid #e6e6e6; border-radius:10px;">
-    <h4 style="margin:0 0 10px 0;">Datos de Escobillas (TRICO)</h4>
-
-<input type="hidden" id="escobillas_tipo" name="escobillas_tipo" value="">
-<input type="hidden" id="escobillas_codigos_json" name="escobillas_codigos_json" value="">
-<input type="hidden" id="escobillas_kit_json" name="escobillas_kit_json" value="">
-
-    <div class="form-group-crear">
-      <label for="esc_formato">Formato:</label>
-      <select id="esc_formato" name="esc_formato">
-        <option value="unidad">Unidad</option>
-        <option value="kit">Kit (Conductor + Acompañante)</option>
-      </select>
-    </div>
-
-    <!-- Unidad -->
-    <div id="esc_unidad_block">
-      <div class="form-group-crear">
-        <label for="esc_tecnologia">Tecnología:</label>
-        <select id="esc_tecnologia" name="esc_tecnologia">
-          <option value="FLEX">FLEX</option>
-          <option value="STEEL">STEEL</option>
-          <option value="REAR">REAR (Trasera)</option>
-        </select>
-      </div>
-
-      <div class="form-group-crear">
-        <label for="esc_codigo">Código TRICO:</label>
-        <input
-          type="text"
-          id="esc_codigo"
-          name="esc_codigo"
-          placeholder="Ej: 10707"
-          autocomplete="off"
-        />
-      </div>
-    </div>
-
-    <!-- Kit -->
-    <div id="esc_kit_block" style="display:none;">
-      <div class="form-group-crear">
-        <label for="esc_kit_tecnologia">Tecnología del kit:</label>
-        <select id="esc_kit_tecnologia" name="esc_kit_tecnologia">
-          <option value="FLEX">FLEX</option>
-          <option value="STEEL">STEEL</option>
-        </select>
-      </div>
-
-      <div class="form-group-crear">
-        <label for="esc_kit_conductor">Código TRICO Conductor:</label>
-        <input
-          type="text"
-          id="esc_kit_conductor"
-          name="esc_kit_conductor"
-          placeholder="Ej: 10707"
-          autocomplete="off"
-        />
-      </div>
-
-      <div class="form-group-crear">
-        <label for="esc_kit_acompanante">Código TRICO Acompañante:</label>
-        <input
-          type="text"
-          id="esc_kit_acompanante"
-          name="esc_kit_acompanante"
-          placeholder="Ej: 10708"
-          autocomplete="off"
-        />
-      </div>
-    </div>
-  </div>
-</div>
-
-
-              <div class="form-group-crear">
-                <label for="marca">Marca</label>
-                <select id="marca" name="marca">
-                  <option value="" selected>Selecciona una marca</option>
-                  <% marcas.forEach(function(marca) { %>
-                    <option value="<%= marca.id %>"><%= marca.nombre %></option>
-                  <% }); %>
+              <div class="cr-field">
+                <label class="cr-label" for="esc_formato">Formato</label>
+                <select id="esc_formato" name="esc_formato" class="cr-select">
+                  <option value="unidad">Unidad</option>
+                  <option value="kit">Kit (Conductor + Acompañante)</option>
                 </select>
               </div>
 
-              <div class="form-group-crear">
-                <label for="modelo_id">Modelo</label>
-                <select id="modelo_id" name="modelo_id">
-                  <option value="" <% if (!producto || !producto.modelo_id) { %>selected<% } %>>Selecciona un modelo</option>
-                  <% modelos.forEach(function(modelo) { %>
-                    <option value="<%= modelo.id %>" <% if (producto && producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
-                  <% }); %>
-                </select>
+              <div id="esc_unidad_block">
+                <div class="cr-field">
+                  <label class="cr-label" for="esc_tecnologia">Tecnología</label>
+                  <select id="esc_tecnologia" name="esc_tecnologia" class="cr-select">
+                    <option value="FLEX">FLEX</option>
+                    <option value="STEEL">STEEL</option>
+                    <option value="REAR">REAR (Trasera)</option>
+                  </select>
+                </div>
+                <div class="cr-field">
+                  <label class="cr-label" for="esc_codigo">Código TRICO</label>
+                  <input type="text" id="esc_codigo" name="esc_codigo" placeholder="Ej: 10707" autocomplete="off" class="cr-input">
+                </div>
+              </div>
+
+              <div id="esc_kit_block" style="display:none">
+                <div class="cr-field">
+                  <label class="cr-label" for="esc_kit_tecnologia">Tecnología del kit</label>
+                  <select id="esc_kit_tecnologia" name="esc_kit_tecnologia" class="cr-select">
+                    <option value="FLEX">FLEX</option>
+                    <option value="STEEL">STEEL</option>
+                  </select>
+                </div>
+                <div class="cr-field">
+                  <label class="cr-label" for="esc_kit_conductor">Código TRICO Conductor</label>
+                  <input type="text" id="esc_kit_conductor" name="esc_kit_conductor" placeholder="Ej: 10707" autocomplete="off" class="cr-input">
+                </div>
+                <div class="cr-field">
+                  <label class="cr-label" for="esc_kit_acompanante">Código TRICO Acompañante</label>
+                  <input type="text" id="esc_kit_acompanante" name="esc_kit_acompanante" placeholder="Ej: 10708" autocomplete="off" class="cr-input">
+                </div>
               </div>
             </div>
 
-            <!-- Columna 2: Proveedores -->
-            <div id="proveedoresContainer" class="proveedores">
-              <div class="form-group-crear">
-                <label for="calidad_original">Calidad FITAM</label>
-                <input type="checkbox" id="calidad_original" name="calidad_original" value="1">
-              </div>
+            <!-- Marca / Modelo -->
+            <div class="cr-field">
+              <label class="cr-label" for="marca">Marca</label>
+              <select id="marca" name="marca" class="cr-select">
+                <option value="" selected>Seleccioná una marca</option>
+                <% marcas.forEach(function(marca) { %>
+                  <option value="<%= marca.id %>"><%= marca.nombre %></option>
+                <% }); %>
+              </select>
+            </div>
 
-              <div class="form-group-crear">
-                <label for="calidad_vic">Calidad VIC</label>
-                <input type="checkbox" id="calidad_vic" name="calidad_vic" value="1">
-              </div>
+            <div class="cr-field">
+              <label class="cr-label" for="modelo_id">Modelo</label>
+              <select id="modelo_id" name="modelo_id" class="cr-select">
+                <option value="" <% if (!producto || !producto.modelo_id) { %>selected<% } %>>Seleccioná un modelo</option>
+                <% modelos.forEach(function(modelo) { %>
+                  <option value="<%= modelo.id %>" <% if (producto && producto.modelo_id == modelo.id) { %>selected<% } %>><%= modelo.nombre %></option>
+                <% }); %>
+              </select>
+            </div>
 
-              <div class="form-group-crear">
-                <label for="proveedorAsignado">Proveedor Asignado (automático por costo IVA más bajo):</label>
-                <div id="proveedorAsignado" class="form-control" readonly></div>
-              </div>
+          </div>
+        </div>
 
-              <!-- BLOQUE BASE DE PROVEEDOR (plantilla para clonar) -->
-              <div class="proveedor">
-                <div class="form-group-crear">
-                  <label class="label-proveedor">Proveedores: <span class="nombre_proveedor"></span></label>
-                  <select class="proveedores" name="proveedores[]" required>
-                    <option value="" selected>Selecciona proveedor...</option>
+        <!-- ══════════════════════════════
+             COLUMNA 2: PROVEEDORES
+        ══════════════════════════════ -->
+        <div class="cr-panel">
+          <div class="cr-panel__hd">
+            <i class="fa-solid fa-truck"></i>
+            <strong>Proveedores y costos</strong>
+          </div>
+          <div class="cr-panel__bd">
+
+            <!-- Calidades -->
+            <div class="cr-field cr-field--inline">
+              <label class="cr-label" for="calidad_original">Calidad FITAM</label>
+              <label class="cr-toggle">
+                <input type="checkbox" id="calidad_original" name="calidad_original" value="1" class="cr-toggle__input">
+                <span class="cr-toggle__slider"></span>
+              </label>
+            </div>
+            <div class="cr-field cr-field--inline">
+              <label class="cr-label" for="calidad_vic">Calidad VIC</label>
+              <label class="cr-toggle">
+                <input type="checkbox" id="calidad_vic" name="calidad_vic" value="1" class="cr-toggle__input">
+                <span class="cr-toggle__slider"></span>
+              </label>
+            </div>
+
+            <!-- Proveedor asignado -->
+            <div class="cr-field">
+              <label class="cr-label">Proveedor asignado <span class="cr-hint-inline">(costo IVA más bajo)</span></label>
+              <div id="proveedorAsignado" class="cr-input cr-input--readonly"></div>
+            </div>
+
+            <div class="cr-sep"></div>
+
+            <!-- Contenedor de bloques proveedor -->
+            <div id="proveedoresContainer">
+
+              <!-- BLOQUE BASE (se clona con JS) -->
+              <div class="proveedor cr-prov-card">
+                <div class="form-group-crear cr-field">
+                  <label class="label-proveedor cr-label">Proveedor: <span class="nombre_proveedor cr-prov-nombre"></span></label>
+                  <select class="proveedores cr-select" name="proveedores[]" required>
+                    <option value="" selected>Seleccioná proveedor...</option>
                     <% proveedores.forEach(function(proveedor) { %>
                       <option value="<%= proveedor.id %>" data-descuento="<%= proveedor.descuento %>"><%= proveedor.nombre %></option>
                     <% }); %>
                   </select>
                 </div>
 
-                <div class="form-group-crear">
-                  <label class="label-codigo" for="codigo">Código Proveedor</label>
-                  <input class="codigo form-control" type="text" name="codigo[]">
+                <div class="form-group-crear cr-field">
+                  <label class="label-codigo cr-label">Código proveedor</label>
+                  <input class="codigo cr-input form-control" type="text" name="codigo[]">
                 </div>
 
-                <div class="form-group-crear">
-  <label class="label-precio-lista" for="precio_lista">Precio de Lista:</label>
-  <input class="precio_lista form-control" type="number" step="0.01" name="precio_lista[]">
-</div>
+                <div class="cr-prov-grid">
+                  <div class="form-group-crear cr-field">
+                    <label class="label-precio-lista cr-label">Precio de lista</label>
+                    <input class="precio_lista cr-input form-control" type="number" step="0.01" name="precio_lista[]">
+                  </div>
 
-<div class="form-group-crear">
-  <label class="label-descuento" for="descuentos_proveedor_id">Descuentos Proveedor:</label>
-  <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
-</div>
+                  <div class="form-group-crear cr-field">
+                    <label class="label-descuento cr-label">Descuento prov.</label>
+                    <input class="descuentos_proveedor_id cr-input cr-input--readonly form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
+                  </div>
+                </div>
 
-<!-- Presentación de precio del proveedor -->
-<div class="form-group-crear">
-  <label for="presentacion">Presentación del precio</label>
-  <select class="presentacion form-control" name="presentacion[]">
-    <option value="unidad" selected>Unidad</option>
-    <option value="juego">Juego (par)</option>
-  </select>
-  <!-- viaja al backend y se recalcula en tiempo real -->
-  <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="1">
-  <div class="hint">Se normaliza para comparar por unidad. Si es "juego", toma la mitad.</div>
-</div>
+                <div class="cr-prov-grid">
+                  <div class="form-group-crear cr-field">
+                    <label class="cr-label">Presentación</label>
+                    <select class="presentacion cr-select form-control" name="presentacion[]">
+                      <option value="unidad" selected>Unidad</option>
+                      <option value="juego">Juego (par)</option>
+                    </select>
+                    <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="1">
+                    <p class="cr-hint">Si es "juego", toma la mitad por unidad.</p>
+                  </div>
 
-<!-- 👇 SOLO UNO: este es el que se muestra y viaja -->
-<div class="form-group-crear">
-  <label for="costo_neto">Precio de costo (Neto):</label>
-  <input class="costo_neto form-control" type="number" step="0.01" name="costo_neto[]" value="0">
-</div>
+                  <div class="form-group-crear cr-field">
+                    <label class="cr-label">IVA</label>
+                    <select class="IVA cr-select form-control" name="IVA[]">
+                      <option value="21" selected>21%</option>
+                      <option value="10.5">10.5%</option>
+                    </select>
+                  </div>
+                </div>
 
-<!-- IVA SOLO como select -->
-<div class="form-group-crear">
-  <label>IVA</label>
-  <select class="IVA form-control" name="IVA[]">
-    <option value="21" selected>21%</option>
-    <option value="10.5">10,5%</option>
-  </select>
-</div>
+                <div class="cr-prov-grid">
+                  <div class="form-group-crear cr-field">
+                    <label class="cr-label">Costo neto</label>
+                    <input class="costo_neto cr-input form-control" type="number" step="0.01" name="costo_neto[]" value="0">
+                  </div>
 
-<!-- Costo con IVA: visible + hidden que viaja -->
-<div class="form-group-crear">
-  <label for="costo_iva_vis">Precio de costo (con IVA):</label>
-  <input class="costo_iva_vis form-control" type="number" step="0.01" readonly>
-  <input class="costo_iva" type="hidden" name="costo_iva[]" value="0">
-</div>
+                  <div class="form-group-crear cr-field">
+                    <label class="cr-label">Costo con IVA</label>
+                    <input class="costo_iva_vis cr-input cr-input--readonly form-control" type="number" step="0.01" readonly>
+                    <input class="costo_iva" type="hidden" name="costo_iva[]" value="0">
+                  </div>
+                </div>
 
-
+                <button type="button" class="eliminar-proveedor cr-btn cr-btn--danger cr-btn--sm">
+                  <i class="fa-solid fa-trash"></i> Eliminar proveedor
+                </button>
               </div>
 
-              <!-- Botón + FUERA del bloque .proveedor (no se clona) -->
-              <button id="addProveedor" type="button" class="btn btn-secondary">+</button>
             </div>
 
-            <!-- Columna 3: Utilidades/estado/stock -->
-            <div class="utilidades">
-              <div class="form-group-crear">
-                <label for="utilidad">Utilidad:</label>
-                <input id="utilidad" class="form-control" type="number" name="utilidad">
-              </div>
+            <button id="addProveedor" type="button" class="cr-btn cr-btn--outline cr-btn--full">
+              <i class="fa-solid fa-plus"></i> Agregar proveedor
+            </button>
 
-              <div class="form-group-crear">
-                <label for="precio_venta">Precio Venta:</label>
-                <input id="precio_venta" class="form-control" type="number" name="precio_venta">
-              </div>
-
-              <div class="form-group-crear">
-                <label for="estado">Estado:</label>
-                <select id="estado" class="form-control" name="estado">
-                  <option value="">Selecciona un estado...</option>
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                </select>
-              </div>
-
-              <div class="form-group-crear">
-                <label for="stock_minimo">Stock Mínimo:</label>
-                <input type="number" id="stock_minimo" class="form-control" name="stock_minimo" min="0" required>
-              </div>
-
-              <div class="form-group-crear">
-                <label for="stock_actual">Stock Actual:</label>
-                <input type="number" id="stock_actual" class="form-control" name="stock_actual" min="0" required>
-              </div>
-
-              <div class="botones-crear">
-                <button class="btn btn-success" type="submit">Guardar</button>
-                <a class='btn btn-primary' href="/productos">Cancelar</a>
-              </div>
-            </div>
-          </form>
+          </div>
         </div>
-      </div>
-    </div>
-  </main>
 
- <%- include ./layouts/footer.ejs %>
+        <!-- ══════════════════════════════
+             COLUMNA 3: UTILIDADES
+        ══════════════════════════════ -->
+        <div class="cr-panel">
+          <div class="cr-panel__hd">
+            <i class="fa-solid fa-chart-pie"></i>
+            <strong>Precio y stock</strong>
+          </div>
+          <div class="cr-panel__bd">
+
+            <div class="cr-field">
+              <label class="cr-label" for="utilidad">Utilidad (%)</label>
+              <input id="utilidad" type="number" name="utilidad" class="cr-input">
+            </div>
+
+            <div class="cr-field">
+              <label class="cr-label" for="precio_venta">Precio de venta</label>
+              <div class="cr-input-prefix-wrap">
+                <span class="cr-input-prefix">$</span>
+                <input id="precio_venta" type="number" name="precio_venta" class="cr-input cr-input--prefixed">
+              </div>
+            </div>
+
+            <div class="cr-sep"></div>
+
+            <div class="cr-field">
+              <label class="cr-label" for="estado">Estado</label>
+              <select id="estado" name="estado" class="cr-select">
+                <option value="">Seleccioná un estado...</option>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
+
+            <div class="cr-field">
+              <label class="cr-label" for="stock_minimo">Stock mínimo</label>
+              <input type="number" id="stock_minimo" name="stock_minimo" min="0" required class="cr-input">
+            </div>
+
+            <div class="cr-field">
+              <label class="cr-label" for="stock_actual">Stock actual</label>
+              <input type="number" id="stock_actual" name="stock_actual" min="0" required class="cr-input">
+            </div>
+
+            <div class="cr-sep"></div>
+
+            <div class="cr-actions">
+              <button type="submit" class="cr-btn cr-btn--primary cr-btn--full">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar producto
+              </button>
+              <a href="/productos" class="cr-btn cr-btn--outline cr-btn--full">
+                Cancelar
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</main>
+
+<%- include('./layouts/footer.ejs') %>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.10.2/Sortable.min.js"></script>
-<script src="/js/crear.js"></script>
-
-<!-- ✅ FIX ENTER EN DESCRIPCIÓN -->
+<script src="/js/pages/crear.js?v=1"></script>
 <script>
+  // Fix Enter en textarea descripción
   (function () {
     var ta = document.getElementById('descripcion');
     if (!ta) return;
-
     ta.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
-
-      // Forzamos salto de línea aunque algún script global bloquee Enter
       e.preventDefault();
       e.stopImmediatePropagation();
-
-      var start = ta.selectionStart;
-      var end = ta.selectionEnd;
-
-      if (typeof start !== 'number' || typeof end !== 'number') {
-        ta.value += "\n";
-        return;
-      }
-
+      var start = ta.selectionStart, end = ta.selectionEnd;
       ta.value = ta.value.slice(0, start) + "\n" + ta.value.slice(end);
       ta.selectionStart = ta.selectionEnd = start + 1;
-
       ta.dispatchEvent(new Event('input', { bubbles: true }));
     }, true);
   })();
 </script>
-
 </body>
+</html>

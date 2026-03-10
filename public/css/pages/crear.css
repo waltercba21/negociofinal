@@ -1,0 +1,484 @@
+/* ============================================================
+   crear.css  —  Autofaros · Crear / Editar Producto
+   v2026-03-09
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────
+   1. BASE
+────────────────────────────────────────────────────────── */
+.cr-main {
+  background: #0b1220;
+  min-height: 100vh;
+  padding: 96px 24px 64px;
+}
+
+.cr-wrap {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   2. PAGE HEADER
+────────────────────────────────────────────────────────── */
+.cr-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cr-eyebrow {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #1F487E;
+  margin-bottom: 4px;
+}
+
+.cr-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 800;
+  color: #f0f4ff;
+  margin: 0;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+/* ──────────────────────────────────────────────────────────
+   3. BOTONES
+────────────────────────────────────────────────────────── */
+.cr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 18px;
+  height: 40px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.cr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.cr-btn:active:not(:disabled) { transform: translateY(1px); }
+
+.cr-btn--primary { background: #1F487E; color: #fff; }
+.cr-btn--primary:hover:not(:disabled) { background: #2a5da0; box-shadow: 0 4px 16px rgba(31,72,126,0.4); }
+
+.cr-btn--outline {
+  background: transparent;
+  color: rgba(240,244,255,0.75);
+  border: 1.5px solid rgba(31,72,126,0.35);
+}
+.cr-btn--outline:hover:not(:disabled) {
+  background: rgba(31,72,126,0.12);
+  border-color: #1F487E;
+  color: #f0f4ff;
+}
+
+.cr-btn--danger {
+  background: rgba(217,4,41,0.1);
+  color: #ff4d6d;
+  border: 1.5px solid rgba(217,4,41,0.25);
+}
+.cr-btn--danger:hover:not(:disabled) { background: rgba(217,4,41,0.2); }
+
+.cr-btn--sm { height: 34px; padding: 0 12px; font-size: 12px; }
+.cr-btn--full { width: 100%; }
+
+/* ──────────────────────────────────────────────────────────
+   4. GRID PRINCIPAL (3 columnas)
+────────────────────────────────────────────────────────── */
+.cr-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .cr-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 780px) {
+  .cr-grid { grid-template-columns: 1fr; }
+}
+
+/* ──────────────────────────────────────────────────────────
+   5. PANEL
+────────────────────────────────────────────────────────── */
+.cr-panel {
+  background: rgba(17,28,48,0.8);
+  border: 1px solid rgba(31,72,126,0.18);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.cr-panel__hd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(31,72,126,0.15);
+  background: rgba(31,72,126,0.05);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f0f4ff;
+}
+
+.cr-panel__hd i { color: #1F487E; font-size: 15px; }
+
+.cr-panel__bd {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   6. FIELDS
+────────────────────────────────────────────────────────── */
+.cr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cr-field--inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cr-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240,244,255,0.45);
+}
+
+.cr-hint {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: rgba(240,244,255,0.3);
+  margin: 0;
+}
+
+.cr-hint-inline {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(240,244,255,0.3);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   7. INPUTS / SELECTS / TEXTAREA
+────────────────────────────────────────────────────────── */
+.cr-input,
+.cr-select,
+.cr-textarea {
+  width: 100%;
+  padding: 0 12px;
+  height: 40px;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(31,72,126,0.25);
+  border-radius: 10px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+
+.cr-input::placeholder,
+.cr-textarea::placeholder { color: rgba(240,244,255,0.2); }
+
+.cr-input:focus,
+.cr-select:focus,
+.cr-textarea:focus {
+  border-color: #1F487E;
+  background: rgba(31,72,126,0.1);
+  box-shadow: 0 0 0 3px rgba(31,72,126,0.15);
+}
+
+.cr-input--readonly {
+  opacity: 0.6;
+  cursor: default;
+  pointer-events: none;
+}
+
+.cr-textarea {
+  height: auto;
+  padding: 10px 12px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.cr-select { cursor: pointer; }
+
+/* Input con prefijo $ */
+.cr-input-prefix-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cr-input-prefix {
+  position: absolute;
+  left: 12px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(240,244,255,0.4);
+  pointer-events: none;
+}
+
+.cr-input--prefixed { padding-left: 24px; }
+
+/* ──────────────────────────────────────────────────────────
+   8. TOGGLE (checkbox custom)
+────────────────────────────────────────────────────────── */
+.cr-toggle {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cr-toggle__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cr-toggle__slider {
+  width: 40px;
+  height: 22px;
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(31,72,126,0.3);
+  border-radius: 999px;
+  transition: background 0.2s, border-color 0.2s;
+  position: relative;
+}
+
+.cr-toggle__slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: rgba(240,244,255,0.4);
+  border-radius: 999px;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.cr-toggle__input:checked + .cr-toggle__slider {
+  background: #1F487E;
+  border-color: #1F487E;
+}
+
+.cr-toggle__input:checked + .cr-toggle__slider::after {
+  transform: translateX(18px);
+  background: #fff;
+}
+
+/* ──────────────────────────────────────────────────────────
+   9. FILE UPLOAD ZONE
+────────────────────────────────────────────────────────── */
+.cr-file-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px;
+  border: 1.5px dashed rgba(31,72,126,0.35);
+  border-radius: 12px;
+  background: rgba(31,72,126,0.04);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: center;
+}
+
+.cr-file-zone:hover {
+  border-color: #1F487E;
+  background: rgba(31,72,126,0.08);
+}
+
+.cr-file-zone__icon {
+  font-size: 28px;
+  color: rgba(31,72,126,0.5);
+}
+
+.cr-file-zone__text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240,244,255,0.4);
+}
+
+.cr-file-input { display: none; }
+
+/* Miniaturas preview */
+.imagen-miniatura-contenedor {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.thumb {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border: 1.5px solid rgba(31,72,126,0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: grab;
+  background: rgba(255,255,255,0.03);
+  transition: border-color 0.15s;
+}
+
+.thumb:active { cursor: grabbing; }
+.thumb:hover { border-color: #1F487E; }
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.badge-portada {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  background: #1F487E;
+  color: #fff;
+  padding: 2px 5px;
+  border-radius: 999px;
+  display: none;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.thumb.is-cover {
+  border-color: #1F487E;
+  box-shadow: 0 0 0 2px rgba(31,72,126,0.3);
+}
+
+.thumb.is-cover .badge-portada { display: inline-block; }
+
+/* ──────────────────────────────────────────────────────────
+   10. ESCOBILLAS
+────────────────────────────────────────────────────────── */
+.cr-escobillas {
+  border: 1px solid rgba(31,72,126,0.2);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cr-escobillas__hd {
+  padding: 10px 14px;
+  background: rgba(31,72,126,0.08);
+  border-bottom: 1px solid rgba(31,72,126,0.15);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(240,244,255,0.7);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cr-escobillas > .cr-field,
+.cr-escobillas > #esc_unidad_block,
+.cr-escobillas > #esc_kit_block {
+  padding: 0 14px 10px;
+  margin-top: 10px;
+}
+
+#esc_unidad_block .cr-field,
+#esc_kit_block .cr-field { margin-bottom: 10px; }
+
+/* ──────────────────────────────────────────────────────────
+   11. PROVEEDORES CARD
+────────────────────────────────────────────────────────── */
+.cr-prov-card {
+  background: rgba(31,72,126,0.06);
+  border: 1px solid rgba(31,72,126,0.18);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+
+.cr-prov-card:has(.proveedores-designado-radio:checked),
+.cr-prov-card.active { border-color: #1F487E; }
+
+.cr-prov-nombre {
+  color: #4e80c0;
+  font-weight: 700;
+}
+
+.cr-prov-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   12. SEPARADOR
+────────────────────────────────────────────────────────── */
+.cr-sep {
+  height: 1px;
+  background: rgba(31,72,126,0.15);
+  margin: 2px 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   13. ACCIONES FOOTER
+────────────────────────────────────────────────────────── */
+.cr-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   14. RESPONSIVE
+────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .cr-main { padding: 88px 12px 48px; }
+  .cr-prov-grid { grid-template-columns: 1fr; }
+}
