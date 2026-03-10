@@ -455,3 +455,105 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+/* ============================================================
+   autofaros-dark-reset.css
+   Parche global que revierte los overrides de Bootstrap en todas
+   las vistas dark navy de Autofaros.
+   
+   CÓMO USARLO: agregar este bloque al final de public/css/autofaros.css
+   (o incluirlo como <link> después de Bootstrap en head.ejs)
+   ============================================================ */
+
+/*
+  Bootstrap define:
+    input, select, textarea { background-color: #fff; color: #212529; }
+    .btn { color: #212529; }
+  
+  Estos resets aplican a todos los inputs/botones dentro de las vistas
+  dark del proyecto usando los prefijos de clase de cada vista.
+*/
+
+/* Prefijos de vistas dark: .pc- .cr- .lf- .fv- .lp- .pv- .arca- .auth- .lista- .pa- */
+.pc-input, .pc-select,
+.cr-input, .cr-select,
+.lf-input, .lf-select,
+.fv-input, .fv-select,
+.lp-input, .lp-select,
+.pv-input, .pv-select,
+.arca-input,
+.auth-input, .auth-select,
+.lista-input, .lista-select,
+.pa-input, .pa-select,
+.facturas-input, .facturas-select,
+.facturas-buscador-input,
+.buscador-field__input,
+.filtro-select {
+  background-color: rgba(255,255,255,0.05) !important;
+  color: #f0f4ff !important;
+  -webkit-text-fill-color: #f0f4ff !important;
+  border-color: rgba(31,72,126,0.25) !important;
+}
+
+/* Autofill de Chrome — siempre pone fondo blanco si no se fuerza */
+.pc-input:-webkit-autofill,
+.cr-input:-webkit-autofill,
+.arca-input:-webkit-autofill,
+.auth-input:-webkit-autofill,
+.facturas-input:-webkit-autofill,
+.buscador-field__input:-webkit-autofill,
+.filtro-select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 40px #0d1628 inset !important;
+  -webkit-text-fill-color: #f0f4ff !important;
+  caret-color: #f0f4ff;
+}
+
+/* Opciones de select — fondo del dropdown */
+.pc-select option,
+.cr-select option,
+.arca-input option,
+.facturas-select option,
+.filtro-select option,
+.adm-main select option {
+  background: #111c30 !important;
+  color: #f0f4ff !important;
+}
+
+/* Botones — Bootstrap pisa el color de texto */
+.pc-btn, .cr-btn, .arca-btn, .auth-btn,
+.adm-tile__btn, .adm-btn, .pa-btn,
+.btn-guardar, .btn-imprimir, .btn-listado,
+.btn-agregar, .btn-detalle, .btn-aplicaciones,
+.btn-ver-proveedores, .paginacion__btn, .paginacion__page {
+  color: inherit !important;
+}
+
+/* Inputs dentro de modales Bootstrap (administracion.ejs) */
+.modal .form-control,
+.modal .form-select {
+  background-color: rgba(255,255,255,0.05) !important;
+  color: #f0f4ff !important;
+  -webkit-text-fill-color: #f0f4ff !important;
+  border-color: rgba(31,72,126,0.25) !important;
+}
+.modal .form-control::placeholder {
+  color: rgba(240,244,255,0.25) !important;
+}
+.modal .form-control:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 40px #0d1628 inset !important;
+  -webkit-text-fill-color: #f0f4ff !important;
+}
+.modal .form-select option {
+  background: #111c30 !important;
+  color: #f0f4ff !important;
+}
+
+/* SweetAlert2 — aparece en body directamente, no hereda contexto de vista */
+/* El parche usa body.arca-page para las vistas que tienen esa clase en body */
+body.arca-page .swal2-input,
+body.arca-page .swal2-select,
+body.arca-page .swal2-textarea {
+  background: rgba(255,255,255,0.06) !important;
+  color: #f0f4ff !important;
+  -webkit-text-fill-color: #f0f4ff !important;
+  border-color: rgba(31,72,126,0.3) !important;
+}
