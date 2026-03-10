@@ -482,94 +482,15 @@
   .cr-main { padding: 88px 12px 48px; }
   .cr-prov-grid { grid-template-columns: 1fr; }
 }
-/* ──────────────────────────────────────────────────────────
-   16. CALIDADES GROUP — Bloque unificado de calidades + oferta
-────────────────────────────────────────────────────────── */
-.cr-calidades-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px;
-  background: rgba(31,72,126,0.05);
-  border: 1px solid rgba(31,72,126,0.15);
-  border-radius: 12px;
+/* ── Sin calidad (ninguna) — gris neutro ── */
+.cr-toggle--ninguna .cr-toggle__input:checked + .cr-toggle__slider {
+  background: rgba(240,244,255,0.15);
+  border-color: rgba(240,244,255,0.3);
 }
-
-.cr-calidades-group__title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: rgba(240,244,255,0.3);
-  margin-bottom: 4px;
-  display: block;
+.cr-field--ninguna .cr-label {
+  color: rgba(240,244,255,0.4);
+  font-style: italic;
 }
-
-/* ── Toggle base ya definido arriba ── */
-
-/* ── FITAM (azul — ya existía, sin cambio de color) ── */
-.cr-toggle--fitam .cr-toggle__input:checked + .cr-toggle__slider {
-  background: #1F487E;
-  border-color: #1F487E;
+.cr-field:has(.cr-toggle--ninguna .cr-toggle__input:checked) .cr-label {
+  color: rgba(240,244,255,0.55);
 }
-
-/* ── VIC (violeta) ── */
-.cr-toggle--vic .cr-toggle__input:checked + .cr-toggle__slider {
-  background: #6d28d9;
-  border-color: #6d28d9;
-  box-shadow: 0 0 0 2px rgba(109,40,217,0.2);
-}
-
-/* ── MAGNETTI MARELLI (amarillo + azul acero) ── */
-.cr-toggle--mm .cr-toggle__input:checked + .cr-toggle__slider {
-  background: linear-gradient(135deg, #ca8a04 0%, #1e40af 100%);
-  border-color: #ca8a04;
-  box-shadow: 0 0 0 2px rgba(202,138,4,0.2);
-}
-.cr-toggle--mm .cr-toggle__input:checked + .cr-toggle__slider::after {
-  background: #fef08a;
-}
-
-/* ── ORIGINAL PREMIUM (dorado — sofisticado) ── */
-.cr-toggle--premium .cr-toggle__input:checked + .cr-toggle__slider {
-  background: linear-gradient(135deg, #92400e 0%, #d97706 40%, #f59e0b 100%);
-  border-color: #b45309;
-  box-shadow: 0 0 0 2px rgba(245,158,11,0.25), 0 0 8px rgba(245,158,11,0.15);
-}
-.cr-toggle--premium .cr-toggle__input:checked + .cr-toggle__slider::after {
-  background: #fef3c7;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-/* Label premium especial cuando está activo */
-.cr-toggle--premium .cr-toggle__input:checked ~ .cr-calidades-label,
-.cr-field:has(.cr-toggle--premium .cr-toggle__input:checked) .cr-label {
-  color: #f59e0b;
-  text-shadow: 0 0 8px rgba(245,158,11,0.3);
-}
-
-/* ── OFERTA (verde) ── */
-.cr-toggle--oferta .cr-toggle__input:checked + .cr-toggle__slider {
-  background: #16a34a;
-  border-color: #16a34a;
-  box-shadow: 0 0 0 2px rgba(22,163,74,0.2);
-}
-.cr-toggle--oferta .cr-toggle__input:checked + .cr-toggle__slider::after {
-  background: #dcfce7;
-}
-
-/* Label color dinámico cuando el toggle está activo */
-/* FITAM */
-.cr-field:has(.cr-toggle--fitam .cr-toggle__input:checked) .cr-label { color: #60a5fa; }
-/* VIC */
-.cr-field:has(.cr-toggle--vic .cr-toggle__input:checked) .cr-label { color: #a78bfa; }
-/* MM */
-.cr-field:has(.cr-toggle--mm .cr-toggle__input:checked) .cr-label { color: #fde047; }
-/* Premium */
-.cr-field:has(.cr-toggle--premium .cr-toggle__input:checked) .cr-label {
-  color: #fbbf24;
-  letter-spacing: 2px;
-}
-/* Oferta */
-.cr-field:has(.cr-toggle--oferta .cr-toggle__input:checked) .cr-label { color: #4ade80; }

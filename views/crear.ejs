@@ -158,7 +158,15 @@
             <!-- Calidades + Oferta -->
             <div class="cr-calidades-group">
               <span class="cr-label cr-calidades-group__title">Calidades y estado</span>
-              <p class="cr-hint" style="margin:0 0 4px;">Solo una calidad puede estar activa a la vez.</p>
+              <p class="cr-hint" style="margin:0 0 4px;">Opcional — solo una calidad puede estar activa a la vez.</p>
+
+              <div class="cr-field cr-field--inline cr-field--ninguna">
+                <label class="cr-label">Sin calidad</label>
+                <label class="cr-toggle cr-toggle--ninguna">
+                  <input type="radio" id="calidad_ninguna" name="calidad_grupo" value="ninguna" class="cr-toggle__input" checked>
+                  <span class="cr-toggle__slider"></span>
+                </label>
+              </div>
 
               <div class="cr-field cr-field--inline">
                 <label class="cr-label" for="calidad_original">Calidad FITAM</label>
@@ -396,9 +404,11 @@
   function sync() {
     // Reset todos a 0
     Object.values(hiddenMap).forEach(h => { if (h) h.value = '0'; });
-    // Activar el seleccionado
+    // Si hay uno activo que no sea "ninguna", activarlo
     const checked = document.querySelector('input[name="calidad_grupo"]:checked');
-    if (checked && hiddenMap[checked.value]) hiddenMap[checked.value].value = '1';
+    if (checked && checked.value !== 'ninguna' && hiddenMap[checked.value]) {
+      hiddenMap[checked.value].value = '1';
+    }
   }
 
   radios.forEach(r => r.addEventListener('change', sync));
