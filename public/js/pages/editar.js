@@ -691,7 +691,13 @@ function redondearAlCentenar(valor) {
         </div>
       `);
 
-      $container.find('#addProveedor').closest('.form-group-crear').before($card);
+      // Insertar justo antes del botón #addProveedor (que es hijo directo del container, sin wrapper)
+      var $btn = $container.find('#addProveedor');
+      if ($btn.length) {
+        $btn.before($card);
+      } else {
+        $container.append($card);
+      }
 
       var $sel = $card.find('.proveedores');
       $sel.val($sel.find('option:first').val() || '');
