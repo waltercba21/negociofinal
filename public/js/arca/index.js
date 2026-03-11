@@ -1,4 +1,3 @@
-
 // SweetAlert2: estilos/acciones consistentes (usa las clases .btn del CSS de la página)
 const ARCA_SWAL = (() => {
   const confirm = Swal.mixin({
@@ -648,6 +647,17 @@ html: `
         const inpTipo = document.getElementById("sw_doc_tipo");
         const inpNro = document.getElementById("sw_doc_nro");
 
+        // Bloquear guiones y caracteres no numéricos en el campo documento
+        inpNro.addEventListener("input", () => {
+          const clean = inpNro.value.replace(/[^0-9]/g, "");
+          if (clean !== inpNro.value) inpNro.value = clean;
+        });
+        inpNro.addEventListener("keydown", (e) => {
+          if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === ".") {
+            e.preventDefault();
+          }
+        });
+
        inpNro.addEventListener("keydown", async (e) => {
   if (e.key !== "Enter") return;
 
@@ -690,7 +700,7 @@ html: `
 
         const draft = loadDraft(draftKey) || {
   cbte_tipo: 6,
-  doc_tipo: "",   // <-- vacío por defecto
+  doc_tipo: 99,   // Consumidor Final por defecto
   doc_nro: "",
   receptor_cond_iva_id: null,
   receptor_nombre: "",
@@ -1063,12 +1073,16 @@ preConfirm: () => {
   if (!Number.isFinite(receptor_cond_iva_id) || receptor_cond_iva_id <= 0)
     return Swal.showValidationMessage("condición IVA inválida");
 
-  // FACTURA A: CUIT obligatorio
+  // FACTURA A: CUIT obligatorio + receptor obligatorio
   if (cbte_tipo === 1) {
     doc_tipo = 80;
     if (!/^\d{11}$/.test(docNroRaw))
       return Swal.showValidationMessage("CUIT inválido (11 dígitos)");
     doc_nro = Number(docNroRaw);
+    // Si no hay nombre/razón social, significa que el CUIT no se resolvió — bloquear
+    const nombreA = (document.getElementById("sw_nombre").value || "").trim();
+    if (!nombreA)
+      return Swal.showValidationMessage("Factura A requiere receptor válido. Ingresá el CUIT y resolvé el padrón (Enter o botón Resolver).");
   }
 
   // FACTURA B: si es Consumidor Final (cond 5) permitir vacío => 99/0

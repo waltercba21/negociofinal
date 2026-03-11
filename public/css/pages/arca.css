@@ -158,8 +158,8 @@ body.arca-page {
 .arca-input {
   height: 38px;
   padding: 0 12px;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1.5px solid rgba(31, 72, 126, 0.25) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1.5px solid rgba(31, 72, 126, 0.32) !important;
   border-radius: 10px !important;
   color: #f0f4ff !important;
   font-family: 'DM Sans', sans-serif !important;
@@ -169,6 +169,13 @@ body.arca-page {
   color-scheme: dark;
   outline: none;
   -webkit-text-fill-color: #f0f4ff;
+}
+
+/* Forzar fondo oscuro en los <option> de cualquier select arca */
+.arca-input option,
+select.arca-input option {
+  background: #111c30;
+  color: #f0f4ff;
 }
 
 .arca-input::placeholder { color: rgba(240, 244, 255, 0.3) !important; }
@@ -207,11 +214,12 @@ body.arca-page {
    6. PANEL
 ────────────────────────────────────────────────────────── */
 .arca-panel {
-  background: rgba(17, 28, 48, 0.8);
-  border: 1px solid rgba(31, 72, 126, 0.18);
+  background: rgba(13, 22, 42, 0.97);
+  border: 1px solid rgba(31, 72, 126, 0.3);
   border-radius: 16px;
   backdrop-filter: blur(8px);
   overflow: hidden;
+  box-shadow: 0 4px 28px rgba(0,0,0,0.4), 0 1px 0 rgba(31,72,126,0.1) inset;
 }
 
 .arca-panel__hd {
@@ -219,13 +227,15 @@ body.arca-page {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px;
-  border-bottom: 1px solid rgba(31, 72, 126, 0.15);
-  background: rgba(31, 72, 126, 0.05);
+  padding: 13px 18px;
+  border-bottom: 1px solid rgba(31, 72, 126, 0.22);
+  background: rgba(31, 72, 126, 0.12);
   font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #f0f4ff;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .arca-panel__bd {
@@ -284,11 +294,19 @@ body.arca-page {
 }
 
 .arca-tabla tbody tr.arca-row:hover td {
-  background: rgba(31, 72, 126, 0.08);
+  background: rgba(31, 72, 126, 0.12);
 }
 
 .arca-tabla tbody tr.arca-row.is-selected td {
-  background: rgba(31, 72, 126, 0.15);
+  background: rgba(31, 72, 126, 0.22);
+}
+
+/* Filas alternas para más legibilidad */
+.arca-tabla tbody tr.arca-row:nth-child(even) td {
+  background: rgba(255,255,255,0.02);
+}
+.arca-tabla tbody tr.arca-row:nth-child(even):hover td {
+  background: rgba(31, 72, 126, 0.12);
 }
 
 .arca-tabla tbody tr.arca-row.is-selected td:first-child {
@@ -512,13 +530,14 @@ body.arca-page {
 ────────────────────────────────────────────────────────── */
 body.arca-page .swal2-popup {
   border-radius: 18px !important;
-  box-shadow: 0 12px 48px rgba(0,0,0,0.5) !important;
-  background: #111c30 !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(31,72,126,0.3) !important;
+  background: #0e1a2e !important;
   width: 720px !important;
   max-width: 92vw !important;
   max-height: 90vh !important;
   overflow: hidden !important;
   padding: 14px 16px 12px !important;
+  border: 1px solid rgba(31,72,126,0.28) !important;
 }
 
 body.arca-page .swal2-title {
@@ -552,6 +571,18 @@ body.arca-page .swal2-textarea {
   margin: 0 !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
+  color-scheme: dark !important;
+  -webkit-text-fill-color: #f0f4ff !important;
+}
+
+/* Options del modal de emisión — fondo oscuro */
+body.arca-page .swal2-select option,
+body.arca-page #sw_cbte option,
+body.arca-page #sw_doc_tipo option,
+body.arca-page #sw_cond option {
+  background: #111c30 !important;
+  color: #f0f4ff !important;
+  font-weight: 600;
 }
 
 body.arca-page .swal2-input:focus,
