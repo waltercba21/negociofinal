@@ -706,7 +706,11 @@ html: `
   receptor_nombre: "",
   domicilio: "",
 };
-          if (Number(draft.doc_tipo || 0) !== 99 && String(draft.doc_nro || "").trim() === "0") {
+        // Siempre arrancar con doc_nro vacío — el CUIT nunca se pre-rellena
+        draft.doc_nro = "";
+        draft.receptor_nombre = "";
+        draft.domicilio = "";
+        if (Number(draft.doc_tipo || 0) !== 99 && String(draft.doc_nro || "").trim() === "0") {
   draft.doc_nro = "";
 }
         const setVal = (el, v) => {
