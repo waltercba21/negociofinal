@@ -611,7 +611,9 @@ html: `
 
     <div class="f">
       <label>Número Documento</label>
-      <input id="sw_doc_nro" class="swal2-input" value="" autocomplete="new-password" />
+      <input id="sw_doc_nro" class="swal2-input" value="" 
+  autocomplete="off" 
+  name="arca_doc_nro_x" />
     </div>
 
     <div class="f">
