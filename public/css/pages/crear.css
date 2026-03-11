@@ -123,30 +123,41 @@
    5. PANEL
 ────────────────────────────────────────────────────────── */
 .cr-panel {
-  background: rgba(17,28,48,0.8);
-  border: 1px solid rgba(31,72,126,0.18);
+  background: rgba(13,22,42,0.95);
+  border: 1px solid rgba(31,72,126,0.28);
   border-radius: 16px;
   backdrop-filter: blur(8px);
   overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35), 0 1px 0 rgba(31,72,126,0.12) inset;
 }
 
 .cr-panel__hd {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 18px;
-  border-bottom: 1px solid rgba(31,72,126,0.15);
-  background: rgba(31,72,126,0.05);
+  padding: 13px 18px;
+  border-bottom: 1px solid rgba(31,72,126,0.22);
+  background: rgba(31,72,126,0.10);
   font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #f0f4ff;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
-.cr-panel__hd i { color: #1F487E; font-size: 15px; }
+.cr-panel__hd i {
+  color: #4e80c0;
+  font-size: 14px;
+  background: rgba(31,72,126,0.2);
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
 
 .cr-panel__bd {
-  padding: 18px;
+  padding: 20px 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -201,8 +212,8 @@
   width: 100%;
   padding: 0 12px;
   height: 40px;
-  background: rgba(255,255,255,0.05);
-  border: 1.5px solid rgba(31,72,126,0.25);
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(31,72,126,0.32);
   border-radius: 10px;
   color: #f0f4ff;
   font-family: 'DM Sans', sans-serif;
@@ -431,16 +442,22 @@
    11. PROVEEDORES CARD
 ────────────────────────────────────────────────────────── */
 .cr-prov-card {
-  background: rgba(31,72,126,0.06);
-  border: 1px solid rgba(31,72,126,0.18);
+  background: rgba(31,72,126,0.08);
+  border: 1px solid rgba(31,72,126,0.22);
+  border-left: 3px solid rgba(31,72,126,0.4);
   border-radius: 12px;
-  padding: 14px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   position: relative;
-  margin-bottom: 10px;
-  transition: border-color 0.15s;
+  margin-bottom: 12px;
+  transition: border-color 0.15s, background 0.15s;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+.cr-prov-card:hover {
+  background: rgba(31,72,126,0.11);
+  border-color: rgba(31,72,126,0.35);
 }
 
 .cr-prov-card:has(.proveedores-designado-radio:checked),
@@ -493,4 +510,71 @@
 }
 .cr-field:has(.cr-toggle--ninguna .cr-toggle__input:checked) .cr-label {
   color: rgba(240,244,255,0.55);
+}
+/* ──────────────────────────────────────────────────────────
+   MEJORAS DE DIFERENCIACIÓN DE CONTENEDORES
+────────────────────────────────────────────────────────── */
+
+/* Subsección dentro de un panel (ej: bloque de escobillas, oferta) */
+.cr-subpanel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(31,72,126,0.15);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+/* Etiqueta de sección dentro del panel */
+.cr-section-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(78,128,192,0.7);
+  margin-bottom: 2px;
+}
+
+/* cr-calidades-group más destacado */
+.cr-calidades-group {
+  outline: 1px solid rgba(31,72,126,0.18);
+  outline-offset: -1px;
+}
+
+/* Separador visual horizontal con label */
+.cr-sep-labeled {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0;
+}
+.cr-sep-labeled::before,
+.cr-sep-labeled::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(31,72,126,0.2);
+}
+.cr-sep-labeled span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(78,128,192,0.5);
+  white-space: nowrap;
+}
+
+/* Campo readonly más distinguible del editable */
+.cr-input--readonly {
+  background: rgba(0,0,0,0.2) !important;
+  border-color: rgba(31,72,126,0.15) !important;
+  color: rgba(240,244,255,0.5) !important;
+  cursor: default;
+}
+
+/* Estado activo del proveedor designado */
+.cr-prov-card:has(.proveedor-designado-radio:checked) {
+  border-left-color: #1F487E;
+  border-color: rgba(31,72,126,0.45);
+  background: rgba(31,72,126,0.13);
+  box-shadow: 0 0 0 1px rgba(31,72,126,0.2), 0 2px 12px rgba(0,0,0,0.25);
 }

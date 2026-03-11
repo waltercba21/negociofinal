@@ -27,7 +27,16 @@ function normalizarClave(texto) {
 // ─────────────────────────────────────────────────────────────────────────────
 function reordenarPorLado(productos, busqueda) {
   const q = (busqueda || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Productos que se ven desde ATRÁS del auto → derecho primero
   const esTrasero = /trase(ro|ra|ros|ras)|stop|posterior|rear/.test(q);
+
+  // Productos que se ven desde ADELANTE del auto → izquierdo primero
+  // Incluye: ópticas, vidrios/policarbonatos de óptica, faros auxiliares, faros delanteros
+  const esDelantero = /optic(a|as)|vidrio|policarbonat|auxiliar|delanter(o|a|os|as)|front/.test(q);
+
+  // Si no se detecta ninguno de los dos lados, no reordenamos
+  if (!esTrasero && !esDelantero) return productos;
 
   const tienePareja = (productos || []).some(p =>
     /\bderecho\b|\bizquierdo\b|\bder\b|\bizq\b/.test((p.nombre || '').toLowerCase())
@@ -45,8 +54,8 @@ function reordenarPorLado(productos, busqueda) {
     const esDer = /\bderecho\b|\bder\b/.test(n);
     const esIzq = /\bizquierdo\b|\bizq\b/.test(n);
     if (!esDer && !esIzq) return 1;
-    if (esTrasero) return esDer ? 0 : 2;
-    return esIzq ? 0 : 2;
+    if (esTrasero) return esDer ? 0 : 2; // trasero: derecho primero
+    return esIzq ? 0 : 2;               // delantero: izquierdo primero
   }
 
   return [...productos].sort((a, b) => {

@@ -625,69 +625,70 @@ function redondearAlCentenar(valor) {
       var optsHTML = ($('.proveedores').first().html() || '<option value="">Selecciona proveedor...</option>');
 
       var $card = $(`
-        <div class="proveedor" data-proveedor-id="">
-          <div class="form-group-crear">
-            <label class="radio-elige-proveedor">
-              <input type="radio" name="proveedor_designado_radio" class="proveedor-designado-radio" value="">
-              Usar este proveedor
+        <div class="proveedor cr-prov-card" data-proveedor-id="">
+          <div class="form-group-crear cr-field cr-field--inline">
+            <label class="cr-label">Usar este proveedor</label>
+            <label class="cr-toggle">
+              <input type="radio" name="proveedor_designado_radio" class="proveedor-designado-radio cr-toggle__input" value="">
+              <span class="cr-toggle__slider"></span>
             </label>
           </div>
 
-          <div class="form-group-crear">
-            <label class="label-proveedor">Proveedor <span class="nombre_proveedor"></span></label>
-            <select class="proveedores form-control" name="proveedores[]">
+          <div class="form-group-crear cr-field">
+            <label class="label-proveedor cr-label">Proveedor <span class="nombre_proveedor cr-prov-nombre"></span></label>
+            <select class="proveedores cr-select form-control" name="proveedores[]">
               ${optsHTML}
             </select>
           </div>
 
-          <div class="form-group-crear">
-            <label class="label-codigo">Código</label>
-            <input class="codigo form-control" type="text" name="codigo[]" value="">
+          <div class="form-group-crear cr-field">
+            <label class="label-codigo cr-label">Código proveedor</label>
+            <input class="codigo cr-input form-control" type="text" name="codigo[]" value="">
           </div>
 
-          <div class="form-group-crear">
-            <label class="label-precio-lista">Precio de Lista</label>
-            <input class="precio_lista form-control" type="number" step="0.01" name="precio_lista[]" value="">
+          <div class="cr-prov-grid">
+            <div class="form-group-crear cr-field">
+              <label class="label-precio-lista cr-label">Precio de lista</label>
+              <input class="precio_lista cr-input form-control" type="number" step="0.01" name="precio_lista[]" value="">
+            </div>
+            <div class="form-group-crear cr-field">
+              <label class="label-descuento cr-label">Descuento prov.</label>
+              <input class="descuentos_proveedor_id cr-input cr-input--readonly form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
+            </div>
           </div>
 
-          <div class="form-group-crear">
-            <label class="label-descuento">Descuento</label>
-            <input class="descuentos_proveedor_id form-control" type="text" name="descuentos_proveedor_id[]" value="0" readonly>
+          <div class="form-group-crear cr-field">
+            <label class="cr-label">Precio de costo (Neto)</label>
+            <input class="costo_neto cr-input cr-input--readonly form-control" type="number" name="costo_neto[]" value="0" readonly>
           </div>
 
-          <div class="form-group-crear">
-            <label>Precio de costo (Neto)</label>
-            <input class="costo_neto form-control" type="number" name="costo_neto[]" value="0" readonly>
+          <div class="cr-prov-grid">
+            <div class="form-group-crear cr-field">
+              <label class="cr-label">Presentación</label>
+              <select class="presentacion cr-select form-control" name="presentacion[]">
+                <option value="unidad" selected>Unidad</option>
+                <option value="juego">Juego (par)</option>
+              </select>
+              <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="1">
+            </div>
+            <div class="form-group-crear cr-field">
+              <label class="cr-label">IVA</label>
+              <select class="IVA cr-select form-control" name="IVA[]">
+                <option value="21" selected>21%</option>
+                <option value="10.5">10,5%</option>
+              </select>
+            </div>
           </div>
 
-          <div class="form-group-crear">
-            <label>IVA</label>
-            <select class="IVA form-control" name="IVA[]">
-              <option value="21" selected>21%</option>
-              <option value="10.5">10,5%</option>
-            </select>
+          <div class="form-group-crear cr-field campo-costo-iva">
+            <label class="cr-label">Costo con IVA (por unidad)</label>
+            <input class="costo_iva_vis cr-input cr-input--readonly form-control" type="number" step="0.01" value="" readonly>
+            <input class="costo_iva" type="hidden" name="costo_iva[]" value="0">
           </div>
 
-          <div class="form-group-crear">
-            <label>Presentación del precio</label>
-            <select class="presentacion form-control" name="presentacion[]">
-              <option value="unidad" selected>Unidad</option>
-              <option value="juego">Juego (par)</option>
-            </select>
-            <small>Si es "juego", se divide a la mitad (por unidad) para comparar y calcular.</small>
-            <input type="hidden" class="factor_unidad" name="factor_unidad[]" value="1">
-          </div>
-
-          <div class="form-group-crear campo-costo-iva">
-            <label>Costo con IVA (por unidad)</label>
-            <input class="costo_iva_vis form-control" type="number" step="0.01" value="" readonly>
-          </div>
-
-          <input class="costo_iva" type="hidden" name="costo_iva[]" value="0">
-
-          <div class="form-group-crear">
-            <button class="eliminar-proveedor btn btn-outline-danger" type="button">Eliminar proveedor</button>
-          </div>
+          <button class="eliminar-proveedor cr-btn cr-btn--danger cr-btn--sm" type="button">
+            <i class="fa-solid fa-trash"></i> Eliminar proveedor
+          </button>
         </div>
       `);
 
