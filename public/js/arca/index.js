@@ -612,7 +612,7 @@ html: `
 
     <div class="f">
       <label>Número Documento</label>
-      <input id="sw_doc_nro" class="swal2-input" value="" />
+      <input id="sw_doc_nro" class="swal2-input" value="" autocomplete="new-password" />
     </div>
 
     <div class="f">
