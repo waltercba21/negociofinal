@@ -595,18 +595,17 @@ html: `
     <div class="f">
       <label>Tipo de comprobante</label>
       <select id="sw_cbte" class="swal2-input">
+        <option value="6" selected>Factura B</option>
         <option value="1">Factura A</option>
-        <option value="6">Factura B</option>
       </select>
     </div>
 
     <div class="f">
       <label>Tipo de documento</label>
       <select id="sw_doc_tipo" class="swal2-input">
-       <option value="">(Vacío)</option>
-       <option value="99">CONSUMIDOR FINAL</option>
-       <option value="80">CUIT</option>
-      <option value="96">DNI</option>
+        <option value="99" selected>CONSUMIDOR FINAL</option>
+        <option value="80">CUIT</option>
+        <option value="96">DNI</option>
       </select>
     </div>
 
@@ -707,21 +706,15 @@ html: `
           if (stCache) stCache.textContent = t || "";
         };
 
-        const draft = loadDraft(draftKey) || {
-  cbte_tipo: 6,
-  doc_tipo: 99,   // Consumidor Final por defecto
-  doc_nro: "",
-  receptor_cond_iva_id: null,
-  receptor_nombre: "",
-  domicilio: "",
-};
-        // Siempre arrancar con doc_nro vacío — el CUIT nunca se pre-rellena
-        draft.doc_nro = "";
-        draft.receptor_nombre = "";
-        draft.domicilio = "";
-        if (Number(draft.doc_tipo || 0) !== 99 && String(draft.doc_nro || "").trim() === "0") {
-  draft.doc_nro = "";
-}
+        // Siempre arrancar con valores limpios — nunca restaurar datos sensibles del receptor
+        const draft = {
+          cbte_tipo: 6,       // Siempre Factura B al abrir
+          doc_tipo: 99,       // Siempre Consumidor Final al abrir
+          doc_nro: "",
+          receptor_cond_iva_id: null,
+          receptor_nombre: "",
+          domicilio: "",
+        };
         const setVal = (el, v) => {
           if (el && v !== undefined && v !== null) el.value = String(v);
         };
@@ -1025,11 +1018,7 @@ if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
         if (btnCache) btnCache.addEventListener("click", guardarCache);
         if (btnResolve) btnResolve.addEventListener("click", resolverPadron);
 
-        // Restaurar valores
-        setVal(inpCbte, draft.cbte_tipo);
-        setVal(inpTipo, draft.doc_tipo);
-        setVal(inpNom, draft.receptor_nombre);
-        setVal(inpDom, draft.domicilio);
+        // No restaurar cbte_tipo ni doc_tipo del draft — el HTML ya tiene los defaults correctos
         lastDocKey = docKeyNow(); // base de comparación
         // Guardar borrador en cada cambio
         const hook = (el) => {
