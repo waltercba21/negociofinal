@@ -647,6 +647,15 @@ html: `
         const inpTipo = document.getElementById("sw_doc_tipo");
         const inpNro = document.getElementById("sw_doc_nro");
 
+        // Limpiar el campo inmediatamente y con delay para vencer el autocompletado del navegador
+        inpNro.value = "";
+        inpNro.setAttribute("readonly", "readonly");
+        setTimeout(() => {
+          inpNro.value = "";
+          inpNro.removeAttribute("readonly");
+          inpNro.focus && inpNro.blur();
+        }, 100);
+
         // Bloquear guiones y caracteres no numéricos en el campo documento
         inpNro.addEventListener("input", () => {
           const clean = inpNro.value.replace(/[^0-9]/g, "");
