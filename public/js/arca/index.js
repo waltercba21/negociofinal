@@ -1015,7 +1015,6 @@ if (`${now.doc_tipo}:${now.doc_nro_str}` !== key) return;
         // Restaurar valores
         setVal(inpCbte, draft.cbte_tipo);
         setVal(inpTipo, draft.doc_tipo);
-        setVal(inpNro, draft.doc_nro);
         setVal(inpNom, draft.receptor_nombre);
         setVal(inpDom, draft.domicilio);
         lastDocKey = docKeyNow(); // base de comparación
