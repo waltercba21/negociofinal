@@ -3,22 +3,20 @@
         data-is-admin="<%= isAdminUser ? 'true' : 'false' %>"
         role="banner">
 
-  <!-- ── MARCA / LOGO ──────────────────────────── -->
-  <a href="/" class="site-header__logo" aria-label="AUTOFAROS — Inicio">
+  <!-- ── LOGO ──────────────────────────── -->
+  <a href="<%= isAdminUser ? '/administracion' : '/' %>" class="site-header__logo" aria-label="AUTOFAROS — Inicio">
     <img src="/uploads/productos/logo.png?v=2" alt="AUTOFAROS" width="140" height="auto" loading="eager" />
   </a>
 
-  <!-- ── BUSCADOR ──────────────────────────────── -->
+  <!-- ── BUSCADOR (solo usuarios comunes) ── -->
+  <% if (!isAdminUser) { %>
   <% const qHeader = (typeof req !== 'undefined' && req.query && req.query.q) ? String(req.query.q) : ''; %>
-
-  <% if (!isAdminUser) { %> 
   <form class="site-header__search"
         action="/productos"
         method="GET"
         role="search"
         autocomplete="off"
         aria-label="Buscar productos">
-
     <div class="search-wrapper">
       <span class="search-wrapper__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -26,7 +24,6 @@
           <path d="M20 20l-3.5-3.5"></path>
         </svg>
       </span>
-
       <input
         class="search-wrapper__input"
         type="text"
@@ -35,7 +32,6 @@
         placeholder="Buscá por modelo, marca o pieza…"
         value="<%= qHeader %>"
         aria-label="Buscar productos" />
-
       <button
         type="button"
         id="headerBotonLimpiar"
@@ -46,82 +42,78 @@
       </button>
     </div>
   </form>
+  <% } else { %>
+    <!-- Espaciador para admin -->
+    <div class="site-header__spacer"></div>
   <% } %>
 
-  <!-- ── NAVEGACIÓN PRINCIPAL ───────────────────── -->
+  <!-- ── NAVEGACIÓN ───────────────────── -->
   <nav class="site-header__nav" id="mainNav" aria-label="Navegación principal">
 
     <% if (!isAdminUser) { %>
-  <a class="nav-link" href="/">
-    <i class="fa-solid fa-house" aria-hidden="true"></i>
-    <span>Inicio</span>
-  </a>
-<% } %>
-
-    <a class="nav-link" href="/productos">
-      <i class="fa-solid fa-bolt" aria-hidden="true"></i>
-      <span>Productos</span>
-    </a>
-
-    <% if (!isAdminUser) { %>
+      <!-- Nav usuario común -->
+      <a class="nav-link" href="/">
+        <i class="fa-solid fa-house" aria-hidden="true"></i>
+        <span>Inicio</span>
+      </a>
+      <a class="nav-link" href="/productos">
+        <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+        <span>Productos</span>
+      </a>
       <a class="nav-link nav-link--ofertas" href="/productos/ofertas">
         <i class="fa-solid fa-tag" aria-hidden="true"></i>
         <span>Ofertas</span>
       </a>
-
-      <a class="nav-link nav-link--whatsapp" href="https://wa.me/+543513820440/" target="_blank" rel="noopener noreferrer" aria-label="Contacto WhatsApp (abre en nueva pestaña)">
+      <a class="nav-link nav-link--whatsapp" href="https://wa.me/+543513820440/" target="_blank" rel="noopener noreferrer" aria-label="Contacto WhatsApp">
         <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
         <span>WhatsApp</span>
       </a>
-
-      <button class="nav-link nav-link--mapa" type="button" onclick="abrirMapa()" aria-label="Ver ubicación en mapa">
+      <button class="nav-link nav-link--mapa" type="button" onclick="abrirMapa()" aria-label="Ver ubicación">
         <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
         <span>Ubicación</span>
       </button>
-    <% } %>
 
-    <!-- ── ENLACES SOLO ADMIN ─────────────── -->
-    <% if (isAdminUser) { %>
-      <a class="nav-link nav-link--admin" href="/productos/panelControl">
-        <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
+    <% } else { %>
+      <!-- Nav administrador — pills con color -->
+      <a class="admin-pill admin-pill--blue" href="/productos/panelControl" aria-label="Panel de control">
+        <i class="fa-solid fa-gauge-high"></i>
         <span>Panel</span>
       </a>
-
-      <a class="nav-link nav-link--admin" href="/productos/presupuestoMostrador">
-        <i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i>
+      <a class="admin-pill admin-pill--blue" href="/productos" aria-label="Productos">
+        <i class="fa-solid fa-bolt"></i>
+        <span>Productos</span>
+      </a>
+      <a class="admin-pill admin-pill--violet" href="/productos/presupuestoMostrador" aria-label="Presupuesto mostrador">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
         <span>Presupuesto</span>
       </a>
-
-      <a class="nav-link nav-link--admin nav-link--factura" href="/productos/facturasMostrador">
-        <i class="fa-solid fa-receipt" aria-hidden="true"></i>
+      <a class="admin-pill admin-pill--yellow" href="/productos/facturasMostrador" aria-label="Facturas mostrador">
+        <i class="fa-solid fa-receipt"></i>
         <span>Facturas</span>
       </a>
-
-      <a class="nav-link nav-link--admin" href="/arca">
-        <i class="fa-solid fa-landmark" aria-hidden="true"></i>
+      <a class="admin-pill admin-pill--slate" href="/arca" aria-label="ARCA / AFIP">
+        <i class="fa-solid fa-landmark"></i>
         <span>ARCA</span>
       </a>
-
-      <a class="nav-link nav-link--admin" href="/administracion" id="admin-btn">
-        <i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>
+      <a class="admin-pill admin-pill--slate" href="/administracion" aria-label="Administración">
+        <i class="fa-solid fa-screwdriver-wrench"></i>
         <span>Admin</span>
       </a>
-
-      <a class="nav-link nav-link--admin nav-link--pedidos" href="/pedidos" aria-label="Pedidos pendientes">
-        <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
+      <a class="admin-pill admin-pill--red admin-pill--pedidos" href="/pedidos" aria-label="Pedidos pendientes">
+        <i class="fa-solid fa-boxes-stacked"></i>
         <span>Pedidos</span>
-        <span id="badge-pedidos" class="badge-pedidos" aria-live="polite" aria-label="Pedidos pendientes" hidden>0</span>
+        <span id="badge-pedidos" class="badge-pedidos" aria-live="polite" hidden>0</span>
       </a>
     <% } %>
 
-    <!-- ── AUTH LINKS (solo mobile dentro del menú) ── -->
+    <!-- Auth links mobile (no logueado) -->
     <% if (!isLogged) { %>
       <div class="nav-auth-mobile">
         <a class="nav-link" href="/users/login">
           <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
           <span>Iniciar Sesión</span>
         </a>
-        <a class="nav-link nav-link--register" href="/users/register">
+        <a class="nav-link" href="/users/register">
           <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
           <span>Registrarme</span>
         </a>
@@ -130,12 +122,10 @@
 
   </nav>
 
-  <!-- ── ACCIONES DE USUARIO (iconos derecha) ────── -->
+  <!-- ── ACCIONES USUARIO ──────────────── -->
   <div class="site-header__actions">
-
     <% if (isLogged) { %>
-
-      <a href="/users/profile" class="user-greeting" aria-label="Ir a mi perfil">
+      <a href="/users/profile" class="user-greeting" aria-label="Mi perfil">
         <span class="user-greeting__avatar" aria-hidden="true">
           <%= userLogged.nombre.charAt(0).toUpperCase() %>
         </span>
@@ -143,12 +133,11 @@
       </a>
 
       <% if (!isAdminUser) { %>
-        <a href="/carrito" class="action-btn action-btn--carrito" aria-label="Ver carrito de compras">
+        <a href="/carrito" class="action-btn action-btn--carrito" aria-label="Ver carrito">
           <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
           <span id="carrito-notificacion"
                 class="action-btn__badge"
                 aria-live="polite"
-                aria-label="<%= cantidadCarrito %> productos en el carrito"
                 <% if (!cantidadCarrito || cantidadCarrito <= 0) { %>hidden<% } %>>
             <%= cantidadCarrito %>
           </span>
@@ -161,7 +150,6 @@
       </a>
 
     <% } else { %>
-
       <div class="auth-buttons">
         <a href="/users/login" class="btn-auth btn-auth--login">
           <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
@@ -172,12 +160,10 @@
           <span>Registrarme</span>
         </a>
       </div>
-
     <% } %>
-
   </div>
 
-  <!-- ── HAMBURGER (mobile) ──────────────────────── -->
+  <!-- ── HAMBURGER (mobile) ──────────────── -->
   <button class="site-header__hamburger"
           id="hamburgerBtn"
           type="button"
@@ -191,7 +177,5 @@
 
 </header>
 
-<!-- Socket.io — cargado una única vez aquí (se elimina del head) -->
 <script src="/socket.io/socket.io.js"></script>
-<!-- Lógica del header: búsqueda, hamburger, socket, badges -->
 <script src="/js/layout/header.js" defer></script>
