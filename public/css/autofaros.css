@@ -400,6 +400,137 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 
 
 /* ══════════════════════════════════════════════
+   3b. ADMIN PILLS
+   ══════════════════════════════════════════════ */
+
+/* Header levemente diferenciado en modo admin */
+.site-header.is-admin {
+  background-color: #0d1526;
+  border-bottom-color: rgba(31,72,126,.35);
+}
+.site-header.is-admin::after {
+  background: linear-gradient(90deg, transparent 0%, #1F487E 40%, #2860a8 60%, transparent 100%);
+  opacity: .8;
+}
+
+/* Espaciador cuando no hay buscador (admin) */
+.site-header__spacer { grid-area: search; }
+
+/* Pill base */
+.admin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-decoration: none;
+  border: 1.5px solid transparent;
+  position: relative;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+.admin-pill i { font-size: .85rem; }
+.admin-pill:hover { transform: translateY(-1px); }
+
+/* Azul — Panel, Productos */
+.admin-pill--blue {
+  background-color: rgba(31,72,126,.2);
+  border-color: rgba(31,72,126,.45);
+  color: #7aaee8;
+}
+.admin-pill--blue:hover {
+  background-color: rgba(31,72,126,.38);
+  border-color: #2860a8;
+  color: #c0d8f8;
+  box-shadow: 0 4px 14px rgba(31,72,126,.35);
+}
+
+/* Violeta — Presupuesto */
+.admin-pill--violet {
+  background-color: rgba(124,58,237,.15);
+  border-color: rgba(124,58,237,.38);
+  color: #b39dfa;
+}
+.admin-pill--violet:hover {
+  background-color: rgba(124,58,237,.3);
+  border-color: #7c3aed;
+  color: #ddd6fe;
+  box-shadow: 0 4px 14px rgba(124,58,237,.35);
+}
+
+/* Amarillo — Facturas */
+.admin-pill--yellow {
+  background-color: rgba(217,119,6,.15);
+  border-color: rgba(217,119,6,.38);
+  color: #fbbf24;
+}
+.admin-pill--yellow:hover {
+  background-color: rgba(217,119,6,.3);
+  border-color: #d97706;
+  color: #fde68a;
+  box-shadow: 0 4px 14px rgba(217,119,6,.35);
+}
+
+/* Gris pizarra — ARCA, Admin */
+.admin-pill--slate {
+  background-color: rgba(100,116,139,.15);
+  border-color: rgba(100,116,139,.32);
+  color: #94a3b8;
+}
+.admin-pill--slate:hover {
+  background-color: rgba(100,116,139,.3);
+  border-color: #64748b;
+  color: #e2e8f0;
+  box-shadow: 0 4px 14px rgba(100,116,139,.25);
+}
+
+/* Rojo — Pedidos */
+.admin-pill--red {
+  background-color: rgba(217,4,41,.13);
+  border-color: rgba(217,4,41,.38);
+  color: #ff6b7a;
+}
+.admin-pill--red:hover {
+  background-color: rgba(217,4,41,.28);
+  border-color: #d90429;
+  color: #ffc0c8;
+  box-shadow: 0 4px 14px rgba(217,4,41,.35);
+}
+
+/* Badge sobre el pill de pedidos */
+.admin-pill--pedidos { padding-right: 8px; }
+.badge-pedidos {
+  position: absolute;
+  top: -5px; right: -5px;
+  min-width: 18px; height: 18px;
+  padding: 0 4px;
+  background-color: var(--color-accent);
+  color: #fff;
+  font-size: .6rem;
+  font-weight: var(--weight-bold);
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: badgePop .3s var(--ease-out);
+}
+
+/* Responsive admin pills */
+@media (max-width: 1024px) {
+  .admin-pill span { display: none; }
+  .admin-pill { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: var(--radius-md); gap: 0; }
+}
+@media (max-width: 768px) {
+  .admin-pill { width: 100%; height: auto; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); justify-content: flex-start; gap: var(--space-2); }
+  .admin-pill span { display: inline; font-size: var(--text-sm); }
+}
+
+/* ══════════════════════════════════════════════
    4. FOOTER
    ══════════════════════════════════════════════ */
 .site-footer {
