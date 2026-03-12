@@ -11,6 +11,7 @@
   <!-- ── BUSCADOR ──────────────────────────────── -->
   <% const qHeader = (typeof req !== 'undefined' && req.query && req.query.q) ? String(req.query.q) : ''; %>
 
+  <% if (!isAdminUser) { %> 
   <form class="site-header__search"
         action="/productos"
         method="GET"
@@ -45,14 +46,17 @@
       </button>
     </div>
   </form>
+  <% } %>
 
   <!-- ── NAVEGACIÓN PRINCIPAL ───────────────────── -->
   <nav class="site-header__nav" id="mainNav" aria-label="Navegación principal">
 
-    <a class="nav-link" href="/">
-      <i class="fa-solid fa-house" aria-hidden="true"></i>
-      <span>Inicio</span>
-    </a>
+    <% if (!isAdminUser) { %>
+  <a class="nav-link" href="/">
+    <i class="fa-solid fa-house" aria-hidden="true"></i>
+    <span>Inicio</span>
+  </a>
+<% } %>
 
     <a class="nav-link" href="/productos">
       <i class="fa-solid fa-bolt" aria-hidden="true"></i>
@@ -96,11 +100,6 @@
       <a class="nav-link nav-link--admin" href="/arca">
         <i class="fa-solid fa-landmark" aria-hidden="true"></i>
         <span>ARCA</span>
-      </a>
-
-      <a class="nav-link nav-link--admin" href="/administracion/gastos" id="gastos-btn">
-        <i class="fa-solid fa-coins" aria-hidden="true"></i>
-        <span>Gastos</span>
       </a>
 
       <a class="nav-link nav-link--admin" href="/administracion" id="admin-btn">
