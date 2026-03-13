@@ -227,19 +227,25 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    const totalFacturaElement = document.getElementById('total-amount');
-    let totalFactura = '0';
-    if (totalFacturaElement) {
-      totalFactura = totalFacturaElement.value.replace(/\./g, '').replace(',', '.').replace('$', '').trim();
-    }
-
     const fechaFacturaElement = document.getElementById('fecha-presupuesto');
     const fechaFactura = fechaFacturaElement ? fechaFacturaElement.value.trim() : undefined;
     const nombreClienteInput = document.getElementById('nombre-cliente');
     const nombreCliente = nombreClienteInput ? nombreClienteInput.value.trim() : '';
 
+    // ── Interés tarjeta crédito ──────────────────────────────────────────────
+    // El interés se distribuye proporcionalmente en cada ítem para que ARCA
+    // recalcule correctamente desde precio_unitario (no usa el total de cabecera)
+    const esCredito = metodosPagoSeleccionados.value === 'CREDITO';
+    const factorInteres = esCredito ? 1.15 : 1;
     let interesCalculado = 0;
-    if (metodosPagoSeleccionados.value === 'CREDITO') interesCalculado = totalSinInteres * 0.15;
+
+    const invoiceItemsConInteres = invoiceItems.map(item => {
+      const pu  = item.precio_unitario * factorInteres;
+      const sub = item.subtotal        * factorInteres;
+      return { ...item, precio_unitario: pu, subtotal: sub };
+    });
+
+    if (esCredito) interesCalculado = totalSinInteres * 0.15;
     const totalConInteres = totalSinInteres + interesCalculado;
 
     const filasHTML = invoiceItems.map((item, index) => `
@@ -297,8 +303,8 @@ document.addEventListener('DOMContentLoaded', function () {
         body: JSON.stringify({
           nombreCliente,
           fechaPresupuesto: fechaFactura,
-          totalPresupuesto: totalFactura,
-          invoiceItems,
+          totalPresupuesto: totalConInteres.toFixed(2),  // total real con interés incluido
+          invoiceItems: invoiceItemsConInteres,           // precios ya con el 15% distribuido
           metodosPago: metodosPagoSeleccionados.value
         })
       });

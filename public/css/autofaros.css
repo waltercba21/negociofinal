@@ -40,8 +40,8 @@
   --color-info:          #3b82f6;
 
   /* Tipografía */
-  --font-display: 'Barlow Condensed', sans-serif;
-  --font-body:    'DM Sans', sans-serif;
+  --font-display: 'Roboto', sans-serif;
+  --font-body:    'Roboto', sans-serif;
 
   --text-xs:   0.75rem;
   --text-sm:   0.875rem;

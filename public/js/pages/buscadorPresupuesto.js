@@ -252,18 +252,16 @@ document.addEventListener('DOMContentLoaded', function () {
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
   let timeoutId;
 
-  entradaBusqueda.addEventListener('keyup', async (e) => {
-    const busqueda = e.target.value;
-    resultadosBusqueda.innerHTML = '';
+  // Buscador con debounce + AbortController (evita duplicados y requests fantasma)
+  let _searchTimer = null;
+  let _searchController = null;
 
-    if (!busqueda.trim()) {
+  function renderResultados(productos) {
+    resultadosBusqueda.innerHTML = '';
+    if (!productos.length) {
       resultadosBusqueda.style.display = 'none';
       return;
     }
-
-    const respuesta = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda));
-    const productos = await respuesta.json();
-
     productos.forEach((producto) => {
       const resultado = document.createElement('div');
       resultado.classList.add('resultado-busqueda');
@@ -271,7 +269,6 @@ document.addEventListener('DOMContentLoaded', function () {
       resultado.dataset.nombre       = producto.nombre;
       resultado.dataset.precio_venta = producto.precio_venta;
       resultado.dataset.stock_actual = producto.stock_actual;
-
       if (producto.imagenes && producto.imagenes.length > 0) {
         resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
       }
@@ -295,7 +292,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.resultado-busqueda').forEach(r => r.classList.remove('hover-activo'));
         this.classList.add('hover-activo');
       });
-
       resultado.addEventListener('mouseleave', function () {
         this.classList.remove('hover-activo');
       });
@@ -308,13 +304,47 @@ document.addEventListener('DOMContentLoaded', function () {
           this.dataset.stock_actual,
           this.dataset.imagen
         );
+        // ✅ FIX: cerrar lista pero mantener el texto para buscar más productos
         resultadosBusqueda.style.display = 'none';
-        entradaBusqueda.value = '';
+        // Enfocar el input para que el vendedor siga escribiendo sin hacer click
+        entradaBusqueda.focus();
       });
 
       resultadosBusqueda.appendChild(resultado);
-      resultadosBusqueda.style.display = 'block';
     });
+    resultadosBusqueda.style.display = 'block';
+  }
+
+  entradaBusqueda.addEventListener('input', (e) => {
+    const busqueda = e.target.value.trim();
+
+    // Cancelar búsqueda anterior si todavía está en vuelo
+    if (_searchController) { _searchController.abort(); _searchController = null; }
+    clearTimeout(_searchTimer);
+
+    if (!busqueda) {
+      resultadosBusqueda.innerHTML = '';
+      resultadosBusqueda.style.display = 'none';
+      return;
+    }
+
+    // Debounce 280ms: esperar a que el usuario deje de escribir
+    _searchTimer = setTimeout(async () => {
+      _searchController = new AbortController();
+      try {
+        const respuesta = await fetch(
+          '/productos/api/buscar?q=' + encodeURIComponent(busqueda),
+          { signal: _searchController.signal }
+        );
+        const productos = await respuesta.json();
+        renderResultados(productos);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('[Buscador] Error al buscar:', err);
+        }
+        // Si fue abortado, ignorar silenciosamente
+      }
+    }, 280);
   });
 
   resultadosBusqueda.addEventListener('mouseleave', () => {
