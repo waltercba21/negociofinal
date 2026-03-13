@@ -508,14 +508,96 @@ async function mostrarModalARCA(facturaId, totalConInteres) {
 
   const modoCuit = paso1.isDenied || paso1.value === 'cuit';
 
-  // ── Paso 2a: Consumidor Final ─────────────────────────────
+  // ── Paso 2a: Consumidor Final (datos opcionales para seguros) ─────────────
   if (!modoCuit) {
-    await _emitirARCA(facturaId, {
-      cbte_tipo: 6,
-      doc_tipo: 99,
-      doc_nro: 0,
-      receptor_cond_iva_id: 5
+    const htmlCF = `
+      <div style="display:flex;flex-direction:column;gap:14px;padding:4px 0;text-align:left">
+        <p style="color:#8fa3c0;font-size:.82rem;margin:0">
+          <i class="fa-solid fa-circle-info" style="margin-right:6px;color:#7aaee8"></i>
+          Opcional — completar solo si el cliente necesita sus datos en la factura (seguros, devoluciones).
+        </p>
+        <div>
+          <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
+            Nombre / Razón Social
+          </label>
+          <input id="cf-nombre" type="text" maxlength="100" placeholder="Ej: Juan García"
+            style="width:100%;padding:11px 14px;border-radius:10px;
+                   background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.4);
+                   color:#f0f4ff;font-size:.95rem;outline:none;font-family:inherit" />
+        </div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:0 0 150px">
+            <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
+              Tipo doc.
+            </label>
+            <select id="cf-doc-tipo" style="width:100%;padding:11px 10px;border-radius:10px;
+              background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.4);
+              color:#f0f4ff;font-size:.88rem;outline:none;font-family:inherit;cursor:pointer">
+              <option value="96" style="background:#111c30">DNI (96)</option>
+              <option value="94" style="background:#111c30">Pasaporte (94)</option>
+              <option value="89" style="background:#111c30">Cédula (89)</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
+              Nro. de documento
+            </label>
+            <input id="cf-doc-nro" type="text" inputmode="numeric" maxlength="12"
+              placeholder="Ej: 30123456"
+              style="width:100%;padding:11px 14px;border-radius:10px;
+                     background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.4);
+                     color:#f0f4ff;font-size:.95rem;outline:none;font-family:inherit" />
+          </div>
+        </div>
+        <div id="cf-error" style="color:#f87171;font-size:.78rem;display:none"></div>
+      </div>`;
+
+    const pasoCF = await Swal.fire({
+      title: '<span style="font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:#7aaee8">Factura B — Consumidor Final</span>',
+      html: htmlCF,
+      background: '#111c30',
+      color: '#f0f4ff',
+      showConfirmButton: true,
+      confirmButtonText: 'Emitir',
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      width: '460px',
+      customClass: { confirmButton: 'af-apps-confirm' },
+      preConfirm: () => {
+        const nombre    = (document.getElementById('cf-nombre').value || '').trim();
+        const docTipo   = Number(document.getElementById('cf-doc-tipo').value);
+        const docNroRaw = document.getElementById('cf-doc-nro').value.replace(/\D/g, '');
+        const docNro    = docNroRaw ? Number(docNroRaw) : 0;
+        const errEl     = document.getElementById('cf-error');
+        if (nombre && !docNro) {
+          errEl.textContent = 'Si ingresás nombre, también ingresá el número de documento.';
+          errEl.style.display = 'block';
+          return false;
+        }
+        if (docNro && !nombre) {
+          errEl.textContent = 'Si ingresás número de documento, también ingresá el nombre.';
+          errEl.style.display = 'block';
+          return false;
+        }
+        errEl.style.display = 'none';
+        return { nombre, docTipo, docNro };
+      }
     });
+
+    if (!pasoCF.isConfirmed) { window.location.href = '/productos'; return; }
+
+    const { nombre: cfNombre, docTipo: cfDocTipo, docNro: cfDocNro } = pasoCF.value;
+
+    const cfPayload = (cfNombre && cfDocNro) ? {
+      cbte_tipo: 6, doc_tipo: cfDocTipo, doc_nro: cfDocNro,
+      receptor_cond_iva_id: 5, receptor_nombre: cfNombre
+    } : {
+      cbte_tipo: 6, doc_tipo: 99, doc_nro: 0, receptor_cond_iva_id: 5
+    };
+
+    await _emitirARCA(facturaId, cfPayload);
     return;
   }
 
@@ -527,13 +609,44 @@ async function mostrarModalARCA(facturaId, totalConInteres) {
         <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
           CUIT del receptor (11 dígitos, sin guiones)
         </label>
-        <input id="arca-cuit-input" type="text" inputmode="numeric" maxlength="11"
-          placeholder="Ej: 20123456789"
-          style="width:100%;padding:12px 14px;border-radius:10px;
-                 background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.4);
-                 color:#f0f4ff;font-size:1rem;outline:none;font-family:inherit"
-        />
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="arca-cuit-input" type="text" inputmode="numeric" maxlength="11"
+            placeholder="Ej: 20123456789"
+            style="flex:1;padding:12px 14px;border-radius:10px;
+                   background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.4);
+                   color:#f0f4ff;font-size:1rem;outline:none;font-family:inherit" />
+          <button id="arca-cuit-buscar" type="button"
+            style="padding:11px 14px;border-radius:10px;flex-shrink:0;
+                   background:rgba(31,72,126,.25);border:1.5px solid rgba(31,72,126,.5);
+                   color:#c0d8f8;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">
+            <i class="fa-solid fa-magnifying-glass"></i> Buscar
+          </button>
+        </div>
+        <div id="arca-cuit-buscando" style="color:#7aaee8;font-size:.78rem;margin-top:5px;display:none">
+          <i class="fa-solid fa-spinner fa-spin"></i> Consultando padrón AFIP…
+        </div>
         <div id="arca-cuit-error" style="color:#f87171;font-size:.78rem;margin-top:5px;display:none"></div>
+      </div>
+
+      <div>
+        <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
+          Razón Social / Nombre
+        </label>
+        <input id="arca-receptor-nombre" type="text" maxlength="100"
+          placeholder="Se completa automáticamente al buscar"
+          style="width:100%;padding:11px 14px;border-radius:10px;
+                 background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.35);
+                 color:#f0f4ff;font-size:.95rem;outline:none;font-family:inherit" />
+      </div>
+
+      <div id="arca-domicilio-row" style="display:none">
+        <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
+          Domicilio
+        </label>
+        <input id="arca-receptor-domicilio" type="text" maxlength="200" readonly
+          style="width:100%;padding:11px 14px;border-radius:10px;
+                 background:rgba(255,255,255,.03);border:1.5px solid rgba(31,72,126,.2);
+                 color:#8fa3c0;font-size:.9rem;outline:none;font-family:inherit" />
       </div>
 
       <div>
@@ -583,29 +696,77 @@ async function mostrarModalARCA(facturaId, totalConInteres) {
     cancelButtonText: 'Cancelar',
     allowOutsideClick: false,
     allowEscapeKey: false,
-    width: '460px',
+    width: '480px',
     customClass: { confirmButton: 'af-apps-confirm' },
     didOpen: () => {
-      // Highlight visual de los radio buttons
+      // Highlight visual radios
       document.querySelectorAll('input[name="arca-cbte"]').forEach(radio => {
         radio.addEventListener('change', () => {
           const isA = document.querySelector('input[name="arca-cbte"]:checked').value === '1';
-          document.getElementById('arca-radio-b').style.background = isA ? 'rgba(31,72,126,.07)' : 'rgba(31,72,126,.2)';
-          document.getElementById('arca-radio-b').style.color = isA ? '#4d6380' : '#7aaee8';
-          document.getElementById('arca-radio-b').style.borderColor = isA ? 'rgba(31,72,126,.25)' : 'rgba(31,72,126,.4)';
-          document.getElementById('arca-radio-a').style.background = isA ? 'rgba(99,102,241,.18)' : 'rgba(99,102,241,.07)';
-          document.getElementById('arca-radio-a').style.color = isA ? '#c7d2fe' : '#8fa3c0';
-          document.getElementById('arca-radio-a').style.borderColor = isA ? 'rgba(99,102,241,.5)' : 'rgba(99,102,241,.25)';
-          // Fact. A obliga RI
-          if (isA) {
-            document.getElementById('arca-cond-iva').value = '1';
-          }
+          document.getElementById('arca-radio-b').style.background    = isA ? 'rgba(31,72,126,.07)' : 'rgba(31,72,126,.2)';
+          document.getElementById('arca-radio-b').style.color          = isA ? '#4d6380' : '#7aaee8';
+          document.getElementById('arca-radio-b').style.borderColor    = isA ? 'rgba(31,72,126,.25)' : 'rgba(31,72,126,.4)';
+          document.getElementById('arca-radio-a').style.background    = isA ? 'rgba(99,102,241,.18)' : 'rgba(99,102,241,.07)';
+          document.getElementById('arca-radio-a').style.color          = isA ? '#c7d2fe' : '#8fa3c0';
+          document.getElementById('arca-radio-a').style.borderColor    = isA ? 'rgba(99,102,241,.5)' : 'rgba(99,102,241,.25)';
+          if (isA) document.getElementById('arca-cond-iva').value = '1';
         });
+      });
+
+      // Autocomplete padrón AFIP
+      async function buscarCuit() {
+        const cuitVal = (document.getElementById('arca-cuit-input').value || '').replace(/\D/g, '');
+        const errEl   = document.getElementById('arca-cuit-error');
+        const busEl   = document.getElementById('arca-cuit-buscando');
+        errEl.style.display = 'none';
+        if (cuitVal.length !== 11) {
+          errEl.textContent = 'El CUIT debe tener exactamente 11 dígitos.';
+          errEl.style.display = 'block';
+          return;
+        }
+        busEl.style.display = 'block';
+        try {
+          const r = await fetch(`/arca/receptor?doc_tipo=80&doc_nro=${cuitVal}&resolve=1`);
+          const d = await r.json();
+          busEl.style.display = 'none';
+          if (d.razon_social || d.nombre) {
+            document.getElementById('arca-receptor-nombre').value = (d.razon_social || d.nombre || '').trim();
+            if (d.domicilio) {
+              document.getElementById('arca-receptor-domicilio').value = d.domicilio;
+              document.getElementById('arca-domicilio-row').style.display = 'block';
+            }
+            // Autoseleccionar condición IVA
+            if (d.cond_iva_id) {
+              const sel = document.getElementById('arca-cond-iva');
+              if (sel.querySelector(`option[value="${d.cond_iva_id}"]`)) {
+                sel.value = String(d.cond_iva_id);
+                if (Number(d.cond_iva_id) === 1) {
+                  document.querySelector('input[name="arca-cbte"][value="1"]').checked = true;
+                  document.querySelector('input[name="arca-cbte"][value="1"]').dispatchEvent(new Event('change'));
+                }
+              }
+            }
+          } else {
+            errEl.textContent = d.error || 'CUIT no encontrado en el padrón. Podés ingresar el nombre manualmente.';
+            errEl.style.display = 'block';
+          }
+        } catch(e) {
+          busEl.style.display = 'none';
+          errEl.textContent = 'Error al consultar padrón. Ingresá el nombre manualmente.';
+          errEl.style.display = 'block';
+        }
+      }
+
+      document.getElementById('arca-cuit-buscar').addEventListener('click', buscarCuit);
+      document.getElementById('arca-cuit-input').addEventListener('input', function() {
+        if (this.value.replace(/\D/g, '').length === 11) buscarCuit();
       });
     },
     preConfirm: () => {
-      const cuitVal = (document.getElementById('arca-cuit-input').value || '').replace(/\D/g, '');
-      const errEl = document.getElementById('arca-cuit-error');
+      const cuitVal        = (document.getElementById('arca-cuit-input').value || '').replace(/\D/g, '');
+      const errEl          = document.getElementById('arca-cuit-error');
+      const receptorNombre = (document.getElementById('arca-receptor-nombre').value || '').trim();
+      const receptorDom    = (document.getElementById('arca-receptor-domicilio')?.value || '').trim();
 
       if (cuitVal.length !== 11) {
         errEl.textContent = 'El CUIT debe tener exactamente 11 dígitos.';
@@ -615,39 +776,33 @@ async function mostrarModalARCA(facturaId, totalConInteres) {
       errEl.style.display = 'none';
 
       const cbte_tipo = Number(document.querySelector('input[name="arca-cbte"]:checked').value);
-      const cond_iva = Number(document.getElementById('arca-cond-iva').value);
+      const cond_iva  = Number(document.getElementById('arca-cond-iva').value);
 
-      // Validación Fact. A → solo RI (cond 1)
       if (cbte_tipo === 1 && cond_iva !== 1) {
         errEl.textContent = 'Factura A requiere condición IVA: Responsable Inscripto (1).';
         errEl.style.display = 'block';
         return false;
       }
-      // Fact. B → no puede ser RI (cond 1)
       if (cbte_tipo === 6 && cond_iva === 1) {
         errEl.textContent = 'Factura B no acepta condición IVA Responsable Inscripto. Usá Factura A.';
         errEl.style.display = 'block';
         return false;
       }
 
-      return { cbte_tipo, doc_nro: Number(cuitVal), cond_iva };
+      return { cbte_tipo, doc_nro: Number(cuitVal), cond_iva, receptorNombre, receptorDom };
     }
   });
 
-  if (!paso2.isConfirmed) {
-    // Canceló → igual va a productos (la factura ya está guardada)
-    window.location.href = '/productos';
-    return;
-  }
+  if (!paso2.isConfirmed) { window.location.href = '/productos'; return; }
 
-  const { cbte_tipo, doc_nro, cond_iva } = paso2.value;
+  const { cbte_tipo, doc_nro, cond_iva, receptorNombre, receptorDom } = paso2.value;
 
-  await _emitirARCA(facturaId, {
-    cbte_tipo,
-    doc_tipo: 80,       // CUIT
-    doc_nro,
-    receptor_cond_iva_id: cond_iva
-  }, true); // resolve_receptor=1 para buscar nombre en padrón
+  const cuitPayload = { cbte_tipo, doc_tipo: 80, doc_nro, receptor_cond_iva_id: cond_iva };
+  if (receptorNombre) cuitPayload.receptor_nombre    = receptorNombre;
+  if (receptorDom)    cuitPayload.receptor_domicilio = receptorDom;
+
+  // Solo pasar resolve_receptor si no tenemos nombre (para no pisar lo que ya completó el admin)
+  await _emitirARCA(facturaId, cuitPayload, !receptorNombre);
 }
 
 
