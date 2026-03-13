@@ -568,3 +568,169 @@ body.arca-page .swal2-textarea {
   -webkit-text-fill-color: #f0f4ff !important;
   border-color: rgba(31,72,126,0.3) !important;
 }
+
+/* ══════════════════════════════════════════════
+   3b. HEADER ADMIN — Grid + Admin Pills
+   (sección restaurada)
+   ══════════════════════════════════════════════ */
+
+/* Spacer que ocupa el lugar del buscador en modo admin */
+.site-header__spacer { grid-area: search; }
+
+/* Grid especial para admin: logo | espacio | nav centrado | espacio | actions */
+.site-header.is-admin {
+  grid-template-columns: auto 1fr auto 1fr auto;
+  grid-template-areas: "logo . nav . actions";
+}
+
+/* Las pills se centran dentro del nav */
+.site-header.is-admin .site-header__nav {
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+/* ── Base pill ── */
+.admin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid transparent;
+  font-family: var(--font-display);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color var(--transition-fast),
+    border-color     var(--transition-fast),
+    color            var(--transition-fast),
+    box-shadow       var(--transition-fast),
+    transform        var(--transition-fast);
+}
+.admin-pill i { font-size: .75rem; opacity: .85; }
+.admin-pill:hover { transform: translateY(-1px); }
+
+/* ── Variantes de color ── */
+.admin-pill--blue {
+  background: rgba(31,72,126,.18);
+  border-color: rgba(31,72,126,.45);
+  color: #7aaee8;
+}
+.admin-pill--blue:hover {
+  background: rgba(31,72,126,.32);
+  border-color: #2860a8;
+  color: #c0d8f8;
+  box-shadow: 0 4px 14px rgba(31,72,126,.3);
+}
+
+.admin-pill--violet {
+  background: rgba(99,102,241,.15);
+  border-color: rgba(99,102,241,.4);
+  color: #a5b4fc;
+}
+.admin-pill--violet:hover {
+  background: rgba(99,102,241,.28);
+  border-color: #6366f1;
+  color: #c7d2fe;
+  box-shadow: 0 4px 14px rgba(99,102,241,.3);
+}
+
+.admin-pill--yellow {
+  background: rgba(245,166,35,.12);
+  border-color: rgba(245,166,35,.38);
+  color: #fbbf24;
+}
+.admin-pill--yellow:hover {
+  background: rgba(245,166,35,.24);
+  border-color: #f5a623;
+  color: #fde68a;
+  box-shadow: 0 4px 14px rgba(245,166,35,.25);
+}
+
+.admin-pill--slate {
+  background: rgba(100,116,139,.15);
+  border-color: rgba(100,116,139,.38);
+  color: #94a3b8;
+}
+.admin-pill--slate:hover {
+  background: rgba(100,116,139,.28);
+  border-color: #64748b;
+  color: #cbd5e1;
+  box-shadow: 0 4px 14px rgba(100,116,139,.2);
+}
+
+.admin-pill--red {
+  background: rgba(217,4,41,.12);
+  border-color: rgba(217,4,41,.38);
+  color: #ff6b7a;
+  position: relative;
+}
+.admin-pill--red:hover {
+  background: rgba(217,4,41,.24);
+  border-color: var(--color-accent);
+  color: #ffaab3;
+  box-shadow: 0 4px 14px rgba(217,4,41,.3);
+}
+
+/* Badge de pedidos sobre la pill roja */
+.admin-pill--pedidos { padding-right: 10px; }
+.badge-pedidos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-accent);
+  color: #fff;
+  font-size: .6rem;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  margin-left: 2px;
+  animation: badgePop .3s var(--ease-out);
+}
+
+/* ── Responsive pills ──
+   1024px → solo ícono cuadrado
+   768px  → menú móvil vertical con texto
+────────────────────────── */
+@media (max-width: 1280px) {
+  .admin-pill span:not(.badge-pedidos) { display: none; }
+  .admin-pill {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+    border-radius: var(--radius-md);
+  }
+  .admin-pill--pedidos { padding: 0; width: 36px; }
+  .badge-pedidos {
+    position: absolute;
+    top: -4px; right: -4px;
+    margin: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  /* En mobile el nav se despliega en columna, restauramos texto */
+  .site-header.is-admin .site-header__nav.is-open .admin-pill {
+    width: 100%;
+    height: auto;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    justify-content: flex-start;
+  }
+  .site-header.is-admin .site-header__nav.is-open .admin-pill span:not(.badge-pedidos) {
+    display: inline;
+  }
+  .badge-pedidos {
+    position: static;
+    margin-left: auto;
+  }
+}
