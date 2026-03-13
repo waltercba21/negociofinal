@@ -359,7 +359,7 @@ if (!window.__CREAR_INIT__) {
       var $g = null, min = Infinity;
       $('.proveedor').each(function () {
         var v = toNumber($(this).find('.costo_iva').val()); // hidden enviado (ya normalizado a unidad)
-        if (!isNaN(v) && v < min) { min = v; $g = $(this); }
+        if (!isNaN(v) && v > 0 && v < min) { min = v; $g = $(this); } // v>0: excluir proveedores sin precio
       });
       return $g;
     }
@@ -388,7 +388,12 @@ if (!window.__CREAR_INIT__) {
       var utilRaw = utilEl ? utilEl.value : '';
       var utilidad = toNumber(utilRaw);
 
-      var precioFinal = Math.ceil((base * (1 + utilidad / 100)) / 10) * 10;
+      // Redondeo a la centena más cercana (≥50 sube, <50 baja) — idéntico a editar.js
+      var precioFinalRaw = base * (1 + utilidad / 100);
+      var precioFinal = (function(n) {
+        var resto = n % 100;
+        return (resto < 50) ? (n - resto) : (n + (100 - resto));
+      })(Math.ceil(precioFinalRaw));
 
       // Establecer por id y también por name (por si alguna vez cambia el id)
       $('#precio_venta, input[name="precio_venta"]').val(precioFinal).trigger('input').trigger('change');

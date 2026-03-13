@@ -339,6 +339,10 @@ function redondearAlCentenar(valor) {
 
     window.__seleccionManualProveedor__ = false;
 
+    // ✅ FIX: al cargar, NO activar seleccionManualProveedor aunque haya proveedor en BD.
+    // El cálculo del precio siempre parte del proveedor más barato (costo_iva menor).
+    // El radio del proveedor en BD se marca visualmente solo como referencia,
+    // pero actualizarPrecioFinal() lo sobreescribirá con el más barato al terminar el init.
     var seleccionadoBD = $('#proveedor_designado').val();
     if (seleccionadoBD) {
       var $radioBD = $('.proveedor-designado-radio').filter(function () {
@@ -346,7 +350,7 @@ function redondearAlCentenar(valor) {
       });
       if ($radioBD.length) {
         $radioBD.prop('checked', true);
-        window.__seleccionManualProveedor__ = true;
+        // NO activamos __seleccionManualProveedor__ aquí — el init debe calcular desde el más barato
         var $bloque = $radioBD.closest('.proveedor');
         var nombre = $bloque.find('.nombre_proveedor').text().trim();
         if (!nombre) {
@@ -828,7 +832,7 @@ function redondearAlCentenar(valor) {
     var $g = null, min = Infinity;
     $('.proveedor').each(function () {
       var v = toNumber($(this).find('.costo_iva').val()); // hidden por unidad
-      if (!isNaN(v) && v < min) { min = v; $g = $(this); }
+      if (!isNaN(v) && v > 0 && v < min) { min = v; $g = $(this); } // v>0: excluir proveedores sin precio
     });
     return $g;
   }
@@ -898,17 +902,9 @@ function actualizarPrecioFinal(opts) {
   var precioFinal = baseUnit * (1 + (utilidad / 100));
   precioFinal = redondearAlCentenar(precioFinal);
 
-  // ✅ CLAVE: en el primer load NO pisamos el precio_venta si ya vino desde BD
+  // ✅ Siempre escribir el PV calculado desde el proveedor más barato
   var $pv = $('#precio_venta, input[name="precio_venta"]').first();
-  var pvActual = toNumber($pv.val());
-  var debeEscribirPV = (opts.forceWrite === true) || (!esPrimerLoad) || (pvActual <= 0);
-
-  if (debeEscribirPV) {
-    $pv.val(precioFinal).trigger('input').trigger('change');
-  } else {
-    // dejamos el PV tal cual vino de la BD
-    console.log('[EDITAR][PV] (skip primer load) PV BD=', pvActual, 'calc=', precioFinal);
-  }
+  $pv.val(precioFinal).trigger('input').trigger('change');
 
   console.log('[EDITAR][PV] presGanador=',
     ($proveedor.data('presentacion') || $proveedor.find('.presentacion').val() || 'unidad'),
