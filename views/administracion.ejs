@@ -603,15 +603,25 @@
   (function(){
     function openModal(id){
       const el = document.getElementById(id);
-      if (!el || !window.bootstrap) return;
+      if (!el) return;
       bootstrap.Modal.getOrCreateInstance(el).show();
     }
-    document.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-open]');
-      if (!btn) return;
-      e.preventDefault();
-      openModal(btn.getAttribute('data-open'));
-    });
+
+    function initModals(){
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-open]');
+        if (!btn) return;
+        e.preventDefault();
+        openModal(btn.getAttribute('data-open'));
+      });
+    }
+
+    // Bootstrap se carga con defer — esperamos a que esté disponible
+    if (window.bootstrap) {
+      initModals();
+    } else {
+      window.addEventListener('load', initModals);
+    }
   })();
 </script>
 </body>
