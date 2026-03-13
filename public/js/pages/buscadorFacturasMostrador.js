@@ -678,6 +678,9 @@ async function _emitirARCA(facturaId, payload, resolveReceptor = false) {
 
     // ── EMITIDO ─────────────────────────────────────────────
     if (resp.ok && data.estado === 'EMITIDO') {
+      const tipoLabel = (data.cbte_tipo === 1 || data.cbte_tipo === 51) ? 'Factura A' : 'Factura B';
+      const pdfUrl   = `/arca/pdf/${data.arca_id}`;
+
       await Swal.fire({
         icon: 'success',
         title: '<span style="color:#4ade80">✓ Comprobante emitido</span>',
@@ -693,12 +696,22 @@ async function _emitirARCA(facturaId, payload, resolveReceptor = false) {
             </div>
             <div style="display:flex;justify-content:space-between;padding:10px 14px;background:rgba(31,72,126,.1);border-radius:10px">
               <span style="color:#4d6380;font-size:.82rem;font-weight:700">Tipo</span>
-              <strong style="color:#f0f4ff">${data.cbte_tipo === 1 || data.cbte_tipo === 51 ? 'Factura A' : 'Factura B'}</strong>
+              <strong style="color:#f0f4ff">${tipoLabel}</strong>
             </div>
             <div style="display:flex;justify-content:space-between;padding:10px 14px;background:rgba(31,72,126,.1);border-radius:10px">
               <span style="color:#4d6380;font-size:.82rem;font-weight:700">Vto. CAE</span>
               <strong style="color:#f0f4ff">${_formatFecha8(data.cae_vto)}</strong>
             </div>
+
+            <a href="${pdfUrl}" target="_blank" rel="noopener"
+               style="display:flex;align-items:center;justify-content:center;gap:10px;
+                      margin-top:6px;padding:13px 20px;border-radius:12px;
+                      background:rgba(31,72,126,.25);border:1.5px solid rgba(31,72,126,.5);
+                      color:#c0d8f8;font-size:.9rem;font-weight:800;
+                      text-decoration:none;letter-spacing:.04em">
+              <i class="fa-solid fa-print"></i>
+              Imprimir / Ver PDF
+            </a>
           </div>`,
         background: '#111c30',
         color: '#f0f4ff',
