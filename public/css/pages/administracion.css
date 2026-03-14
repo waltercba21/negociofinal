@@ -433,3 +433,49 @@
 @media (max-width: 768px) {
   .adm-main { padding: 88px 12px 48px; }
 }
+
+/* ──────────────────────────────────────────────────────────
+   11. BUSCADOR DE PRODUCTOS — Modal Factura / Presupuesto
+────────────────────────────────────────────────────────── */
+.resultado-busqueda {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(31,72,126,0.12);
+  transition: background 0.12s;
+}
+
+.resultado-busqueda:last-child {
+  border-bottom: none;
+}
+
+.resultado-busqueda:hover {
+  background: rgba(31,72,126,0.15);
+}
+
+.resultado-contenedor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(240,244,255,0.85);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+}
+
+.miniatura {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(31,72,126,0.2);
+  flex-shrink: 0;
+  background: rgba(31,72,126,0.08);
+}
+
+.miniatura-tabla {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(31,72,126,0.2);
+  background: rgba(31,72,126,0.08);
+}
