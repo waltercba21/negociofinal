@@ -101,6 +101,20 @@
         </div>
       </div>
 
+      <div class="adm-tile">
+        <div class="adm-tile__icon adm-tile__icon--green"><i class="fa-solid fa-file-invoice"></i></div>
+        <h3 class="adm-tile__title">Carta de Pago</h3>
+        <p class="adm-tile__desc">Preparar orden de pago a proveedor con detalle de documentos y medios de pago.</p>
+        <div class="adm-tile__action d-flex gap-2 flex-wrap">
+          <button class="adm-tile__btn" data-open="modalCartaPago">
+            <i class="fa-solid fa-plus"></i> Nueva
+          </button>
+          <button class="adm-tile__btn" id="btnVerHistorialCartas" style="background:rgba(31,72,126,0.3);">
+            <i class="fa-solid fa-list"></i> Historial
+          </button>
+        </div>
+      </div>
+
     </section>
 
   </div><!-- /adm-wrap -->
@@ -590,6 +604,260 @@
       </div>
     </div>
 
+    <!-- MODAL: NUEVA CARTA DE PAGO -->
+    <div class="modal fade" id="modalCartaPago" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="fa-solid fa-file-invoice me-2"></i>Nueva Carta de Pago</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body p-0">
+
+            <!-- SECCIÓN 1: DATOS GENERALES -->
+            <div class="cp-section">
+              <div class="cp-section__title">
+                <span class="cp-section__num">1</span>
+                Datos generales
+              </div>
+              <div class="row g-3 p-3">
+                <div class="col-md-4">
+                  <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+                  <select id="cartaProveedor" class="form-select">
+                    <option value="">Seleccionar proveedor...</option>
+                    <% proveedores.forEach(p => { %>
+                      <option value="<%= p.id %>"><%= p.nombre %></option>
+                    <% }) %>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Fecha <span class="text-danger">*</span></label>
+                  <input type="date" id="cartaFecha" class="form-control">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Administrador <span class="text-danger">*</span></label>
+                  <select id="cartaAdministrador" class="form-select">
+                    <option value="">Seleccionar...</option>
+                    <option value="GERARDO">GERARDO</option>
+                    <option value="CHACHO">CHACHO</option>
+                    <option value="WALTER">WALTER</option>
+                  </select>
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label">Observaciones</label>
+                  <textarea id="cartaObservaciones" class="form-control" rows="2" placeholder="Ej: Pago correspondiente a mercadería recibida semana 12..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 2: DOCUMENTOS A ABONAR -->
+            <div class="cp-section">
+              <div class="cp-section__title">
+                <span class="cp-section__num">2</span>
+                Documentos a abonar
+              </div>
+              <div class="p-3">
+                <div class="d-flex gap-2 align-items-end mb-3 flex-wrap">
+                  <div>
+                    <label class="form-label">Tipo de documento</label>
+                    <select id="cartaTipoDocumento" class="form-select" style="min-width:180px;">
+                      <option value="factura">Facturas</option>
+                      <option value="presupuesto">Presupuestos</option>
+                    </select>
+                  </div>
+                  <button id="btnCargarDocumentos" class="btn btn-primary" style="height:40px;">
+                    <i class="fa-solid fa-rotate"></i> Cargar documentos
+                  </button>
+                  <small class="text-muted ms-1" style="align-self:center;">Solo muestra documentos pendientes no asignados a otra carta.</small>
+                </div>
+
+                <div id="contenedorDocumentosDisponibles" class="cp-docs-grid mb-4">
+                  <p class="cp-hint">Seleccioná un proveedor y hacé clic en <strong>Cargar documentos</strong>.</p>
+                </div>
+
+                <div class="cp-tabla-wrap">
+                  <div class="cp-tabla-header">
+                    <span>Documentos seleccionados para esta carta</span>
+                    <span id="cartaTotalDocumentos" class="cp-tabla-total">$ 0,00</span>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm align-middle" id="tablaDocumentosSeleccionados">
+                      <thead>
+                        <tr>
+                          <th>Tipo</th>
+                          <th>N° Documento</th>
+                          <th>Fecha</th>
+                          <th>Vencimiento</th>
+                          <th class="text-end">Importe</th>
+                          <th class="text-center">Quitar</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr id="tablaDocumentosPlaceholder">
+                          <td colspan="6" class="text-center text-muted py-3">
+                            <i class="fa-solid fa-inbox me-2"></i>Sin documentos seleccionados
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 3: FORMA DE PAGO -->
+            <div class="cp-section">
+              <div class="cp-section__title">
+                <span class="cp-section__num">3</span>
+                Forma de pago
+              </div>
+              <div class="row g-3 p-3">
+
+                <div class="col-md-4">
+                  <label class="form-label"><i class="fa-solid fa-money-bill-wave me-1 text-success"></i> Efectivo</label>
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="cartaEfectivo" class="form-control" step="0.01" min="0" placeholder="0,00">
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label"><i class="fa-solid fa-building-columns me-1 text-info"></i> Transferencia bancaria</label>
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="cartaTransferencia" class="form-control" step="0.01" min="0" placeholder="0,00">
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label"><i class="fa-solid fa-money-check me-1 text-warning"></i> Cheque</label>
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="cartaCheque" class="form-control" step="0.01" min="0" placeholder="0,00">
+                  </div>
+                </div>
+
+                <div class="col-12 d-none" id="seccionCheque">
+                  <div class="cp-cheque-panel">
+                    <div class="cp-cheque-panel__title"><i class="fa-solid fa-money-check-dollar me-2"></i>Datos del cheque</div>
+                    <div class="row g-2">
+                      <div class="col-md-4">
+                        <label class="form-label">Banco</label>
+                        <input type="text" id="cartaBancoCheque" class="form-control" placeholder="Ej: Banco Nación">
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label">N° de cheque</label>
+                        <input type="text" id="cartaNumeroCheque" class="form-control" placeholder="Ej: 0004521">
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label">Fecha del cheque</label>
+                        <input type="date" id="cartaFechaCheque" class="form-control">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="cp-resumen">
+                    <div class="cp-resumen__row">
+                      <span>Total documentos</span>
+                      <span id="cartaTotalDocumentos2">— agregá documentos en la sección anterior —</span>
+                    </div>
+                    <div class="cp-resumen__row cp-resumen__row--pago">
+                      <span>Total a pagar</span>
+                      <span id="cartaTotalPago">$ 0,00</span>
+                    </div>
+                    <div class="cp-resumen__row">
+                      <span>Diferencia</span>
+                      <span id="cartaDiferencia" class="fw-bold">$ 0,00</span>
+                    </div>
+                  </div>
+                  <div id="alertaDiferencia" class="cp-alerta d-none"></div>
+                </div>
+
+              </div>
+            </div>
+
+          </div><!-- /modal-body -->
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" id="btnGuardarCartaPago" class="btn btn-success">
+              <i class="fa-solid fa-floppy-disk"></i> Guardar Carta
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: HISTORIAL CARTAS DE PAGO -->
+    <div class="modal fade" id="modalHistorialCartas" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="fa-solid fa-list me-2"></i>Historial de Cartas de Pago</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Proveedor</label>
+                <select id="historialFiltroProveedor" class="form-select">
+                  <option value="">Todos</option>
+                  <% proveedores.forEach(p => { %>
+                    <option value="<%= p.id %>"><%= p.nombre %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Estado</label>
+                <select id="historialFiltroEstado" class="form-select">
+                  <option value="">Todos</option>
+                  <option value="emitida">Emitida</option>
+                  <option value="borrador">Borrador</option>
+                  <option value="anulada">Anulada</option>
+                </select>
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button id="btnBuscarHistorialCartas" class="btn btn-primary w-100">Filtrar</button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm align-middle" id="tablaHistorialCartas">
+                <thead>
+                  <tr>
+                    <th>N° Carta</th>
+                    <th>Fecha</th>
+                    <th>Proveedor</th>
+                    <th>Total Docs.</th>
+                    <th>Total Pagado</th>
+                    <th>Estado</th>
+                    <th class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="7" class="text-center text-muted py-3">Aplicá un filtro para ver resultados.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
 <%- include('./layouts/footer.ejs') %>
 
 <script src="/js/proveedores.js"></script>
@@ -598,6 +866,7 @@
 <script src="/js/listadosDocumentos.js"></script>
 <script src="/js/catalogosAdmin.js"></script>
 <script src="/js/notasCreditoAdministracion.js?v=20260109_1"></script>
+<script src="/js/cartasPagoAdministracion.js"></script>
 
 <script>
   (function(){
