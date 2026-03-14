@@ -93,7 +93,8 @@ function insertarItems(cartaId, items, callback) {
       item.documento_id,
       item.numero_documento,
       toSQLDate(item.fecha_documento),
-      importeOriginal,
+      importeOriginal,   // importe (columna original requerida)
+      importeOriginal,   // importe_original
       item.nota_credito_id   || null,
       ncImporte,
       tipoPago,
@@ -105,7 +106,7 @@ function insertarItems(cartaId, items, callback) {
   const sql = `
     INSERT INTO cartas_pago_items
       (carta_pago_id, tipo_documento, documento_id, numero_documento,
-       fecha_documento, importe_original, nota_credito_id, nota_credito_importe,
+       fecha_documento, importe, importe_original, nota_credito_id, nota_credito_importe,
        tipo_pago, importe_abonado, saldo_pendiente)
     VALUES ?
   `;
