@@ -127,7 +127,8 @@ router.delete('/api/modelos/:id', administracionController.eliminarModelo);
 
 // ⚠️  Esta ruta DEBE ir ANTES de /api/cartas-pago/:id para que no sea
 //     interpretada como un :id con valor "documentos-disponibles"
-router.get('/api/cartas-pago/documentos-disponibles', cartasPagoController.documentosDisponibles);
+router.get('/api/cartas-pago/documentos-disponibles',   cartasPagoController.documentosDisponibles);
+router.get('/api/cartas-pago/notas-credito-disponibles', cartasPagoController.notasCreditoDisponibles);
 
 router.post('/api/cartas-pago',               cartasPagoController.crearCarta);
 router.get('/api/cartas-pago',                cartasPagoController.listarCartas);

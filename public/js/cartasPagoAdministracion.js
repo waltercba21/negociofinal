@@ -1,31 +1,36 @@
-/* public/js/cartasPagoAdministracion.js
-   Autofaros — Carta de Pago v1.0
-   ─────────────────────────────────────────────────────────────────────────── */
+/* public/js/cartasPagoAdministracion.js — v2
+   Autofaros — Carta de Pago con notas de crédito y pagos parciales
+   ─────────────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
 
+  // ── Modales Bootstrap ──────────────────────────────────────────────────────
+  const modalCarta     = new bootstrap.Modal(document.getElementById('modalCartaPago'));
+  const modalHistorial = new bootstrap.Modal(document.getElementById('modalHistorialCartas'));
+
   // ── Elementos DOM ──────────────────────────────────────────────────────────
-  const modalCarta      = new bootstrap.Modal(document.getElementById('modalCartaPago'));
-  const modalHistorial  = new bootstrap.Modal(document.getElementById('modalHistorialCartas'));
+  const selProveedor   = document.getElementById('cartaProveedor');
+  const selTipo        = document.getElementById('cartaTipoDocumento');
+  const btnCargarDocs  = document.getElementById('btnCargarDocumentos');
+  const contenedorDocs = document.getElementById('contenedorDocumentosDisponibles');
+  const tablaSelBody   = document.getElementById('tablaDocumentosSeleccionados').querySelector('tbody');
+  const spanTotal      = document.getElementById('cartaTotalDocumentos');
+  const inputEfectivo  = document.getElementById('cartaEfectivo');
+  const inputTransf    = document.getElementById('cartaTransferencia');
+  const inputCheque    = document.getElementById('cartaCheque');
+  const seccionCheque  = document.getElementById('seccionCheque');
+  const spanTotalPago  = document.getElementById('cartaTotalPago');
+  const spanDiferencia = document.getElementById('cartaDiferencia');
+  const alertDif       = document.getElementById('alertaDiferencia');
+  const btnGuardar     = document.getElementById('btnGuardarCartaPago');
+  const btnVerHistorial= document.getElementById('btnVerHistorialCartas');
 
-  const selProveedor    = document.getElementById('cartaProveedor');
-  const selTipo         = document.getElementById('cartaTipoDocumento');
-  const btnCargarDocs   = document.getElementById('btnCargarDocumentos');
-  const contenedorDocs  = document.getElementById('contenedorDocumentosDisponibles');
-  const tablaSelBody    = document.getElementById('tablaDocumentosSeleccionados').querySelector('tbody');
-  const spanTotal       = document.getElementById('cartaTotalDocumentos');
-
-  const inputEfectivo   = document.getElementById('cartaEfectivo');
-  const inputTransf     = document.getElementById('cartaTransferencia');
-  const inputCheque     = document.getElementById('cartaCheque');
-  const seccionCheque   = document.getElementById('seccionCheque');
-  const spanTotalPago   = document.getElementById('cartaTotalPago');
-  const spanDiferencia  = document.getElementById('cartaDiferencia');
-  const alertDif        = document.getElementById('alertaDiferencia');
-
-  const btnGuardar      = document.getElementById('btnGuardarCartaPago');
-  const btnVerHistorial = document.getElementById('btnVerHistorialCartas');
-
-  let documentosSeleccionados = []; // [{ tipo, id, numero, fecha, fecha_pago, importe }]
+  // ── Estado ─────────────────────────────────────────────────────────────────
+  // Cada ítem: { tipo, id, numero_documento, fecha_documento, fecha_pago,
+  //              importe (saldo pendiente real), importe_original,
+  //              nota_credito_id, nota_credito_numero, nota_credito_importe,
+  //              tipo_pago ('total'|'parcial'), importe_abonado, saldo_pendiente }
+  let documentosSeleccionados = [];
+  let notasCreditoDisponibles = [];
 
   // ── Abrir modal ────────────────────────────────────────────────────────────
   document.addEventListener('click', e => {
@@ -35,12 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── Reset completo del modal ───────────────────────────────────────────────
   function resetModal() {
-    selProveedor.value     = '';
-    selTipo.value          = 'factura';
+    selProveedor.value = '';
+    selTipo.value = 'factura';
     contenedorDocs.innerHTML = '<p class="cp-hint">Seleccioná un proveedor y hacé clic en <strong>Cargar documentos</strong>.</p>';
     documentosSeleccionados = [];
+    notasCreditoDisponibles = [];
     renderTablaSeleccionados();
     ['cartaFecha','cartaAdministrador','cartaObservaciones',
      'cartaEfectivo','cartaTransferencia','cartaCheque',
@@ -53,13 +58,29 @@ document.addEventListener('DOMContentLoaded', () => {
     actualizarTotalesPago();
   }
 
+  // ── Cambio de proveedor → limpiar documentos y cargar notas ───────────────
+  selProveedor.addEventListener('change', () => {
+    documentosSeleccionados = [];
+    notasCreditoDisponibles = [];
+    contenedorDocs.innerHTML = '<p class="cp-hint">Seleccioná un proveedor y hacé clic en <strong>Cargar documentos</strong>.</p>';
+    renderTablaSeleccionados();
+    actualizarTotalesPago();
+
+    const idProv = selProveedor.value;
+    if (!idProv) return;
+
+    // Cargar notas de crédito en segundo plano
+    fetch(`/administracion/api/cartas-pago/notas-credito-disponibles?proveedor_id=${idProv}`)
+      .then(r => r.json())
+      .then(data => { notasCreditoDisponibles = data; })
+      .catch(err => console.error('Error cargando notas de crédito:', err));
+  });
+
   // ── Cargar documentos disponibles ─────────────────────────────────────────
   btnCargarDocs.addEventListener('click', async () => {
     const idProv = selProveedor.value;
     const tipo   = selTipo.value;
-    if (!idProv) {
-      return Swal.fire('Atención', 'Seleccioná un proveedor primero.', 'warning');
-    }
+    if (!idProv) return Swal.fire('Atención', 'Seleccioná un proveedor primero.', 'warning');
 
     contenedorDocs.innerHTML = '<p class="cp-hint"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</p>';
 
@@ -75,12 +96,15 @@ document.addEventListener('DOMContentLoaded', () => {
       contenedorDocs.innerHTML = '';
       docs.forEach(doc => {
         const yaAgregado = documentosSeleccionados.some(d => d.tipo === doc.tipo && d.id === doc.id);
+        const saldo      = parseFloat(doc.saldo_pendiente || doc.importe) || 0;
+        const abonado    = parseFloat(doc.total_abonado)  || 0;
+        const tieneSaldo = abonado > 0;
+
         const card = document.createElement('div');
         card.className = 'cp-doc-card' + (yaAgregado ? ' cp-doc-card--added' : '');
         card.dataset.id   = doc.id;
         card.dataset.tipo = doc.tipo;
 
-        const imp = parseFloat(doc.importe) || 0;
         card.innerHTML = `
           <div class="cp-doc-card__header">
             <span class="cp-doc-badge cp-doc-badge--${doc.tipo}">${doc.tipo === 'factura' ? 'Factura' : 'Presupuesto'}</span>
@@ -91,15 +115,25 @@ document.addEventListener('DOMContentLoaded', () => {
             ${doc.fecha_pago ? `<span class="cp-doc-card__venc ${esVencido(doc.fecha_pago) ? 'cp-doc-card__venc--danger' : ''}">
               <i class="fa-solid fa-clock"></i> Vence: ${fmtFecha(doc.fecha_pago)}
             </span>` : ''}
-            <span class="cp-doc-card__importe">$ ${fmtMonto(imp)}</span>
+            ${tieneSaldo ? `<span class="cp-doc-card__abonado">Abonado: $ ${fmtMonto(abonado)}</span>` : ''}
+            <span class="cp-doc-card__importe">Saldo: $ ${fmtMonto(saldo)}</span>
           </div>
-          <button class="cp-doc-card__btn ${yaAgregado ? 'cp-doc-card__btn--added' : ''}" data-id="${doc.id}" data-tipo="${doc.tipo}">
+          <button class="cp-doc-card__btn ${yaAgregado ? 'cp-doc-card__btn--added' : ''}">
             ${yaAgregado ? '<i class="fa-solid fa-check"></i> Agregado' : '<i class="fa-solid fa-plus"></i> Agregar'}
           </button>
         `;
 
         card.querySelector('.cp-doc-card__btn').addEventListener('click', () => {
-          toggleDocumento(doc, card);
+          toggleDocumento({
+            tipo:              doc.tipo,
+            id:                doc.id,
+            numero_documento:  doc.numero_documento,
+            fecha_documento:   doc.fecha_documento,
+            fecha_pago:        doc.fecha_pago,
+            importe:           saldo,           // saldo actual (lo que se debe)
+            importe_original:  parseFloat(doc.importe) || saldo,
+            total_abonado:     abonado,
+          }, card);
         });
 
         contenedorDocs.appendChild(card);
@@ -110,19 +144,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── Toggle agregar/quitar documento ───────────────────────────────────────
+  // ── Toggle agregar/quitar ──────────────────────────────────────────────────
   function toggleDocumento(doc, card) {
     const idx = documentosSeleccionados.findIndex(d => d.tipo === doc.tipo && d.id === doc.id);
     const btn = card.querySelector('.cp-doc-card__btn');
 
     if (idx === -1) {
       documentosSeleccionados.push({
-        tipo:             doc.tipo,
-        id:               doc.id,
-        numero_documento: doc.numero_documento,
-        fecha_documento:  doc.fecha_documento,
-        fecha_pago:       doc.fecha_pago,
-        importe:          parseFloat(doc.importe) || 0,
+        ...doc,
+        nota_credito_id:      null,
+        nota_credito_numero:  null,
+        nota_credito_importe: 0,
+        tipo_pago:            'total',
+        importe_abonado:      doc.importe,   // por defecto paga todo el saldo
+        saldo_pendiente:      0,
       });
       card.classList.add('cp-doc-card--added');
       btn.classList.add('cp-doc-card__btn--added');
@@ -141,81 +176,213 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Render tabla de documentos seleccionados ───────────────────────────────
   function renderTablaSeleccionados() {
     tablaSelBody.innerHTML = '';
-    let total = 0;
+    let totalDocs = 0;
 
-    documentosSeleccionados.forEach((doc, i) => {
-      total += doc.importe;
+    documentosSeleccionados.forEach((doc, idx) => {
+      const netoPagar = doc.importe - doc.nota_credito_importe; // saldo - NC
+      totalDocs += Math.max(netoPagar, 0);
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><span class="cp-doc-badge cp-doc-badge--${doc.tipo}">${doc.tipo === 'factura' ? 'Factura' : 'Presupuesto'}</span></td>
         <td class="fw-semibold">${doc.numero_documento}</td>
         <td>${fmtFecha(doc.fecha_documento)}</td>
         <td class="${esVencido(doc.fecha_pago) ? 'text-danger fw-bold' : ''}">${fmtFecha(doc.fecha_pago)}</td>
-        <td class="text-end fw-semibold">$ ${fmtMonto(doc.importe)}</td>
+        <td class="text-end">$ ${fmtMonto(doc.importe)}</td>
         <td class="text-center">
-          <button class="btn btn-sm btn-danger boton-quitar-doc" data-idx="${i}">
+          ${renderSelectorNC(doc, idx)}
+        </td>
+        <td class="text-end fw-bold ${doc.nota_credito_importe > 0 ? 'text-warning' : ''}">
+          - $ ${fmtMonto(doc.nota_credito_importe)}
+        </td>
+        <td>
+          ${renderSelectorTipoPago(doc, idx)}
+        </td>
+        <td class="text-end fw-bold text-success">$ ${fmtMonto(doc.importe_abonado)}</td>
+        <td class="text-end ${doc.saldo_pendiente > 0 ? 'text-danger fw-bold' : 'text-success'}">
+          ${doc.saldo_pendiente > 0 ? '$ ' + fmtMonto(doc.saldo_pendiente) : '✓ Cancelada'}
+        </td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-danger boton-quitar-doc" data-idx="${idx}">
             <i class="bi bi-trash"></i>
           </button>
         </td>
       `;
+
+      // Selector de nota de crédito
+      const selNC = tr.querySelector('.sel-nota-credito');
+      if (selNC) {
+        selNC.addEventListener('change', () => aplicarNotaCredito(idx, selNC.value));
+      }
+
+      // Selector tipo pago
+      const selTipoPago = tr.querySelector('.sel-tipo-pago');
+      if (selTipoPago) {
+        selTipoPago.addEventListener('change', () => cambiarTipoPago(idx, selTipoPago.value, tr));
+      }
+
+      // Input pago parcial
+      const inputParcial = tr.querySelector('.input-pago-parcial');
+      if (inputParcial) {
+        inputParcial.addEventListener('input', () => actualizarPagoParcial(idx, inputParcial.value));
+      }
+
       tr.querySelector('.boton-quitar-doc').addEventListener('click', () => {
-        quitarDocumentoDesdTabla(i);
+        documentosSeleccionados.splice(idx, 1);
+        sincronizarCardsConLista();
+        renderTablaSeleccionados();
+        actualizarTotalesPago();
       });
+
       tablaSelBody.appendChild(tr);
     });
 
-    spanTotal.textContent = '$ ' + fmtMonto(total);
+    spanTotal.textContent = '$ ' + fmtMonto(totalDocs);
 
-    // Mostrar/ocultar placeholder
     const placeholder = document.getElementById('tablaDocumentosPlaceholder');
     if (placeholder) placeholder.style.display = documentosSeleccionados.length ? 'none' : 'table-row';
+
+    actualizarTotalesPago();
   }
 
-  // ── Quitar desde tabla ─────────────────────────────────────────────────────
-  function quitarDocumentoDesdTabla(idx) {
-    documentosSeleccionados.splice(idx, 1);
+  function renderSelectorNC(doc, idx) {
+    if (!notasCreditoDisponibles.length) return '<span class="text-muted" style="font-size:11px;">Sin NC</span>';
+
+    let opts = '<option value="">Sin nota de crédito</option>';
+    notasCreditoDisponibles.forEach(nc => {
+      const sel = doc.nota_credito_id == nc.id ? 'selected' : '';
+      opts += `<option value="${nc.id}" data-importe="${nc.importe_total}" ${sel}>${nc.numero_nota_credito} — $ ${fmtMonto(nc.importe_total)}</option>`;
+    });
+    return `<select class="form-select form-select-sm sel-nota-credito" style="min-width:160px;">${opts}</select>`;
+  }
+
+  function renderSelectorTipoPago(doc, idx) {
+    const netoPagar = Math.max(doc.importe - doc.nota_credito_importe, 0);
+    const esParcial = doc.tipo_pago === 'parcial';
+    return `
+      <div class="d-flex flex-column gap-1" style="min-width:150px;">
+        <select class="form-select form-select-sm sel-tipo-pago">
+          <option value="total"   ${!esParcial ? 'selected' : ''}>Pago total</option>
+          <option value="parcial" ${ esParcial ? 'selected' : ''}>Pago parcial</option>
+        </select>
+        ${esParcial ? `
+        <div class="input-group input-group-sm">
+          <span class="input-group-text">$</span>
+          <input type="number" class="form-control input-pago-parcial"
+                 value="${fmtMontoPlain(doc.importe_abonado)}"
+                 min="0" max="${netoPagar}" step="0.01"
+                 placeholder="Monto a abonar">
+        </div>` : ''}
+      </div>
+    `;
+  }
+
+  // ── Aplicar nota de crédito a un ítem ─────────────────────────────────────
+  function aplicarNotaCredito(idx, ncId) {
+    const doc = documentosSeleccionados[idx];
+    if (!ncId) {
+      doc.nota_credito_id      = null;
+      doc.nota_credito_numero  = null;
+      doc.nota_credito_importe = 0;
+    } else {
+      const nc = notasCreditoDisponibles.find(n => n.id == ncId);
+      if (nc) {
+        doc.nota_credito_id      = nc.id;
+        doc.nota_credito_numero  = nc.numero_nota_credito;
+        doc.nota_credito_importe = parseFloat(nc.importe_total) || 0;
+      }
+    }
+    // Recalcular abonado y saldo según tipo de pago
+    recalcularItem(idx);
     renderTablaSeleccionados();
     actualizarTotalesPago();
-    // Re-render cards si están visibles
+  }
+
+  // ── Cambiar tipo de pago ───────────────────────────────────────────────────
+  function cambiarTipoPago(idx, tipoPago, tr) {
+    documentosSeleccionados[idx].tipo_pago = tipoPago;
+    recalcularItem(idx);
+    renderTablaSeleccionados();
+    actualizarTotalesPago();
+  }
+
+  // ── Actualizar monto de pago parcial ──────────────────────────────────────
+  function actualizarPagoParcial(idx, valor) {
+    const doc         = documentosSeleccionados[idx];
+    const netoPagar   = Math.max(doc.importe - doc.nota_credito_importe, 0);
+    const abonado     = Math.min(parseFloat(valor) || 0, netoPagar);
+    doc.importe_abonado  = abonado;
+    doc.saldo_pendiente  = Math.max(netoPagar - abonado, 0);
+    actualizarTotalesPago();
+    // Refrescar solo el total sin re-renderizar toda la tabla
+    spanTotal.textContent = '$ ' + fmtMonto(
+      documentosSeleccionados.reduce((s, d) => s + Math.max(d.importe - d.nota_credito_importe, 0), 0)
+    );
+  }
+
+  // ── Recalcular importe_abonado y saldo_pendiente de un ítem ───────────────
+  function recalcularItem(idx) {
+    const doc       = documentosSeleccionados[idx];
+    const netoPagar = Math.max(doc.importe - doc.nota_credito_importe, 0);
+
+    if (doc.tipo_pago === 'total') {
+      doc.importe_abonado = netoPagar;
+      doc.saldo_pendiente = 0;
+    } else {
+      // En pago parcial, conservar el monto ingresado si ya existe; si no, 0
+      const abonado = Math.min(doc.importe_abonado || 0, netoPagar);
+      doc.importe_abonado = abonado;
+      doc.saldo_pendiente = Math.max(netoPagar - abonado, 0);
+    }
+  }
+
+  // ── Sincronizar cards con la lista (para el botón quitar desde tabla) ──────
+  function sincronizarCardsConLista() {
     document.querySelectorAll('.cp-doc-card').forEach(card => {
       const tipo = card.dataset.tipo;
       const id   = parseInt(card.dataset.id);
       const btn  = card.querySelector('.cp-doc-card__btn');
-      const estaEnLista = documentosSeleccionados.some(d => d.tipo === tipo && d.id === id);
-      card.classList.toggle('cp-doc-card--added', estaEnLista);
-      btn.classList.toggle('cp-doc-card__btn--added', estaEnLista);
-      btn.innerHTML = estaEnLista
-        ? '<i class="fa-solid fa-check"></i> Agregado'
-        : '<i class="fa-solid fa-plus"></i> Agregar';
+      const esta = documentosSeleccionados.some(d => d.tipo === tipo && d.id === id);
+      card.classList.toggle('cp-doc-card--added', esta);
+      if (btn) {
+        btn.classList.toggle('cp-doc-card__btn--added', esta);
+        btn.innerHTML = esta
+          ? '<i class="fa-solid fa-check"></i> Agregado'
+          : '<i class="fa-solid fa-plus"></i> Agregar';
+      }
     });
   }
 
-  // ── Cheque: mostrar/ocultar sección ───────────────────────────────────────
+  // ── Totales de pago ────────────────────────────────────────────────────────
   inputCheque.addEventListener('input', () => {
-    const v = parseFloat(inputCheque.value) || 0;
-    seccionCheque.classList.toggle('d-none', v <= 0);
+    seccionCheque.classList.toggle('d-none', (parseFloat(inputCheque.value) || 0) <= 0);
     actualizarTotalesPago();
   });
+  inputEfectivo.addEventListener('input', actualizarTotalesPago);
+  inputTransf.addEventListener('input',   actualizarTotalesPago);
 
-  inputEfectivo.addEventListener('input',  actualizarTotalesPago);
-  inputTransf.addEventListener('input',    actualizarTotalesPago);
-
-  // ── Calcular totales de pago ───────────────────────────────────────────────
   function actualizarTotalesPago() {
-    const totalDocs  = documentosSeleccionados.reduce((s, d) => s + d.importe, 0);
-    const efectivo   = parseFloat(inputEfectivo.value) || 0;
-    const transf     = parseFloat(inputTransf.value)   || 0;
-    const cheque     = parseFloat(inputCheque.value)   || 0;
-    const totalPago  = efectivo + transf + cheque;
-    const diferencia = totalPago - totalDocs;
+    const totalDocs = documentosSeleccionados.reduce((s, d) => {
+      return s + Math.max(d.importe - d.nota_credito_importe, 0);
+    }, 0);
+    const totalAbonado = documentosSeleccionados.reduce((s, d) => s + (d.importe_abonado || 0), 0);
+
+    const efectivo = parseFloat(inputEfectivo.value) || 0;
+    const transf   = parseFloat(inputTransf.value)   || 0;
+    const cheque   = parseFloat(inputCheque.value)   || 0;
+    const totalPago = efectivo + transf + cheque;
+    const diferencia = totalPago - totalAbonado;
 
     spanTotalPago.textContent  = '$ ' + fmtMonto(totalPago);
     spanDiferencia.textContent = (diferencia >= 0 ? '+' : '') + '$ ' + fmtMonto(diferencia);
-
-    spanDiferencia.className = 'fw-bold ' + (
+    spanDiferencia.className   = 'fw-bold ' + (
       Math.abs(diferencia) < 0.01 ? 'text-success' :
       diferencia > 0 ? 'text-warning' : 'text-danger'
     );
+
+    // Actualizar label total docs en resumen
+    const el2 = document.getElementById('cartaTotalDocumentos2');
+    if (el2) el2.textContent = '$ ' + fmtMonto(totalDocs);
 
     if (alertDif) {
       alertDif.classList.toggle('d-none', Math.abs(diferencia) < 0.01);
@@ -237,33 +404,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const transf   = parseFloat(inputTransf.value)   || 0;
     const cheque   = parseFloat(inputCheque.value)   || 0;
 
-    // Validaciones
     const errores = [];
-    if (!idProv)    errores.push('Proveedor');
-    if (!fecha)     errores.push('Fecha');
-    if (!admin)     errores.push('Administrador');
+    if (!idProv)  errores.push('Proveedor');
+    if (!fecha)   errores.push('Fecha');
+    if (!admin)   errores.push('Administrador');
     if (!documentosSeleccionados.length) errores.push('Al menos un documento');
     if (efectivo + transf + cheque <= 0) errores.push('Al menos un medio de pago con monto > 0');
 
-    if (errores.length) {
-      return Swal.fire('Faltan datos', 'Completá: ' + errores.join(', '), 'warning');
-    }
+    // Validar pagos parciales: el monto parcial no puede ser 0
+    const parcialSinMonto = documentosSeleccionados.some(
+      d => d.tipo_pago === 'parcial' && (!d.importe_abonado || d.importe_abonado <= 0)
+    );
+    if (parcialSinMonto) errores.push('Ingresá el monto a abonar en los pagos parciales');
 
-    const totalDocs = documentosSeleccionados.reduce((s, d) => s + d.importe, 0);
-    const totalPago = efectivo + transf + cheque;
-    const diferencia = Math.abs(totalPago - totalDocs);
+    if (errores.length) return Swal.fire('Faltan datos', errores.join('\n'), 'warning');
 
-    // Advertir si hay diferencia pero permitir continuar
+    const totalAbonado = documentosSeleccionados.reduce((s, d) => s + (d.importe_abonado || 0), 0);
+    const totalPago    = efectivo + transf + cheque;
+    const totalDocs    = documentosSeleccionados.reduce((s, d) => s + Math.max(d.importe - d.nota_credito_importe, 0), 0);
+    const diferencia   = Math.abs(totalPago - totalAbonado);
+
     if (diferencia >= 0.01) {
-      const confirmar = await Swal.fire({
+      const ok = await Swal.fire({
         icon: 'warning',
         title: 'Diferencia en los montos',
-        html: `El total de documentos es <strong>$ ${fmtMonto(totalDocs)}</strong> y el total a pagar es <strong>$ ${fmtMonto(totalPago)}</strong>.<br>¿Deseás continuar de todas formas?`,
+        html: `Total a abonar por documentos: <strong>$ ${fmtMonto(totalAbonado)}</strong><br>
+               Medios de pago ingresados: <strong>$ ${fmtMonto(totalPago)}</strong><br>
+               ¿Deseás continuar de todas formas?`,
         showCancelButton: true,
         confirmButtonText: 'Sí, guardar',
         cancelButtonText: 'Revisar',
       });
-      if (!confirmar.isConfirmed) return;
+      if (!ok.isConfirmed) return;
     }
 
     const payload = {
@@ -280,11 +452,17 @@ document.addEventListener('DOMContentLoaded', () => {
       total_documentos:    totalDocs,
       total_pagado:        totalPago,
       items: documentosSeleccionados.map(d => ({
-        tipo_documento:   d.tipo,
-        documento_id:     d.id,
-        numero_documento: d.numero_documento,
-        fecha_documento:  d.fecha_documento,
-        importe:          d.importe,
+        tipo_documento:       d.tipo,
+        documento_id:         d.id,
+        numero_documento:     d.numero_documento,
+        fecha_documento:      d.fecha_documento,
+        importe:              d.importe,
+        importe_original:     d.importe_original,
+        nota_credito_id:      d.nota_credito_id   || null,
+        nota_credito_importe: d.nota_credito_importe || 0,
+        tipo_pago:            d.tipo_pago,
+        importe_abonado:      d.importe_abonado,
+        saldo_pendiente:      d.saldo_pendiente,
       })),
     };
 
@@ -298,29 +476,24 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-
       if (!res.ok || !data.insertId) throw new Error(data.error || 'Error desconocido');
 
       modalCarta.hide();
 
-      const resultado = await Swal.fire({
+      const result = await Swal.fire({
         icon: 'success',
         title: `Carta ${data.numero} guardada`,
-        html: `La carta de pago fue registrada correctamente.<br>
-               <small class="text-muted">ID interno: #${data.insertId}</small>`,
-        showDenyButton:    true,
-        showCancelButton:  false,
+        html: `Registrada correctamente.<br><small class="text-muted">ID: #${data.insertId}</small>`,
+        showDenyButton:   true,
         confirmButtonText: '<i class="fa-solid fa-file-pdf"></i> Descargar PDF',
         denyButtonText:    'Cerrar',
         denyButtonColor:   '#6b7a99',
       });
-
-      if (resultado.isConfirmed) {
+      if (result.isConfirmed) {
         window.open(`/administracion/api/cartas-pago/${data.insertId}/pdf`, '_blank');
       }
-
     } catch (err) {
-      console.error('❌ Error al guardar carta de pago:', err);
+      console.error('❌ Error al guardar carta:', err);
       Swal.fire('Error', err.message || 'No se pudo guardar la carta de pago.', 'error');
     } finally {
       btnGuardar.disabled = false;
@@ -328,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── Ver historial ──────────────────────────────────────────────────────────
+  // ── Historial ──────────────────────────────────────────────────────────────
   btnVerHistorial.addEventListener('click', async () => {
     modalHistorial.show();
     await cargarHistorial();
@@ -336,32 +509,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function cargarHistorial() {
     const tbody = document.getElementById('tablaHistorialCartas').querySelector('tbody');
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3"><i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
+
+    const filtroP = document.getElementById('historialFiltroProveedor')?.value || '';
+    const filtroE = document.getElementById('historialFiltroEstado')?.value    || '';
+    let url = '/administracion/api/cartas-pago?';
+    if (filtroP) url += `proveedor_id=${filtroP}&`;
+    if (filtroE) url += `estado=${filtroE}&`;
 
     try {
-      const filtroP = document.getElementById('historialFiltroProveedor')?.value || '';
-      const filtroE = document.getElementById('historialFiltroEstado')?.value    || '';
-      let url = '/administracion/api/cartas-pago?';
-      if (filtroP) url += `proveedor_id=${filtroP}&`;
-      if (filtroE) url += `estado=${filtroE}&`;
-
       const res   = await fetch(url);
       const lista = await res.json();
-
       tbody.innerHTML = '';
 
       if (!lista.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No hay cartas de pago registradas.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Sin resultados.</td></tr>';
         return;
       }
 
       lista.forEach(carta => {
-        const estadoClass = {
-          emitida:  'badge bg-success',
-          borrador: 'badge bg-warning text-dark',
-          anulada:  'badge bg-danger',
-        }[carta.estado] || 'badge bg-secondary';
-
+        const badgeClass = { emitida: 'bg-success', borrador: 'bg-warning text-dark', anulada: 'bg-danger' }[carta.estado] || 'bg-secondary';
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="fw-semibold">${carta.numero}</td>
@@ -369,52 +536,42 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${carta.nombre_proveedor}</td>
           <td>$ ${fmtMonto(carta.total_documentos)}</td>
           <td>$ ${fmtMonto(carta.total_pagado)}</td>
-          <td><span class="${estadoClass}">${carta.estado}</span></td>
+          <td><span class="badge ${badgeClass}">${carta.estado}</span></td>
           <td class="text-center">
             <a href="/administracion/api/cartas-pago/${carta.id}/pdf" target="_blank"
-               class="btn btn-sm btn-primary me-1" title="Ver PDF">
-              <i class="fa-solid fa-file-pdf"></i>
-            </a>
+               class="btn btn-sm btn-primary me-1"><i class="fa-solid fa-file-pdf"></i></a>
             ${carta.estado !== 'anulada' ? `
-            <button class="btn btn-sm btn-danger btn-anular-carta" data-id="${carta.id}" data-numero="${carta.numero}" title="Anular">
+            <button class="btn btn-sm btn-danger btn-anular" data-id="${carta.id}" data-num="${carta.numero}">
               <i class="fa-solid fa-ban"></i>
             </button>` : ''}
           </td>
         `;
-
-        tr.querySelector('.btn-anular-carta')?.addEventListener('click', () => anularCarta(carta.id, carta.numero));
+        tr.querySelector('.btn-anular')?.addEventListener('click', () => anularCarta(carta.id, carta.numero));
         tbody.appendChild(tr);
       });
     } catch (err) {
-      console.error(err);
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error al cargar historial.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error al cargar.</td></tr>';
     }
   }
 
-  // Filtros historial
   document.getElementById('btnBuscarHistorialCartas')?.addEventListener('click', cargarHistorial);
 
-  // ── Anular ─────────────────────────────────────────────────────────────────
   async function anularCarta(id, numero) {
-    const confirm = await Swal.fire({
-      icon: 'warning',
-      title: `Anular ${numero}`,
-      text: 'Esta acción no se puede deshacer. ¿Confirmás la anulación?',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, anular',
-      confirmButtonColor: '#dc3545',
-      cancelButtonText: 'Cancelar',
+    const ok = await Swal.fire({
+      icon: 'warning', title: `Anular ${numero}`,
+      text: 'Esta acción no se puede deshacer.',
+      showCancelButton: true, confirmButtonText: 'Sí, anular',
+      confirmButtonColor: '#dc3545', cancelButtonText: 'Cancelar',
     });
-    if (!confirm.isConfirmed) return;
-
+    if (!ok.isConfirmed) return;
     try {
-      const res = await fetch(`/administracion/api/cartas-pago/${id}/anular`, { method: 'PUT' });
-      const data = await res.json();
-      if (!data.ok) throw new Error();
+      const r = await fetch(`/administracion/api/cartas-pago/${id}/anular`, { method: 'PUT' });
+      const d = await r.json();
+      if (!d.ok) throw new Error();
       Swal.fire('Anulada', `La carta ${numero} fue anulada.`, 'success');
       cargarHistorial();
     } catch {
-      Swal.fire('Error', 'No se pudo anular la carta.', 'error');
+      Swal.fire('Error', 'No se pudo anular.', 'error');
     }
   }
 
@@ -428,6 +585,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function fmtMonto(n) {
     return (parseFloat(n) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function fmtMontoPlain(n) {
+    return (parseFloat(n) || 0).toFixed(2);
   }
 
   function esVencido(fechaVal) {
