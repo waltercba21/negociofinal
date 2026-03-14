@@ -10,6 +10,25 @@ const pool = conexion.pool || conexion;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Normaliza cualquier valor de fecha a 'YYYY-MM-DD' para MySQL.
+ * Acepta: '2026-03-01', '2026-03-01T03:00:00.000Z', Date, null/undefined.
+ */
+function toSQLDate(val) {
+  if (!val) return null;
+  if (typeof val === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+    return val.split('T')[0];
+  }
+  if (val instanceof Date) {
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  return null;
+}
+
+/**
  * Genera el siguiente número de carta de pago.
  * Formato: CP-0001, CP-0002 … CP-9999, CP-10000 ...
  */
@@ -44,7 +63,7 @@ function insertarCarta(carta, callback) {
     const datos = {
       numero,
       id_proveedor:       carta.id_proveedor,
-      fecha:              carta.fecha,
+      fecha:              toSQLDate(carta.fecha),
       administrador:      carta.administrador,
       observaciones:      carta.observaciones || null,
       monto_efectivo:     carta.monto_efectivo     || 0,
@@ -52,7 +71,7 @@ function insertarCarta(carta, callback) {
       monto_cheque:       carta.monto_cheque       || 0,
       banco_cheque:       carta.banco_cheque       || null,
       numero_cheque:      carta.numero_cheque      || null,
-      fecha_cheque:       carta.fecha_cheque       || null,
+      fecha_cheque:       toSQLDate(carta.fecha_cheque) || null,
       total_documentos:   carta.total_documentos   || 0,
       total_pagado:       carta.total_pagado       || 0,
       estado:             carta.estado             || 'borrador',
@@ -79,7 +98,7 @@ function insertarItems(cartaId, items, callback) {
     item.tipo_documento,
     item.documento_id,
     item.numero_documento,
-    item.fecha_documento,
+    toSQLDate(item.fecha_documento),
     item.importe
   ]);
 
