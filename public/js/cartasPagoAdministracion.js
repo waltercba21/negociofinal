@@ -58,22 +58,13 @@ document.addEventListener('DOMContentLoaded', () => {
     actualizarTotalesPago();
   }
 
-  // ── Cambio de proveedor → limpiar documentos y cargar notas ───────────────
+  // ── Cambio de proveedor → limpiar estado ─────────────────────────────────
   selProveedor.addEventListener('change', () => {
     documentosSeleccionados = [];
     notasCreditoDisponibles = [];
     contenedorDocs.innerHTML = '<p class="cp-hint">Seleccioná un proveedor y hacé clic en <strong>Cargar documentos</strong>.</p>';
     renderTablaSeleccionados();
     actualizarTotalesPago();
-
-    const idProv = selProveedor.value;
-    if (!idProv) return;
-
-    // Cargar notas de crédito en segundo plano
-    fetch(`/administracion/api/cartas-pago/notas-credito-disponibles?proveedor_id=${idProv}`)
-      .then(r => r.json())
-      .then(data => { notasCreditoDisponibles = data; })
-      .catch(err => console.error('Error cargando notas de crédito:', err));
   });
 
   // ── Cargar documentos disponibles ─────────────────────────────────────────
@@ -85,8 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
     contenedorDocs.innerHTML = '<p class="cp-hint"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</p>';
 
     try {
-      const res  = await fetch(`/administracion/api/cartas-pago/documentos-disponibles?proveedor_id=${idProv}&tipo=${tipo}`);
-      const docs = await res.json();
+      // Cargar documentos y notas de crédito en paralelo
+      const [resDocs, resNC] = await Promise.all([
+        fetch(`/administracion/api/cartas-pago/documentos-disponibles?proveedor_id=${idProv}&tipo=${tipo}`),
+        fetch(`/administracion/api/cartas-pago/notas-credito-disponibles?proveedor_id=${idProv}`)
+      ]);
+      const docs = await resDocs.json();
+      notasCreditoDisponibles = resNC.ok ? await resNC.json() : [];
 
       if (!docs.length) {
         contenedorDocs.innerHTML = `<p class="cp-hint">No hay ${tipo === 'factura' ? 'facturas' : 'presupuestos'} pendientes para este proveedor.</p>`;
@@ -203,12 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="fw-semibold">${doc.numero_documento}</td>
         <td>${fmtFecha(doc.fecha_documento)}</td>
         <td class="${esVencido(doc.fecha_pago) ? 'text-danger fw-bold' : ''}">${fmtFecha(doc.fecha_pago)}</td>
-        <td class="text-end">$ ${fmtMonto(doc.importe)}</td>
+        <td class="text-end">
+          <div>$ ${fmtMonto(doc.importe)}</div>
+          ${doc.nota_credito_importe > 0 ? `<div style="font-size:10px;color:#fbbf24;">NC: -$ ${fmtMonto(doc.nota_credito_importe)}</div><div style="font-size:11px;font-weight:700;color:#f0f4ff;">Neto: $ ${fmtMonto(Math.max(doc.importe - doc.nota_credito_importe,0))}</div>` : ''}
+        </td>
         <td class="text-center">
           ${renderSelectorNC(doc, idx)}
-        </td>
-        <td class="text-end fw-bold ${doc.nota_credito_importe > 0 ? 'text-warning' : ''}">
-          - $ ${fmtMonto(doc.nota_credito_importe)}
         </td>
         <td>
           ${renderSelectorTipoPago(doc, idx)}
@@ -265,14 +261,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderSelectorNC(doc, idx) {
-    if (!notasCreditoDisponibles.length) return '<span class="text-muted" style="font-size:11px;">Sin NC</span>';
+    if (!notasCreditoDisponibles.length) {
+      return '<span class="text-muted" style="font-size:11px;white-space:nowrap;">Sin NC disponibles</span>';
+    }
 
-    let opts = '<option value="">Sin nota de crédito</option>';
+    let opts = '<option value="">— Sin aplicar —</option>';
     notasCreditoDisponibles.forEach(nc => {
       const sel = doc.nota_credito_id == nc.id ? 'selected' : '';
-      opts += `<option value="${nc.id}" data-importe="${nc.importe_total}" ${sel}>${nc.numero_nota_credito} — $ ${fmtMonto(nc.importe_total)}</option>`;
+      const tipoLabel = { descuento: 'Desc.', devolucion_mercaderia: 'Dev.', diferencia_precio: 'Dif.' }[nc.tipo] || '';
+      opts += `<option value="${nc.id}" data-importe="${nc.importe_total}" ${sel}>${nc.numero_nota_credito} ${tipoLabel} — $ ${fmtMonto(nc.importe_total)}</option>`;
     });
-    return `<select class="form-select form-select-sm sel-nota-credito" style="min-width:160px;">${opts}</select>`;
+    return `
+      <div style="min-width:190px;">
+        <select class="form-select form-select-sm sel-nota-credito">${opts}</select>
+        ${doc.nota_credito_id ? `
+          <div style="font-size:10px;color:#fbbf24;margin-top:3px;">
+            <i class="fa-solid fa-tag"></i> Descuenta $ ${fmtMonto(doc.nota_credito_importe)}
+            → Neto: <strong>$ ${fmtMonto(Math.max(doc.importe - doc.nota_credito_importe, 0))}</strong>
+          </div>` : ''}
+      </div>`;
   }
 
   function renderSelectorTipoPago(doc, idx) {

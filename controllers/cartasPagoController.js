@@ -243,15 +243,15 @@ exports.generarPDF = (req, res) => {
       if (i % 2 === 0) doc.rect(50, y - 2, W, 15).fill('#f4f6ff');
       doc.fillColor(DARK);
 
-      const tipo          = item.tipo_documento === 'factura' ? 'Factura' : 'Presupuesto';
-      const impOriginal   = parseFloat(item.importe_original || item.importe) || 0;
-      const ncImporte     = parseFloat(item.nota_credito_importe) || 0;
-      const impAbonado    = parseFloat(item.importe_abonado) || 0;
-      const saldoPend     = esParcial
+      const tipo        = item.tipo_documento === 'factura' ? 'Factura' : 'Presupuesto';
+      const impOriginal = parseFloat(item.importe_original || item.importe) || 0;
+      const ncImporte   = parseFloat(item.nota_credito_importe) || 0;
+      const impAbonado  = parseFloat(item.importe_abonado) || 0;
+      const esParcial   = item.tipo_pago === 'parcial';
+      const netoPagar   = Math.max(impOriginal - ncImporte, 0);
+      const saldoPend   = esParcial
         ? parseFloat(item.saldo_pendiente) || 0
         : Math.max(netoPagar - (parseFloat(item.importe_abonado) || netoPagar), 0);
-      const esParcial     = item.tipo_pago === 'parcial';
-      const netoPagar     = Math.max(impOriginal - ncImporte, 0);
 
       doc.text(tipo,                          C.tipo,    y, { width: 50 });
       doc.text(item.numero_documento || '-',  C.numero,  y, { width: 110 });
