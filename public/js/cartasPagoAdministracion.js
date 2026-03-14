@@ -156,8 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
         nota_credito_numero:  null,
         nota_credito_importe: 0,
         tipo_pago:            'total',
-        importe_abonado:      doc.importe,   // por defecto paga todo el saldo
-        saldo_pendiente:      0,
+        importe_abonado:      null,   // se calcula al guardar según medios de pago
+        saldo_pendiente:      null,   // se calcula al guardar
       });
       card.classList.add('cp-doc-card--added');
       btn.classList.add('cp-doc-card__btn--added');
@@ -171,6 +171,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderTablaSeleccionados();
     actualizarTotalesPago();
+  }
+
+  // ── Helpers de estado visual en tabla ────────────────────────────────────
+  function estadoSaldoHTML(doc) {
+    const neto = Math.max(doc.importe - (doc.nota_credito_importe || 0), 0);
+    if (doc.tipo_pago === 'total') {
+      return '<span class="badge" style="background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.3);font-size:10px;">Se abona el total</span>';
+    }
+    // Pago parcial
+    const abonado = doc.importe_abonado || 0;
+    const saldo   = parseFloat((neto - abonado).toFixed(2));
+    if (saldo <= 0) {
+      return '<span class="badge" style="background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.3);font-size:10px;">Se abona el total</span>';
+    }
+    return `<span class="fw-bold text-danger">$ ${fmtMonto(saldo)} pendiente</span>`;
   }
 
   // ── Render tabla de documentos seleccionados ───────────────────────────────
@@ -198,9 +213,13 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>
           ${renderSelectorTipoPago(doc, idx)}
         </td>
-        <td class="text-end fw-bold text-success">$ ${fmtMonto(doc.importe_abonado)}</td>
-        <td class="text-end ${doc.saldo_pendiente > 0 ? 'text-danger fw-bold' : 'text-success'}">
-          ${doc.saldo_pendiente > 0 ? '$ ' + fmtMonto(doc.saldo_pendiente) : '✓ Cancelada'}
+        <td class="text-end fw-bold">
+          ${doc.tipo_pago === 'parcial' && doc.importe_abonado != null
+            ? '$ ' + fmtMonto(doc.importe_abonado)
+            : '<span class="text-muted" style="font-size:11px;">—</span>'}
+        </td>
+        <td class="text-end">
+          ${estadoSaldoHTML(doc)}
         </td>
         <td class="text-center">
           <button class="btn btn-sm btn-danger boton-quitar-doc" data-idx="${idx}">
@@ -326,13 +345,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const netoPagar = Math.max(doc.importe - doc.nota_credito_importe, 0);
 
     if (doc.tipo_pago === 'total') {
-      doc.importe_abonado = netoPagar;
-      doc.saldo_pendiente = 0;
+      // "Pago total" = intención de pagar todo; el estado real se define al guardar
+      doc.importe_abonado = null;
+      doc.saldo_pendiente = null;
     } else {
-      // En pago parcial, conservar el monto ingresado si ya existe; si no, 0
+      // "Pago parcial" = el admin ingresa cuánto abona ahora
       const abonado = Math.min(doc.importe_abonado || 0, netoPagar);
       doc.importe_abonado = abonado;
-      doc.saldo_pendiente = Math.max(netoPagar - abonado, 0);
+      doc.saldo_pendiente = parseFloat((netoPagar - abonado).toFixed(2));
     }
   }
 
@@ -365,7 +385,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalDocs = documentosSeleccionados.reduce((s, d) => {
       return s + Math.max(d.importe - d.nota_credito_importe, 0);
     }, 0);
-    const totalAbonado = documentosSeleccionados.reduce((s, d) => s + (d.importe_abonado || 0), 0);
+    const totalAbonado = documentosSeleccionados.reduce((s, d) => {
+      const neto = Math.max(d.importe - d.nota_credito_importe, 0);
+      return s + (d.tipo_pago === 'total' ? neto : (d.importe_abonado || 0));
+    }, 0);
 
     const efectivo = parseFloat(inputEfectivo.value) || 0;
     const transf   = parseFloat(inputTransf.value)   || 0;
@@ -419,7 +442,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (errores.length) return Swal.fire('Faltan datos', errores.join('\n'), 'warning');
 
-    const totalAbonado = documentosSeleccionados.reduce((s, d) => s + (d.importe_abonado || 0), 0);
+    const totalAbonado = documentosSeleccionados.reduce((s, d) => {
+      const neto = Math.max(d.importe - d.nota_credito_importe, 0);
+      return s + (d.tipo_pago === 'total' ? neto : (d.importe_abonado || 0));
+    }, 0);
     const totalPago    = efectivo + transf + cheque;
     const totalDocs    = documentosSeleccionados.reduce((s, d) => s + Math.max(d.importe - d.nota_credito_importe, 0), 0);
     const diferencia   = Math.abs(totalPago - totalAbonado);
@@ -451,19 +477,24 @@ document.addEventListener('DOMContentLoaded', () => {
       fecha_cheque:        document.getElementById('cartaFechaCheque').value || null,
       total_documentos:    totalDocs,
       total_pagado:        totalPago,
-      items: documentosSeleccionados.map(d => ({
-        tipo_documento:       d.tipo,
-        documento_id:         d.id,
-        numero_documento:     d.numero_documento,
-        fecha_documento:      d.fecha_documento,
-        importe:              d.importe,
-        importe_original:     d.importe_original,
-        nota_credito_id:      d.nota_credito_id   || null,
-        nota_credito_importe: d.nota_credito_importe || 0,
-        tipo_pago:            d.tipo_pago,
-        importe_abonado:      d.importe_abonado,
-        saldo_pendiente:      d.saldo_pendiente,
-      })),
+      items: documentosSeleccionados.map(d => {
+        const neto       = Math.max(d.importe - (d.nota_credito_importe || 0), 0);
+        const abonado    = d.tipo_pago === 'total' ? neto : (d.importe_abonado || 0);
+        const saldoResta = parseFloat((neto - abonado).toFixed(2));
+        return {
+          tipo_documento:       d.tipo,
+          documento_id:         d.id,
+          numero_documento:     d.numero_documento,
+          fecha_documento:      d.fecha_documento,
+          importe:              d.importe,
+          importe_original:     d.importe_original,
+          nota_credito_id:      d.nota_credito_id   || null,
+          nota_credito_importe: d.nota_credito_importe || 0,
+          tipo_pago:            d.tipo_pago,
+          importe_abonado:      abonado,
+          saldo_pendiente:      saldoResta,
+        };
+      }),
     };
 
     try {

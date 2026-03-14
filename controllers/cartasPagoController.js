@@ -247,8 +247,11 @@ exports.generarPDF = (req, res) => {
       const impOriginal   = parseFloat(item.importe_original || item.importe) || 0;
       const ncImporte     = parseFloat(item.nota_credito_importe) || 0;
       const impAbonado    = parseFloat(item.importe_abonado) || 0;
-      const saldoPend     = parseFloat(item.saldo_pendiente) || 0;
+      const saldoPend     = esParcial
+        ? parseFloat(item.saldo_pendiente) || 0
+        : Math.max(netoPagar - (parseFloat(item.importe_abonado) || netoPagar), 0);
       const esParcial     = item.tipo_pago === 'parcial';
+      const netoPagar     = Math.max(impOriginal - ncImporte, 0);
 
       doc.text(tipo,                          C.tipo,    y, { width: 50 });
       doc.text(item.numero_documento || '-',  C.numero,  y, { width: 110 });
@@ -266,13 +269,33 @@ exports.generarPDF = (req, res) => {
 
       doc.text('$ ' + fmtMonto(impAbonado), C.abonado, y, { width: 50, align: 'right' });
 
-      if (esParcial && saldoPend > 0) {
-        doc.fillColor('#ff6b6b').font('Helvetica-Bold');
-        doc.text('$ ' + fmtMonto(saldoPend), C.saldo, y, { width: 55, align: 'right' });
-        doc.fillColor(DARK).font('Helvetica');
+      if (esParcial) {
+        if (saldoPend > 0.009) {
+          // Pago parcial con saldo real pendiente
+          doc.fillColor('#ff6b6b').font('Helvetica-Bold');
+          doc.text('$ ' + fmtMonto(saldoPend), C.saldo, y, { width: 55, align: 'right' });
+          doc.fillColor(DARK).font('Helvetica');
+        } else {
+          // Pago parcial que cubre todo
+          doc.fillColor(GREEN).font('Helvetica-Bold');
+          doc.text('Cancelada', C.saldo, y, { width: 55, align: 'right' });
+          doc.fillColor(DARK).font('Helvetica');
+        }
       } else {
-        doc.fillColor(GREEN).text('Cancelada', C.saldo, y, { width: 55, align: 'right' });
-        doc.fillColor(DARK);
+        // Pago total: depende del monto efectivamente pagado en esta carta
+        // Si importe_abonado >= neto => cancelada, si no => a cuenta
+        const netoPDF = Math.max(impOriginal - ncImporte, 0);
+        const abonadoPDF = parseFloat(item.importe_abonado) || netoPDF;
+        const saldoReal = parseFloat((netoPDF - abonadoPDF).toFixed(2));
+        if (saldoReal <= 0.009) {
+          doc.fillColor(GREEN).font('Helvetica-Bold');
+          doc.text('Cancelada', C.saldo, y, { width: 55, align: 'right' });
+          doc.fillColor(DARK).font('Helvetica');
+        } else {
+          doc.fillColor('#fbbf24').font('Helvetica-Bold');
+          doc.text('A cuenta', C.saldo, y, { width: 55, align: 'right' });
+          doc.fillColor(DARK).font('Helvetica');
+        }
       }
 
       y += 15;
