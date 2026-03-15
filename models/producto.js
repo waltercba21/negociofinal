@@ -626,7 +626,18 @@ actualizarPreciosPDF: async function (precio_lista, codigo, proveedor_id) {
         const esMasBarato = Number(proveedorMasBarato.proveedor_id) === Number(proveedor_id);
 
         if (esMasBarato) {
-          await conn.query(`UPDATE productos SET precio_venta = ? WHERE id = ?`, [precio_venta, producto_id]);
+          // ✅ FIX Bug 1: actualizar precio_venta + reasignar proveedor_id + costos.
+          // Antes solo se actualizaba precio_venta, dejando proveedor_id desincronizado
+          // cuando este proveedor desplazaba al anterior más barato.
+          await conn.query(
+            `UPDATE productos
+                SET precio_venta = ?,
+                    proveedor_id  = ?,
+                    costo_neto    = ?,
+                    costo_iva     = ?
+              WHERE id = ?`,
+            [precio_venta, proveedor_id, Math.ceil(costo_neto_raw), costo_iva_unidad, producto_id]
+          );
           return {
             codigo,
             nombre: row.nombre,
@@ -637,6 +648,8 @@ actualizarPreciosPDF: async function (precio_lista, codigo, proveedor_id) {
           };
         }
 
+        // El proveedor importado NO es el más barato: solo guardamos precio_lista
+        // en producto_proveedor (ya hecho arriba). No tocamos precio_venta ni proveedor_id.
         return {
           codigo,
           nombre: row.nombre,

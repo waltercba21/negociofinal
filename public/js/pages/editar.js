@@ -567,7 +567,14 @@ function redondearAlCentenar(valor) {
     })
     .off('input change.precioLista', '.precio_lista')
     .on('input change.precioLista', '.precio_lista', function () {
+      // FIX Bug 2: propagar cambio de precio_lista al proveedor asignado y precio final.
+      // Antes solo se recalculaba el costo_neto/costo_iva del bloque, sin actualizar
+      // el proveedor ganador ni el precio de venta. Resultado: habia que guardar y
+      // volver a entrar para que tomara el proveedor mas barato.
       actualizarPrecio($(this));
+      if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
+      actualizarPrecioFinal();
+      syncIVAProductoConAsignado();
     })
     .off('input change.iva', '.IVA')
     .on('input change.iva', '.IVA', function () {
@@ -898,11 +905,21 @@ function actualizarPrecioFinal(opts) {
   var baseUnit = toNumber($proveedor.find('.costo_iva').val()); // SIEMPRE unidad
   if (!baseUnit) { finalizarPrimerLoad(); return; }
 
+  // FIX Bug 3: en el primer load NO sobreescribir el precio_venta guardado en BD.
+  // El valor que viene del servidor es el correcto. Solo actualizamos proveedor
+  // asignado e IVA visualmente para que el radio quede marcado en el mas barato.
+  // Si el usuario luego cambia algo (precio, IVA, utilidad) el precio se recalcula.
+  if (esPrimerLoad) {
+    actualizarProveedorAsignado();
+    syncIVAProductoConAsignado();
+    finalizarPrimerLoad();
+    return;
+  }
+
   var utilidad = toNumber($('#utilidad').val());
   var precioFinal = baseUnit * (1 + (utilidad / 100));
   precioFinal = redondearAlCentenar(precioFinal);
 
-  // ✅ Siempre escribir el PV calculado desde el proveedor más barato
   var $pv = $('#precio_venta, input[name="precio_venta"]').first();
   $pv.val(precioFinal).trigger('input').trigger('change');
 
