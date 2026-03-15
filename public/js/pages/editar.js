@@ -369,7 +369,8 @@ function redondearAlCentenar(valor) {
     });
 
     if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
-    actualizarPrecioFinal();
+    actualizarPrecioFinal();          // con __EDITAR_FIRST_LOAD__=true: no toca precio_venta
+    window.__EDITAR_FIRST_LOAD__ = false;  // apagamos el flag AQUI, una sola vez, al terminar el init
     syncIVAProductoConAsignado();
     initEscobillasEditar();
 
@@ -888,11 +889,6 @@ function redondearAlCentenar(valor) {
 function actualizarPrecioFinal(opts) {
   opts = opts || {};
 
-  var esPrimerLoad = (window.__EDITAR_FIRST_LOAD__ === true);
-  function finalizarPrimerLoad() {
-    if (esPrimerLoad) window.__EDITAR_FIRST_LOAD__ = false;
-  }
-
   var $proveedor;
   var $radioChecked = $('.proveedor-designado-radio:checked');
   if (window.__seleccionManualProveedor__ && $radioChecked.length) {
@@ -901,20 +897,20 @@ function actualizarPrecioFinal(opts) {
     $proveedor = getProveedorConCostoIvaMasBajo();
   }
 
-  if (!$proveedor || !$proveedor.length) { finalizarPrimerLoad(); return; }
+  if (!$proveedor || !$proveedor.length) return;
 
   var baseUnit = toNumber($proveedor.find('.costo_iva').val()); // SIEMPRE unidad
-  if (!baseUnit) { finalizarPrimerLoad(); return; }
+  if (!baseUnit) return;
 
-  // FIX Bug 3: en el primer load NO sobreescribir el precio_venta guardado en BD.
-  // El valor que viene del servidor es el correcto. Solo actualizamos proveedor
-  // asignado e IVA visualmente para que el radio quede marcado en el mas barato.
-  // Si el usuario luego cambia algo (precio, IVA, utilidad) el precio se recalcula.
-  if (esPrimerLoad) {
+  // FIX Bug 3 (corregido): durante el init, __EDITAR_FIRST_LOAD__ se mantiene en true
+  // hasta que el init lo apaga explícitamente al final — después de esta última llamada.
+  // Así cualquier actualizarPrecioFinal() disparada por trigger('change') durante el init
+  // también entra aquí con el flag en true y no toca precio_venta.
+  // El flag ya NO se apaga dentro de esta función; el init es el único responsable de hacerlo.
+  if (window.__EDITAR_FIRST_LOAD__) {
     actualizarProveedorAsignado();
     syncIVAProductoConAsignado();
-    finalizarPrimerLoad();
-    return;
+    return;  // no tocar precio_venta durante el init
   }
 
   var utilidad = toNumber($('#utilidad').val());
@@ -926,13 +922,11 @@ function actualizarPrecioFinal(opts) {
 
   console.log('[EDITAR][PV] presGanador=',
     ($proveedor.data('presentacion') || $proveedor.find('.presentacion').val() || 'unidad'),
-    'baseUnidad=', baseUnit, 'utilidad=', utilidad, '→ PV=', precioFinal
+    'baseUnidad=', baseUnit, 'utilidad=', utilidad, '\u2192 PV=', precioFinal
   );
 
   actualizarProveedorAsignado();
   syncIVAProductoConAsignado();
-
-  finalizarPrimerLoad();
 }
 
 
