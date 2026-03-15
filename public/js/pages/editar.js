@@ -781,7 +781,11 @@ function redondearAlCentenar(valor) {
     $wrap.find('.label-descuento').text('Descuento' + suf);
   }
 
-  // ⟶ COSTO NETO (visible) = PL - (PL * desc/100)
+  // FIX redondeo: calcular costo_neto SIN Math.ceil intermedio para evitar
+  // que el +1 del ceil se amplifique por IVA y utilidad hasta saltar de centena.
+  // El hidden costo_neto[] guarda el valor exacto (float); solo se redondea
+  // el precio de venta final (igual que hace el servidor en actualizarPreciosPDF).
+  // El campo visible se muestra redondeado a entero solo para la UI.
   function actualizarPrecio($precioLista) {
     var $wrap = $precioLista.closest('.proveedor');
 
@@ -792,10 +796,10 @@ function redondearAlCentenar(valor) {
     var desc = toNumber($wrap.find('.descuentos_proveedor_id').val());
 
     var $costoNeto = asegurarHidden($wrap, 'costo_neto', 'costo_neto[]', 0);
-    var costoNeto = pl - (pl * desc / 100);
-    $costoNeto.val(Math.ceil(costoNeto));
+    var costoNeto = pl - (pl * desc / 100);  // valor exacto, SIN Math.ceil
+    $costoNeto.val(costoNeto);               // guardamos el float exacto en el hidden
 
-    console.log('[EDITAR][NETO] PL=', pl, 'desc=', desc, '→ neto=', $costoNeto.val());
+    console.log('[EDITAR][NETO] PL=', pl, 'desc=', desc, '→ neto=', costoNeto);
 
     recalcularConIVA($wrap);
   }
@@ -806,21 +810,18 @@ function redondearAlCentenar(valor) {
     ensurePresentacionSelect($wrap);
     asegurarVisibleCostoIVA($wrap);
 
-    var cn  = toNumber($wrap.find('.costo_neto').val()); // neto SIN IVA
+    var cn  = toNumber($wrap.find('.costo_neto').val()); // neto SIN IVA (float exacto)
     var iva = getIVA($wrap);
     if (!iva) iva = 21;
 
     var presSel = ($wrap.find('.presentacion').val() || 'unidad').toLowerCase();
     var pres = (presOverride || presSel);
 
-    var cIVA_unit;
-    if (pres === 'juego') {
-      var cnUnidad = cn * 0.5;
-      cIVA_unit = Math.ceil(cnUnidad * (1 + iva / 100));
-    } else {
-      var cnUnidad2 = cn;
-      cIVA_unit = Math.ceil(cnUnidad2 * (1 + iva / 100));
-    }
+    // FIX redondeo: NO aplicar Math.ceil al costo_neto intermedio.
+    // Trabajamos con floats hasta el Math.ceil final sobre costo_iva_unit,
+    // igual que lo hace el servidor en actualizarPreciosPDF y el controller.
+    var cnUnidad = (pres === 'juego') ? cn * 0.5 : cn;
+    var cIVA_unit = Math.ceil(cnUnidad * (1 + iva / 100));
 
     asegurarHidden($wrap, 'costo_iva', 'costo_iva[]', 0).val(cIVA_unit);
     $wrap.find('.costo_iva_vis').val(cIVA_unit);
