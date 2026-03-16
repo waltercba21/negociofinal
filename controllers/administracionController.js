@@ -108,7 +108,7 @@ postFactura: function (req, res) {
     comprobante_pago: null
   };
 
-  administracion.insertFactura(nuevaFactura, function (error, insertId) {
+  administracion.insertFactura(nuevaFactura, function (insertId, error) {
     if (error) {
       console.error("❌ Error al insertar factura:", error);
       return res.status(500).json({ message: 'Error al crear factura' });
@@ -326,7 +326,7 @@ postFactura: function (req, res) {
 
   };
 
-  administracion.insertPresupuesto(nuevoPresupuesto, (error, insertId) => {
+  administracion.insertPresupuesto(nuevoPresupuesto, (insertId, error) => {
     if (error) {
       console.error("❌ Error al guardar presupuesto:", error);
       return res.status(500).json({ message: 'Error al crear presupuesto' });
@@ -539,7 +539,7 @@ generarResumenFacturasPDF : (req, res) => {
 guardarItemsPresupuesto: async (req, res) => {
   const { presupuestoId, items } = req.body;
 
-  if (!presupuestoId || !Array.isArray(items)) {
+  if (!presupuestoId || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'Datos inválidos para productos del presupuesto' });
   }
 
@@ -1064,33 +1064,31 @@ eliminarModelo: (req, res) => {
   });
 },
 // ================== NOTAS DE CRÉDITO ==================
-postNotaCredito: (req, res) => {
+  postNotaCredito: (req, res) => {
+  const tiposValidos = ['descuento', 'devolucion_mercaderia', 'diferencia_precio'];
+  const ivasValidos  = ['21', '10.5'];
+
+  const tipo = (req.body.tipo || 'descuento').trim();
+  const iva  = (req.body.iva  || '21').trim();
+
   const data = {
-    id_proveedor: Number(req.body.id_proveedor || 0),
-    fecha: req.body.fecha,
+    id_proveedor:        Number(req.body.id_proveedor || 0),
+    fecha:               req.body.fecha,
     numero_nota_credito: (req.body.numero_nota_credito || '').trim(),
-    numero_factura: (req.body.numero_factura || '').trim(),
-    tipo: (req.body.tipo || '').trim(), // 'descuento' | 'devolucion_mercaderia' | 'diferencia_precio'
-    iva: (req.body.iva || '').trim(),   // '21' | '10.5'
-    importe_total: parseFloat(req.body.importe_total || 0) || 0
+    // numero_factura es opcional: la NC se vincula a facturas en la Carta de Pago
+    numero_factura:      (req.body.numero_factura || '').trim() || '-',
+    tipo:                tiposValidos.includes(tipo) ? tipo : 'descuento',
+    iva:                 ivasValidos.includes(iva)   ? iva  : '21',
+    importe_total:       parseFloat(req.body.importe_total || 0) || 0
   };
 
-  // opcional si lo mandás desde el front y tu tabla lo tiene
   if (req.body.id_factura !== undefined && req.body.id_factura !== null && req.body.id_factura !== '') {
     data.id_factura = Number(req.body.id_factura);
   }
 
-  const tiposValidos = ['descuento', 'devolucion_mercaderia', 'diferencia_precio'];
-  const ivasValidos = ['21', '10.5'];
-
-  if (!data.id_proveedor || !data.fecha || !data.numero_nota_credito || !data.numero_factura) {
-    return res.status(400).json({ error: 'Faltan datos obligatorios' });
-  }
-  if (!tiposValidos.includes(data.tipo)) {
-    return res.status(400).json({ error: 'Tipo de nota de crédito inválido' });
-  }
-  if (!ivasValidos.includes(data.iva)) {
-    return res.status(400).json({ error: 'IVA inválido' });
+  // Solo validamos los campos realmente obligatorios
+  if (!data.id_proveedor || !data.fecha || !data.numero_nota_credito) {
+    return res.status(400).json({ error: 'Faltan datos obligatorios: proveedor, fecha y número de NC' });
   }
   if (!(data.importe_total > 0)) {
     return res.status(400).json({ error: 'El importe total debe ser mayor a 0' });
