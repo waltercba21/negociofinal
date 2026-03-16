@@ -2341,18 +2341,47 @@ actualizarPreciosExcel: async (req, res) => {
     const codigosNuevosSet = new Set();
 
     // ── Parser inteligente: delega la lectura del Excel a parser_precios.py ──────
-    // Soporta .xlsx y .xls (el parser convierte .xls automáticamente con LibreOffice).
-    // Detecta código y precio sin importar el formato o los títulos de columna.
+    // Si el archivo es .xls (OLE2), lo convertimos a .xlsx aquí en Node usando el
+    // módulo xlsx (ya instalado en el proyecto) — sin depender de LibreOffice.
+    // Python solo recibe .xlsx, lo que elimina toda dependencia externa.
+    const path_mod = require('path');
+    const fs_sync  = require('fs');
+    const os_mod   = require('os');
+
+    let fileParaParser = file.path;
+    let tmpXlsxPath    = null;
+
+    // Detectar XLS por magic bytes (D0 CF 11 E0) o por extensión
+    const _isXls = (() => {
+      try {
+        const buf = Buffer.alloc(4);
+        const fd  = fs_sync.openSync(file.path, 'r');
+        fs_sync.readSync(fd, buf, 0, 4, 0);
+        fs_sync.closeSync(fd);
+        return buf[0] === 0xD0 && buf[1] === 0xCF && buf[2] === 0x11 && buf[3] === 0xE0;
+      } catch { return false; }
+    })() || path_mod.extname(file.originalname || '').toLowerCase() === '.xls';
+
+    if (_isXls) {
+      // Convertir .xls → .xlsx usando el módulo xlsx (ya en node_modules)
+      tmpXlsxPath = path_mod.join(os_mod.tmpdir(), `dm_conv_${Date.now()}.xlsx`);
+      try {
+        const wb = xlsx.readFile(file.path, { type: 'file' });
+        xlsx.writeFile(wb, tmpXlsxPath);
+        fileParaParser = tmpXlsxPath;
+      } catch (convErr) {
+        if (tmpXlsxPath) try { fs_sync.unlinkSync(tmpXlsxPath); } catch {}
+        throw new Error('No se pudo convertir el archivo .xls: ' + convErr.message);
+      }
+    }
+
     const parserResult = await new Promise((resolve, reject) => {
       const { spawn } = require('child_process');
-      // Usar el Python del venv si existe, sino el del sistema.
-      // En producción: python3 -m venv /var/www/autofaros/venv && venv/bin/pip install openpyxl
-      const fs_sync = require('fs');
-      const venvPython = require('path').join(__dirname, '../venv/bin/python3');
+      const venvPython = path_mod.join(__dirname, '../venv/bin/python3');
       const pythonBin  = fs_sync.existsSync(venvPython) ? venvPython : 'python3';
       const py = spawn(pythonBin, [
-        require('path').join(__dirname, '../utils/parser_precios.py'),
-        file.path
+        path_mod.join(__dirname, '../utils/parser_precios.py'),
+        fileParaParser
       ]);
       let stdout = '';
       let stderr = '';
@@ -2541,6 +2570,7 @@ actualizarPreciosExcel: async (req, res) => {
     }
 
     try { fs.unlinkSync(file.path); } catch {}
+    if (tmpXlsxPath) try { fs_sync.unlinkSync(tmpXlsxPath); } catch {}
 
     if (!req.session) req.session = {};
     req.session.nuevosProductos = {
