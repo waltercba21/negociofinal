@@ -2251,16 +2251,6 @@ actualizarPreciosExcel: async (req, res) => {
     const norm = (txt = '') => quitarAcentos(String(txt).trim().toLowerCase());
     const str = (x) => (x ?? '').toString().trim();
 
-    function encontrarColumna(claves = [], candidatos = []) {
-      const set = claves.map(c => ({ raw: c, n: norm(c) }));
-      for (const cand of candidatos) {
-        const nCand = norm(cand);
-        const hit = set.find(k => k.n === nCand || k.n.includes(nCand) || nCand.includes(k.n));
-        if (hit) return hit.raw;
-      }
-      return null;
-    }
-
     function limpiarPrecio(valor) {
       if (valor === null || valor === undefined) return 0;
 
@@ -2347,79 +2337,92 @@ actualizarPreciosExcel: async (req, res) => {
     const nuevosProductos = [];
     const codigosNuevosSet = new Set();
 
-    const workbook = xlsx.readFile(file.path);
-    const sheets = workbook.SheetNames;
-
-    for (const sheet of sheets) {
-      const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
-
-      for (const row of data) {
-        const claves = Object.keys(row);
-
-        const codigoColumn = encontrarColumna(claves, ['codigo', 'código', 'cod.', 'cod', 'item', 'articulo', 'artículo']);
-        const precioColumn = encontrarColumna(claves, ['precio', 'importe', 'valor', 'unitario', 'p.unit']);
-        const descColumn   = encontrarColumna(claves, ['descripcion', 'descripción', 'detalle', 'producto', 'nombre']);
-
-        if (!codigoColumn || !precioColumn) continue;
-
-        const codigoRaw = str(row[codigoColumn]);
-        const codigoKey = norm(codigoRaw);
-        const precioBruto = limpiarPrecio(row[precioColumn]);
-        const descRaw = descColumn ? str(row[descColumn]) : '';
-
-        if (!codigoRaw || !Number.isFinite(precioBruto) || precioBruto <= 0) continue;
-        if (codigosProcesados.has(codigoKey)) continue;
-
-        // marcamos procesado SIEMPRE (también sirve para ofertas faltantes)
-        codigosProcesados.add(codigoKey);
-
-        const infoBD = ppInfoMap.get(codigoKey);
-
-        // regla principal: si existe en DB -> RESPETAR presentacion DB
-        let presentacionUsada = infoBD?.presentacion;
-        if (!presentacionUsada) {
-          const det = detectarPresentacionFila({
-            proveedorNombre,
-            sheetName: sheet,
-            codigo: codigoRaw,
-            descripcion: descRaw
-          });
-          presentacionUsada = det.presentacion; // SOLO fallback (para nuevos)
+    // ── Parser inteligente: delega la lectura del Excel a parser_precios.py ──────
+    // Soporta .xlsx y .xls (el parser convierte .xls automáticamente con LibreOffice).
+    // Detecta código y precio sin importar el formato o los títulos de columna.
+    const parserResult = await new Promise((resolve, reject) => {
+      const { spawn } = require('child_process');
+      const py = spawn('python3', [
+        require('path').join(__dirname, '../utils/parser_precios.py'),
+        file.path
+      ]);
+      let stdout = '';
+      let stderr = '';
+      py.stdout.on('data', chunk => { stdout += chunk; });
+      py.stderr.on('data', chunk => { stderr += chunk; });
+      py.on('close', code => {
+        if (code !== 0) {
+          return reject(new Error(`parser_precios.py falló (código ${code}): ${stderr.slice(0,300)}`));
         }
+        try {
+          resolve(JSON.parse(stdout));
+        } catch (e) {
+          reject(new Error(`JSON inválido del parser: ${e.message} — stdout: ${stdout.slice(0,200)}`));
+        }
+      });
+      py.on('error', err => reject(new Error(`No se pudo iniciar python3: ${err.message}`)));
+    });
 
-        const precioAnterior = infoBD?.precio_lista || 0;
+    if (parserResult.errores && parserResult.errores.length) {
+      console.warn('⚠️  parser_precios advertencias:', parserResult.errores);
+    }
 
-        // Importante: guardamos "precio_lista" tal cual viene del Excel
-        // La normalización a unidad la hace el MODEL usando presentacion de DB.
-        const precioListaNuevo = precioBruto;
+    const itemsParser = parserResult.items || [];
 
-        const resultado = await producto.actualizarPreciosPDF(precioListaNuevo, codigoRaw, proveedor_id);
+    for (const item of itemsParser) {
+      const codigoRaw  = str(item.codigo);
+      const codigoKey  = norm(codigoRaw);
+      const precioBruto = limpiarPrecio(item.precio);
+      const descRaw    = str(item.descripcion);
+      const sheetName  = str(item.hoja);
 
-        if (Array.isArray(resultado) && resultado.length) {
-          resultado.forEach(p => {
-            productosActualizados.push({
-              producto_id: p.producto_id,
-              codigo: p.codigo,
-              nombre: p.nombre,
-              precio_lista_antiguo: precioAnterior,
-              precio_lista_nuevo: precioListaNuevo,
-              precio_venta: p.precio_venta || 0,
-              presentacion_usada: presentacionUsada,
-              sin_cambio: Math.abs((precioAnterior || 0) - precioListaNuevo) < 0.01
-            });
-            productosTocados.add(Number(p.producto_id));
+      if (!codigoRaw || !Number.isFinite(precioBruto) || precioBruto <= 0) continue;
+      if (codigosProcesados.has(codigoKey)) continue;
+
+      codigosProcesados.add(codigoKey);
+
+      const infoBD = ppInfoMap.get(codigoKey);
+
+      // Respetar presentacion guardada en BD; para nuevos, detectar por nombre/código
+      let presentacionUsada = infoBD?.presentacion;
+      if (!presentacionUsada) {
+        const det = detectarPresentacionFila({
+          proveedorNombre,
+          sheetName,
+          codigo: codigoRaw,
+          descripcion: descRaw
+        });
+        presentacionUsada = det.presentacion;
+      }
+
+      const precioAnterior    = infoBD?.precio_lista || 0;
+      const precioListaNuevo  = precioBruto;
+
+      const resultado = await producto.actualizarPreciosPDF(precioListaNuevo, codigoRaw, proveedor_id);
+
+      if (Array.isArray(resultado) && resultado.length) {
+        resultado.forEach(p => {
+          productosActualizados.push({
+            producto_id: p.producto_id,
+            codigo: p.codigo,
+            nombre: p.nombre,
+            precio_lista_antiguo: precioAnterior,
+            precio_lista_nuevo: precioListaNuevo,
+            precio_venta: p.precio_venta || 0,
+            presentacion_usada: presentacionUsada,
+            sin_cambio: Math.abs((precioAnterior || 0) - precioListaNuevo) < 0.01
           });
-        } else {
-          // no existe en DB → listado de nuevos
-          if (!codigosNuevosSet.has(codigoKey)) {
-            codigosNuevosSet.add(codigoKey);
-            nuevosProductos.push({
-              codigo: codigoRaw,
-              descripcion: descRaw || '(sin descripción)',
-              precio: precioListaNuevo,
-              presentacion_sugerida: presentacionUsada
-            });
-          }
+          productosTocados.add(Number(p.producto_id));
+        });
+      } else {
+        if (!codigosNuevosSet.has(codigoKey)) {
+          codigosNuevosSet.add(codigoKey);
+          nuevosProductos.push({
+            codigo: codigoRaw,
+            descripcion: descRaw || '(sin descripción)',
+            precio: precioListaNuevo,
+            presentacion_sugerida: presentacionUsada
+          });
         }
       }
     }

@@ -28,6 +28,36 @@ var maxImagenes = 10;
 var multerInstance = multer({ storage: rutaAlmacen });
 var cargar = multerInstance.array('archivos[]', maxImagenes);
 
+// ─── Multer exclusivo para listas de precios Excel (xls + xlsx) ───────────────
+// Guarda el archivo en uploads/listas-precios/ conservando la extensión original.
+// Acepta tanto .xlsx como .xls (el parser Python convierte .xls automáticamente).
+var rutaListasPrecios = multer.diskStorage({
+    destination: function (req, file, callback) {
+        const dir = './uploads/listas-precios/';
+        require('fs').mkdirSync(dir, { recursive: true });
+        callback(null, dir);
+    },
+    filename: function (req, file, callback) {
+        const ext  = path.extname(file.originalname).toLowerCase();          // .xlsx o .xls
+        const base = path.basename(file.originalname, path.extname(file.originalname))
+            .replace(/[^a-zA-Z0-9_\-]/g, '_')
+            .substring(0, 60);
+        callback(null, `${Date.now()}_${base}${ext}`);
+    }
+});
+var cargarListaPrecio = multer({
+    storage: rutaListasPrecios,
+    fileFilter: function (req, file, callback) {
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (ext === '.xlsx' || ext === '.xls') {
+            callback(null, true);
+        } else {
+            callback(new Error('Solo se aceptan archivos .xlsx o .xls'), false);
+        }
+    },
+    limits: { fileSize: 50 * 1024 * 1024 }   // 50 MB máximo
+}).single('archivos[]');
+
 // ─── Middleware: solo admins ───────────────────────────────────────────────────
 function soloAdmin(req, res, next) {
     if (!req.session.usuario || !adminEmails.includes(req.session.usuario.email)) {
@@ -88,7 +118,7 @@ router.get('/modificarPorProveedor', ensureAuthenticated, soloAdmin, productosCo
 router.post('/actualizarPorProveedor', ensureAuthenticated, soloAdmin, productosController.actualizarPorProveedor);
 router.post('/actualizarPrecio', ensureAuthenticated, soloAdmin, productosController.actualizarPrecio);
 router.post('/generarPresupuestoPDF', ensureAuthenticated, soloAdmin, productosController.generarPresupuestoPDF);
-router.post('/actualizarPreciosExcel', ensureAuthenticated, soloAdmin, cargar, productosController.actualizarPreciosExcel);
+router.post('/actualizarPreciosExcel', ensureAuthenticated, soloAdmin, cargarListaPrecio, productosController.actualizarPreciosExcel);
 router.get('/actualizados/nuevos.pdf', ensureAuthenticated, soloAdmin, productosController.descargarPDFNuevos);
 
 // API proveedores (admin)
