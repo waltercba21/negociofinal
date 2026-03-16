@@ -108,7 +108,7 @@ postFactura: function (req, res) {
     comprobante_pago: null
   };
 
-  administracion.insertFactura(nuevaFactura, function (insertId, error) {
+  administracion.insertFactura(nuevaFactura, function (error, insertId) {
     if (error) {
       console.error("❌ Error al insertar factura:", error);
       return res.status(500).json({ message: 'Error al crear factura' });
@@ -326,7 +326,7 @@ postFactura: function (req, res) {
 
   };
 
-  administracion.insertPresupuesto(nuevoPresupuesto, (insertId, error) => {
+  administracion.insertPresupuesto(nuevoPresupuesto, (error, insertId) => {
     if (error) {
       console.error("❌ Error al guardar presupuesto:", error);
       return res.status(500).json({ message: 'Error al crear presupuesto' });
