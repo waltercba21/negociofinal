@@ -376,58 +376,42 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title"><i class="fa-solid fa-file-circle-minus me-2"></i>Registrar Nota de Crédito</h5>
+            <h5 class="modal-title">Registrar Nota de Crédito</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-
-            <div class="cp-section__title mb-3" style="background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.2);border-radius:8px;padding:10px 14px;font-size:12px;color:rgba(240,244,255,0.6);">
-              <i class="fa-solid fa-circle-info me-2" style="color:#fbbf24;"></i>
-              Registrá los datos básicos de la nota de crédito. Luego podrás aplicarla como descuento al preparar una Carta de Pago.
-            </div>
-
             <div class="mb-3">
-              <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+              <label class="form-label">Proveedor</label>
               <select id="notaCreditoProveedor" class="form-select">
                 <option value="">Seleccionar proveedor...</option>
                 <% proveedores.forEach(p => { %><option value="<%= p.id %>"><%= p.nombre %></option><% }) %>
               </select>
             </div>
-
             <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Fecha <span class="text-danger">*</span></label>
-                <input type="date" id="notaCreditoFecha" class="form-control">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Número de Nota de Crédito <span class="text-danger">*</span></label>
-                <input type="text" id="notaCreditoNumero" class="form-control" placeholder="Ej: 001-00001234">
-              </div>
+              <div class="col-md-6"><label class="form-label">Fecha Nota de Crédito</label><input type="date" id="notaCreditoFecha" class="form-control"></div>
+              <div class="col-md-6"><label class="form-label">Número de Nota de Crédito</label><input type="text" id="notaCreditoNumero" class="form-control" placeholder="Ej: 001-00001234"></div>
+              <div class="col-md-6"><label class="form-label">Corresponde a Factura Nº</label><input type="text" id="notaCreditoFacturaNumero" class="form-control" placeholder="Ej: 001-00005678"></div>
               <div class="col-md-6">
                 <label class="form-label">Tipo</label>
                 <select id="notaCreditoTipo" class="form-select">
+                  <option value="">Seleccionar tipo...</option>
                   <option value="descuento">Por descuento</option>
                   <option value="devolucion_mercaderia">Por devolución de mercadería</option>
                   <option value="diferencia_precio">Por diferencia de precio</option>
                 </select>
               </div>
               <div class="col-md-6">
-                <label class="form-label">Importe total <span class="text-danger">*</span></label>
-                <div class="input-group">
-                  <span class="input-group-text">$</span>
-                  <input type="number" step="0.01" id="notaCreditoImporteTotal" class="form-control" placeholder="0,00">
-                </div>
-              </div>
-              <div class="col-md-6">
                 <label class="form-label">IVA</label>
                 <select id="notaCreditoIVA" class="form-select">
+                  <option value="">Seleccionar IVA...</option>
                   <option value="21">21%</option>
                   <option value="10.5">10.5%</option>
                 </select>
               </div>
+              <div class="col-md-6"><label class="form-label">Importe total (con IVA)</label><input type="number" step="0.01" id="notaCreditoImporteTotal" class="form-control"></div>
               <div class="col-md-6">
-                <label class="form-label">Administrador <span class="text-danger">*</span></label>
-                <select id="notaCreditoAdministrador" class="form-select">
+                <label class="form-label">Administrador</label>
+                <select id="notaCreditoAdministrador" class="form-select" required>
                   <option value="">Seleccionar...</option>
                   <option value="GERARDO">GERARDO</option>
                   <option value="CHACHO">CHACHO</option>
@@ -437,10 +421,8 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button id="btnGuardarNotaCredito" class="btn btn-success">
-              <i class="fa-solid fa-floppy-disk me-1"></i>Guardar Nota de Crédito
-            </button>
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button id="btnGuardarNotaCredito" class="btn btn-success">Guardar Nota de Crédito</button>
           </div>
         </div>
       </div>
@@ -622,82 +604,124 @@
       </div>
     </div>
 
-    <!-- MODAL: NUEVA CARTA DE PAGO -->
+    <!-- MODAL: NUEVA CARTA DE PAGO — WIZARD -->
     <div class="modal fade" id="modalCartaPago" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
 
+          <!-- HEADER -->
           <div class="modal-header">
-            <h5 class="modal-title"><i class="fa-solid fa-file-invoice me-2"></i>Nueva Carta de Pago</h5>
+            <div>
+              <h5 class="modal-title"><i class="fa-solid fa-file-invoice me-2"></i>Nueva Carta de Pago</h5>
+              <div class="wz-subtitle" id="wzSubtitle">Completá los datos paso a paso</div>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
 
-          <div class="modal-body p-0">
+          <!-- STEPPER -->
+          <div class="wz-stepper">
+            <div class="wz-step active" data-step="1">
+              <div class="wz-step__circle"><span class="wz-step__num">1</span><i class="fa-solid fa-check wz-step__check"></i></div>
+              <div class="wz-step__label">Datos generales</div>
+            </div>
+            <div class="wz-connector"></div>
+            <div class="wz-step" data-step="2">
+              <div class="wz-step__circle"><span class="wz-step__num">2</span><i class="fa-solid fa-check wz-step__check"></i></div>
+              <div class="wz-step__label">Documentos</div>
+            </div>
+            <div class="wz-connector"></div>
+            <div class="wz-step" data-step="3">
+              <div class="wz-step__circle"><span class="wz-step__num">3</span><i class="fa-solid fa-check wz-step__check"></i></div>
+              <div class="wz-step__label">Forma de pago</div>
+            </div>
+          </div>
 
-            <!-- SECCIÓN 1: DATOS GENERALES -->
-            <div class="cp-section">
-              <div class="cp-section__title">
-                <span class="cp-section__num">1</span>
-                Datos generales
-              </div>
-              <div class="row g-3 p-3">
-                <div class="col-md-4">
-                  <label class="form-label">Proveedor <span class="text-danger">*</span></label>
-                  <select id="cartaProveedor" class="form-select">
-                    <option value="">Seleccionar proveedor...</option>
-                    <% proveedores.forEach(p => { %>
-                      <option value="<%= p.id %>"><%= p.nombre %></option>
-                    <% }) %>
-                  </select>
+          <!-- PANELS -->
+          <div class="modal-body p-0" style="min-height:420px;">
+
+            <!-- ── PANEL 1: DATOS GENERALES ─────────────────────────── -->
+            <div class="wz-panel active" id="wzPanel1">
+              <div class="wz-panel__inner">
+
+                <div class="wz-tip">
+                  <i class="fa-solid fa-circle-info wz-tip__icon"></i>
+                  <div>
+                    <strong>Paso 1 de 3 — Datos generales</strong><br>
+                    Seleccioná el proveedor al que vas a realizar el pago, la fecha de la carta y el administrador responsable.
+                  </div>
                 </div>
-                <div class="col-md-3">
-                  <label class="form-label">Fecha <span class="text-danger">*</span></label>
-                  <input type="date" id="cartaFecha" class="form-control">
+
+                <div class="row g-3 mt-1">
+                  <div class="col-md-5">
+                    <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+                    <select id="cartaProveedor" class="form-select wz-field" data-label="Proveedor">
+                      <option value="">Seleccionar proveedor...</option>
+                      <% proveedores.forEach(p => { %>
+                        <option value="<%= p.id %>"><%= p.nombre %></option>
+                      <% }) %>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Fecha <span class="text-danger">*</span></label>
+                    <input type="date" id="cartaFecha" class="form-control wz-field" data-label="Fecha">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Administrador <span class="text-danger">*</span></label>
+                    <select id="cartaAdministrador" class="form-select wz-field" data-label="Administrador">
+                      <option value="">Seleccionar...</option>
+                      <option value="GERARDO">GERARDO</option>
+                      <option value="CHACHO">CHACHO</option>
+                      <option value="WALTER">WALTER</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Observaciones <span class="wz-optional">(opcional)</span></label>
+                    <textarea id="cartaObservaciones" class="form-control" rows="2"
+                      placeholder="Ej: Pago de factura correspondiente a entrega de marzo..."></textarea>
+                  </div>
                 </div>
-                <div class="col-md-3">
-                  <label class="form-label">Administrador <span class="text-danger">*</span></label>
-                  <select id="cartaAdministrador" class="form-select">
-                    <option value="">Seleccionar...</option>
-                    <option value="GERARDO">GERARDO</option>
-                    <option value="CHACHO">CHACHO</option>
-                    <option value="WALTER">WALTER</option>
-                  </select>
-                </div>
-                <div class="col-md-12">
-                  <label class="form-label">Observaciones</label>
-                  <textarea id="cartaObservaciones" class="form-control" rows="2" placeholder="Ej: Pago correspondiente a mercadería recibida semana 12..."></textarea>
-                </div>
+
+                <div class="wz-error-box d-none" id="wzError1"></div>
               </div>
             </div>
 
-            <!-- SECCIÓN 2: DOCUMENTOS A ABONAR -->
-            <div class="cp-section">
-              <div class="cp-section__title">
-                <span class="cp-section__num">2</span>
-                Documentos a abonar
-              </div>
-              <div class="p-3">
-                <div class="d-flex gap-2 align-items-end mb-3 flex-wrap">
+            <!-- ── PANEL 2: DOCUMENTOS ─────────────────────────────── -->
+            <div class="wz-panel" id="wzPanel2">
+              <div class="wz-panel__inner">
+
+                <div class="wz-tip">
+                  <i class="fa-solid fa-circle-info wz-tip__icon"></i>
                   <div>
-                    <label class="form-label">Tipo de documento</label>
+                    <strong>Paso 2 de 3 — Documentos a abonar</strong><br>
+                    Cargá las facturas o presupuestos pendientes. Si el proveedor tiene notas de crédito, aparecerán automáticamente para aplicarlas como descuento. <span class="wz-badge-optional">Las notas de crédito son opcionales.</span>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2 align-items-end mt-3 mb-3 flex-wrap">
+                  <div>
+                    <label class="form-label mb-1">Tipo de documento</label>
                     <select id="cartaTipoDocumento" class="form-select" style="min-width:180px;">
                       <option value="factura">Facturas</option>
                       <option value="presupuesto">Presupuestos</option>
                     </select>
                   </div>
-                  <button id="btnCargarDocumentos" class="btn btn-primary" style="height:40px;">
+                  <button id="btnCargarDocumentos" class="btn btn-primary" style="height:40px;align-self:flex-end;">
                     <i class="fa-solid fa-rotate"></i> Cargar documentos
                   </button>
-                  <small class="text-muted ms-1" style="align-self:center;">Solo muestra documentos pendientes no asignados a otra carta.</small>
+                  <div class="wz-info-chip" style="align-self:flex-end;">
+                    <i class="fa-solid fa-lock-open"></i> Solo muestra documentos pendientes no asignados a otra carta
+                  </div>
                 </div>
 
+                <!-- Cards de documentos disponibles -->
                 <div id="contenedorDocumentosDisponibles" class="cp-docs-grid mb-4">
-                  <p class="cp-hint">Seleccioná un proveedor y hacé clic en <strong>Cargar documentos</strong>.</p>
+                  <p class="cp-hint">Hacé clic en <strong>Cargar documentos</strong> para ver los disponibles.</p>
                 </div>
 
+                <!-- Tabla seleccionados -->
                 <div class="cp-tabla-wrap">
                   <div class="cp-tabla-header">
-                    <span>Documentos seleccionados para esta carta</span>
+                    <span><i class="fa-solid fa-check-circle me-1" style="color:#4ade80;"></i>Documentos seleccionados</span>
                     <span id="cartaTotalDocumentos" class="cp-tabla-total">$ 0,00</span>
                   </div>
                   <div class="table-responsive">
@@ -709,7 +733,7 @@
                           <th>Fecha</th>
                           <th>Vencimiento</th>
                           <th class="text-end">Importe / Neto</th>
-                          <th class="text-center">Nota de Crédito</th>
+                          <th class="text-center">Nota de Crédito <span class="wz-badge-optional">opcional</span></th>
                           <th>Tipo Pago</th>
                           <th class="text-end">Abonado</th>
                           <th class="text-end">Estado</th>
@@ -719,96 +743,128 @@
                       <tbody>
                         <tr id="tablaDocumentosPlaceholder">
                           <td colspan="10" class="text-center text-muted py-3">
-                            <i class="fa-solid fa-inbox me-2"></i>Sin documentos seleccionados
+                            <i class="fa-solid fa-inbox me-2"></i>Sin documentos seleccionados aún
                           </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
                 </div>
+
+                <div class="wz-error-box d-none" id="wzError2"></div>
               </div>
             </div>
 
-            <!-- SECCIÓN 3: FORMA DE PAGO -->
-            <div class="cp-section">
-              <div class="cp-section__title">
-                <span class="cp-section__num">3</span>
-                Forma de pago
-              </div>
-              <div class="row g-3 p-3">
+            <!-- ── PANEL 3: FORMA DE PAGO ──────────────────────────── -->
+            <div class="wz-panel" id="wzPanel3">
+              <div class="wz-panel__inner">
 
-                <div class="col-md-4">
-                  <label class="form-label"><i class="fa-solid fa-money-bill-wave me-1 text-success"></i> Efectivo</label>
-                  <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" id="cartaEfectivo" class="form-control" step="0.01" min="0" placeholder="0,00">
+                <div class="wz-tip">
+                  <i class="fa-solid fa-circle-info wz-tip__icon"></i>
+                  <div>
+                    <strong>Paso 3 de 3 — Forma de pago</strong><br>
+                    Ingresá cómo se va a abonar. Podés combinar efectivo, transferencia y cheque. El total debe coincidir con los documentos seleccionados.
                   </div>
                 </div>
 
-                <div class="col-md-4">
-                  <label class="form-label"><i class="fa-solid fa-building-columns me-1 text-info"></i> Transferencia bancaria</label>
-                  <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" id="cartaTransferencia" class="form-control" step="0.01" min="0" placeholder="0,00">
+                <!-- Resumen documentos -->
+                <div class="wz-resumen-docs mt-3 mb-4" id="wzResumenDocs">
+                  <div class="wz-resumen-docs__row">
+                    <span><i class="fa-solid fa-file-invoice me-2"></i>Documentos a pagar</span>
+                    <span id="cartaTotalDocumentos2" class="fw-bold">$ 0,00</span>
                   </div>
                 </div>
 
-                <div class="col-md-4">
-                  <label class="form-label"><i class="fa-solid fa-money-check me-1 text-warning"></i> Cheque</label>
-                  <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" id="cartaCheque" class="form-control" step="0.01" min="0" placeholder="0,00">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">
+                      <i class="fa-solid fa-money-bill-wave me-1" style="color:#4ade80;"></i> Efectivo
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text">$</span>
+                      <input type="number" id="cartaEfectivo" class="form-control" step="0.01" min="0" placeholder="0,00">
+                    </div>
                   </div>
-                </div>
+                  <div class="col-md-4">
+                    <label class="form-label">
+                      <i class="fa-solid fa-building-columns me-1" style="color:#60a5fa;"></i> Transferencia bancaria
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text">$</span>
+                      <input type="number" id="cartaTransferencia" class="form-control" step="0.01" min="0" placeholder="0,00">
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">
+                      <i class="fa-solid fa-money-check me-1" style="color:#fbbf24;"></i> Cheque
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text">$</span>
+                      <input type="number" id="cartaCheque" class="form-control" step="0.01" min="0" placeholder="0,00">
+                    </div>
+                  </div>
 
-                <div class="col-12 d-none" id="seccionCheque">
-                  <div class="cp-cheque-panel">
-                    <div class="cp-cheque-panel__title"><i class="fa-solid fa-money-check-dollar me-2"></i>Datos del cheque</div>
-                    <div class="row g-2">
-                      <div class="col-md-4">
-                        <label class="form-label">Banco</label>
-                        <input type="text" id="cartaBancoCheque" class="form-control" placeholder="Ej: Banco Nación">
+                  <!-- Datos del cheque -->
+                  <div class="col-12 d-none" id="seccionCheque">
+                    <div class="cp-cheque-panel">
+                      <div class="cp-cheque-panel__title"><i class="fa-solid fa-money-check-dollar me-2"></i>Datos del cheque</div>
+                      <div class="row g-2">
+                        <div class="col-md-4">
+                          <label class="form-label">Banco</label>
+                          <input type="text" id="cartaBancoCheque" class="form-control" placeholder="Ej: Banco Nación">
+                        </div>
+                        <div class="col-md-4">
+                          <label class="form-label">N° de cheque</label>
+                          <input type="text" id="cartaNumeroCheque" class="form-control" placeholder="Ej: 0004521">
+                        </div>
+                        <div class="col-md-4">
+                          <label class="form-label">Fecha del cheque</label>
+                          <input type="date" id="cartaFechaCheque" class="form-control">
+                        </div>
                       </div>
-                      <div class="col-md-4">
-                        <label class="form-label">N° de cheque</label>
-                        <input type="text" id="cartaNumeroCheque" class="form-control" placeholder="Ej: 0004521">
+                    </div>
+                  </div>
+
+                  <!-- Resumen totales -->
+                  <div class="col-12">
+                    <div class="cp-resumen">
+                      <div class="cp-resumen__row">
+                        <span>Total documentos</span>
+                        <span id="wzTotalDocs2">$ 0,00</span>
                       </div>
-                      <div class="col-md-4">
-                        <label class="form-label">Fecha del cheque</label>
-                        <input type="date" id="cartaFechaCheque" class="form-control">
+                      <div class="cp-resumen__row cp-resumen__row--pago">
+                        <span>Total a pagar</span>
+                        <span id="cartaTotalPago">$ 0,00</span>
+                      </div>
+                      <div class="cp-resumen__row">
+                        <span>Diferencia</span>
+                        <span id="cartaDiferencia" class="fw-bold">$ 0,00</span>
                       </div>
                     </div>
+                    <div id="alertaDiferencia" class="cp-alerta d-none"></div>
                   </div>
                 </div>
 
-                <div class="col-12">
-                  <div class="cp-resumen">
-                    <div class="cp-resumen__row">
-                      <span>Total documentos</span>
-                      <span id="cartaTotalDocumentos2">— agregá documentos en la sección anterior —</span>
-                    </div>
-                    <div class="cp-resumen__row cp-resumen__row--pago">
-                      <span>Total a pagar</span>
-                      <span id="cartaTotalPago">$ 0,00</span>
-                    </div>
-                    <div class="cp-resumen__row">
-                      <span>Diferencia</span>
-                      <span id="cartaDiferencia" class="fw-bold">$ 0,00</span>
-                    </div>
-                  </div>
-                  <div id="alertaDiferencia" class="cp-alerta d-none"></div>
-                </div>
-
+                <div class="wz-error-box d-none" id="wzError3"></div>
               </div>
             </div>
 
           </div><!-- /modal-body -->
 
-          <div class="modal-footer">
+          <!-- FOOTER CON NAVEGACIÓN -->
+          <div class="modal-footer wz-footer">
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" id="btnGuardarCartaPago" class="btn btn-success">
-              <i class="fa-solid fa-floppy-disk"></i> Guardar Carta
-            </button>
+            <div class="wz-nav">
+              <button type="button" class="btn btn-outline-secondary" id="btnWzAnterior" style="display:none;">
+                <i class="fa-solid fa-arrow-left me-1"></i> Anterior
+              </button>
+              <button type="button" class="btn btn-primary" id="btnWzSiguiente">
+                Siguiente <i class="fa-solid fa-arrow-right ms-1"></i>
+              </button>
+              <button type="button" class="btn btn-success" id="btnGuardarCartaPago" style="display:none;">
+                <i class="fa-solid fa-floppy-disk me-1"></i> Guardar Carta
+              </button>
+            </div>
           </div>
 
         </div>
@@ -917,3 +973,253 @@
 </script>
 </body>
 </html>
+
+<!-- Wizard CSS — inline para no depender de otro archivo -->
+<style>
+/* ── WIZARD STEPPER ──────────────────────────────────────── */
+.wz-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 32px 0;
+  background: rgba(31,72,126,0.05);
+  border-bottom: 1px solid rgba(31,72,126,0.12);
+  gap: 0;
+}
+
+.wz-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  cursor: default;
+  padding-bottom: 14px;
+}
+
+.wz-step__circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(31,72,126,0.25);
+  background: rgba(17,28,48,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.wz-step__num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(240,244,255,0.35);
+  transition: all 0.25s;
+}
+
+.wz-step__check {
+  display: none;
+  font-size: 13px;
+  color: #4ade80;
+}
+
+.wz-step__label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(240,244,255,0.3);
+  letter-spacing: 0.3px;
+  transition: color 0.25s;
+  white-space: nowrap;
+}
+
+/* Activo */
+.wz-step.active .wz-step__circle {
+  border-color: #1F487E;
+  background: #1F487E;
+  box-shadow: 0 0 0 4px rgba(31,72,126,0.2);
+}
+.wz-step.active .wz-step__num  { color: #fff; }
+.wz-step.active .wz-step__label { color: #f0f4ff; }
+
+/* Completado */
+.wz-step.done .wz-step__circle {
+  border-color: rgba(74,222,128,0.6);
+  background: rgba(74,222,128,0.12);
+}
+.wz-step.done .wz-step__num   { display: none; }
+.wz-step.done .wz-step__check { display: block; }
+.wz-step.done .wz-step__label { color: #4ade80; }
+
+/* Conector */
+.wz-connector {
+  flex: 1;
+  height: 2px;
+  background: rgba(31,72,126,0.2);
+  margin-bottom: 22px;
+  max-width: 120px;
+  transition: background 0.3s;
+  position: relative;
+}
+.wz-connector::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: 0%;
+  background: #4ade80;
+  transition: width 0.4s ease;
+}
+.wz-connector.done::after { width: 100%; }
+
+/* Subtitle */
+.wz-subtitle {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: rgba(240,244,255,0.35);
+  margin-top: 2px;
+}
+
+/* ── PANELS ─────────────────────────────────────────────── */
+.wz-panel {
+  display: none;
+  animation: wzFadeIn 0.22s ease;
+}
+.wz-panel.active { display: block; }
+
+@keyframes wzFadeIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.wz-panel__inner {
+  padding: 20px 24px;
+}
+
+/* ── TIP ────────────────────────────────────────────────── */
+.wz-tip {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: rgba(31,72,126,0.08);
+  border: 1px solid rgba(31,72,126,0.18);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240,244,255,0.65);
+  line-height: 1.5;
+}
+
+.wz-tip__icon {
+  color: #60a5fa;
+  font-size: 15px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.wz-tip strong {
+  color: #f0f4ff;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* ── OPTIONAL BADGE ─────────────────────────────────────── */
+.wz-optional {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(240,244,255,0.3);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.wz-badge-optional {
+  display: inline-block;
+  background: rgba(251,191,36,0.1);
+  border: 1px solid rgba(251,191,36,0.25);
+  color: #fbbf24;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  vertical-align: middle;
+}
+
+/* ── INFO CHIP ───────────────────────────────────────────── */
+.wz-info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(31,72,126,0.1);
+  border: 1px solid rgba(31,72,126,0.2);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: rgba(240,244,255,0.45);
+}
+
+/* ── ERROR BOX ───────────────────────────────────────────── */
+.wz-error-box {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(217,4,41,0.08);
+  border: 1px solid rgba(217,4,41,0.25);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: #ff6b6b;
+  animation: wzShake 0.3s ease;
+}
+
+.wz-error-box ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.wz-error-box li { margin-bottom: 2px; }
+
+@keyframes wzShake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-5px); }
+  75%      { transform: translateX(5px); }
+}
+
+/* ── RESUMEN DOCS EN PASO 3 ──────────────────────────────── */
+.wz-resumen-docs {
+  background: rgba(31,72,126,0.08);
+  border: 1px solid rgba(31,72,126,0.18);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.wz-resumen-docs__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240,244,255,0.7);
+}
+
+/* ── FOOTER NAV ──────────────────────────────────────────── */
+.wz-footer {
+  justify-content: space-between !important;
+}
+
+.wz-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Fields con error */
+.wz-field.is-invalid {
+  border-color: rgba(217,4,41,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(217,4,41,0.12) !important;
+}
+</style>
