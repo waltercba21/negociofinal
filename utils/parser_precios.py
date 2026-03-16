@@ -330,6 +330,119 @@ def convertir_xls(input_path):
 
 # ─── Función pública ──────────────────────────────────────────────────────────
 
+# ─── Detección y mapeo especial para archivos DM ─────────────────────────────
+# DM envía un único archivo con todos sus sub-proveedores mezclados.
+# La columna "origen" y "padron" determinan a qué sub-proveedor pertenece cada fila.
+# El usuario selecciona "DM" (id=8) y el sistema distribuye automáticamente.
+
+_DM_COLUMNAS = {'cod_articulo', 'padron', 'origen', 'articulo', 'precio', 'marca'}
+
+def _es_archivo_dm(ws):
+    """True si la hoja tiene la estructura característica de DM."""
+    for i, row in enumerate(ws.iter_rows(values_only=True)):
+        if i > 5: break
+        if row and any(c is not None for c in row):
+            celdas = {norm(str(c)) for c in row if c is not None and str(c).strip()}
+            if len(_DM_COLUMNAS & celdas) >= 4:
+                return True
+    return False
+
+def _mapear_subproveedor_dm(padron, origen):
+    """
+    Devuelve lista de proveedor_ids para una fila del archivo DM.
+    Basado en los sub-proveedores reales de la BD:
+      8  DM            14 DM LAM       18 DM VIDRIOS
+      12 DM FAL        15 DM FITAM     19 DM LAMPARAS
+      16 DM VIC        17 DM AP        34 DM LAMPARAS LED
+    """
+    p = padron.strip().upper() if padron else ''
+    o = origen.strip().upper() if origen else ''
+
+    provs = []
+
+    # Origen → sub-proveedor específico
+    if o == 'VIC':         provs.append(16)   # DM VIC
+    if o == 'LAM':         provs.append(14)   # DM LAM
+    if o == 'FITAM':       provs.append(15)   # DM FITAM
+    if o == 'A-PLASTIC':   provs.append(17)   # DM AP
+    if o == 'FAL':         provs.append(12)   # DM FAL
+    if o == 'POLICARBONATO' or p == 'VIDRIOS DE OPTICA':
+        provs.append(18)                       # DM VIDRIOS
+    if p == 'LAMPARAS':
+        provs.append(19)                       # DM LAMPARAS
+        provs.append(34)                       # DM LAMPARAS LED
+
+    # Todo lo demás va al proveedor DM genérico (id=8)
+    if not provs or o in (
+        'DEPO','IMPORTADO','NACIONAL','ORIGINAL','T-ORIGINAL','ORIGINAL-A',
+        'BRASIL','TAIWAN','ARGENTA','HELLA','INOVOX','MARELLI','VALEO','ORGUS',
+        'DAM','CELCO','EURO','HT','LEDEX','COFRAN','BORHAM','PHILIPS',
+        'FICO','FTM','METAGAL','VIEW-MAX','SAN JUSTO','','.','BRASIL'
+    ):
+        provs.append(8)                        # DM genérico
+
+    # Deduplicar manteniendo orden
+    seen = set()
+    return [p for p in provs if not (p in seen or seen.add(p))]
+
+def parsear_hoja_dm(sheet_name, ws):
+    """
+    Parser especializado para el archivo DM.
+    Devuelve items con campo extra 'proveedor_id_override' (lista de ids).
+    Header: cod_articulo | marca | padron | articulo | origen | precio
+    """
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows: return []
+
+    # Buscar fila header
+    header_idx = -1
+    col_cod = col_padron = col_origen = col_articulo = col_precio = None
+
+    for i, row in enumerate(rows[:5]):
+        if not row: continue
+        cells_norm = [norm(str(c)) if c else '' for c in row]
+        if 'cod_articulo' in cells_norm and 'precio' in cells_norm:
+            header_idx = i
+            col_cod     = cells_norm.index('cod_articulo')
+            col_precio  = cells_norm.index('precio')
+            col_padron  = cells_norm.index('padron') if 'padron' in cells_norm else None
+            col_origen  = cells_norm.index('origen') if 'origen' in cells_norm else None
+            col_articulo= cells_norm.index('articulo') if 'articulo' in cells_norm else None
+            break
+
+    if header_idx < 0 or col_precio is None: return []
+
+    items = []
+    for row in rows[header_idx + 1:]:
+        if not row or all(c is None or str(c).strip() == '' for c in row): continue
+
+        def get(idx):
+            return row[idx] if idx is not None and idx < len(row) else None
+
+        precio = limpiar_precio(get(col_precio))
+        if not precio: continue
+
+        codigo = limpiar_codigo(get(col_cod))
+        if not codigo: continue
+
+        padron  = str(get(col_padron)  or '').strip()
+        origen  = str(get(col_origen)  or '').strip()
+        articulo= str(get(col_articulo) or '').strip()
+
+        prov_ids = _mapear_subproveedor_dm(padron, origen)
+
+        for prov_id in prov_ids:
+            items.append({
+                'codigo':               codigo,
+                'precio':               precio,
+                'descripcion':          articulo,
+                'hoja':                 sheet_name,
+                'proveedor_id_override': prov_id,
+            })
+
+    return items
+
+
 def parsear_archivo(file_path):
     """
     Parsea un archivo Excel de lista de precios.
@@ -368,19 +481,37 @@ def parsear_archivo(file_path):
 
     hojas = seleccionar_hojas(wb.sheetnames)
     todos = []
+    es_dm = False
+
     for sh in hojas:
+        ws = wb[sh]
         try:
-            todos.extend(parsear_hoja(sh, wb[sh]))
+            # Detectar si es archivo DM antes de parsear
+            if _es_archivo_dm(ws):
+                es_dm = True
+                # Recargar la hoja (iter_rows ya fue consumido por _es_archivo_dm)
+                ws2 = wb[sh]
+                todos.extend(parsear_hoja_dm(sh, ws2))
+            else:
+                todos.extend(parsear_hoja(sh, ws))
         except Exception as e:
             errores.append(f'Hoja "{sh}": {e}')
     wb.close()
 
-    # Deduplicar por código normalizado → mayor precio
-    dedup = {}
-    for item in todos:
-        key = item['codigo'].strip().upper()
-        if key not in dedup or item['precio'] > dedup[key]['precio']:
-            dedup[key] = item
+    if es_dm:
+        # Para DM: deduplicar por (codigo, proveedor_id_override) — precio mayor
+        dedup = {}
+        for item in todos:
+            key = (item['codigo'].strip().upper(), item.get('proveedor_id_override', 0))
+            if key not in dedup or item['precio'] > dedup[key]['precio']:
+                dedup[key] = item
+    else:
+        # Normal: deduplicar solo por codigo → mayor precio
+        dedup = {}
+        for item in todos:
+            key = item['codigo'].strip().upper()
+            if key not in dedup or item['precio'] > dedup[key]['precio']:
+                dedup[key] = item
 
     return {'items': list(dedup.values()), 'hojas': hojas, 'errores': errores}
 

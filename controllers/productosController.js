@@ -2345,7 +2345,12 @@ actualizarPreciosExcel: async (req, res) => {
     // Detecta código y precio sin importar el formato o los títulos de columna.
     const parserResult = await new Promise((resolve, reject) => {
       const { spawn } = require('child_process');
-      const py = spawn('python3', [
+      // Usar el Python del venv si existe, sino el del sistema.
+      // En producción: python3 -m venv /var/www/autofaros/venv && venv/bin/pip install openpyxl
+      const fs_sync = require('fs');
+      const venvPython = require('path').join(__dirname, '../venv/bin/python3');
+      const pythonBin  = fs_sync.existsSync(venvPython) ? venvPython : 'python3';
+      const py = spawn(pythonBin, [
         require('path').join(__dirname, '../utils/parser_precios.py'),
         file.path
       ]);
@@ -2373,20 +2378,27 @@ actualizarPreciosExcel: async (req, res) => {
     const itemsParser = parserResult.items || [];
 
     for (const item of itemsParser) {
-      const codigoRaw  = str(item.codigo);
-      const codigoKey  = norm(codigoRaw);
+      const codigoRaw   = str(item.codigo);
       const precioBruto = limpiarPrecio(item.precio);
-      const descRaw    = str(item.descripcion);
-      const sheetName  = str(item.hoja);
+      const descRaw     = str(item.descripcion);
+      const sheetName   = str(item.hoja);
+
+      // Archivos DM: el parser asigna el sub-proveedor correcto por cada fila.
+      // Para el resto de proveedores, usar el proveedor_id seleccionado en el form.
+      const provIdEfectivo = (item.proveedor_id_override != null)
+        ? Number(item.proveedor_id_override)
+        : proveedor_id;
+
+      // Clave de deduplicación: incluye proveedor para DM (mismo código en varios sub-proveedores)
+      const codigoKey = norm(codigoRaw) + '|' + provIdEfectivo;
 
       if (!codigoRaw || !Number.isFinite(precioBruto) || precioBruto <= 0) continue;
       if (codigosProcesados.has(codigoKey)) continue;
-
       codigosProcesados.add(codigoKey);
 
-      const infoBD = ppInfoMap.get(codigoKey);
+      // ppInfoMap usa solo el codigo (sin proveedor) — buscar por codigo puro
+      const infoBD = ppInfoMap.get(norm(codigoRaw));
 
-      // Respetar presentacion guardada en BD; para nuevos, detectar por nombre/código
       let presentacionUsada = infoBD?.presentacion;
       if (!presentacionUsada) {
         const det = detectarPresentacionFila({
@@ -2398,10 +2410,10 @@ actualizarPreciosExcel: async (req, res) => {
         presentacionUsada = det.presentacion;
       }
 
-      const precioAnterior    = infoBD?.precio_lista || 0;
-      const precioListaNuevo  = precioBruto;
+      const precioAnterior   = infoBD?.precio_lista || 0;
+      const precioListaNuevo = precioBruto;
 
-      const resultado = await producto.actualizarPreciosPDF(precioListaNuevo, codigoRaw, proveedor_id);
+      const resultado = await producto.actualizarPreciosPDF(precioListaNuevo, codigoRaw, provIdEfectivo);
 
       if (Array.isArray(resultado) && resultado.length) {
         resultado.forEach(p => {
@@ -2418,8 +2430,10 @@ actualizarPreciosExcel: async (req, res) => {
           productosTocados.add(Number(p.producto_id));
         });
       } else {
-        if (!codigosNuevosSet.has(codigoKey)) {
-          codigosNuevosSet.add(codigoKey);
+        // No existe en DB → listado de nuevos (solo para el proveedor efectivo)
+        const nuevoKey = norm(codigoRaw) + '|' + provIdEfectivo;
+        if (!codigosNuevosSet.has(nuevoKey)) {
+          codigosNuevosSet.add(nuevoKey);
           nuevosProductos.push({
             codigo: codigoRaw,
             descripcion: descRaw || '(sin descripción)',
