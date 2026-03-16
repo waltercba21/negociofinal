@@ -240,7 +240,7 @@ exports.generarPDF = (req, res) => {
 
     doc.font('Helvetica').fontSize(8);
     carta.items.forEach((item, i) => {
-      if (i % 2 === 0) doc.rect(50, y - 2, W, 15).fill('#f4f6ff');
+      if (i % 2 === 0) doc.rect(50, y - 2, W, 20).fill('#f4f6ff');
       doc.fillColor(DARK);
 
       const tipo        = item.tipo_documento === 'factura' ? 'Factura' : 'Presupuesto';
@@ -260,8 +260,12 @@ exports.generarPDF = (req, res) => {
       doc.text('$ ' + fmtMonto(impOriginal),  C.importe, y, { width: 65, align: 'right' });
 
       if (ncImporte > 0) {
-        doc.fillColor('#fbbf24');
-        doc.text('- $ ' + fmtMonto(ncImporte), C.nc, y, { width: 55, align: 'right' });
+        // Número de NC en primera línea (amarillo, negrita)
+        doc.fillColor('#fbbf24').font('Helvetica-Bold').fontSize(7);
+        doc.text(item.numero_nota_credito || 'NC', C.nc, y, { width: 55, align: 'right' });
+        // Monto en segunda línea
+        doc.font('Helvetica').fontSize(8);
+        doc.text('- $ ' + fmtMonto(ncImporte), C.nc, y + 9, { width: 55, align: 'right' });
         doc.fillColor(DARK);
       } else {
         doc.text('-', C.nc, y, { width: 55, align: 'right' });
@@ -298,7 +302,7 @@ exports.generarPDF = (req, res) => {
         }
       }
 
-      y += 15;
+      y += 20;
     });
 
     // Subtotales
@@ -334,7 +338,7 @@ exports.generarPDF = (req, res) => {
       doc.fillColor(GRAY).text(label + ':', 56, y, { width: 280 });
       doc.fillColor(DARK).font('Helvetica-Bold').text('$ ' + val, C.saldo, y, { width: 55, align: 'right' });
       doc.font('Helvetica');
-      y += 15;
+      y += 20;
     });
 
     // Total pagado
