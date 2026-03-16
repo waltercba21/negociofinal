@@ -318,10 +318,10 @@ def convertir_xls(input_path):
     tmp_dir = tempfile.mkdtemp(prefix='parser_pp_')
     r = subprocess.run(
         ['libreoffice','--headless','--convert-to','xlsx','--outdir', tmp_dir, input_path],
-        capture_output=True, text=True, timeout=120)
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
     if r.returncode != 0:
         shutil.rmtree(tmp_dir, ignore_errors=True)
-        raise RuntimeError(f'LibreOffice error: {r.stderr[:200]}')
+        raise RuntimeError('LibreOffice error: ' + (r.stderr or b'').decode('utf-8', errors='replace')[:200])
     out = os.path.join(tmp_dir, os.path.splitext(os.path.basename(input_path))[0] + '.xlsx')
     if not os.path.exists(out):
         shutil.rmtree(tmp_dir, ignore_errors=True)
