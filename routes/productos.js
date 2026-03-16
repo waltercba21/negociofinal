@@ -50,17 +50,7 @@ var rutaListasPrecios = multer.diskStorage({
 // .single() lo dejaría en req.file (singular) y el controller no lo encontraría.
 var cargarListaPrecio = multer({
     storage: rutaListasPrecios,
-    fileFilter: function (req, file, callback) {
-        const ext = path.extname(file.originalname).toLowerCase();
-        // Algunos browsers envían .xls con mimetype genérico;
-        // validamos solo por extensión para máxima compatibilidad.
-        if (ext === '.xlsx' || ext === '.xls') {
-            callback(null, true);
-        } else {
-            callback(new Error('Solo se aceptan archivos .xlsx o .xls'), false);
-        }
-    },
-    limits: { fileSize: 50 * 1024 * 1024 }   // 50 MB maximo
+    limits: { fileSize: 50 * 1024 * 1024 }   // 50 MB — sin filtro de extension
 }).array('archivos[]', 1);
 
 // ─── Middleware: solo admins ───────────────────────────────────────────────────

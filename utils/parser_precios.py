@@ -302,7 +302,7 @@ def seleccionar_hojas(sheet_names):
         if 'lista abreviada' in n: return [name]  # distri
 
     preferidas = [name for name, n in nn if n.startswith('lista de precio')]
-    if preferidas: return preferidas  # LAM, SUDIMAR, SUDIMAR LED
+    if preferidas: return preferidas  # LAM, SUDIMAR
 
     preferidas = [name for name, n in nn if n == 'page1']
     if preferidas: return preferidas  # MYL
@@ -340,7 +340,20 @@ def parsear_archivo(file_path):
     tmp_dir = None
     path_usar = file_path
 
-    if os.path.splitext(file_path)[1].lower() == '.xls':
+    # Detectar formato por magic bytes, no por extensión.
+    # OLE2 (.xls): D0 CF 11 E0  |  ZIP/xlsx: 50 4B 03 04
+    # Así funciona aunque el archivo llegue sin extensión o con nombre raro.
+    def _es_xls_ole2(path):
+        try:
+            with open(path, 'rb') as fh:
+                return fh.read(4) == b'\xd0\xcf\x11\xe0'
+        except Exception:
+            return False
+
+    ext = os.path.splitext(file_path)[1].lower()
+    necesita_conversion = (ext == '.xls') or _es_xls_ole2(file_path)
+
+    if necesita_conversion:
         try:
             path_usar, tmp_dir = convertir_xls(file_path)
         except Exception as e:
