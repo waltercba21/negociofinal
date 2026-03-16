@@ -302,7 +302,7 @@ def seleccionar_hojas(sheet_names):
         if 'lista abreviada' in n: return [name]  # distri
 
     preferidas = [name for name, n in nn if n.startswith('lista de precio')]
-    if preferidas: return preferidas  # LAM, SUDIMAR
+    if preferidas: return preferidas  # LAM, SUDIMAR, SUDIMAR LED
 
     preferidas = [name for name, n in nn if n == 'page1']
     if preferidas: return preferidas  # MYL
