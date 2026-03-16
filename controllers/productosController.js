@@ -2241,9 +2241,12 @@ actualizarPrecios: function(req, res) {
 actualizarPreciosExcel: async (req, res) => {
   try {
     const proveedor_id = Number(req.body.proveedor);
-    const file = req.files && req.files[0];
+    // Compatibilidad: multer .array() → req.files[0], .single() → req.file
+    const file = (req.files && req.files[0]) || req.file || null;
 
     if (!proveedor_id || !file) {
+      console.error('[actualizarPreciosExcel] proveedor_id=%s file=%s body=%j files=%j',
+        proveedor_id, !!file, req.body, req.files);
       return res.status(400).send('Proveedor y archivo son requeridos.');
     }
 

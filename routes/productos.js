@@ -45,18 +45,23 @@ var rutaListasPrecios = multer.diskStorage({
         callback(null, `${Date.now()}_${base}${ext}`);
     }
 });
+// Usamos .array (igual que el multer de imágenes) para que el archivo
+// quede en req.files[0], que es lo que espera el controller.
+// .single() lo dejaría en req.file (singular) y el controller no lo encontraría.
 var cargarListaPrecio = multer({
     storage: rutaListasPrecios,
     fileFilter: function (req, file, callback) {
         const ext = path.extname(file.originalname).toLowerCase();
+        // Algunos browsers envían .xls con mimetype genérico;
+        // validamos solo por extensión para máxima compatibilidad.
         if (ext === '.xlsx' || ext === '.xls') {
             callback(null, true);
         } else {
             callback(new Error('Solo se aceptan archivos .xlsx o .xls'), false);
         }
     },
-    limits: { fileSize: 50 * 1024 * 1024 }   // 50 MB máximo
-}).single('archivos[]');
+    limits: { fileSize: 50 * 1024 * 1024 }   // 50 MB maximo
+}).array('archivos[]', 1);
 
 // ─── Middleware: solo admins ───────────────────────────────────────────────────
 function soloAdmin(req, res, next) {
