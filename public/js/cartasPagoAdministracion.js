@@ -32,6 +32,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let documentosSeleccionados = [];
   let notasCreditoDisponibles = [];
 
+  // ── Estado del wizard ─────────────────────────────────────────────────────
+  let wzStep = 1;
+  const WZ_TOTAL = 3;
+
+  const subtitles = [
+    'Paso 1 de 3 — Completá los datos de la carta',
+    'Paso 2 de 3 — Seleccioná los documentos a abonar',
+    'Paso 3 de 3 — Indicá cómo se va a realizar el pago',
+  ];
+
   // ── Abrir modal ────────────────────────────────────────────────────────────
   document.addEventListener('click', e => {
     if (e.target.closest('[data-open="modalCartaPago"]')) {
@@ -41,9 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function resetModal() {
+    wzGoTo(1);
     selProveedor.value = '';
     selTipo.value = 'factura';
-    contenedorDocs.innerHTML = '<p class="cp-hint">Seleccioná un proveedor y hacé clic en <strong>Cargar documentos</strong>.</p>';
+    contenedorDocs.innerHTML = '<p class="cp-hint">Hacé clic en <strong>Cargar documentos</strong> para ver los disponibles.</p>';
     documentosSeleccionados = [];
     notasCreditoDisponibles = [];
     renderTablaSeleccionados();
@@ -56,7 +67,123 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cartaFecha').value = new Date().toISOString().split('T')[0];
     seccionCheque.classList.add('d-none');
     actualizarTotalesPago();
+    // Limpiar errores y clases inválidas
+    [1,2,3].forEach(n => {
+      const box = document.getElementById(`wzError${n}`);
+      if (box) { box.classList.add('d-none'); box.innerHTML = ''; }
+    });
+    document.querySelectorAll('.wz-field.is-invalid').forEach(el => el.classList.remove('is-invalid'));
   }
+
+  // ── Navegación wizard ──────────────────────────────────────────────────────
+  function wzGoTo(step) {
+    const panels    = document.querySelectorAll('.wz-panel');
+    const steps     = document.querySelectorAll('.wz-step');
+    const connectors = document.querySelectorAll('.wz-connector');
+    const btnAnterior = document.getElementById('btnWzAnterior');
+    const btnSiguiente = document.getElementById('btnWzSiguiente');
+    const btnGuardar  = document.getElementById('btnGuardarCartaPago');
+    const subtitle    = document.getElementById('wzSubtitle');
+
+    wzStep = step;
+
+    // Panels
+    panels.forEach((p, i) => p.classList.toggle('active', i + 1 === step));
+
+    // Steps
+    steps.forEach((s, i) => {
+      const n = i + 1;
+      s.classList.remove('active', 'done');
+      if (n === step) s.classList.add('active');
+      else if (n < step) s.classList.add('done');
+    });
+
+    // Connectors
+    connectors.forEach((c, i) => c.classList.toggle('done', i + 1 < step));
+
+    // Subtitle
+    if (subtitle) subtitle.textContent = subtitles[step - 1];
+
+    // Buttons
+    btnAnterior.style.display  = step > 1 ? '' : 'none';
+    btnSiguiente.style.display = step < WZ_TOTAL ? '' : 'none';
+    btnGuardar.style.display   = step === WZ_TOTAL ? '' : 'none';
+
+    // Al llegar al paso 3, actualizar el resumen de documentos
+    if (step === 3) {
+      const totalDocs = documentosSeleccionados.reduce((s, d) =>
+        s + Math.max(d.importe - (d.nota_credito_importe || 0), 0), 0);
+      const el2 = document.getElementById('cartaTotalDocumentos2');
+      const el3 = document.getElementById('wzTotalDocs2');
+      if (el2) el2.textContent = '$ ' + fmtMonto(totalDocs);
+      if (el3) el3.textContent = '$ ' + fmtMonto(totalDocs);
+    }
+  }
+
+  // ── Validar paso ───────────────────────────────────────────────────────────
+  function wzValidar(step) {
+    const errores = [];
+
+    if (step === 1) {
+      const prov  = document.getElementById('cartaProveedor');
+      const fecha = document.getElementById('cartaFecha');
+      const admin = document.getElementById('cartaAdministrador');
+
+      // Limpiar previos
+      [prov, fecha, admin].forEach(el => el?.classList.remove('is-invalid'));
+
+      if (!prov?.value)   { errores.push('Seleccioná un proveedor');    prov?.classList.add('is-invalid'); }
+      if (!fecha?.value)  { errores.push('Ingresá la fecha');           fecha?.classList.add('is-invalid'); }
+      if (!admin?.value)  { errores.push('Seleccioná un administrador');admin?.classList.add('is-invalid'); }
+    }
+
+    if (step === 2) {
+      if (!documentosSeleccionados.length) {
+        errores.push('Agregá al menos un documento (factura o presupuesto)');
+      }
+      const parcialSinMonto = documentosSeleccionados.some(
+        d => d.tipo_pago === 'parcial' && (!d.importe_abonado || d.importe_abonado <= 0)
+      );
+      if (parcialSinMonto) {
+        errores.push('Ingresá el monto a abonar en los documentos con pago parcial');
+      }
+    }
+
+    if (step === 3) {
+      const efectivo = parseFloat(document.getElementById('cartaEfectivo')?.value) || 0;
+      const transf   = parseFloat(document.getElementById('cartaTransferencia')?.value) || 0;
+      const cheque   = parseFloat(document.getElementById('cartaCheque')?.value) || 0;
+      if (efectivo + transf + cheque <= 0) {
+        errores.push('Ingresá al menos un medio de pago con monto mayor a 0');
+      }
+    }
+
+    return errores;
+  }
+
+  function wzMostrarError(step, errores) {
+    const box = document.getElementById(`wzError${step}`);
+    if (!box) return;
+    if (!errores.length) { box.classList.add('d-none'); box.innerHTML = ''; return; }
+    box.innerHTML = `<strong><i class="fa-solid fa-triangle-exclamation me-1"></i>Antes de continuar:</strong>
+      <ul>${errores.map(e => `<li>${e}</li>`).join('')}</ul>`;
+    box.classList.remove('d-none');
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Botón Siguiente
+  document.getElementById('btnWzSiguiente')?.addEventListener('click', () => {
+    const errores = wzValidar(wzStep);
+    wzMostrarError(wzStep, errores);
+    if (errores.length) return;
+    wzMostrarError(wzStep, []); // limpiar
+    wzGoTo(wzStep + 1);
+  });
+
+  // Botón Anterior
+  document.getElementById('btnWzAnterior')?.addEventListener('click', () => {
+    wzGoTo(wzStep - 1);
+  });
 
   // ── Cambio de proveedor → limpiar estado ─────────────────────────────────
   selProveedor.addEventListener('change', () => {
@@ -434,20 +561,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const transf   = parseFloat(inputTransf.value)   || 0;
     const cheque   = parseFloat(inputCheque.value)   || 0;
 
-    const errores = [];
-    if (!idProv)  errores.push('Proveedor');
-    if (!fecha)   errores.push('Fecha');
-    if (!admin)   errores.push('Administrador');
-    if (!documentosSeleccionados.length) errores.push('Al menos un documento');
-    if (efectivo + transf + cheque <= 0) errores.push('Al menos un medio de pago con monto > 0');
-
-    // Validar pagos parciales: el monto parcial no puede ser 0
-    const parcialSinMonto = documentosSeleccionados.some(
-      d => d.tipo_pago === 'parcial' && (!d.importe_abonado || d.importe_abonado <= 0)
-    );
-    if (parcialSinMonto) errores.push('Ingresá el monto a abonar en los pagos parciales');
-
-    if (errores.length) return Swal.fire('Faltan datos', errores.join('\n'), 'warning');
+    // La validación por pasos ya fue aplicada al navegar — validamos el paso 3 final
+    const erroresFinales = wzValidar(3);
+    if (erroresFinales.length) {
+      wzMostrarError(3, erroresFinales);
+      return;
+    }
 
     const totalAbonado = documentosSeleccionados.reduce((s, d) => {
       const neto = Math.max(d.importe - d.nota_credito_importe, 0);
