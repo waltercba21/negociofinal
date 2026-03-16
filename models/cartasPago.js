@@ -130,17 +130,23 @@ function actualizarSaldosFacturas(items, callback) {
   let firstErr = null;
 
   facturasItems.forEach(item => {
-    const importeOriginal = parseFloat(item.importe_original || item.importe) || 0;
-    const importeAbonado  = parseFloat(item.importe_abonado) || importeOriginal;
-    const saldoPendiente  = parseFloat(item.saldo_pendiente) || 0;
+    const importeOriginal  = parseFloat(item.importe_original || item.importe) || 0;
+    const ncImporte        = parseFloat(item.nota_credito_importe) || 0;
+    // Calcular el abonado real: para 'total' es (importeOriginal - NC), para 'parcial' es lo que ingresó
+    const netoAPagar       = Math.max(importeOriginal - ncImporte, 0);
+    const importeAbonado   = item.tipo_pago === 'parcial'
+      ? Math.min(parseFloat(item.importe_abonado) || 0, netoAPagar)
+      : netoAPagar;
+    // El saldo se calcula aquí, no se confía en el que manda el front
+    const saldoPendiente   = parseFloat((netoAPagar - importeAbonado).toFixed(2));
 
-    // Upsert: si ya existe el saldo, suma el abono y recalcula pendiente
+    // Upsert: acumula abonos de múltiples cartas, recalcula saldo real
     const sql = `
       INSERT INTO facturas_saldo (factura_id, importe_original, total_abonado, saldo_pendiente)
       VALUES (?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         total_abonado   = total_abonado + VALUES(total_abonado),
-        saldo_pendiente = importe_original - (total_abonado + VALUES(total_abonado))
+        saldo_pendiente = GREATEST(importe_original - (total_abonado + VALUES(total_abonado)), 0)
     `;
 
     pool.query(sql, [item.documento_id, importeOriginal, importeAbonado, saldoPendiente], (err) => {
@@ -237,17 +243,9 @@ function facturasDisponiblesPorProveedor(idProveedor, callback) {
     LEFT JOIN facturas_saldo fs ON fs.factura_id = f.id
     WHERE f.id_proveedor = ?
       AND f.condicion = 'pendiente'
-      -- Excluir facturas que ya están en una carta activa con pago total
-      AND f.id NOT IN (
-        SELECT cpi.documento_id
-        FROM cartas_pago_items cpi
-        INNER JOIN cartas_pago cp ON cp.id = cpi.carta_pago_id
-        WHERE cpi.tipo_documento = 'factura'
-          AND cpi.tipo_pago = 'total'
-          AND cp.estado IN ('borrador','emitida')
-      )
-      -- Excluir facturas con saldo = 0 (totalmente pagadas)
-      AND COALESCE(fs.saldo_pendiente, f.importe_factura) > 0
+      -- Excluir facturas totalmente canceladas (saldo real = 0)
+      -- Una factura con pago parcial SIEMPRE sigue disponible si tiene saldo pendiente
+      AND COALESCE(fs.saldo_pendiente, f.importe_factura) > 0.009
     ORDER BY f.fecha_pago ASC, f.fecha ASC
   `;
   pool.query(sql, [idProveedor], callback);
