@@ -316,8 +316,23 @@ def seleccionar_hojas(sheet_names):
 
 def convertir_xls(input_path):
     tmp_dir = tempfile.mkdtemp(prefix='parser_pp_')
+    # Ruta absoluta para que funcione cuando lo lanza Node.js (PATH reducido)
+    lo_bin = None
+    for candidate in ['/usr/bin/libreoffice', '/usr/local/bin/libreoffice',
+                      '/opt/libreoffice/program/soffice', '/usr/lib/libreoffice/program/soffice']:
+        if os.path.isfile(candidate):
+            lo_bin = candidate
+            break
+    if not lo_bin:
+        # Último recurso: buscar en PATH
+        import shutil as _shutil
+        lo_bin = _shutil.which('libreoffice') or _shutil.which('soffice')
+    if not lo_bin:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise RuntimeError('No se encontró LibreOffice. Instalá libreoffice con: dnf install libreoffice-calc')
+
     r = subprocess.run(
-        ['libreoffice','--headless','--convert-to','xlsx','--outdir', tmp_dir, input_path],
+        [lo_bin, '--headless', '--convert-to', 'xlsx', '--outdir', tmp_dir, input_path],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
     if r.returncode != 0:
         shutil.rmtree(tmp_dir, ignore_errors=True)
