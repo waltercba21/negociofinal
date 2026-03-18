@@ -70,9 +70,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function normalizeAplicaciones(raw) {
+    // Si ya es un array (formato nuevo desde el EJS), usarlo directamente
+    if (Array.isArray(raw)) {
+      const lines = raw.map(x => String(x).trim()).filter(Boolean);
+      let subtitle = '';
+      if (lines.length >= 2 && /^(escobilla|kit|rear)/i.test(lines[0])) subtitle = lines.shift();
+      return { subtitle, lines };
+    }
+
     let s = String(raw ?? '').trim();
     if (!s) return { subtitle: '', lines: [] };
+
+    // Normalizar secuencias literales "\r\n", "\r", "\n", "\t" (texto plano, no escapes reales)
+    s = s.replace(/\\r\\n/g, '\n')
+         .replace(/\\r/g,    '\n')
+         .replace(/\\n/g,    '\n')
+         .replace(/\\t/g,    ' ');
+
+    // Normalizar <br> y retornos de carro reales
     s = s.replace(/<br\s*\/?\s*>/gi, '\n').replace(/\r/g, '');
+
     if (!s.includes('\n')) {
       const m = s.match(/\b[A-ZÁÉÍÓÚÑ]{2,}\b/);
       if (m && typeof m.index === 'number' && m.index > 0) {
@@ -83,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         s = s.replace(/\s{2,}/g, '\n');
       }
     }
+
     const lines = s.split('\n').map(x => x.trim()).filter(Boolean);
     let subtitle = '';
     if (lines.length >= 2 && /^(escobilla|kit|rear)/i.test(lines[0])) subtitle = lines.shift();
