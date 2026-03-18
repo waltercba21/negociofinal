@@ -1,5 +1,5 @@
 // public/js/pages/lista.js
-// Autofaros v2026-03-09
+// Autofaros v2026-03-18
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[AF] lista.js cargado');
