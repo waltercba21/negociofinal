@@ -18,18 +18,11 @@
   function normalizeAplicaciones(raw){
     let s = String(raw ?? '').trim();
     if (!s) return { subtitle:'', lines:[] };
-    if (!s.includes('\n')) {
-      const m = s.match(/\b[A-ZÁÉÍÓÚÑ]{2,}\b/);
-      if (m && typeof m.index === 'number' && m.index > 0) {
-        const subtitle = s.slice(0, m.index).trim();
-        const rest = s.slice(m.index).trim().replace(/\s+(?=[A-ZÁÉÍÓÚÑ]{2,}\b)/g, '\n');
-        s = subtitle + '\n' + rest;
-      } else {
-        s = s.replace(/\s{2,}/g, '\n');
-      }
-    }
-    const lines = s.split('\n').map(x => x.trim()).filter(Boolean);
+    // Separar por 2+ espacios/tabs consecutivos (formato real de la DB)
+    s = s.replace(/<br\s*\/?>\s*/gi, ' ').replace(/\r?\n/g, ' ');
+    const partes = s.split(/[ \t]{2,}/).map(x => x.trim()).filter(Boolean);
     let subtitle = '';
+    const lines = [...partes];
     if (lines.length >= 2 && /^(escobilla|kit|rear)/i.test(lines[0])) subtitle = lines.shift();
     return { subtitle, lines };
   }
@@ -52,6 +45,180 @@
 <html lang="es">
 <%- include('./layouts/head.ejs') %>
 <link rel="stylesheet" href="/css/pages/detalle.css" />
+<style>
+/* ── Det-Apps buscador interactivo ─────────────────────── */
+.det-apps {
+  background: rgba(15, 25, 46, 0.7);
+  border: 1px solid rgba(31, 72, 126, 0.35);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.det-apps__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 10px;
+}
+
+.det-apps__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240,244,255,0.55);
+}
+
+.det-apps__title i { color: #1F487E; font-size: 13px; }
+
+.det-apps__count {
+  background: rgba(31, 72, 126, 0.25);
+  border: 1px solid rgba(31, 72, 126, 0.4);
+  color: #7aaee8;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0;
+  transition: all 0.2s;
+}
+
+.det-apps__count--filtered {
+  background: rgba(217, 4, 41, 0.15);
+  border-color: rgba(217, 4, 41, 0.4);
+  color: #f87171;
+}
+
+/* Buscador */
+.det-apps__search-wrap {
+  position: relative;
+  margin: 0 14px 12px;
+  display: flex;
+  align-items: center;
+}
+
+.det-apps__search-ico {
+  position: absolute;
+  left: 13px;
+  color: rgba(240,244,255,0.3);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.det-apps__search-input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(31, 72, 126, 0.3);
+  border-radius: 10px;
+  padding: 9px 36px 9px 36px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.det-apps__search-input::placeholder { color: rgba(240,244,255,0.3); }
+
+.det-apps__search-input:focus {
+  border-color: #1F487E;
+  background: rgba(31, 72, 126, 0.08);
+}
+
+.det-apps__search-clear {
+  position: absolute;
+  right: 10px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: rgba(240,244,255,0.5);
+  cursor: pointer;
+  font-size: 11px;
+  transition: background 0.15s;
+}
+
+.det-apps__search-clear:hover { background: rgba(217,4,41,0.25); color: #f87171; }
+
+/* Lista */
+.det-apps__list {
+  list-style: none;
+  padding: 0 0 8px;
+  margin: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(31,72,126,0.4) transparent;
+}
+
+.det-apps__list::-webkit-scrollbar { width: 4px; }
+.det-apps__list::-webkit-scrollbar-track { background: transparent; }
+.det-apps__list::-webkit-scrollbar-thumb { background: rgba(31,72,126,0.4); border-radius: 2px; }
+
+.det-apps__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(240,244,255,0.8);
+  line-height: 1.4;
+  transition: background 0.12s;
+}
+
+.det-apps__item:nth-child(odd) { background: rgba(31,72,126,0.07); }
+.det-apps__item:hover { background: rgba(31,72,126,0.16); }
+
+.det-apps__item i {
+  color: #1F487E;
+  font-size: 12px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.det-apps__item--in {
+  animation: appItemIn 0.15s ease both;
+}
+
+@keyframes appItemIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Highlight búsqueda */
+mark.apps-hl {
+  background: rgba(217, 4, 41, 0.25);
+  color: #f87171;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* Empty state */
+.det-apps__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 16px;
+  color: rgba(240,244,255,0.35);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+}
+
+.det-apps__empty i { font-size: 28px; color: rgba(217,4,41,0.4); }
+</style>
 
 <body class="det-page" data-is-admin-user="<%= isAdminUser %>" data-is-user-logged-in="<%= isUserLoggedIn %>">
 
@@ -214,57 +381,49 @@
         <% } %>
       <% } %>
 
-      <!-- Aplicaciones (escobillas) -->
+      <!-- Aplicaciones (escobillas) — buscador interactivo -->
       <% if (tieneAplic) { %>
-        <div class="det-apps">
+        <div class="det-apps" id="det-apps-widget">
+
           <div class="det-apps__head">
             <div class="det-apps__title">
               <i class="fa-solid fa-car"></i>
-              <span>Aplicaciones</span>
+              <span>Compatibilidades</span>
+              <span class="det-apps__count" id="appsCount"><%= appsData.lines.length %></span>
             </div>
-            <button
-              type="button"
-              class="det-apps__btn"
-              id="btnAppsDetalle"
-              data-titulo="<%= producto.nombre %>"
-              data-aplicaciones="<%= encodeURIComponent(_cleanDescripcion) %>"
-            >
-              <i class="fa-solid fa-list-ul"></i>
-              Ver todas
+          </div>
+
+          <!-- Buscador inline -->
+          <div class="det-apps__search-wrap">
+            <i class="fa-solid fa-magnifying-glass det-apps__search-ico"></i>
+            <input
+              type="text"
+              id="appsSearch"
+              class="det-apps__search-input"
+              placeholder="Buscá tu vehículo… ej: Ford, Gol, Civic"
+              autocomplete="off"
+            />
+            <button type="button" class="det-apps__search-clear" id="appsClear" aria-label="Limpiar">
+              <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
 
-          <% if (appsData.subtitle) { %>
-            <div style="padding:10px 18px 0;font-size:.75rem;font-weight:700;color:#4d6380;letter-spacing:.04em">
-              <i class="fa-solid fa-circle-info" style="margin-right:6px"></i><%= appsData.subtitle %>
-            </div>
-          <% } %>
-
-          <ul class="det-apps__list">
-            <% if (preview.length) { %>
-              <% preview.forEach(l => { %>
-                <li class="det-apps__item">
-                  <i class="fa-solid fa-car-side"></i>
-                  <span><%= l %></span>
-                </li>
-              <% }) %>
-            <% } else { %>
+          <!-- Lista filtrable -->
+          <ul class="det-apps__list" id="appsList"
+            data-items="<%- JSON.stringify(appsData.lines).replace(/'/g, '&#39;') %>">
+            <% appsData.lines.forEach(l => { %>
               <li class="det-apps__item">
                 <i class="fa-solid fa-car-side"></i>
-                <span>Sin aplicaciones cargadas.</span>
+                <span><%= l %></span>
               </li>
-            <% } %>
+            <% }) %>
           </ul>
 
-          <% if ((appsData.lines || []).length > preview.length) { %>
-            <div class="det-apps__more" id="btnAppsDetalle2"
-              data-titulo="<%= producto.nombre %>"
-              data-aplicaciones="<%= encodeURIComponent(_cleanDescripcion) %>"
-            >
-              <i class="fa-solid fa-ellipsis"></i>
-              y <%= appsData.lines.length - preview.length %> compatibilidades más — ver lista completa
-            </div>
-          <% } %>
+          <div class="det-apps__empty" id="appsEmpty" style="display:none;">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>Sin resultados para tu búsqueda</span>
+          </div>
+
         </div>
 
       <!-- Descripción normal -->
