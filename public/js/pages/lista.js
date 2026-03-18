@@ -6,24 +6,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ──────────────────────────────────────────────
      CAROUSEL
-     Las imágenes usan clase .pcard__img + .hidden
-     Los contenedores tienen id="carousel-{index}"
   ────────────────────────────────────────────── */
   window.moverCarrusel = function (index, direccion) {
     const carousel = document.getElementById('carousel-' + index);
     if (!carousel) return;
-
     const imagenes = carousel.querySelectorAll('.pcard__img');
     if (!imagenes.length) return;
-
     let activa = Array.from(imagenes).findIndex(img => !img.classList.contains('hidden'));
     if (activa < 0) activa = 0;
-
     imagenes[activa].classList.add('hidden');
     activa = (activa + direccion + imagenes.length) % imagenes.length;
     imagenes[activa].classList.remove('hidden');
-
-    // Actualizar dots
     const dotsContainer = document.getElementById('dots-' + index);
     if (dotsContainer) {
       dotsContainer.querySelectorAll('.pcard__dot').forEach((dot, i) => {
@@ -33,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ──────────────────────────────────────────────
-     QTY BUTTONS — delegado en el grid
+     QTY BUTTONS
   ────────────────────────────────────────────── */
   const grid = document.getElementById('contenedor-productos');
   if (!grid) return;
@@ -42,19 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnMinus = e.target.closest('.qty-btn--minus');
     const btnPlus  = e.target.closest('.qty-btn--plus');
     if (!btnMinus && !btnPlus) return;
-
-    const row   = (btnMinus || btnPlus).closest('.pcard__qty-row');
+    const row = (btnMinus || btnPlus).closest('.pcard__qty-row');
     if (!row) return;
     const input = row.querySelector('.cantidad-input');
     if (!input || input.disabled) return;
-
     const min = parseInt(input.min) || 1;
     const max = parseInt(input.max) || 9999;
-    let val   = parseInt(input.value) || min;
-
+    let val = parseInt(input.value) || min;
     if (btnMinus) val = Math.max(min, val - 1);
     if (btnPlus)  val = Math.min(max, val + 1);
-
     input.value = val;
     input.dataset.afRequested = String(val);
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -70,46 +59,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function normalizeAplicaciones(raw) {
-    // Si ya es un array (formato nuevo desde el EJS), usarlo directamente
-    if (Array.isArray(raw)) {
-      const lines = raw.map(x => String(x).trim()).filter(Boolean);
-      let subtitle = '';
-      if (lines.length >= 2 && /^(escobilla|kit|rear)/i.test(lines[0])) subtitle = lines.shift();
-      return { subtitle, lines };
-    }
-
     let s = String(raw ?? '').trim();
     if (!s) return { subtitle: '', lines: [] };
 
-    // Normalizar secuencias literales "\r\n", "\r", "\n", "\t" (texto plano, no escapes reales)
-    s = s.replace(/\\r\\n/g, '\n')
-         .replace(/\\r/g,    '\n')
-         .replace(/\\n/g,    '\n')
-         .replace(/\\t/g,    ' ');
+    // La DB separa cada entrada con múltiples espacios/tabs consecutivos.
+    // Primero aplanamos saltos de línea y tags <br> a un espacio.
+    s = s.replace(/<br\s*\/?\s*>/gi, ' ').replace(/\r?\n/g, ' ');
 
-    // Normalizar <br> y retornos de carro reales
-    s = s.replace(/<br\s*\/?\s*>/gi, '\n').replace(/\r/g, '');
+    // Separar por 2 o más espacios/tabs consecutivos
+    const partes = s.split(/[ \t]{2,}/).map(x => x.trim()).filter(Boolean);
 
-    if (!s.includes('\n')) {
-      const m = s.match(/\b[A-ZÁÉÍÓÚÑ]{2,}\b/);
-      if (m && typeof m.index === 'number' && m.index > 0) {
-        const subtitle = s.slice(0, m.index).trim();
-        const rest = s.slice(m.index).trim().replace(/\s+(?=[A-ZÁÉÍÓÚÑ]{2,}\b)/g, '\n');
-        s = subtitle + '\n' + rest;
-      } else {
-        s = s.replace(/\s{2,}/g, '\n');
-      }
+    let subtitle = '';
+    if (partes.length >= 2 && /^(escobilla|kit|rear)/i.test(partes[0])) {
+      subtitle = partes.shift();
     }
 
-    const lines = s.split('\n').map(x => x.trim()).filter(Boolean);
-    let subtitle = '';
-    if (lines.length >= 2 && /^(escobilla|kit|rear)/i.test(lines[0])) subtitle = lines.shift();
-    return { subtitle, lines };
+    return { subtitle, lines: partes };
   }
 
   function buildAplicacionesHtml(raw) {
     const { subtitle, lines } = normalizeAplicaciones(raw);
-    const items = (lines || []).slice(0, 400).map(l => `
+    const items = lines.slice(0, 400).map(l => `
       <li class="af-apps-li">
         <span class="af-apps-ico"><i class="fa-solid fa-car"></i></span>
         <span class="af-apps-txt">${escapeHtml(l)}</span>
@@ -143,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: true });
 
   /* ──────────────────────────────────────────────
-     LOADING SPINNER — intercepta el texto de selectores.js
+     LOADING SPINNER
   ────────────────────────────────────────────── */
   const observer = new MutationObserver(() => {
     const p = grid.querySelector('p');
