@@ -526,8 +526,8 @@ function mostrarProductos(productos) {
     const esEscobilla = /escobill/i.test(producto.categoria_nombre || '') || /escobill/i.test(producto.nombre || '');
     const aplicacionesHTML = (esEscobilla && descAplic) ? `
       <button type="button" class="btn-aplicaciones"
-        data-titulo="${producto.nombre}"
-        data-aplicaciones='${JSON.stringify(descAplic)}'>
+        data-titulo="${_escapeHtml(producto.nombre)}"
+        data-aplicaciones='${JSON.stringify(descAplic).replace(/'/g, "&#39;")}'>
         <i class="fa-solid fa-car"></i> <span>Ver aplicaciones</span>
       </button>` : '';
 
@@ -593,12 +593,44 @@ function mostrarAplicacionesModal(titulo, texto) {
   const contenido = String(texto ?? '').trim();
   if (!contenido) return;
 
+  // Parsear el texto: separar por 2+ espacios/tabs consecutivos
+  const lineas = contenido
+    .replace(/<br\s*\/?>\s*/gi, ' ')
+    .replace(/\r?\n/g, ' ')
+    .split(/[ \t]{2,}/)
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  let subtitle = '';
+  const copia = [...lineas];
+  if (copia.length >= 2 && /^(escobilla|kit|rear)/i.test(copia[0])) {
+    subtitle = copia.shift();
+  }
+
+  const items = copia.map(l => `
+    <li class="af-apps-li">
+      <span class="af-apps-ico"><i class="fa-solid fa-car"></i></span>
+      <span class="af-apps-txt">${_escapeHtml(l)}</span>
+    </li>`).join('');
+
+  const html = `<div class="af-apps-wrap">
+    ${subtitle ? `<div class="af-apps-subtitle">${_escapeHtml(subtitle)}</div>` : ''}
+    <ul class="af-apps-ul">${items || '<li class="af-apps-li"><span class="af-apps-txt">Sin aplicaciones cargadas.</span></li>'}</ul>
+  </div>`;
+
   if (typeof Swal !== 'undefined' && Swal.fire) {
     Swal.fire({
       title: titulo || 'Aplicaciones',
-      html: `<pre style="text-align:left;white-space:pre-wrap;max-height:60vh;overflow:auto;margin:0;font-family:inherit;">${_escapeHtml(contenido)}</pre>`,
-      width: 900,
-      confirmButtonText: 'Cerrar'
+      html,
+      width: 'min(980px, 94vw)',
+      showCloseButton: true,
+      confirmButtonText: 'Cerrar',
+      customClass: {
+        popup: 'af-apps-modal',
+        title: 'af-apps-title',
+        htmlContainer: 'af-apps-body',
+        confirmButton: 'af-apps-confirm'
+      }
     });
   } else {
     alert(contenido);
@@ -743,6 +775,20 @@ if (CAN_INIT) contenedorProductos.addEventListener('click', async (ev) => {
   });
 }, { passive: true });
 
+
+/* ==========================================
+   Delegado de clicks — modal aplicaciones
+========================================== */
+if (CAN_INIT) contenedorProductos.addEventListener('click', (ev) => {
+  const btnAplic = ev.target.closest('.btn-aplicaciones');
+  if (btnAplic) {
+    const titulo = btnAplic.dataset.titulo || 'Aplicaciones';
+    let texto = btnAplic.dataset.aplicaciones || '';
+    try { texto = JSON.parse(texto); } catch(_) {}
+    mostrarAplicacionesModal(titulo, String(texto));
+    return;
+  }
+}, { passive: true });
 
 /* ==========================================
    Delegado de clicks (analytics)
