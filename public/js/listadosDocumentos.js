@@ -630,4 +630,75 @@ document.addEventListener('DOMContentLoaded', () => {
       btnPrint: modal.querySelector('#btnImprimirDeuda')
     };
   }
+ // ── Resumen de compras ──────────────────────────────────────────────────────
+const btnVerResumen   = document.getElementById('btnVerResumenCompras');
+const btnPDFCompras   = document.getElementById('btnPDFResumenCompras');
+const contenedorComp  = document.getElementById('contenedorResumenCompras');
+
+function money(n) {
+  return (+n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+btnVerResumen?.addEventListener('click', async () => {
+  const desde    = document.getElementById('filtroFechaDesde').value;
+  const hasta    = document.getElementById('filtroFechaHasta').value;
+  const proveedor = document.getElementById('filtroProveedor').value;
+  const condicion = document.getElementById('filtroCondicion').value;
+  if (!desde || !hasta) { Swal.fire('Faltan fechas','Seleccioná Desde y Hasta.','warning'); return; }
+
+  const qs = new URLSearchParams({desde,hasta});
+  if (proveedor) qs.set('proveedor', proveedor);
+  if (condicion) qs.set('condicion', condicion);
+
+  try {
+    const r = await fetch(`${adminPrefix}/api/resumen-compras?${qs}`);
+    if (!r.ok) throw new Error();
+    const { dias, totales } = await r.json();
+
+    if (!dias?.length) { contenedorComp.innerHTML='<p class="text-muted">Sin compras en el período.</p>'; return; }
+
+    const filas = dias.map(d=>`
+      <div style="display:grid;grid-template-columns:110px 60px 1fr 1fr 1fr;gap:8px;padding:7px 10px;border-bottom:1px solid rgba(240,244,255,0.07);font-size:13px">
+        <div>${d.fecha}</div>
+        <div style="text-align:center">${d.cant}</div>
+        <div style="text-align:right">$ ${money(d.neto)}</div>
+        <div style="text-align:right;color:#f59e0b"><b>$ ${money(d.iva)}</b></div>
+        <div style="text-align:right"><b>$ ${money(d.total)}</b></div>
+      </div>`).join('');
+
+    contenedorComp.innerHTML = `
+      <div style="border:1px solid rgba(31,72,126,0.25);border-radius:10px;overflow:hidden;font-family:'DM Sans',sans-serif">
+        <div style="display:grid;grid-template-columns:110px 60px 1fr 1fr 1fr;gap:8px;padding:8px 10px;background:rgba(31,72,126,0.15);font-size:12px;font-weight:700;color:rgba(240,244,255,0.6);text-transform:uppercase;letter-spacing:.5px">
+          <div>Fecha</div><div style="text-align:center">Fact.</div>
+          <div style="text-align:right">Neto</div>
+          <div style="text-align:right;color:#f59e0b">IVA</div>
+          <div style="text-align:right">Total</div>
+        </div>
+        ${filas}
+        <div style="display:grid;grid-template-columns:110px 60px 1fr 1fr 1fr;gap:8px;padding:9px 10px;background:rgba(31,72,126,0.2);font-size:13px;font-weight:700;border-top:2px solid rgba(240,244,255,0.15)">
+          <div>TOTAL</div><div style="text-align:center">${totales.cant}</div>
+          <div style="text-align:right">$ ${money(totales.neto)}</div>
+          <div style="text-align:right;color:#f59e0b">$ ${money(totales.iva)}</div>
+          <div style="text-align:right">$ ${money(totales.total)}</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;padding:10px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:13px;color:#f59e0b">
+        <strong>IVA total en compras del período: $ ${money(totales.iva)}</strong>
+        &nbsp;·&nbsp; Neto: $ ${money(totales.neto)}
+        &nbsp;·&nbsp; Total con IVA: $ ${money(totales.total)}
+      </div>`;
+  } catch { Swal.fire('Error','No se pudo obtener el resumen.','error'); }
 });
+
+btnPDFCompras?.addEventListener('click', () => {
+  const desde    = document.getElementById('filtroFechaDesde').value;
+  const hasta    = document.getElementById('filtroFechaHasta').value;
+  const proveedor = document.getElementById('filtroProveedor').value;
+  const condicion = document.getElementById('filtroCondicion').value;
+  if (!desde || !hasta) { Swal.fire('Faltan fechas','Seleccioná Desde y Hasta.','warning'); return; }
+  const qs = new URLSearchParams({desde,hasta});
+  if (proveedor) qs.set('proveedor', proveedor);
+  if (condicion) qs.set('condicion', condicion);
+  window.open(`${adminPrefix}/pdf/resumen/compras-periodo?${qs}`, '_blank');
+});
+ });

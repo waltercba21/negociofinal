@@ -92,6 +92,8 @@ router.delete('/api/presupuesto/:id', administracionController.eliminarPresupues
 
 // ── PDF deuda pendiente ───────────────────────────────────────────────────────
 router.get('/pdf/deuda-pendiente', administracionController.generarPDFDeudaPendiente);
+router.get('/api/resumen-compras', administracionController.resumenComprasPorPeriodo);
+router.get('/pdf/resumen/compras-periodo', administracionController.generarResumenComprasPeriodoPDF);
 
 // ── Objetivos ─────────────────────────────────────────────────────────────────
 router.get('/objetivos', administracionController.objetivos);
