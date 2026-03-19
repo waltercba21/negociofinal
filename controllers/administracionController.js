@@ -1479,6 +1479,71 @@ generarResumenComprasPeriodoPDF: (req, res) => {
   });
 },
 
+
+// ── TOP PROVEEDORES POR COMPRAS ────────────────────────────────────────────────
+// GET /administracion/api/top-proveedores?desde=YYYY-MM-DD&hasta=YYYY-MM-DD&limit=10
+topProveedores: async (req, res) => {
+  try {
+    const conexion = require('../config/conexion');
+    const { desde, hasta } = req.query;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const params = [];
+    let filtroFac  = '';
+    let filtroPres = '';
+
+    if (desde && hasta) {
+      filtroFac  = 'AND f.fecha BETWEEN ? AND ?';
+      filtroPres = 'AND p.fecha BETWEEN ? AND ?';
+      params.push(desde, hasta, desde, hasta);
+    }
+
+    const sql = `
+      SELECT
+        pr.id, pr.nombre,
+        SUM(v.monto)   AS total,
+        SUM(v.monto_a) AS total_a,
+        SUM(v.monto_b) AS total_b,
+        COUNT(*)       AS cant_docs
+      FROM (
+        SELECT
+          f.id_proveedor,
+          COALESCE(f.importe_factura, 0) AS monto,
+          COALESCE(f.importe_factura, 0) AS monto_a,
+          0                              AS monto_b
+        FROM facturas f
+        WHERE f.id_proveedor IS NOT NULL
+        ${filtroFac}
+
+        UNION ALL
+
+        SELECT
+          p.id_proveedor,
+          COALESCE(p.importe, 0) AS monto,
+          0                      AS monto_a,
+          COALESCE(p.importe, 0) AS monto_b
+        FROM presupuestos p
+        WHERE p.id_proveedor IS NOT NULL
+        ${filtroPres}
+      ) v
+      INNER JOIN proveedores pr ON pr.id = v.id_proveedor
+      GROUP BY pr.id, pr.nombre
+      ORDER BY total DESC
+      LIMIT ${limit}
+    `;
+
+    conexion.query(sql, params, (err, rows) => {
+      if (err) {
+        console.error('❌ topProveedores:', err);
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(rows);
+    });
+  } catch (e) {
+    console.error('❌ topProveedores:', e);
+    res.status(500).json({ error: e.message });
+  }
+},
+
 // ── TOP PRODUCTOS VENDIDOS ─────────────────────────────────────────────────────
 // GET /administracion/api/top-productos?desde=YYYY-MM-DD&hasta=YYYY-MM-DD&limit=15
 // Une factura_items + presupuesto_items, agrupa por producto y ordena por cantidad

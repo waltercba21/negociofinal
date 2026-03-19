@@ -99,6 +99,8 @@ router.delete('/api/presupuesto/:id', administracionController.eliminarPresupues
 router.get('/objetivos', administracionController.objetivos);
 router.get('/api/objetivos-compras', administracionController.apiObjetivosCompras);
 router.get('/api/objetivos-ventas', administracionController.apiObjetivosVentas);
+router.get('/api/top-proveedores', administracionController.topProveedores);
+router.get('/api/top-productos', administracionController.topProductos);
 
 // ── Gastos ────────────────────────────────────────────────────────────────────
 router.get('/gastos', administracionController.gastos);
@@ -106,7 +108,6 @@ router.post('/gastos', administracionController.postGasto);
 router.get('/api/gastos', administracionController.listarGastos);
 router.get('/api/objetivos-gastos', administracionController.apiObjetivosGastos);
 router.post('/gastos/:id/eliminar', administracionController.eliminarGasto);
-router.get('/api/top-productos', administracionController.topProductos);
 
 // ── Catálogos ─────────────────────────────────────────────────────────────────
 router.get('/api/categorias', administracionController.getCategorias);

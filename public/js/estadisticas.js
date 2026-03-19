@@ -186,16 +186,28 @@ function renderDoughnut(canvasId,legId,labels,values,colors){
 /* ══════════════════════════════════════
    RENDER: RANKING
 ══════════════════════════════════════ */
-function renderRanking(elId,items,valFmt){
-  const el=$(elId);if(!el)return;
-  if(!items?.length){el.innerHTML='<div class="est-empty"><i class="fa-solid fa-inbox"></i><p>Sin datos para el período</p></div>';return;}
-  const max=items[0].val||1;
-  el.innerHTML=items.slice(0,8).map((item,i)=>{
-    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
-    const color=PALETTE[i%PALETTE.length];
-    return`<div class="est-rk-row ${i===0?'top':''}">
+function renderRanking(elId, items, valFmt, showSub = false) {
+  const el = $(elId); if (!el) return;
+  if (!items?.length) {
+    el.innerHTML = '<div class="est-empty"><i class="fa-solid fa-inbox"></i><p>Sin datos para el período</p></div>';
+    return;
+  }
+  const max = items[0].val || 1;
+  el.innerHTML = items.slice(0, 8).map((item, i) => {
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+    const color = PALETTE[i % PALETTE.length];
+    const subLine = (showSub && (item.val_a || item.val_b)) ? `
+      <div style="font-family:'Roboto Mono',monospace;font-size:9px;color:rgba(240,244,255,.32);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap">
+        ${item.val_a > 0 ? `<span style="color:rgba(59,130,246,.75)">A: ${money(item.val_a)}</span>` : ''}
+        ${item.val_b > 0 ? `<span style="color:rgba(251,146,60,.75)">B: ${money(item.val_b)}</span>` : ''}
+        ${item.docs  > 0 ? `<span>${item.docs} doc${item.docs > 1 ? 's' : ''}</span>` : ''}
+      </div>` : '';
+    return `<div class="est-rk-row ${i === 0 ? 'top' : ''}">
       <span class="est-rk-pos">${medal}</span>
-      <span class="est-rk-name" title="${item.name}">${item.name}</span>
+      <div style="flex:1;min-width:0;overflow:hidden">
+        <div class="est-rk-name" title="${item.name}">${item.name}</div>
+        ${subLine}
+      </div>
       <div class="est-rk-bar-w"><div class="est-rk-bar-f" style="width:${(item.val/max*100).toFixed(1)}%;background:${color}"></div></div>
       <span class="est-rk-val">${valFmt(item.val)}</span>
     </div>`;
@@ -245,36 +257,22 @@ function renderDiag(vA,vB,comp,gast){
 
 /* ══════════════════════════════════════
    TOP PROVEEDORES
-   /administracion/api/resumen-compras?desde&hasta
-   Tablas: facturas (id_proveedor, importe_factura) JOIN proveedores (nombre)
-           presupuestos (id_proveedor, importe) JOIN proveedores (nombre)
+   GET /administracion/api/top-proveedores?desde&hasta&limit=10
+   Devuelve: [{ id, nombre, total, total_a, total_b, cant_docs }]
+   total_a = facturas de proveedor | total_b = presupuestos de proveedor
 ══════════════════════════════════════ */
-async function getProveedores(desde,hasta){
-  const data=await soft(`/administracion/api/resumen-compras?desde=${desde}&hasta=${hasta}`);
-  if(!data) return [];
-
-  // resumenComprasPorPeriodo puede devolver varios formatos según la implementación
-  const arr=Array.isArray(data)?data:(data.documentos||data.resumen||data.items||data.data||[]);
-  if(!arr.length) return [];
-
-  // Caso A: ya viene agrupado con campos nombre/total
-  // Ej: [{nombre:'DM Compras',total:1234567}, ...]
-  if(arr[0].nombre!==undefined&&(arr[0].total!==undefined||arr[0].importe!==undefined)){
-    return arr
-      .map(d=>({name:String(d.nombre||d.proveedor||'?'),val:Number(d.total||d.importe||d.monto||0)}))
-      .filter(d=>d.val>0).sort((a,b)=>b.val-a.val);
-  }
-
-  // Caso B: documentos individuales con proveedor_nombre y monto
-  // Ej: [{proveedor_nombre:'DM Compras', importe_factura:50000, tipo:'factura'}, ...]
-  const map={};
-  arr.forEach(doc=>{
-    const n=doc.proveedor_nombre||doc.proveedor||doc.nombre_proveedor||doc.nombre||null;
-    if(!n)return;
-    const v=Number(doc.importe_factura||doc.importe||doc.total||doc.monto||0);
-    map[n]=(map[n]||0)+v;
-  });
-  return Object.entries(map).map(([name,val])=>({name,val})).filter(d=>d.val>0).sort((a,b)=>b.val-a.val);
+async function getProveedores(desde, hasta) {
+  const data = await soft(`/administracion/api/top-proveedores?desde=${desde}&hasta=${hasta}&limit=10`);
+  if (!data || !Array.isArray(data) || !data.length) return [];
+  return data
+    .map(d => ({
+      name:  String(d.nombre  || '?'),
+      val:   Number(d.total   || 0),
+      val_a: Number(d.total_a || 0),
+      val_b: Number(d.total_b || 0),
+      docs:  Number(d.cant_docs || 0)
+    }))
+    .filter(d => d.val > 0);
 }
 
 /* ══════════════════════════════════════
@@ -364,7 +362,7 @@ async function cargar(){
     const gC=CATS.filter(k=>gastosCat[k]>0);
     renderDoughnut('cGastosPie','legGastos',gC,gC.map(k=>gastosCat[k]),gC.map((_,i)=>PALETTE[i%PALETTE.length]));
     renderGastosLista(gastosCat);
-    renderRanking('rkProv',proveedores,money);
+    renderRanking('rkProv', proveedores, money, true);
     renderRanking('rkProd',productos,n=>`${n} uds.`);
     renderDiag(vA,vB,comp,gast);
 
