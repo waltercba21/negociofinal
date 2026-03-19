@@ -1,0 +1,302 @@
+<% var pageCss = '/css/pages/index.css' %>
+<% var pageJs  = '/js/pages/index.js' %>
+<!DOCTYPE html>
+<html lang="es">
+<%- include('./layouts/head.ejs') %>
+<link rel="stylesheet" href="/css/pages/index.css" />
+
+<body class="body-index">
+
+  <%- include('./layouts/header.ejs') %>
+
+  <main class="index-main" id="main-content">
+
+    <!-- ══════════════════════════════════════════════
+         HERO CARRUSEL — CATEGORÍAS
+    ═══════════════════════════════════════════════ -->
+    <section class="cat-section" aria-label="Categorías de productos">
+
+      <div class="cat-section__header">
+        <h2 class="cat-section__title">
+          <span class="cat-section__title-accent">Explorá</span> nuestras categorías
+        </h2>
+        <a href="/productos" class="cat-section__ver-todo">
+          Ver todo <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+
+      <div class="cat-carousel" role="region" aria-label="Carrusel de categorías">
+
+        <button class="cat-carousel__arrow cat-carousel__arrow--prev"
+                id="catArrowPrev"
+                aria-label="Categoría anterior"
+                type="button">
+          <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+        </button>
+
+        <div class="cat-carousel__track-wrapper">
+          <div class="cat-carousel__track" id="catTrack" role="list">
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=31" data-categoria="31">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/faros-led1.webp" alt="Faros Auxiliares LED" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Faros Auxiliares LED</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=30" data-categoria="30">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/faro-trasero-led1.webp" alt="Faros Traseros LED" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Faros Traseros LED</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=25" data-categoria="25">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/opticas-led1.webp" alt="Ópticas LED" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Ópticas LED</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=28" data-categoria="28">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/lamparas-led1.webp" alt="Lámparas LED" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Lámparas LED</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=2" data-categoria="2">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/lamparas1.webp" alt="Lámparas Halógenas" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Lámparas Halógenas</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=15" data-categoria="15">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/16.webp" alt="Faros Auxiliares" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Faros Auxiliares</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=16" data-categoria="16">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/14.webp" alt="Barras LED" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Barras LED</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=5" data-categoria="5">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/10.webp" alt="Faros LED" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Faros LED</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=12" data-categoria="12">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/3.webp" alt="Línea Universal" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Línea Universal</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=13" data-categoria="13">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/2.webp" alt="Xenon" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Xenon</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=9" data-categoria="9">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/5.webp" alt="Espejos Universales" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Espejos Universales</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=14" data-categoria="14">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/6.webp" alt="Vidrios de Espejos" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Vidrios de Espejos</span></div>
+              </a>
+            </div>
+
+            <div class="cat-card" role="listitem">
+              <a class="cat-card__link" href="/productos?categoria=11" data-categoria="11">
+                <div class="cat-card__img-wrap">
+                  <img class="cat-card__img" src="/uploads/productos/4.webp" alt="Vidrios de Ópticas" loading="lazy">
+                </div>
+                <div class="cat-card__label"><span>Vidrios de Ópticas</span></div>
+              </a>
+            </div>
+
+          </div><!-- /.cat-carousel__track -->
+        </div><!-- /.cat-carousel__track-wrapper -->
+
+        <button class="cat-carousel__arrow cat-carousel__arrow--next"
+                id="catArrowNext"
+                aria-label="Siguiente categoría"
+                type="button">
+          <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+        </button>
+
+      </div><!-- /.cat-carousel -->
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════
+         PRODUCTOS — ÚLTIMOS + OFERTAS
+    ═══════════════════════════════════════════════ -->
+    <div class="products-grid-layout">
+
+      <!-- ── ÚLTIMOS AGREGADOS ────────────────────── -->
+      <section class="products-panel" aria-label="Últimos productos agregados">
+
+        <div class="products-panel__head">
+          <span class="products-panel__badge products-panel__badge--nuevo">
+            <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+          </span>
+          <h2 class="products-panel__title">Últimos Agregados</h2>
+          <a href="/productos" class="products-panel__link">
+            Ver todos <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+
+        <div class="product-list" id="ultimosList">
+          <% if (productos && productos.length > 0) { %>
+            <% productos.forEach(function(producto) { %>
+              <a class="product-card"
+                 href="/productos/<%= producto.id %>"
+                 aria-label="Ver <%= producto.nombre %>">
+                <div class="product-card__img-wrap">
+                  <% if (producto.imagen && producto.imagen.length > 0) { %>
+                    <img class="product-card__img"
+                         src="/uploads/productos/<%= producto.imagen[0] %>"
+                         alt="<%= producto.nombre %>"
+                         loading="lazy">
+                  <% } else { %>
+                    <div class="product-card__img product-card__img--placeholder">
+                      <i class="fa-solid fa-image" aria-hidden="true"></i>
+                    </div>
+                  <% } %>
+                </div>
+                <div class="product-card__body">
+                  <span class="product-card__categoria"><%= producto.categoria_nombre %></span>
+                  <h3 class="product-card__nombre"><%= producto.nombre %></h3>
+                  <p class="product-card__precio">
+                    <%= new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(producto.precio_venta) %>
+                  </p>
+                </div>
+              </a>
+            <% }); %>
+          <% } else { %>
+            <div class="products-panel__empty">
+              <i class="fa-solid fa-box-open" aria-hidden="true"></i>
+              <p>No hay productos recientes.</p>
+            </div>
+          <% } %>
+        </div>
+
+      </section>
+
+      <!-- ── OFERTAS ───────────────────────────────── -->
+      <section class="products-panel products-panel--ofertas" aria-label="Productos en oferta">
+
+        <div class="products-panel__head">
+          <span class="products-panel__badge products-panel__badge--oferta">
+            <i class="fa-solid fa-tag" aria-hidden="true"></i>
+          </span>
+          <h2 class="products-panel__title">Ofertas</h2>
+          <a href="/productos/ofertas" class="products-panel__link">
+            Ver todas <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+
+        <div class="ofertas-carousel">
+          <button class="ofertas-carousel__arrow ofertas-carousel__arrow--prev"
+                  id="ofertaArrowPrev"
+                  type="button"
+                  aria-label="Oferta anterior">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </button>
+
+          <div class="ofertas-carousel__viewport" id="ofertasViewport">
+            <div class="product-list product-list--ofertas" id="ofertasList">
+              <% if (productosOferta && productosOferta.length > 0) { %>
+                <% productosOferta.forEach(function(oferta) { %>
+                  <a class="product-card product-card--oferta"
+                     href="/productos/<%= oferta.id %>"
+                     aria-label="Ver oferta: <%= oferta.nombre %>">
+                    <div class="product-card__img-wrap">
+                      <span class="product-card__oferta-badge">OFERTA</span>
+                      <% if (oferta.imagenes && oferta.imagenes.length > 0) { %>
+                        <img class="product-card__img"
+                             src="/uploads/productos/<%= oferta.imagenes[0] %>"
+                             alt="<%= oferta.nombre %>"
+                             loading="lazy">
+                      <% } else { %>
+                        <div class="product-card__img product-card__img--placeholder">
+                          <i class="fa-solid fa-image" aria-hidden="true"></i>
+                        </div>
+                      <% } %>
+                    </div>
+                    <div class="product-card__body">
+                      <span class="product-card__categoria"><%= oferta.categoria_nombre %></span>
+                      <h3 class="product-card__nombre"><%= oferta.nombre %></h3>
+                      <p class="product-card__precio product-card__precio--oferta">
+                        <%= new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(oferta.precio_venta) %>
+                      </p>
+                    </div>
+                  </a>
+                <% }); %>
+              <% } else { %>
+                <div class="products-panel__empty">
+                  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+                  <p>Sin ofertas activas por ahora.</p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+
+          <button class="ofertas-carousel__arrow ofertas-carousel__arrow--next"
+                  id="ofertaArrowNext"
+                  type="button"
+                  aria-label="Siguiente oferta">
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
+        </div>
+
+      </section>
+
+    </div><!-- /.products-grid-layout -->
+
+  </main>
+  <script src="/js/pages/index.js" defer></script>
+  <%- include('./layouts/footer.ejs') %>
+
+</body>
+</html>

@@ -2977,11 +2977,11 @@ async function reporteVentasDiariasPdf(req, res) {
     const cuit_emisor = process.env.ARCA_CUIT || process.env.CUIT || "30718763718";
     const pto_vta = Number(process.env.ARCA_PTO_VTA || 2);
 
-    const incluirNc = isTrue(req.query.incluir_nc);
-    const tiposFact = [CBTE_TIPO_FACT_A, 6, 11];
-    const tiposNc = [CBTE_TIPO_NC_A, 8, 13];
-    const tipos = incluirNc ? [...tiposFact, ...tiposNc] : tiposFact;
-    const inList = tipos.map(() => "?").join(",");
+    // Siempre incluir NC para que el PDF refleje el resultado neto real del día
+    const tiposFact = [CBTE_TIPO_FACT_A, 6, 11, 51];
+    const tiposNc   = [CBTE_TIPO_NC_A,   8, 13, 53];
+    const tipos     = [...tiposFact, ...tiposNc];
+    const inList    = tipos.map(() => "?").join(",");
 
     const rows = await query(
       `
@@ -3209,12 +3209,12 @@ async function reporteVentasDiariasPdf(req, res) {
     doc.fillColor("#000").font("Helvetica-Bold").fontSize(11)
       .text(`Total facturado: $ ${fmtMoney(totalFacturado)}`, left, doc.y + 14, { width: right - left, align: "right" });
 
-    if (incluirNc) {
-      doc.fillColor("#000").font("Helvetica").fontSize(10)
-        .text(`Total NC: $ ${fmtMoney(totalNc)}`, left, doc.y + 2, { width: right - left, align: "right" });
-      doc.fillColor("#000").font("Helvetica-Bold").fontSize(11)
-        .text(`Neto ventas: $ ${fmtMoney(neto)}`, left, doc.y + 2, { width: right - left, align: "right" });
+    if (totalNc > 0) {
+      doc.fillColor("#b45309").font("Helvetica").fontSize(10)
+        .text(`Total NC: -$ ${fmtMoney(totalNc)}`, left, doc.y + 2, { width: right - left, align: "right" });
     }
+    doc.fillColor("#000").font("Helvetica-Bold").fontSize(11)
+      .text(`Neto ventas: $ ${fmtMoney(neto)}`, left, doc.y + 2, { width: right - left, align: "right" });
 
     doc.end();
   } catch (e) {

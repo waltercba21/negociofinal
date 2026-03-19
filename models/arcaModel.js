@@ -399,10 +399,10 @@ async function listarWsfeConsultas(arca_comprobante_id, limit = 20) {
 async function reportesResumen(pool, { ambiente, cuit_emisor, pto_vta, desdeYmd, hastaYmd, estado }) {
   const q = getQuery(pool);
 
-  // Facturas típicas: A=1, B=6, C=11
-  // Notas de crédito típicas: A=3, B=8, C=13
-  const FACT = "1,6,11";
-  const NC   = "3,8,13";
+  // Facturas: A=1, A-RET=51, B=6, C=11
+  // Notas de crédito: A=3, A-RET=53, B=8, C=13
+  const FACT = "1,6,11,51";
+  const NC   = "3,8,13,53";
 
   let sql = `
     SELECT
