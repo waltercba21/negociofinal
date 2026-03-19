@@ -3,378 +3,901 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
-/* ═══════════════════════════════════════════════════
-   ESTADÍSTICAS — Dashboard Ejecutivo  (Roboto)
-═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   ESTADÍSTICAS — AutoFaros (Roboto)
+   Sin solapamientos, números con overflow seguro
+═══════════════════════════════════════════════ */
 :root {
   --bg:        #080c14;
   --bg-card:   #0e1520;
   --bg-card2:  #111927;
   --border:    rgba(255,255,255,0.07);
-  --border-hi: rgba(245,200,66,0.20);
+  --border-hi: rgba(245,200,66,0.22);
   --gold:      #f5c842;
   --gold-dim:  rgba(245,200,66,0.10);
   --blue:      #3b82f6;
   --green:     #34d399;
   --red:       #f87171;
   --purple:    #a78bfa;
+  --orange:    #fb923c;
   --txt-hi:    #f0f4ff;
   --txt-mid:   rgba(240,244,255,0.58);
   --txt-lo:    rgba(240,244,255,0.30);
   --r:         12px;
   --r-sm:      8px;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt-hi);font-family:'Roboto',sans-serif}
 
-.pg{max-width:1400px;margin:0 auto;padding:24px 20px 60px}
+/* RESET selectivo para no pisar el sistema */
+.est-dash *, .est-dash *::before, .est-dash *::after {
+  box-sizing: border-box;
+}
+.est-dash {
+  font-family: 'Roboto', sans-serif;
+  background: var(--bg);
+  color: var(--txt-hi);
+  min-height: calc(100vh - 60px);
+}
 
-/* TOPBAR */
-.topbar{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:22px}
-.topbar__ey{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:5px;display:flex;align-items:center;gap:7px}
-.topbar__ey::before{content:'';width:16px;height:1px;background:var(--gold)}
-.topbar__title{font-size:28px;font-weight:900;letter-spacing:-.3px}
-.topbar__sub{font-size:12px;color:var(--txt-mid);margin-top:3px}
-.btn-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--txt-mid);background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px 16px;text-decoration:none;transition:all .2s;white-space:nowrap}
-.btn-back:hover{color:var(--txt-hi);border-color:rgba(255,255,255,.13)}
+/* ── PAGE ── */
+.est-pg {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
 
-/* PERIOD */
-.period-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
-.period-tabs{display:flex;background:var(--bg-card);border:1px solid var(--border);border-radius:30px;padding:3px;gap:2px}
-.period-tab{font-size:12px;font-weight:500;color:var(--txt-mid);background:none;border:none;border-radius:24px;padding:6px 16px;cursor:pointer;transition:all .2s;white-space:nowrap}
-.period-tab:hover{color:var(--txt-hi)}
-.period-tab.active{background:var(--gold);color:#080c14;font-weight:700}
-.sub-filters{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.sub-filters select{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--txt-hi);background:var(--bg-card2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;outline:none;cursor:pointer}
-.sub-filters select:focus{border-color:var(--border-hi)}
-.btn-act{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;background:var(--gold);color:#080c14;border:none;border-radius:24px;padding:8px 22px;cursor:pointer;transition:all .2s;white-space:nowrap}
-.btn-act:hover{opacity:.88;transform:translateY(-1px)}
-.loading{display:none;align-items:center;gap:8px;font-family:'Roboto Mono',monospace;font-size:11px;color:var(--gold);background:var(--gold-dim);border:1px solid var(--border-hi);border-radius:7px;padding:6px 14px}
-.loading.on{display:flex}
-.spinner{width:13px;height:13px;border:2px solid rgba(245,200,66,.25);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* ── TOPBAR ── */
+.est-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.est-eyebrow {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.est-eyebrow::before {
+  content: '';
+  width: 16px;
+  height: 1px;
+  background: var(--gold);
+}
+.est-h1 {
+  font-family: 'Roboto', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -.3px;
+  color: var(--txt-hi);
+  margin: 0;
+}
+.est-sub {
+  font-size: 12px;
+  color: var(--txt-mid);
+  margin-top: 3px;
+}
+.est-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--txt-mid);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  text-decoration: none;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.est-btn-back:hover {
+  color: var(--txt-hi);
+  border-color: rgba(255,255,255,.14);
+}
 
-.rango-lbl{display:none;font-family:'Roboto Mono',monospace;font-size:11px;color:var(--txt-lo);padding:7px 14px;background:var(--bg-card);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;margin-bottom:18px;width:fit-content}
-.rango-lbl span{color:var(--txt-mid)}
-.err-box{display:none;padding:11px 16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.22);border-radius:8px;font-size:12px;color:var(--red);margin-bottom:16px}
-.err-box.on{display:block}
+/* ── PERIOD ── */
+.est-period-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.est-tabs-periodo {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  padding: 3px;
+  gap: 2px;
+}
+.est-tab-p {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--txt-mid);
+  background: none;
+  border: none;
+  border-radius: 24px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.est-tab-p:hover { color: var(--txt-hi); }
+.est-tab-p.active {
+  background: var(--gold);
+  color: #080c14;
+  font-weight: 700;
+}
+.est-sub-filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.est-sub-filters select {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  color: var(--txt-hi);
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  outline: none;
+  cursor: pointer;
+}
+.est-sub-filters select:focus { border-color: var(--border-hi); }
+.est-btn-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--gold);
+  color: #080c14;
+  border: none;
+  border-radius: 24px;
+  padding: 8px 22px;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.est-btn-run:hover { opacity: .88; transform: translateY(-1px); }
 
-/* BALANCE CARD */
-.bal-card{background:linear-gradient(135deg,#0c1829 0%,var(--bg-card) 100%);border:1px solid var(--border-hi);border-radius:var(--r);padding:22px 26px;margin-bottom:18px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;animation:fadeUp .35s ease both}
-.bal-card::before{content:'BALANCE';position:absolute;right:-6px;top:-4px;font-weight:900;font-size:48px;color:rgba(245,200,66,.03);pointer-events:none;white-space:nowrap}
-.bal-ey{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:7px}
-/* valor balance con clamp para no escapar */
-.bal-val{font-size:clamp(22px,3.5vw,40px);font-weight:900;line-height:1;transition:color .5s}
-.bal-val.pos{color:var(--green)}.bal-val.neg{color:var(--red)}.bal-val.neu{color:var(--txt-hi)}
-.bal-verdict{font-size:12px;color:var(--txt-mid);margin-top:7px;display:flex;align-items:center;gap:6px}
-.bal-right{display:flex;gap:14px;flex-wrap:wrap}
-.bal-col{text-align:center;min-width:90px}
-.bal-col-lbl{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-lo);margin-bottom:3px}
-/* valores columna con clamp */
-.bal-col-val{font-size:clamp(12px,1.5vw,16px);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bal-col-val.ing{color:var(--blue)}.bal-col-val.comp{color:var(--red)}.bal-col-val.gast{color:rgba(248,113,113,.7)}.bal-col-val.marg{color:var(--green)}
-.bal-bar{height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:5px;overflow:hidden}
-.bal-bar-fill{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+/* loading */
+.est-loading {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  color: var(--gold);
+  background: var(--gold-dim);
+  border: 1px solid var(--border-hi);
+  border-radius: 7px;
+  padding: 6px 14px;
+}
+.est-loading.on { display: flex; }
+.est-spin {
+  width: 13px; height: 13px;
+  border: 2px solid rgba(245,200,66,.25);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: estSpin .7s linear infinite;
+}
+@keyframes estSpin { to { transform: rotate(360deg); } }
 
-/* SEC TITLE */
-.sec-title{font-size:11px;font-weight:700;color:var(--txt-lo);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
-.sec-title i{font-size:11px}
+/* rango / error */
+.est-rango {
+  display: none;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  color: var(--txt-lo);
+  padding: 7px 14px;
+  background: var(--bg-card);
+  border-left: 2px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 18px;
+}
+.est-rango.on { display: block; }
+.est-rango span { color: var(--txt-mid); }
+.est-err {
+  display: none;
+  padding: 11px 16px;
+  background: rgba(248,113,113,.08);
+  border: 1px solid rgba(248,113,113,.22);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--red);
+  margin-bottom: 16px;
+}
+.est-err.on { display: block; }
 
-/* KPI STRIP */
-.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:11px;margin-bottom:18px}
-.kpi{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .25s,transform .2s;animation:fadeUp .4s ease both}
-.kpi:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.12)}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--k-ac,var(--gold))}
-.kpi--gold{--k-ac:var(--gold)}.kpi--blue{--k-ac:var(--blue)}.kpi--green{--k-ac:var(--green)}.kpi--red{--k-ac:var(--red)}.kpi--purple{--k-ac:var(--purple)}
-.kpi-lbl{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-lo);margin-bottom:7px;display:flex;align-items:center;gap:5px}
-.kpi-lbl i{color:var(--k-ac);font-size:10px}
-/* KPI VALUE: clamp + overflow hidden para que no escape */
-.kpi-val{font-size:clamp(13px,1.8vw,18px);font-weight:700;color:var(--txt-hi);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.kpi-sub{font-size:10px;color:var(--txt-lo);margin-top:3px}
-.kpi:nth-child(1){animation-delay:.04s}.kpi:nth-child(2){animation-delay:.08s}.kpi:nth-child(3){animation-delay:.12s}.kpi:nth-child(4){animation-delay:.16s}.kpi:nth-child(5){animation-delay:.20s}
+/* ── BALANCE ── */
+.est-balance {
+  background: linear-gradient(135deg, #0c1829 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--r);
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+.est-balance::before {
+  content: 'BALANCE';
+  position: absolute;
+  right: -6px; top: -4px;
+  font-weight: 900;
+  font-size: 52px;
+  color: rgba(245,200,66,.03);
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: 'Roboto', sans-serif;
+}
+.estbal-ey {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px; letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.estbal-val {
+  font-family: 'Roboto', sans-serif;
+  font-size: clamp(22px, 3.5vw, 40px);
+  font-weight: 900;
+  line-height: 1;
+  transition: color .5s;
+}
+.estbal-val.pos { color: var(--green); }
+.estbal-val.neg { color: var(--red); }
+.estbal-val.neu { color: var(--txt-hi); }
+.estbal-verdict {
+  font-size: 12px;
+  color: var(--txt-mid);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.estbal-cols {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.estbal-col { text-align: center; min-width: 90px; }
+.estbal-col-lbl {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--txt-lo);
+  margin-bottom: 4px;
+}
+.estbal-col-val {
+  font-family: 'Roboto', sans-serif;
+  font-size: clamp(12px, 1.6vw, 16px);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.estbal-col-val.ing  { color: var(--blue); }
+.estbal-col-val.comp { color: var(--red); }
+.estbal-col-val.gast { color: rgba(248,113,113,.75); }
+.estbal-col-val.marg { color: var(--green); }
+.estbal-bar { height: 3px; background: rgba(255,255,255,.07); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.estbal-bar-f { height: 100%; border-radius: 2px; transition: width .8s cubic-bezier(.4,0,.2,1); }
 
-/* RATIO STRIP */
-.ratio-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
-.ratio{background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;text-align:center}
-.ratio-num{font-size:clamp(16px,2vw,24px);font-weight:700;margin-bottom:3px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ratio-lbl{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-lo)}
-.ratio-desc{font-size:10px;color:var(--txt-mid);margin-top:4px}
+/* ── SECTION LABEL ── */
+.est-sec {
+  font-family: 'Roboto', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--txt-lo);
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  margin: 20px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.est-sec::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.est-sec i { font-size: 11px; }
 
-/* CARDS */
-.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;animation:fadeUp .4s ease both}
-.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 17px 9px;border-bottom:1px solid var(--border)}
-.card-title{font-size:13px;font-weight:700;color:var(--txt-hi);display:flex;align-items:center;gap:7px}
-.card-title i{color:var(--c-ac,var(--gold));font-size:12px}
-.card-badge{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-lo);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:20px;padding:3px 9px}
-.card-body{padding:13px 17px}
-.ch-md{position:relative;height:230px}
-.ch-sm{position:relative;height:170px}
+/* ── KPI STRIP ──
+   IMPORTANTE: usa padding-top para que el ::before no tape el contenido */
+.est-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 11px;
+  margin-bottom: 20px;
+}
+.est-kpi {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  /* padding-top: 18px reserva espacio para la línea de color superior */
+  padding: 18px 16px 14px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .25s, transform .2s;
+}
+.est-kpi:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.12);
+}
+/* línea de color en el tope — 2px, no interfiere con texto */
+.est-kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--kac, var(--gold));
+  border-radius: var(--r) var(--r) 0 0;
+}
+.est-kpi--gold   { --kac: var(--gold); }
+.est-kpi--blue   { --kac: var(--blue); }
+.est-kpi--green  { --kac: var(--green); }
+.est-kpi--red    { --kac: var(--red); }
+.est-kpi--purple { --kac: var(--purple); }
 
-/* GRIDS */
-.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:18px}
-.g-4060{display:grid;grid-template-columns:1fr 1.5fr;gap:14px;margin-bottom:18px}
-.g-6040{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:18px}
-@media(max-width:900px){.g2,.g-4060,.g-6040{grid-template-columns:1fr}}
+.est-kpi-lbl {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--txt-lo);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.est-kpi-lbl i { color: var(--kac); font-size: 10px; }
+.est-kpi-val {
+  font-family: 'Roboto', sans-serif;
+  font-size: clamp(13px, 1.8vw, 20px);
+  font-weight: 700;
+  color: var(--txt-hi);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.est-kpi-sub {
+  font-size: 10px;
+  color: var(--txt-lo);
+  margin-top: 4px;
+}
 
-/* PIE */
-.pie-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center}
-.pie-cw{position:relative;height:170px}
-.legend{display:flex;flex-direction:column;gap:6px}
-.leg-row{display:flex;align-items:center;gap:7px}
-.leg-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
-.leg-name{font-size:11px;color:var(--txt-mid);flex:1}
-.leg-pct{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--txt-hi)}
-.leg-val{font-family:'Roboto Mono',monospace;font-size:9px;color:var(--txt-lo);margin-left:14px;margin-top:1px}
+/* ── RATIO STRIP ──
+   Separado completamente de los KPIs, propio margin-top */
+.est-ratio-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+  /* No position:absolute, flujo normal */
+}
+.est-ratio {
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  text-align: center;
+}
+.est-ratio-num {
+  font-family: 'Roboto', sans-serif;
+  font-size: clamp(16px, 2vw, 24px);
+  font-weight: 700;
+  margin-bottom: 3px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.est-ratio-lbl {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--txt-lo);
+}
+.est-ratio-desc {
+  font-size: 10px;
+  color: var(--txt-mid);
+  margin-top: 4px;
+}
 
-/* RANKING */
-.ranking{display:flex;flex-direction:column;gap:6px}
-.rk-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;background:rgba(255,255,255,.02);border:1px solid transparent;transition:all .18s}
-.rk-row:hover{background:rgba(255,255,255,.04);border-color:var(--border)}
-.rk-row.top{background:var(--gold-dim);border-color:var(--border-hi)}
-.rk-pos{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--txt-lo);width:20px;flex-shrink:0;text-align:center}
-.rk-row.top .rk-pos{color:var(--gold)}
-.rk-name{font-size:11px;font-weight:500;color:var(--txt-hi);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rk-bar-w{width:55px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
-.rk-bar-f{height:100%;border-radius:2px;transition:width .7s ease}
-.rk-val{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--txt-mid);white-space:nowrap;min-width:70px;text-align:right}
+/* ── CARDS ── */
+.est-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.est-card-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 17px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.est-card-title {
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--txt-hi);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.est-card-title i { color: var(--cac, var(--gold)); font-size: 12px; }
+.est-card-badge {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--txt-lo);
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 9px;
+}
+.est-card-body { padding: 14px 17px; }
 
-/* GASTOS */
-.gastos-list{display:flex;flex-direction:column;gap:4px}
-.gasto-row{display:flex;align-items:center;gap:7px;padding:6px 7px;border-radius:6px;transition:background .15s}
-.gasto-row:hover{background:rgba(255,255,255,.03)}
-.gasto-ico{width:24px;height:24px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px}
-.gasto-name{font-size:11px;color:var(--txt-mid);flex:1;text-transform:capitalize}
-.gasto-bw{width:50px;height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden}
-.gasto-bf{height:100%;border-radius:2px;transition:width .6s ease}
-.gasto-val{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--txt-hi);white-space:nowrap;min-width:80px;text-align:right}
+/* chart heights */
+.est-ch-md { position: relative; height: 230px; }
 
-/* TABS */
-.tabs{display:flex;gap:3px;background:rgba(255,255,255,.04);border-radius:7px;padding:3px}
-.tab{font-size:11px;font-weight:500;color:var(--txt-lo);background:none;border:none;border-radius:5px;padding:4px 11px;cursor:pointer;transition:all .18s}
-.tab:hover{color:var(--txt-hi)}
-.tab.active{background:var(--bg-card);color:var(--txt-hi);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+/* ── GRIDS ── */
+.est-g2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.est-g-4060 {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.est-g-6040 {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+@media (max-width: 900px) {
+  .est-g2, .est-g-4060, .est-g-6040 { grid-template-columns: 1fr; }
+}
 
-/* EMPTY */
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;gap:7px;color:var(--txt-lo);text-align:center}
-.empty i{font-size:22px;opacity:.25}
-.empty p{font-size:11px}
+/* ── PIE ── */
+.est-pie-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.est-pie-cw { position: relative; height: 170px; }
+.est-legend  { display: flex; flex-direction: column; gap: 7px; }
+.est-leg-row { display: flex; align-items: center; gap: 7px; }
+.est-leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.est-leg-name {
+  font-family: 'Roboto', sans-serif;
+  font-size: 11px; color: var(--txt-mid); flex: 1;
+}
+.est-leg-pct {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px; color: var(--txt-hi);
+}
+.est-leg-sub {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px; color: var(--txt-lo);
+  margin-left: 15px; margin-top: -3px;
+}
 
-/* ANIM */
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+/* ── RANKING ── */
+.est-ranking { display: flex; flex-direction: column; gap: 6px; }
+.est-rk-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: rgba(255,255,255,.02);
+  border: 1px solid transparent;
+  transition: all .18s;
+}
+.est-rk-row:hover { background: rgba(255,255,255,.04); border-color: var(--border); }
+.est-rk-row.top   { background: var(--gold-dim); border-color: var(--border-hi); }
+.est-rk-pos {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px; color: var(--txt-lo);
+  width: 22px; flex-shrink: 0; text-align: center;
+}
+.est-rk-row.top .est-rk-pos { color: var(--gold); }
+.est-rk-name {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px; font-weight: 500; color: var(--txt-hi);
+  flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.est-rk-bar-w { width: 55px; height: 3px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+.est-rk-bar-f { height: 100%; border-radius: 2px; transition: width .7s ease; }
+.est-rk-val {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px; color: var(--txt-mid);
+  white-space: nowrap; min-width: 70px; text-align: right;
+}
+
+/* ── GASTOS LIST ── */
+.est-gastos { display: flex; flex-direction: column; gap: 5px; }
+.est-gasto-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 7px; border-radius: 6px; transition: background .15s;
+}
+.est-gasto-row:hover { background: rgba(255,255,255,.03); }
+.est-gasto-ico {
+  width: 26px; height: 26px; border-radius: 5px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 11px;
+}
+.est-gasto-name {
+  font-family: 'Roboto', sans-serif;
+  font-size: 11px; color: var(--txt-mid); flex: 1; text-transform: capitalize;
+}
+.est-gasto-bw { width: 52px; height: 3px; background: rgba(255,255,255,.05); border-radius: 2px; overflow: hidden; }
+.est-gasto-bf { height: 100%; border-radius: 2px; transition: width .6s ease; }
+.est-gasto-val {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px; color: var(--txt-hi);
+  white-space: nowrap; min-width: 80px; text-align: right;
+}
+
+/* ── TABS ── */
+.est-tabs { display: flex; gap: 3px; background: rgba(255,255,255,.04); border-radius: 7px; padding: 3px; }
+.est-tab {
+  font-family: 'Roboto', sans-serif;
+  font-size: 11px; font-weight: 500; color: var(--txt-lo);
+  background: none; border: none; border-radius: 5px;
+  padding: 4px 11px; cursor: pointer; transition: all .18s;
+}
+.est-tab:hover { color: var(--txt-hi); }
+.est-tab.active { background: var(--bg-card); color: var(--txt-hi); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+
+/* ── DIAGNÓSTICO ── */
+.est-diag-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px; border-radius: 9px; margin-bottom: 8px;
+}
+.est-diag-item:last-child { margin-bottom: 0; }
+.est-diag-item i { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+.est-diag-item p {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px; color: rgba(240,244,255,.8); line-height: 1.55; margin: 0;
+}
+
+/* ── EMPTY ── */
+.est-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 28px; gap: 7px;
+  color: var(--txt-lo); text-align: center;
+}
+.est-empty i  { font-size: 22px; opacity: .25; }
+.est-empty p  { font-family: 'Roboto', sans-serif; font-size: 11px; }
+
+/* ── ESTADO INICIAL ── */
+.est-inicial {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 70px 20px; gap: 14px; text-align: center;
+}
+.est-inicial p:first-of-type {
+  font-family: 'Roboto', sans-serif;
+  font-size: 17px; font-weight: 700; color: var(--txt-mid);
+}
+.est-inicial p:last-of-type {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px; color: var(--txt-lo);
+}
+
+/* anim */
+@keyframes estFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.est-fadein { animation: estFadeUp .35s ease both; }
+
+/* scrollbar */
+.est-dash ::-webkit-scrollbar { width: 4px; height: 4px; }
+.est-dash ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
 </style>
 
 <%- include('./layouts/header.ejs') %>
 
 <body>
-<div class="pg">
+<div class="est-dash">
+<div class="est-pg">
 
-  <div class="topbar">
+  <!-- TOPBAR -->
+  <div class="est-topbar">
     <div>
-      <div class="topbar__ey"><i class="fa-solid fa-chart-mixed"></i>Panel Ejecutivo</div>
-      <h1 class="topbar__title">Estadísticas</h1>
-      <p class="topbar__sub">Métricas operativas del negocio en tiempo real</p>
+      <div class="est-eyebrow"><i class="fa-solid fa-chart-mixed"></i>Panel Ejecutivo</div>
+      <h1 class="est-h1">Estadísticas</h1>
+      <p class="est-sub">Métricas operativas del negocio en tiempo real</p>
     </div>
-    <a href="/administracion" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Administración</a>
+    <a href="/administracion" class="est-btn-back">
+      <i class="fa-solid fa-arrow-left"></i> Administración
+    </a>
   </div>
 
-  <div class="period-wrap">
-    <div class="period-tabs">
-      <button class="period-tab" data-p="semanal">Semana</button>
-      <button class="period-tab active" data-p="mensual">Mes</button>
-      <button class="period-tab" data-p="anual">Año</button>
+  <!-- FILTROS PERIODO -->
+  <div class="est-period-row">
+    <div class="est-tabs-periodo">
+      <button class="est-tab-p" data-p="semanal">Semana</button>
+      <button class="est-tab-p active" data-p="mensual">Mes</button>
+      <button class="est-tab-p" data-p="anual">Año</button>
     </div>
-    <div id="sub-semanal" class="sub-filters" style="display:none">
-      <select id="f-anSem"></select><select id="f-mesSem"></select>
+
+    <div id="sub-semanal" class="est-sub-filters" style="display:none">
+      <select id="f-anSem"></select>
+      <select id="f-mesSem"></select>
       <select id="f-semanaMes">
         <option value="1">Semana 1</option><option value="2">Semana 2</option>
         <option value="3">Semana 3</option><option value="4">Semana 4</option>
         <option value="5">Semana 5</option>
       </select>
     </div>
-    <div id="sub-mensual" class="sub-filters">
-      <select id="f-anMen"></select><select id="f-mesMen"></select>
+    <div id="sub-mensual" class="est-sub-filters">
+      <select id="f-anMen"></select>
+      <select id="f-mesMen"></select>
     </div>
-    <div id="sub-anual" class="sub-filters" style="display:none">
+    <div id="sub-anual" class="est-sub-filters" style="display:none">
       <select id="f-anAnu"></select>
     </div>
-    <button class="btn-act" id="btnActualizar"><i class="fa-solid fa-rotate"></i> Actualizar</button>
-    <div class="loading" id="loadingEl"><div class="spinner"></div>Cargando…</div>
+
+    <button class="est-btn-run" id="btnActualizar">
+      <i class="fa-solid fa-rotate"></i> Actualizar
+    </button>
+    <div class="est-loading" id="estLoading">
+      <div class="est-spin"></div>Cargando…
+    </div>
   </div>
 
-  <div class="rango-lbl" id="rangoLbl">Mostrando: <span id="rangoTxt">—</span></div>
-  <div class="err-box" id="errBox"></div>
+  <div class="est-rango" id="estRango">Período: <span id="estRangoTxt">—</span></div>
+  <div class="est-err"  id="estErr"></div>
 
-  <div id="dash" style="display:none">
+  <!-- ═══════ DASHBOARD ═══════ -->
+  <div id="estDash" style="display:none">
 
     <!-- BALANCE -->
-    <div class="bal-card">
+    <div class="est-balance est-fadein">
       <div>
-        <div class="bal-ey">Balance Operativo del Período</div>
-        <div class="bal-val neu" id="balVal">$0</div>
-        <div class="bal-verdict" id="balVerdict"><i class="fa-solid fa-circle-info"></i> Cargando análisis…</div>
+        <div class="estbal-ey">Balance Operativo del Período</div>
+        <div class="estbal-val neu" id="bVal">$0</div>
+        <div class="estbal-verdict" id="bVerdict">
+          <i class="fa-solid fa-circle-info"></i> Cargando análisis…
+        </div>
       </div>
-      <div class="bal-right">
-        <div class="bal-col">
-          <div class="bal-col-lbl">Ingresos</div>
-          <div class="bal-col-val ing" id="balIng">$0</div>
-          <div class="bal-bar"><div class="bal-bar-fill" id="bIng" style="width:0%;background:var(--blue)"></div></div>
+      <div class="estbal-cols">
+        <div class="estbal-col">
+          <div class="estbal-col-lbl">Ingresos</div>
+          <div class="estbal-col-val ing" id="bIng">$0</div>
+          <div class="estbal-bar"><div class="estbal-bar-f" id="bfIng" style="width:0%;background:var(--blue)"></div></div>
         </div>
-        <div class="bal-col">
-          <div class="bal-col-lbl">Compras</div>
-          <div class="bal-col-val comp" id="balComp">$0</div>
-          <div class="bal-bar"><div class="bal-bar-fill" id="bComp" style="width:0%;background:var(--red)"></div></div>
+        <div class="estbal-col">
+          <div class="estbal-col-lbl">Compras</div>
+          <div class="estbal-col-val comp" id="bComp">$0</div>
+          <div class="estbal-bar"><div class="estbal-bar-f" id="bfComp" style="width:0%;background:var(--red)"></div></div>
         </div>
-        <div class="bal-col">
-          <div class="bal-col-lbl">Gastos</div>
-          <div class="bal-col-val gast" id="balGast">$0</div>
-          <div class="bal-bar"><div class="bal-bar-fill" id="bGast" style="width:0%;background:rgba(248,113,113,.5)"></div></div>
+        <div class="estbal-col">
+          <div class="estbal-col-lbl">Gastos</div>
+          <div class="estbal-col-val gast" id="bGast">$0</div>
+          <div class="estbal-bar"><div class="estbal-bar-f" id="bfGast" style="width:0%;background:rgba(248,113,113,.5)"></div></div>
         </div>
-        <div class="bal-col">
-          <div class="bal-col-lbl">Margen</div>
-          <div class="bal-col-val marg" id="balMarg">0%</div>
-          <div class="bal-bar"><div class="bal-bar-fill" id="bMarg" style="width:0%;background:var(--green)"></div></div>
+        <div class="estbal-col">
+          <div class="estbal-col-lbl">Margen</div>
+          <div class="estbal-col-val marg" id="bMarg">0%</div>
+          <div class="estbal-bar"><div class="estbal-bar-f" id="bfMarg" style="width:0%;background:var(--green)"></div></div>
         </div>
       </div>
     </div>
 
-    <!-- KPIs -->
-    <div class="sec-title"><i class="fa-solid fa-gauge-high" style="color:var(--gold)"></i>Métricas Clave</div>
-    <div class="kpi-strip">
-      <div class="kpi kpi--blue">
-        <div class="kpi-lbl"><i class="fa-solid fa-file-invoice-dollar"></i>Ventas A</div>
-        <div class="kpi-val" id="kVentaA">—</div>
-        <div class="kpi-sub">Ingresos facturados</div>
+    <!-- MÉTRICAS CLAVE -->
+    <div class="est-sec"><i class="fa-solid fa-gauge-high" style="color:var(--gold)"></i>Métricas Clave</div>
+    <div class="est-kpi-row">
+      <div class="est-kpi est-kpi--blue">
+        <div class="est-kpi-lbl"><i class="fa-solid fa-file-invoice-dollar"></i>Ventas A</div>
+        <div class="est-kpi-val" id="kVA">—</div>
+        <div class="est-kpi-sub">Ingresos facturados</div>
       </div>
-      <div class="kpi kpi--purple">
-        <div class="kpi-lbl"><i class="fa-solid fa-file-lines"></i>Ventas B</div>
-        <div class="kpi-val" id="kVentaB">—</div>
-        <div class="kpi-sub">Ingresos presupuestados</div>
+      <div class="est-kpi est-kpi--purple">
+        <div class="est-kpi-lbl"><i class="fa-solid fa-file-lines"></i>Ventas B</div>
+        <div class="est-kpi-val" id="kVB">—</div>
+        <div class="est-kpi-sub">Ingresos presupuestados</div>
       </div>
-      <div class="kpi kpi--red">
-        <div class="kpi-lbl"><i class="fa-solid fa-cart-shopping"></i>Compras</div>
-        <div class="kpi-val" id="kCompra">—</div>
-        <div class="kpi-sub">Stock e insumos</div>
+      <div class="est-kpi est-kpi--red">
+        <div class="est-kpi-lbl"><i class="fa-solid fa-cart-shopping"></i>Compras</div>
+        <div class="est-kpi-val" id="kComp">—</div>
+        <div class="est-kpi-sub">Stock e insumos</div>
       </div>
-      <div class="kpi kpi--gold">
-        <div class="kpi-lbl"><i class="fa-solid fa-coins"></i>Gastos Op.</div>
-        <div class="kpi-val" id="kGastos">—</div>
-        <div class="kpi-sub">Servicios, sueldos, otros</div>
+      <div class="est-kpi est-kpi--gold">
+        <div class="est-kpi-lbl"><i class="fa-solid fa-coins"></i>Gastos Op.</div>
+        <div class="est-kpi-val" id="kGast">—</div>
+        <div class="est-kpi-sub">Servicios, sueldos, otros</div>
       </div>
-      <div class="kpi kpi--green">
-        <div class="kpi-lbl"><i class="fa-solid fa-percent"></i>Margen Bruto</div>
-        <div class="kpi-val" id="kMargen">—</div>
-        <div class="kpi-sub">Ventas − Compras / Ventas</div>
+      <div class="est-kpi est-kpi--green">
+        <div class="est-kpi-lbl"><i class="fa-solid fa-percent"></i>Margen Bruto</div>
+        <div class="est-kpi-val" id="kMarg">—</div>
+        <div class="est-kpi-sub">(Ventas − Compras) / Ventas</div>
       </div>
     </div>
 
-    <!-- INDICADORES -->
-    <div class="sec-title"><i class="fa-solid fa-sliders" style="color:var(--purple)"></i>Indicadores Financieros</div>
-    <div class="ratio-strip">
-      <div class="ratio"><div class="ratio-num" id="rRentab" style="color:var(--green)">—</div><div class="ratio-lbl">Rentabilidad Neta</div><div class="ratio-desc">Balance / Ingresos</div></div>
-      <div class="ratio"><div class="ratio-num" id="rCV" style="color:var(--blue)">—</div><div class="ratio-lbl">Compra / Venta</div><div class="ratio-desc">Qué % de ventas se compra</div></div>
-      <div class="ratio"><div class="ratio-num" id="rGV" style="color:var(--gold)">—</div><div class="ratio-lbl">Gastos / Ventas</div><div class="ratio-desc">Peso gastos sobre ingresos</div></div>
-      <div class="ratio"><div class="ratio-num" id="rPesoA" style="color:var(--purple)">—</div><div class="ratio-lbl">Participación A</div><div class="ratio-desc">Factura A sobre total ventas</div></div>
+    <!-- INDICADORES FINANCIEROS -->
+    <div class="est-sec"><i class="fa-solid fa-sliders" style="color:var(--purple)"></i>Indicadores Financieros</div>
+    <div class="est-ratio-row">
+      <div class="est-ratio">
+        <div class="est-ratio-num" id="rRent" style="color:var(--green)">—</div>
+        <div class="est-ratio-lbl">Rentabilidad Neta</div>
+        <div class="est-ratio-desc">Balance / Ingresos</div>
+      </div>
+      <div class="est-ratio">
+        <div class="est-ratio-num" id="rCV"   style="color:var(--blue)">—</div>
+        <div class="est-ratio-lbl">Compra / Venta</div>
+        <div class="est-ratio-desc">% de ventas en compras</div>
+      </div>
+      <div class="est-ratio">
+        <div class="est-ratio-num" id="rGV"   style="color:var(--gold)">—</div>
+        <div class="est-ratio-lbl">Gastos / Ventas</div>
+        <div class="est-ratio-desc">Peso gastos sobre ingresos</div>
+      </div>
+      <div class="est-ratio">
+        <div class="est-ratio-num" id="rPA"   style="color:var(--purple)">—</div>
+        <div class="est-ratio-lbl">Participación A</div>
+        <div class="est-ratio-desc">Factura A / Total ventas</div>
+      </div>
     </div>
 
-    <!-- EVOLUCIÓN -->
-    <div class="sec-title"><i class="fa-solid fa-chart-line" style="color:var(--blue)"></i>Evolución Temporal</div>
-    <div class="card" style="margin-bottom:18px">
-      <div class="card-hdr">
-        <div class="card-title" style="--c-ac:var(--blue)"><i class="fa-solid fa-chart-area"></i>Ventas · Compras · Gastos</div>
-        <div class="tabs" id="evolTabs">
-          <button class="tab active" data-t="linea">Línea</button>
-          <button class="tab" data-t="barra">Barras</button>
+    <!-- EVOLUCIÓN TEMPORAL -->
+    <div class="est-sec"><i class="fa-solid fa-chart-line" style="color:var(--blue)"></i>Evolución Temporal</div>
+    <div class="est-card" style="margin-bottom:20px">
+      <div class="est-card-hdr">
+        <div class="est-card-title" style="--cac:var(--blue)">
+          <i class="fa-solid fa-chart-area"></i>Ventas · Compras · Gastos
+        </div>
+        <div class="est-tabs" id="evolTabs">
+          <button class="est-tab active" data-t="linea">Línea</button>
+          <button class="est-tab" data-t="barra">Barras</button>
         </div>
       </div>
-      <div class="card-body"><div class="ch-md"><canvas id="cEvol"></canvas></div></div>
+      <div class="est-card-body">
+        <div class="est-ch-md"><canvas id="cEvol"></canvas></div>
+      </div>
     </div>
 
-    <!-- VENTAS PIE + PROVEEDORES -->
-    <div class="g-4060">
-      <div class="card" style="--c-ac:var(--blue)">
-        <div class="card-hdr">
-          <div class="card-title"><i class="fa-solid fa-chart-pie"></i>Distribución Ventas</div>
-          <span class="card-badge">A vs B</span>
+    <!-- DISTRIBUCIÓN VENTAS + TOP PROVEEDORES -->
+    <div class="est-g-4060">
+      <div class="est-card" style="--cac:var(--blue)">
+        <div class="est-card-hdr">
+          <div class="est-card-title"><i class="fa-solid fa-chart-pie"></i>Distribución Ventas</div>
+          <span class="est-card-badge">A vs B</span>
         </div>
-        <div class="card-body">
-          <div class="pie-wrap">
-            <div class="pie-cw"><canvas id="cVentasPie"></canvas></div>
-            <div class="legend" id="legVentas"><div class="empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div></div>
+        <div class="est-card-body">
+          <div class="est-pie-wrap">
+            <div class="est-pie-cw"><canvas id="cVentasPie"></canvas></div>
+            <div class="est-legend" id="legVentas">
+              <div class="est-empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="card" style="--c-ac:var(--red)">
-        <div class="card-hdr">
-          <div class="card-title"><i class="fa-solid fa-truck"></i>Top Proveedores</div>
-          <span class="card-badge">Por compras del período</span>
-        </div>
-        <div class="card-body">
-          <div class="ranking" id="rkProv"><div class="empty"><i class="fa-solid fa-truck"></i><p>Cargando…</p></div></div>
-        </div>
-      </div>
-    </div>
 
-    <!-- PRODUCTOS + COMPRAS PIE -->
-    <div class="g-6040">
-      <div class="card" style="--c-ac:var(--green)">
-        <div class="card-hdr">
-          <div class="card-title"><i class="fa-solid fa-trophy"></i>Productos más Vendidos</div>
-          <span class="card-badge">Por cantidad</span>
+      <div class="est-card" style="--cac:var(--red)">
+        <div class="est-card-hdr">
+          <div class="est-card-title"><i class="fa-solid fa-truck"></i>Top Proveedores</div>
+          <span class="est-card-badge">Por compras del período</span>
         </div>
-        <div class="card-body">
-          <div class="ranking" id="rkProd"><div class="empty"><i class="fa-solid fa-trophy"></i><p>Cargando…</p></div></div>
-        </div>
-      </div>
-      <div class="card" style="--c-ac:var(--red)">
-        <div class="card-hdr">
-          <div class="card-title"><i class="fa-solid fa-chart-donut"></i>Compras por Tipo</div>
-          <span class="card-badge">A · B</span>
-        </div>
-        <div class="card-body">
-          <div class="pie-wrap">
-            <div class="pie-cw"><canvas id="cComprasPie"></canvas></div>
-            <div class="legend" id="legCompras"><div class="empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div></div>
+        <div class="est-card-body">
+          <div class="est-ranking" id="rkProv">
+            <div class="est-empty"><i class="fa-solid fa-truck"></i><p>Cargando…</p></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- GASTOS -->
-    <div class="sec-title"><i class="fa-solid fa-receipt" style="color:var(--gold)"></i>Gastos Operativos</div>
-    <div class="g2">
-      <div class="card" style="--c-ac:var(--gold)">
-        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list-ul"></i>Desglose por Categoría</div></div>
-        <div class="card-body"><div class="gastos-list" id="gastosLista"><div class="empty"><i class="fa-solid fa-receipt"></i><p>Sin gastos</p></div></div></div>
+    <!-- PRODUCTOS MÁS VENDIDOS + COMPRAS PIE -->
+    <div class="est-g-6040">
+      <div class="est-card" style="--cac:var(--green)">
+        <div class="est-card-hdr">
+          <div class="est-card-title"><i class="fa-solid fa-trophy"></i>Productos más Vendidos</div>
+          <span class="est-card-badge">Por cantidad vendida</span>
+        </div>
+        <div class="est-card-body">
+          <div class="est-ranking" id="rkProd">
+            <div class="est-empty"><i class="fa-solid fa-trophy"></i><p>Cargando…</p></div>
+          </div>
+        </div>
       </div>
-      <div class="card" style="--c-ac:var(--gold)">
-        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>Distribución Gastos</div></div>
-        <div class="card-body">
-          <div class="pie-wrap">
-            <div class="pie-cw"><canvas id="cGastosPie"></canvas></div>
-            <div class="legend" id="legGastos"><div class="empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div></div>
+
+      <div class="est-card" style="--cac:var(--red)">
+        <div class="est-card-hdr">
+          <div class="est-card-title"><i class="fa-solid fa-chart-donut"></i>Compras por Tipo</div>
+          <span class="est-card-badge">A · B</span>
+        </div>
+        <div class="est-card-body">
+          <div class="est-pie-wrap">
+            <div class="est-pie-cw"><canvas id="cComprasPie"></canvas></div>
+            <div class="est-legend" id="legCompras">
+              <div class="est-empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GASTOS OPERATIVOS -->
+    <div class="est-sec"><i class="fa-solid fa-receipt" style="color:var(--gold)"></i>Gastos Operativos</div>
+    <div class="est-g2">
+      <div class="est-card" style="--cac:var(--gold)">
+        <div class="est-card-hdr">
+          <div class="est-card-title"><i class="fa-solid fa-list-ul"></i>Desglose por Categoría</div>
+        </div>
+        <div class="est-card-body">
+          <div class="est-gastos" id="gastosLista">
+            <div class="est-empty"><i class="fa-solid fa-receipt"></i><p>Sin gastos registrados</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="est-card" style="--cac:var(--gold)">
+        <div class="est-card-hdr">
+          <div class="est-card-title"><i class="fa-solid fa-chart-pie"></i>Distribución Gastos</div>
+        </div>
+        <div class="est-card-body">
+          <div class="est-pie-wrap">
+            <div class="est-pie-cw"><canvas id="cGastosPie"></canvas></div>
+            <div class="est-legend" id="legGastos">
+              <div class="est-empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- DIAGNÓSTICO -->
-    <div class="sec-title"><i class="fa-solid fa-magnifying-glass-chart" style="color:var(--green)"></i>Diagnóstico del Negocio</div>
-    <div class="card" style="margin-bottom:24px">
-      <div class="card-body" id="diagPanel"><div class="empty"><i class="fa-solid fa-magnifying-glass"></i><p>El diagnóstico aparecerá luego de cargar los datos</p></div></div>
+    <div class="est-sec"><i class="fa-solid fa-magnifying-glass-chart" style="color:var(--green)"></i>Diagnóstico del Negocio</div>
+    <div class="est-card" style="margin-bottom:24px">
+      <div class="est-card-body" id="diagPanel">
+        <div class="est-empty"><i class="fa-solid fa-magnifying-glass"></i><p>Cargando diagnóstico…</p></div>
+      </div>
     </div>
 
-  </div><!-- /dash -->
+  </div><!-- /estDash -->
 
-  <div id="estadoInicial" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 20px;gap:14px;text-align:center">
+  <!-- ESTADO INICIAL -->
+  <div class="est-inicial" id="estInicial">
     <i class="fa-solid fa-chart-mixed" style="font-size:44px;color:var(--gold);opacity:.35"></i>
-    <p style="font-size:17px;font-weight:700;color:var(--txt-mid)">Seleccioná el período y presioná Actualizar</p>
-    <p style="font-size:12px;color:var(--txt-lo)">El dashboard cargará ventas, compras, gastos, proveedores y balance operativo.</p>
+    <p>Seleccioná el período y presioná Actualizar</p>
+    <p>El dashboard cargará ventas, compras, gastos, proveedores y balance operativo.</p>
   </div>
 
-</div>
+</div><!-- /est-pg -->
+</div><!-- /est-dash -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/js/estadisticas.js"></script>
