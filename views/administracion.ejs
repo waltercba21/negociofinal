@@ -2,6 +2,34 @@
 <html lang="es">
 <%- include('./layouts/head.ejs') %>
 <link rel="stylesheet" href="/css/pages/administracion.css?v=2" />
+<style>
+/* ── BOTÓN ESTADÍSTICAS ── */
+.adm-btn-estadisticas {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #080c14;
+  background: #f5c842;
+  border: 2px solid #f5c842;
+  border-radius: 10px;
+  padding: 10px 22px;
+  text-decoration: none;
+  letter-spacing: 0.2px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 18px rgba(245,200,66,0.3);
+}
+.adm-btn-estadisticas:hover {
+  background: transparent;
+  color: #f5c842;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(245,200,66,0.25);
+  text-decoration: none;
+}
+.adm-btn-estadisticas i { font-size: 14px; }
+</style>
 <body>
 <%- include('./layouts/header.ejs') %>
 
@@ -14,8 +42,8 @@
         <span class="adm-eyebrow">Sistema</span>
         <h1 class="adm-title">Administración</h1>
       </div>
-      <a href="/administracion/objetivos" class="adm-btn adm-btn--outline">
-        <i class="fa-solid fa-bullseye"></i> Objetivos
+      <a href="/administracion/objetivos" class="adm-btn-estadisticas">
+        <i class="fa-solid fa-chart-mixed"></i> Estadísticas
       </a>
     </div>
 

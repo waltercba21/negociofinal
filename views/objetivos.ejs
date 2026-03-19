@@ -1,316 +1,1095 @@
 <%- include('./layouts/head.ejs') %>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   ESTADÍSTICAS — Dashboard Ejecutivo
+   Paleta: fondo oscuro azul-medianoche, acentos ámbar/dorado,
+   texto en crema. Tipografía: Syne (títulos) + DM Mono (números)
+═══════════════════════════════════════════════════════════════ */
+:root {
+  --bg-base:     #080c14;
+  --bg-card:     #0e1520;
+  --bg-card2:    #111927;
+  --border:      rgba(255,255,255,0.06);
+  --border-hi:   rgba(255,200,80,0.18);
+  --gold:        #f5c842;
+  --gold-dim:    rgba(245,200,66,0.15);
+  --gold-glow:   rgba(245,200,66,0.08);
+  --blue:        #3b82f6;
+  --blue-dim:    rgba(59,130,246,0.12);
+  --green:       #34d399;
+  --green-dim:   rgba(52,211,153,0.12);
+  --red:         #f87171;
+  --red-dim:     rgba(248,113,113,0.12);
+  --purple:      #a78bfa;
+  --text-hi:     #f0f4ff;
+  --text-mid:    rgba(240,244,255,0.60);
+  --text-lo:     rgba(240,244,255,0.30);
+  --radius:      14px;
+  --radius-sm:   8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-base);
+  color: var(--text-hi);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+/* ── PAGE SHELL ── */
+.est-root {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+
+/* ── TOPBAR ── */
+.est-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.est-topbar__left {}
+
+.est-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.est-eyebrow::before {
+  content: '';
+  width: 20px; height: 1px;
+  background: var(--gold);
+}
+
+.est-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 800;
+  color: var(--text-hi);
+  line-height: 1.05;
+  letter-spacing: -0.5px;
+}
+
+.est-subtitle {
+  font-size: 13px;
+  color: var(--text-mid);
+  margin-top: 4px;
+}
+
+.est-topbar__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ── PERIOD SELECTOR ── */
+.est-period-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  padding: 4px;
+}
+
+.est-period-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid);
+  background: none;
+  border: none;
+  border-radius: 30px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.est-period-btn:hover { color: var(--text-hi); }
+.est-period-btn.active {
+  background: var(--gold);
+  color: #080c14;
+}
+
+.est-period-custom {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: 4px;
+}
+.est-period-custom select,
+.est-period-custom input {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text-hi);
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  outline: none;
+  cursor: pointer;
+}
+.est-period-custom select:focus,
+.est-period-custom input:focus { border-color: var(--border-hi); }
+
+.est-btn-buscar {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--gold);
+  color: #080c14;
+  border: none;
+  border-radius: 30px;
+  padding: 8px 20px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.est-btn-buscar:hover { opacity: 0.85; transform: translateY(-1px); }
+.est-btn-buscar:active { transform: translateY(0); }
+
+/* ── LOADING OVERLAY ── */
+.est-loading {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--gold);
+  padding: 8px 16px;
+  background: var(--gold-dim);
+  border: 1px solid var(--border-hi);
+  border-radius: 8px;
+}
+.est-loading.visible { display: flex; }
+.est-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(245,200,66,0.3);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RANGO LABEL ── */
+.est-rango-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text-lo);
+  margin-bottom: 24px;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border-left: 2px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  display: inline-block;
+}
+#rangoTexto { color: var(--text-mid); }
+
+/* ── KPI STRIP (fila superior de métricas) ── */
+.est-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.est-kpi {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, transform 0.2s;
+  animation: fadeUp 0.4s ease both;
+}
+.est-kpi:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.12);
+}
+.est-kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--kpi-accent, var(--gold));
+}
+
+.est-kpi--gold  { --kpi-accent: var(--gold); }
+.est-kpi--blue  { --kpi-accent: var(--blue); }
+.est-kpi--green { --kpi-accent: var(--green); }
+.est-kpi--red   { --kpi-accent: var(--red); }
+.est-kpi--purple { --kpi-accent: var(--purple); }
+
+.est-kpi__label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-lo);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.est-kpi__icon {
+  font-size: 11px;
+  color: var(--kpi-accent, var(--gold));
+}
+
+.est-kpi__value {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 800;
+  color: var(--text-hi);
+  line-height: 1;
+  margin-bottom: 6px;
+  transition: all 0.5s;
+}
+
+.est-kpi__delta {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.est-kpi__delta--up   { color: var(--green); }
+.est-kpi__delta--down { color: var(--red); }
+.est-kpi__delta--neu  { color: var(--text-lo); }
+
+.est-kpi__sub {
+  font-size: 11px;
+  color: var(--text-lo);
+  margin-top: 2px;
+}
+
+/* ── BALANCE CARD ── */
+.est-balance-card {
+  background: linear-gradient(135deg, #0f1d33 0%, #0e1520 100%);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.3s ease both;
+}
+.est-balance-card::before {
+  content: 'BALANCE OPERATIVO';
+  position: absolute;
+  right: -10px; top: -8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 60px;
+  font-weight: 800;
+  color: rgba(245,200,66,0.03);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.est-balance__left {}
+.est-balance__eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.est-balance__value {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(36px, 6vw, 56px);
+  font-weight: 800;
+  line-height: 1;
+  transition: color 0.5s;
+}
+.est-balance__value.positive { color: var(--green); }
+.est-balance__value.negative { color: var(--red); }
+.est-balance__value.neutral  { color: var(--text-hi); }
+
+.est-balance__verdict {
+  font-size: 13px;
+  color: var(--text-mid);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.est-balance__verdict i { font-size: 14px; }
+
+.est-balance__right {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.est-balance__col {
+  text-align: center;
+  min-width: 120px;
+}
+.est-balance__col-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-lo);
+  margin-bottom: 4px;
+}
+.est-balance__col-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+}
+.est-balance__col-val.income { color: var(--blue); }
+.est-balance__col-val.expense { color: var(--red); }
+.est-balance__col-val.margin { color: var(--green); }
+
+.est-balance__bar {
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.est-balance__bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── SECTION TITLE ── */
+.est-section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-lo);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.est-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── GRID LAYOUTS ── */
+.est-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.est-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.est-grid-half {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.est-grid-half-r {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .est-grid-2, .est-grid-3, .est-grid-half, .est-grid-half-r {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── CHART CARD ── */
+.est-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  animation: fadeUp 0.4s ease both;
+}
+
+.est-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.est-card__title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-hi);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.est-card__title i { color: var(--card-accent, var(--gold)); font-size: 13px; }
+
+.est-card__badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-lo);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+.est-card__body {
+  padding: 16px 20px;
+}
+
+.est-chart-wrap {
+  position: relative;
+  height: 220px;
+}
+.est-chart-wrap--tall { height: 280px; }
+.est-chart-wrap--sm   { height: 180px; }
+
+/* ── TABLA RANKING ── */
+.est-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.est-ranking-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.est-ranking-row:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--border);
+}
+.est-ranking-row:first-child {
+  background: var(--gold-glow);
+  border-color: var(--border-hi);
+}
+
+.est-ranking__pos {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-lo);
+  width: 20px;
+  flex-shrink: 0;
+}
+.est-ranking-row:first-child .est-ranking__pos { color: var(--gold); }
+
+.est-ranking__name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-hi);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.est-ranking__val {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text-mid);
+  white-space: nowrap;
+}
+.est-ranking__bar-wrap {
+  width: 70px;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.est-ranking__bar-fill {
+  height: 100%;
+  background: var(--ranking-color, var(--gold));
+  border-radius: 2px;
+  transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── DISTRIBUCIÓN (Pie legend) ── */
+.est-pie-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.est-pie-grid .est-chart-wrap { height: 200px; }
+
+.est-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+}
+.est-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.est-legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.est-legend-label {
+  font-size: 12px;
+  color: var(--text-mid);
+  flex: 1;
+}
+.est-legend-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text-hi);
+}
+
+/* ── GASTOS DETALLE ── */
+.est-gastos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.est-gasto-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  transition: background 0.15s;
+}
+.est-gasto-item:hover { background: rgba(255,255,255,0.03); }
+.est-gasto-icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.est-gasto-name {
+  font-size: 12px;
+  color: var(--text-mid);
+  flex: 1;
+  text-transform: capitalize;
+}
+.est-gasto-bar-wrap {
+  width: 60px;
+  height: 3px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.est-gasto-bar { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+.est-gasto-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text-hi);
+  white-space: nowrap;
+  min-width: 90px;
+  text-align: right;
+}
+
+/* ── INDICADORES / RATIOS ── */
+.est-ratio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.est-ratio {
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  text-align: center;
+}
+.est-ratio__num {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.est-ratio__label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-lo);
+}
+.est-ratio__desc {
+  font-size: 11px;
+  color: var(--text-mid);
+  margin-top: 6px;
+}
+
+/* ── EMPTY STATE ── */
+.est-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text-lo);
+  gap: 8px;
+  text-align: center;
+}
+.est-empty i { font-size: 28px; opacity: 0.3; }
+.est-empty p { font-size: 12px; }
+
+/* ── ERROR ── */
+.est-error {
+  display: none;
+  padding: 12px 16px;
+  background: var(--red-dim);
+  border: 1px solid rgba(248,113,113,0.25);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--red);
+  margin-bottom: 20px;
+}
+.est-error.visible { display: block; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* delay cascade */
+.est-kpi:nth-child(1) { animation-delay: 0.05s; }
+.est-kpi:nth-child(2) { animation-delay: 0.10s; }
+.est-kpi:nth-child(3) { animation-delay: 0.15s; }
+.est-kpi:nth-child(4) { animation-delay: 0.20s; }
+.est-kpi:nth-child(5) { animation-delay: 0.25s; }
+
+/* ── NUMBER COUNTER ANIMATION ── */
+.counting { animation: numPop 0.3s ease; }
+@keyframes numPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* ── TREND SPARKLINE ── */
+.est-sparkline { height: 36px; width: 80px; }
+
+/* ── TABS ── */
+.est-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  padding: 3px;
+}
+.est-tab {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-lo);
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.est-tab:hover { color: var(--text-hi); }
+.est-tab.active {
+  background: var(--bg-card);
+  color: var(--text-hi);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* ── DIVIDER ── */
+.est-divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+/* ── BACK BTN ── */
+.est-back {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.est-back:hover { color: var(--text-hi); border-color: rgba(255,255,255,0.12); }
+
+/* ── PROFIT INDICATOR ── */
+.est-verdict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+.est-verdict-badge.ganando {
+  background: rgba(52,211,153,0.12);
+  color: var(--green);
+  border: 1px solid rgba(52,211,153,0.25);
+}
+.est-verdict-badge.perdiendo {
+  background: rgba(248,113,113,0.12);
+  color: var(--red);
+  border: 1px solid rgba(248,113,113,0.25);
+}
+.est-verdict-badge.neutro {
+  background: rgba(245,200,66,0.08);
+  color: var(--gold);
+  border: 1px solid rgba(245,200,66,0.2);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+</style>
+
 <%- include('./layouts/header.ejs') %>
 
 <body>
-  <div class="obj-console" data-vista="objetivos">
-  <main style="padding:16px;">
-  <div class="obj-panels">
-    <!-- ========== CARD: COMPRAS ========== -->
-    <article class="obj-card" id="card-compras">
-      <h2>Compras</h2>
+<div class="est-root">
 
-      <!-- ===== Filtros COMPRAS ===== -->
-      <section class="obj-section">
-        <!-- Tipo -->
-        <div style="margin-bottom:8px;">
-          <label>Tipo:
-            <select id="tipo">
-              <option value="TOTAL">AMBOS (A + B)</option>
-              <option value="A">A (Facturas)</option>
-              <option value="B">B (Presupuestos)</option>
-            </select>
-          </label>
-        </div>
-
-        <!-- Periodo -->
-        <div style="margin-bottom:8px;">
-          <label>Periodo:
-            <select id="periodo">
-              <option value="" selected hidden>Seleccione…</option>
-              <option value="semanal">Semanal</option>
-              <option value="mensual">Mensual</option>
-              <option value="anual">Anual</option>
-            </select>
-          </label>
-        </div>
-
-        <!-- Subfiltros -->
-        <div id="subfiltros" style="display:none; margin-top:10px;">
-          <!-- Semanal -->
-          <div id="boxSemanal" style="display:none;">
-            <label>Año:
-              <select id="anSem"></select>
-            </label>
-            <label style="margin-left:8px;">Mes:
-              <select id="mesSem"></select>
-            </label>
-            <label style="margin-left:8px;">Semana:
-              <select id="semanaMes">
-                <option value="1">Semana 1 (1–7)</option>
-                <option value="2">Semana 2 (8–14)</option>
-                <option value="3">Semana 3 (15–21)</option>
-                <option value="4">Semana 4 (22–28)</option>
-                <option value="5">Semana 5 (29–fin)</option>
-              </select>
-            </label>
-          </div>
-
-          <!-- Mensual -->
-          <div id="boxMensual" style="display:none;">
-            <label>Año:
-              <select id="anMen"></select>
-            </label>
-            <label style="margin-left:8px;">Mes:
-              <select id="mesMen"></select>
-            </label>
-          </div>
-
-          <!-- Anual -->
-          <div id="boxAnual" style="display:none;">
-            <label>Año:
-              <select id="anAnu"></select>
-            </label>
-          </div>
-
-          <div style="margin-top:10px;">
-            <button id="btnBuscar">Buscar</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- (Ocultamos estado por CSS; si querés, eliminá las dos líneas siguientes) -->
-      <!-- <hr style="margin:16px 0;"> -->
-      <!-- <div id="estado">Seleccione un periodo para comenzar…</div> -->
-      <div id="error" style="color:red; display:none;"></div>
-      <!-- <hr style="margin:16px 0;"> -->
-
-      <!-- ===== Resultados COMPRAS ===== -->
-      <section id="resultados" class="obj-section" style="display:none;">
-        <h3>Resultados</h3>
-        <p><strong>Rango:</strong> <span id="lblRango">-</span> — <strong>Tipo:</strong> <span id="lblTipo">-</span></p>
-        <p><strong>Total del periodo:</strong> <span id="kpiTotal">0</span></p>
-        <p>
-          <strong>Detalle totales:</strong>
-          <span id="wrapA">A (Facturas): <span id="totA">0</span></span> ·
-          <span id="wrapB">B (Presupuestos): <span id="totB">0</span></span> ·
-          <span id="wrapTOTAL">TOTAL: <span id="totTotal">0</span></span>
-        </p>
-      </section>
-
-      <!-- ===== Serie COMPRAS (Gráfico) ===== -->
-      <section id="tablaWrap" class="obj-section" style="display:none; min-height:320px; margin-top:10px;">
-        <h3>Compra</h3>
-        <div id="resumenSerie" style="margin:6px 0 10px 0; font-size:14px;"></div>
-        <div style="height:260px;">
-          <canvas id="chartSerie" style="width:100%; height:100%;"></canvas>
-        </div>
-      </section>
-    </article>
-
-    <!-- ========== CARD: VENTAS ========== -->
-    <article class="obj-card" id="card-ventas">
-      <h2>Ventas</h2>
-
-      <!-- ===== Filtros VENTAS ===== -->
-      <section class="obj-section">
-        <!-- Tipo -->
-        <div style="margin-bottom:8px;">
-          <label>Tipo:
-            <select id="v-tipo">
-              <option value="TOTAL">AMBOS (A + B)</option>
-              <option value="A">A (Facturas)</option>
-              <option value="B">B (Presupuestos)</option>
-            </select>
-          </label>
-        </div>
-
-        <!-- Periodo -->
-        <div style="margin-bottom:8px;">
-          <label>Periodo:
-            <select id="v-periodo">
-              <option value="" selected hidden>Seleccione…</option>
-              <option value="semanal">Semanal</option>
-              <option value="mensual">Mensual</option>
-              <option value="anual">Anual</option>
-            </select>
-          </label>
-        </div>
-
-        <!-- Subfiltros -->
-        <div id="v-subfiltros" style="display:none; margin-top:10px;">
-          <!-- Semanal -->
-          <div id="v-boxSemanal" style="display:none;">
-            <label>Año:
-              <select id="v-anSem"></select>
-            </label>
-            <label style="margin-left:8px;">Mes:
-              <select id="v-mesSem"></select>
-            </label>
-            <label style="margin-left:8px;">Semana:
-              <select id="v-semanaMes">
-                <option value="1">Semana 1 (1–7)</option>
-                <option value="2">Semana 2 (8–14)</option>
-                <option value="3">Semana 3 (15–21)</option>
-                <option value="4">Semana 4 (22–28)</option>
-                <option value="5">Semana 5 (29–fin)</option>
-              </select>
-            </label>
-          </div>
-
-          <!-- Mensual -->
-          <div id="v-boxMensual" style="display:none;">
-            <label>Año:
-              <select id="v-anMen"></select>
-            </label>
-            <label style="margin-left:8px;">Mes:
-              <select id="v-mesMen"></select>
-            </label>
-          </div>
-
-          <!-- Anual -->
-          <div id="v-boxAnual" style="display:none;">
-            <label>Año:
-              <select id="v-anAnu"></select>
-            </label>
-          </div>
-
-          <div style="margin-top:10px;">
-            <button id="v-btnBuscar">Buscar</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- (Ocultamos estado por CSS; si querés, eliminá las dos líneas siguientes) -->
-      <!-- <hr style="margin:16px 0;"> -->
-      <!-- <div id="v-estado">Seleccione un periodo para comenzar…</div> -->
-      <div id="v-error" style="color:red; display:none;"></div>
-      <!-- <hr style="margin:16px 0;"> -->
-
-      <!-- ===== Resultados VENTAS ===== -->
-      <section id="v-resultados" class="obj-section" style="display:none;">
-        <h3>Resultados</h3>
-        <p><strong>Rango:</strong> <span id="v-lblRango">-</span> — <strong>Tipo:</strong> <span id="v-lblTipo">-</span></p>
-        <p><strong>Total del periodo:</strong> <span id="v-kpiTotal">0</span></p>
-        <p>
-          <strong>Detalle totales:</strong>
-          <span id="v-wrapA">A (Facturas): <span id="v-totA">0</span></span> ·
-          <span id="v-wrapB">B (Presupuestos): <span id="v-totB">0</span></span> ·
-          <span id="v-wrapTOTAL">TOTAL: <span id="v-totTotal">0</span></span>
-        </p>
-      </section>
-
-      <!-- ===== Serie VENTAS (Gráfico) ===== -->
-      <section id="v-tablaWrap" class="obj-section" style="display:none; min-height:320px; margin-top:10px;">
-        <h3>Ventas</h3>
-        <div id="v-resumenSerie" style="margin:6px 0 10px 0; font-size:14px;"></div>
-        <div style="height:260px;">
-          <canvas id="v-chartSerie" style="width:100%; height:100%;"></canvas>
-        </div>
-      </section>
-    </article>
-<!-- ========== CARD: GASTOS ========== -->
-<article class="obj-card" id="card-gastos">
-  <h2>Gastos</h2>
-
-  <section class="obj-section">
-    <div style="margin-bottom:8px;">
-      <label>Categoría:
-        <select id="g-categoria">
-          <option value="">TODAS</option>
-          <option>luz</option>
-          <option>agua</option>
-          <option>gas</option>
-          <option>municipalidad</option>
-          <option>rentas provincia</option>
-          <option>contador</option>
-          <option>empleados</option>
-          <option>alquiler</option>
-          <option>internet</option>
-          <option>limpieza</option>
-          <option>seguro</option>
-          <option>otros</option>
-        </select>
-      </label>
+  <!-- ══════════ TOPBAR ══════════ -->
+  <div class="est-topbar">
+    <div class="est-topbar__left">
+      <div class="est-eyebrow"><i class="fa-solid fa-chart-mixed"></i> Panel Ejecutivo</div>
+      <h1 class="est-title">Estadísticas</h1>
+      <p class="est-subtitle">Métricas y análisis operativo del negocio en tiempo real</p>
     </div>
-
-    <div style="margin-bottom:8px;">
-      <label>Periodo:
-        <select id="g-periodo">
-          <option value="" selected hidden>Seleccione…</option>
-          <option value="semanal">Semanal</option>
-          <option value="mensual">Mensual</option>
-          <option value="anual">Anual</option>
-        </select>
-      </label>
+    <div class="est-topbar__actions">
+      <a href="/administracion" class="est-back">
+        <i class="fa-solid fa-arrow-left"></i> Administración
+      </a>
     </div>
-
-    <!-- Subfiltros (idéntico esquema que Compras/Ventas) -->
-    <div id="g-subfiltros" style="display:none; margin-top:10px;">
-      <!-- Semanal -->
-      <div id="g-boxSemanal" style="display:none;">
-        <label>Año:
-          <select id="g-anSem"></select>
-        </label>
-        <label style="margin-left:8px;">Mes:
-          <select id="g-mesSem"></select>
-        </label>
-        <label style="margin-left:8px;">Semana:
-          <select id="g-semanaMes">
-            <option value="1">Semana 1 (1–7)</option>
-            <option value="2">Semana 2 (8–14)</option>
-            <option value="3">Semana 3 (15–21)</option>
-            <option value="4">Semana 4 (22–28)</option>
-            <option value="5">Semana 5 (29–fin)</option>
-          </select>
-        </label>
-      </div>
-
-      <!-- Mensual -->
-      <div id="g-boxMensual" style="display:none;">
-        <label>Año:
-          <select id="g-anMen"></select>
-        </label>
-        <label style="margin-left:8px;">Mes:
-          <select id="g-mesMen"></select>
-        </label>
-      </div>
-
-      <!-- Anual -->
-      <div id="g-boxAnual" style="display:none;">
-        <label>Año:
-          <select id="g-anAnu"></select>
-        </label>
-      </div>
-
-      <div style="margin-top:10px;">
-        <button id="g-btnBuscar">Buscar</button>
-      </div>
-    </div>
-  </section>
-
-  <div id="g-error" style="color:red; display:none;"></div>
-
-  <section id="g-resultados" class="obj-section" style="display:none;">
-    <h3>Resultados</h3>
-    <p><strong>Rango:</strong> <span id="g-lblRango">-</span> — <strong>Categoría:</strong> <span id="g-lblCat">-</span></p>
-    <p><strong>Total del periodo:</strong> <span id="g-kpiTotal">0</span></p>
-  </section>
-
-  <section id="g-tablaWrap" class="obj-section" style="display:none; min-height:320px; margin-top:10px;">
-    <h3>Gastos</h3>
-    <div id="g-resumenSerie" style="margin:6px 0 10px 0; font-size:14px;"></div>
-    <div style="height:260px;">
-      <canvas id="g-chartSerie" style="width:100%; height:100%;"></canvas>
-    </div>
-  </section>
-</article>
-
   </div>
 
-</main>
+  <!-- ══════════ FILTROS PERIODO ══════════ -->
+  <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:20px;">
+    <div class="est-period-bar">
+      <button class="est-period-btn" data-periodo="semanal">Semana</button>
+      <button class="est-period-btn active" data-periodo="mensual">Mes</button>
+      <button class="est-period-btn" data-periodo="anual">Año</button>
+    </div>
 
-</div>
+    <!-- Sub-filtros semanal -->
+    <div id="sub-semanal" class="est-period-custom" style="display:none;">
+      <select id="f-anSem"></select>
+      <select id="f-mesSem"></select>
+      <select id="f-semanaMes">
+        <option value="1">Semana 1</option><option value="2">Semana 2</option>
+        <option value="3">Semana 3</option><option value="4">Semana 4</option>
+        <option value="5">Semana 5</option>
+      </select>
+    </div>
+
+    <!-- Sub-filtros mensual -->
+    <div id="sub-mensual" class="est-period-custom">
+      <select id="f-anMen"></select>
+      <select id="f-mesMen"></select>
+    </div>
+
+    <!-- Sub-filtros anual -->
+    <div id="sub-anual" class="est-period-custom" style="display:none;">
+      <select id="f-anAnu"></select>
+    </div>
+
+    <button class="est-btn-buscar" id="btnActualizar">
+      <i class="fa-solid fa-rotate"></i> Actualizar
+    </button>
+
+    <div class="est-loading" id="loadingIndicator">
+      <div class="est-spinner"></div>
+      Cargando datos...
+    </div>
+  </div>
+
+  <div id="rangoLabel" class="est-rango-label" style="display:none;">
+    Mostrando: <span id="rangoTexto">—</span>
+  </div>
+
+  <div class="est-error" id="errorGlobal"></div>
+
+  <!-- ══════════ CONTENIDO PRINCIPAL (oculto hasta cargar) ══════════ -->
+  <div id="dashContent" style="display:none;">
+
+    <!-- ── BALANCE OPERATIVO (la carta grande) ── -->
+    <div class="est-balance-card" id="balanceCard">
+      <div class="est-balance__left">
+        <div class="est-balance__eyebrow">Balance Operativo del Período</div>
+        <div class="est-balance__value neutral" id="balanceValue">$0</div>
+        <div class="est-balance__verdict" id="balanceVerdict">
+          <i class="fa-solid fa-circle-info"></i> Seleccione un período para ver el balance
+        </div>
+      </div>
+      <div class="est-balance__right">
+        <div class="est-balance__col">
+          <div class="est-balance__col-label">Ingresos Totales</div>
+          <div class="est-balance__col-val income" id="balIngreso">$0</div>
+          <div class="est-balance__bar"><div class="est-balance__bar-fill" id="barIngreso" style="width:0%;background:var(--blue);"></div></div>
+        </div>
+        <div class="est-balance__col">
+          <div class="est-balance__col-label">Compras</div>
+          <div class="est-balance__col-val expense" id="balCompra">$0</div>
+          <div class="est-balance__bar"><div class="est-balance__bar-fill" id="barCompra" style="width:0%;background:var(--red);"></div></div>
+        </div>
+        <div class="est-balance__col">
+          <div class="est-balance__col-label">Gastos Op.</div>
+          <div class="est-balance__col-val expense" id="balGastos">$0</div>
+          <div class="est-balance__bar"><div class="est-balance__bar-fill" id="barGastos" style="width:0%;background:rgba(248,113,113,0.5);"></div></div>
+        </div>
+        <div class="est-balance__col">
+          <div class="est-balance__col-label">Margen</div>
+          <div class="est-balance__col-val margin" id="balMargen">0%</div>
+          <div class="est-balance__bar"><div class="est-balance__bar-fill" id="barMargen" style="width:0%;background:var(--green);"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── KPIs PRINCIPALES ── -->
+    <div class="est-section-title"><i class="fa-solid fa-gauge-high" style="color:var(--gold)"></i> Métricas Clave</div>
+    <div class="est-kpi-strip">
+      <div class="est-kpi est-kpi--blue">
+        <div class="est-kpi__label"><i class="fa-solid fa-arrow-trend-up est-kpi__icon"></i>Ventas Factura A</div>
+        <div class="est-kpi__value" id="kpiVentaA">—</div>
+        <div class="est-kpi__sub">Ingresos facturados (A)</div>
+      </div>
+      <div class="est-kpi est-kpi--purple">
+        <div class="est-kpi__label"><i class="fa-solid fa-file-lines est-kpi__icon"></i>Ventas Presupuesto B</div>
+        <div class="est-kpi__value" id="kpiVentaB">—</div>
+        <div class="est-kpi__sub">Ingresos por presupuesto (B)</div>
+      </div>
+      <div class="est-kpi est-kpi--red">
+        <div class="est-kpi__label"><i class="fa-solid fa-cart-shopping est-kpi__icon"></i>Compras Proveedores</div>
+        <div class="est-kpi__value" id="kpiCompra">—</div>
+        <div class="est-kpi__sub">Stock e insumos adquiridos</div>
+      </div>
+      <div class="est-kpi est-kpi--gold">
+        <div class="est-kpi__label"><i class="fa-solid fa-coins est-kpi__icon"></i>Gastos Operativos</div>
+        <div class="est-kpi__value" id="kpiGastos">—</div>
+        <div class="est-kpi__sub">Servicios, sueldos, otros</div>
+      </div>
+      <div class="est-kpi est-kpi--green">
+        <div class="est-kpi__label"><i class="fa-solid fa-percent est-kpi__icon"></i>Margen Bruto</div>
+        <div class="est-kpi__value" id="kpiMargen">—</div>
+        <div class="est-kpi__sub">Ventas − Compras / Ventas</div>
+      </div>
+    </div>
+
+    <!-- ── INDICADORES FINANCIEROS ── -->
+    <div class="est-section-title"><i class="fa-solid fa-sliders" style="color:var(--purple)"></i> Indicadores Financieros</div>
+    <div class="est-ratio-grid" style="margin-bottom:24px;">
+      <div class="est-ratio">
+        <div class="est-ratio__num" id="ratioRentabilidad" style="color:var(--green)">—</div>
+        <div class="est-ratio__label">Rentabilidad Neta</div>
+        <div class="est-ratio__desc">Balance / Ingresos totales</div>
+      </div>
+      <div class="est-ratio">
+        <div class="est-ratio__num" id="ratioCobro" style="color:var(--blue)">—</div>
+        <div class="est-ratio__label">Relación Compra/Venta</div>
+        <div class="est-ratio__desc">Cuánto compramos vs vendemos</div>
+      </div>
+      <div class="est-ratio">
+        <div class="est-ratio__num" id="ratioGastoVenta" style="color:var(--gold)">—</div>
+        <div class="est-ratio__label">Gastos / Ventas</div>
+        <div class="est-ratio__desc">Peso de gastos sobre ingresos</div>
+      </div>
+      <div class="est-ratio">
+        <div class="est-ratio__num" id="ratioPesoA" style="color:var(--purple)">—</div>
+        <div class="est-ratio__label">Participación A vs B</div>
+        <div class="est-ratio__desc">Factura A sobre total ventas</div>
+      </div>
+    </div>
+
+    <!-- ── EVOLUCIÓN TEMPORAL ── -->
+    <div class="est-section-title"><i class="fa-solid fa-chart-line" style="color:var(--blue)"></i> Evolución Temporal</div>
+    <div class="est-card" style="margin-bottom:24px;">
+      <div class="est-card__header">
+        <div class="est-card__title"><i class="fa-solid fa-chart-area"></i> Ventas vs Compras vs Gastos</div>
+        <div class="est-tabs" id="chartEvolTabs">
+          <button class="est-tab active" data-chart="evol-linea">Línea</button>
+          <button class="est-tab" data-chart="evol-barra">Barras</button>
+        </div>
+      </div>
+      <div class="est-card__body">
+        <div class="est-chart-wrap--tall">
+          <canvas id="chartEvolucion"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VENTAS + PROVEEDORES ── -->
+    <div class="est-grid-half-r">
+      <!-- Distribución ventas A/B -->
+      <div class="est-card" style="--card-accent:var(--blue)">
+        <div class="est-card__header">
+          <div class="est-card__title"><i class="fa-solid fa-chart-pie"></i> Distribución de Ventas</div>
+          <span class="est-card__badge">A vs B</span>
+        </div>
+        <div class="est-card__body">
+          <div class="est-pie-grid">
+            <div style="position:relative;height:200px;">
+              <canvas id="chartVentasPie"></canvas>
+            </div>
+            <div class="est-legend" id="legendVentas">
+              <div class="est-empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top proveedores -->
+      <div class="est-card" style="--card-accent:var(--red)">
+        <div class="est-card__header">
+          <div class="est-card__title"><i class="fa-solid fa-truck"></i> Top Proveedores</div>
+          <span class="est-card__badge">Por compra</span>
+        </div>
+        <div class="est-card__body">
+          <div class="est-ranking" id="rankingProveedores">
+            <div class="est-empty"><i class="fa-solid fa-truck"></i><p>Sin datos de proveedores</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COMPRAS POR TIPO + GASTOS ── -->
+    <div class="est-grid-2">
+      <!-- Compras A vs B -->
+      <div class="est-card" style="--card-accent:var(--red)">
+        <div class="est-card__header">
+          <div class="est-card__title"><i class="fa-solid fa-boxes-stacked"></i> Compras por Tipo</div>
+          <span class="est-card__badge">Facturas A · B</span>
+        </div>
+        <div class="est-card__body">
+          <div class="est-chart-wrap">
+            <canvas id="chartComprasTipo"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gastos por categoría -->
+      <div class="est-card" style="--card-accent:var(--gold)">
+        <div class="est-card__header">
+          <div class="est-card__title"><i class="fa-solid fa-receipt"></i> Gastos por Categoría</div>
+          <span class="est-card__badge">Desglose</span>
+        </div>
+        <div class="est-card__body">
+          <div id="gastosDetalleList" class="est-gastos-list">
+            <div class="est-empty"><i class="fa-solid fa-receipt"></i><p>Sin gastos registrados</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GASTOS PIE + VENTAS BARRAS ── -->
+    <div class="est-grid-half">
+      <!-- Pie gastos -->
+      <div class="est-card" style="--card-accent:var(--gold)">
+        <div class="est-card__header">
+          <div class="est-card__title"><i class="fa-solid fa-chart-donut"></i> Distribución de Gastos</div>
+        </div>
+        <div class="est-card__body">
+          <div class="est-pie-grid">
+            <div style="position:relative;height:200px;">
+              <canvas id="chartGastosPie"></canvas>
+            </div>
+            <div class="est-legend" id="legendGastos">
+              <div class="est-empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barras ventas por período -->
+      <div class="est-card" style="--card-accent:var(--blue)">
+        <div class="est-card__header">
+          <div class="est-card__title"><i class="fa-solid fa-chart-bar"></i> Ventas del Período</div>
+          <span class="est-card__badge">Detalle</span>
+        </div>
+        <div class="est-card__body">
+          <div class="est-chart-wrap--tall">
+            <canvas id="chartVentasBarra"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ANÁLISIS FINAL ── -->
+    <div class="est-section-title"><i class="fa-solid fa-magnifying-glass-chart" style="color:var(--green)"></i> Diagnóstico del Negocio</div>
+    <div class="est-card" style="margin-bottom:24px;">
+      <div class="est-card__body" id="diagnosticoPanel">
+        <div class="est-empty"><i class="fa-solid fa-magnifying-glass"></i><p>El diagnóstico aparecerá luego de cargar los datos</p></div>
+      </div>
+    </div>
+
+  </div><!-- /dashContent -->
+
+  <!-- ESTADO INICIAL (antes de la primera búsqueda) -->
+  <div id="estadoInicial" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px 20px; gap:16px; text-align:center;">
+    <i class="fa-solid fa-chart-mixed" style="font-size:48px; color:var(--gold); opacity:0.4;"></i>
+    <p style="font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--text-mid);">Seleccioná el período y presioná Actualizar</p>
+    <p style="font-size:13px; color:var(--text-lo);">El dashboard cargará ventas, compras, gastos, proveedores y balance operativo completo.</p>
+  </div>
+
+</div><!-- /est-root -->
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/js/objetivos.js"></script>
-  <%- include('./layouts/footer.ejs') %>
+<script src="/js/estadisticas.js"></script>
+<%- include('./layouts/footer.ejs') %>
 </body>
