@@ -3149,6 +3149,262 @@ async function reporteVentasDiariasPdf(req, res) {
     return res.status(500).send("Error generando PDF");
   }
 }
+// ─── PDF de período (rango de fechas, listado completo + resumen IVA) ────────
+async function reportePeriodoPdf(req, res) {
+  try {
+    const desde = req.query.desde;
+    const hasta = req.query.hasta;
+    if (!desde || !hasta) return res.status(400).send("Faltan parámetros: desde y hasta (YYYY-MM-DD)");
+
+    const desdeYmd = isoToYmd8(desde);
+    const hastaYmd = isoToYmd8(hasta);
+    if (!isValidYMD(desdeYmd) || !isValidYMD(hastaYmd))
+      return res.status(400).send("Fechas inválidas. Use YYYY-MM-DD");
+
+    const ambiente   = process.env.ARCA_ENV  || "homo";
+    const cuit_emisor = process.env.ARCA_CUIT || process.env.CUIT || "30718763718";
+    const pto_vta    = Number(process.env.ARCA_PTO_VTA || 2);
+
+    const estadoParam  = req.query.estado   || "EMITIDO";
+    const cbteTipoParam = req.query.cbte_tipo ? Number(req.query.cbte_tipo) : null;
+
+    // Comprobantes del período
+    const comprobantes = await arcaModel.reportesComprobantes(pool, {
+      ambiente, cuit_emisor, pto_vta,
+      desdeYmd, hastaYmd,
+      estado: estadoParam || null,
+      cbte_tipo: cbteTipoParam,
+    });
+
+    // Resumen diario (siempre todos los tipos, para el cuadro de IVA)
+    const diasResumen = await arcaModel.reportesResumen(pool, {
+      ambiente, cuit_emisor, pto_vta,
+      desdeYmd, hastaYmd,
+      estado: estadoParam || null,
+    });
+
+    // Totales generales
+    const tot = diasResumen.reduce((acc, r) => {
+      acc.cant_facturas  += Number(r.cant_facturas  || 0);
+      acc.cant_nc        += Number(r.cant_nc        || 0);
+      acc.total_facturas += Number(r.total_facturas || 0);
+      acc.total_nc       += Number(r.total_nc       || 0);
+      acc.ventas_netas   += Number(r.ventas_netas   || 0);
+      acc.iva_facturas   += Number(r.iva_facturas   || 0);
+      acc.iva_nc         += Number(r.iva_nc         || 0);
+      acc.iva_neto       += Number(r.iva_neto       || 0);
+      return acc;
+    }, { cant_facturas:0, cant_nc:0, total_facturas:0, total_nc:0, ventas_netas:0,
+         iva_facturas:0, iva_nc:0, iva_neto:0 });
+
+    const emisor = {
+      fantasia:  process.env.ARCA_PDF_FANTASIA      || "AUTOFAROS",
+      razon:     process.env.ARCA_PDF_RAZON_SOCIAL  || "FAWA S.A.S.",
+      domicilio: process.env.ARCA_PDF_DOMICILIO     || "IGUALDAD 88 - CENTRO - CORDOBA",
+      iva:       process.env.ARCA_PDF_IVA           || "Responsable Inscripto",
+    };
+
+    const genTs = new Intl.DateTimeFormat("es-AR", {
+      timeZone: "America/Argentina/Cordoba",
+      dateStyle: "short", timeStyle: "medium",
+    }).format(new Date());
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="ARCA_PERIODO_${desdeYmd}_${hastaYmd}.pdf"`);
+    res.setHeader("Cache-Control", "no-store");
+
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
+    doc.pipe(res);
+
+    const left  = doc.page.margins.left;
+    const right = doc.page.width - doc.page.margins.right;
+
+    // ── Encabezado ──────────────────────────────────────────────────────────
+    const drawHeader = (isFirstPage = false) => {
+      doc.fillColor("#0B2A6B").font("Helvetica-Bold").fontSize(18)
+        .text(emisor.fantasia, left, 40, { width: right - left });
+      doc.fillColor("#000").font("Helvetica").fontSize(9)
+        .text(`${emisor.razon} · CUIT ${formatCuit(cuit_emisor)}`, left, 62, { width: right - left });
+      doc.fillColor("#444").font("Helvetica").fontSize(8)
+        .text(`${emisor.iva} · ${emisor.domicilio}`, left, 75, { width: right - left });
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(12)
+        .text(`INFORME DE VENTAS · Período: ${desde} al ${hasta}`, left, 96, { width: right - left });
+      doc.fillColor("#666").font("Helvetica").fontSize(8)
+        .text(`Generado: ${genTs}${estadoParam ? "  |  Estado: " + estadoParam : ""}`, left, 112, { width: right - left });
+      doc.moveTo(left, 126).lineTo(right, 126).strokeColor("#ddd").stroke();
+      doc.y = 134;
+    };
+
+    // ── Tabla de comprobantes ────────────────────────────────────────────────
+    const wFecha = 70, wComp = 90, wCliente = 145, wPago = 75, wNeto = 72, wIva = 65, wTotal = 72;
+    const xFecha   = left;
+    const xComp    = xFecha   + wFecha;
+    const xCliente = xComp    + wComp;
+    const xPago    = xCliente + wCliente;
+    const xNeto    = xPago    + wPago;
+    const xIva     = xNeto    + wNeto;
+    const xTotal   = xIva     + wIva;
+
+    const drawTableHeader = () => {
+      const y = doc.y;
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(8.5);
+      doc.text("Fecha",        xFecha,   y, { width: wFecha });
+      doc.text("Comprobante",  xComp,    y, { width: wComp  });
+      doc.text("Cliente",      xCliente, y, { width: wCliente });
+      doc.text("Pago",         xPago,    y, { width: wPago  });
+      doc.text("Neto",         xNeto,    y, { width: wNeto, align: "right" });
+      doc.text("IVA 21%",      xIva,     y, { width: wIva,  align: "right" });
+      doc.text("Total",        xTotal,   y, { width: wTotal, align: "right" });
+      doc.moveDown(0.6);
+      doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#eee").stroke();
+      doc.moveDown(0.4);
+    };
+
+    const ensureRoom = (extra = 16) => {
+      if (doc.y + extra > doc.page.height - doc.page.margins.bottom) {
+        doc.addPage();
+        drawHeader(false);
+        drawTableHeader();
+      }
+    };
+
+    const normalizePago = (s) => {
+      const t = String(s ?? "").trim();
+      const u = t.toUpperCase();
+      if (!t) return "-";
+      if (u.includes("QR")) return "QR";
+      if (u.includes("TRANSFER")) return "Transf.";
+      if (u.includes("DEBIT")) return "Débito";
+      if (u.includes("CRED")) return "Crédito";
+      if (u.includes("CONTADO") || u.includes("EFECT")) return "Contado";
+      if (u.includes("MERCADO") || u === "MP") return "MP";
+      return cut(t, 14);
+    };
+
+    const pagoLabelShort = (raw) => {
+      if (!raw) return "-";
+      if (typeof raw === "string") {
+        const s = raw.trim();
+        if (!s) return "-";
+        try { return pagoLabelShort(JSON.parse(s)); } catch { return normalizePago(s); }
+      }
+      if (Array.isArray(raw)) {
+        const labels = raw.map(it => {
+          if (!it) return "";
+          if (typeof it === "string") return it;
+          return it.metodo || it.metodo_pago || it.medio || it.tipo || it.forma || it.method || "";
+        }).map(normalizePago).filter(x => x && x !== "-");
+        const uniq = [...new Set(labels)];
+        return uniq.length ? uniq.join("+") : "-";
+      }
+      if (typeof raw === "object") return pagoLabelShort([raw]);
+      return "-";
+    };
+
+    drawHeader(true);
+    drawTableHeader();
+
+    if (!comprobantes?.length) {
+      doc.fillColor("#666").font("Helvetica").fontSize(10)
+        .text("Sin comprobantes para el período y filtros seleccionados.", left, doc.y + 10);
+    } else {
+      let runTotFact = 0, runTotNc = 0, runIvaFact = 0, runIvaNc = 0;
+
+      for (const r of comprobantes) {
+        ensureRoom(18);
+
+        const tipo  = Number(r.cbte_tipo);
+        const isNc  = [3, 8, 13, 53].includes(tipo);
+        const imp   = Number(r.imp_total || 0);
+        const neto  = Number(r.imp_neto  || 0);
+        const iva   = Number(r.imp_iva   || 0);
+        if (isNc) { runTotNc += imp; runIvaNc += iva; }
+        else      { runTotFact += imp; runIvaFact += iva; }
+
+        const fchRaw = String(r.cbte_fch);
+        const fchFmt = fchRaw.length === 8
+          ? `${fchRaw.slice(6,8)}/${fchRaw.slice(4,6)}/${fchRaw.slice(0,4)}`
+          : fchRaw;
+        const compTxt = `${cbteTipoLabel(tipo)} ${padLeft(r.cbte_nro, 8)}`;
+        const cliente = r.receptor_nombre && r.receptor_nombre !== "Consumidor Final"
+          ? cut(r.receptor_nombre, 30)
+          : (Number(r.doc_tipo) === 99 ? "CF" : cut(r.receptor_nombre || "CF", 30));
+
+        const y = doc.y;
+        doc.fillColor(isNc ? "#b45309" : "#000").font("Helvetica").fontSize(8);
+        doc.text(fchFmt,              xFecha,   y, { width: wFecha });
+        doc.text(cut(compTxt, 26),    xComp,    y, { width: wComp  });
+        doc.text(cliente,             xCliente, y, { width: wCliente });
+        doc.text(pagoLabelShort(r.doc_nro ? null : null), xPago, y, { width: wPago }); // pago no está en reportesComprobantes
+        doc.text(fmtMoney(neto),      xNeto,    y, { width: wNeto,  align: "right" });
+        doc.text(fmtMoney(iva),       xIva,     y, { width: wIva,   align: "right" });
+        doc.text(fmtMoney(imp),       xTotal,   y, { width: wTotal, align: "right" });
+        doc.moveDown(1.1);
+      }
+
+      // ── Línea separadora ─────────────────────────────────────────────────
+      ensureRoom(90);
+      doc.moveDown(0.4);
+      doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor("#ddd").stroke();
+      doc.moveDown(0.8);
+
+      // ── Cuadro resumen IVA ───────────────────────────────────────────────
+      const bx = left, by = doc.y, bw = right - left;
+      const lineH = 16;
+      const boxH = lineH * 5 + 24;
+      doc.rect(bx, by, bw, boxH).fillColor("#fffbeb").fill();
+      doc.rect(bx, by, bw, boxH).strokeColor("#f59e0b").lineWidth(0.8).stroke();
+      doc.lineWidth(1);
+
+      const col1 = bx + 10, col2 = bx + bw * 0.55;
+      let ly = by + 10;
+
+      doc.fillColor("#92400e").font("Helvetica-Bold").fontSize(9)
+        .text("RESUMEN DE IVA 21% DEL PERÍODO", col1, ly, { width: bw - 20 });
+      ly += lineH;
+
+      doc.font("Helvetica").fontSize(8.5).fillColor("#000");
+      const ivaLabel = (label, val) => {
+        doc.fillColor("#555").text(label, col1, ly, { width: bw * 0.45 });
+        doc.fillColor("#000").font("Helvetica-Bold").text(`$ ${fmtMoney(val)}`, col2, ly, { width: bw * 0.4, align: "right" });
+        doc.font("Helvetica");
+        ly += lineH;
+      };
+
+      ivaLabel("IVA 21% en Facturas:", tot.iva_facturas);
+      ivaLabel("IVA 21% en NC (descuento):", tot.iva_nc);
+
+      // Línea divisoria
+      doc.moveTo(col1, ly).lineTo(right - 10, ly).strokeColor("#f59e0b").lineWidth(0.5).stroke();
+      ly += 4;
+
+      doc.fillColor("#92400e").font("Helvetica-Bold").fontSize(9.5)
+        .text("IVA 21% NETO A PAGAR:", col1, ly, { width: bw * 0.45 });
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(10)
+        .text(`$ ${fmtMoney(tot.iva_neto)}`, col2, ly, { width: bw * 0.4, align: "right" });
+
+      doc.y = by + boxH + 12;
+
+      // ── Totales finales ───────────────────────────────────────────────────
+      doc.fillColor("#000").font("Helvetica-Bold").fontSize(10)
+        .text(`Comprobantes: ${comprobantes.length}`, left, doc.y, { width: right - left });
+      doc.font("Helvetica").fontSize(9).fillColor("#444")
+        .text(`Facturas: ${tot.cant_facturas}  ·  NC: ${tot.cant_nc}`, left, doc.y + 4, { width: right - left });
+      doc.font("Helvetica-Bold").fontSize(11).fillColor("#000")
+        .text(`Total facturado: $ ${fmtMoney(tot.total_facturas)}`, left, doc.y + 10, { width: right - left, align: "right" });
+      doc.font("Helvetica").fontSize(10)
+        .text(`Total NC: $ ${fmtMoney(tot.total_nc)}`, left, doc.y + 2, { width: right - left, align: "right" });
+      doc.font("Helvetica-Bold").fontSize(12)
+        .text(`Neto ventas: $ ${fmtMoney(tot.ventas_netas)}`, left, doc.y + 2, { width: right - left, align: "right" });
+    }
+
+    doc.end();
+  } catch (e) {
+    console.error("[ARCA][reportePeriodoPdf]", e);
+    return res.status(500).send("Error generando PDF de período");
+  }
+}
+
 module.exports = {
   emitirDesdeFacturaMostrador,
   statusPorFacturaMostrador,
@@ -3164,9 +3420,10 @@ module.exports = {
   listarWsfeConsultas,
   emitirNotaCreditoPorArcaId,
   reportesResumen,
-reportesComprobantes,
-crearCierreDiario,
-listarCierresDiarios,
-detalleCierreDiario,
-reporteVentasDiariasPdf,
+  reportesComprobantes,
+  crearCierreDiario,
+  listarCierresDiarios,
+  detalleCierreDiario,
+  reporteVentasDiariasPdf,
+  reportePeriodoPdf,
 };

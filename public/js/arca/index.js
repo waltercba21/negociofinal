@@ -1228,30 +1228,61 @@ preConfirm: () => {
       return;
     }
 
+    // Totales acumulados del período
+    let totFact = 0, totNc = 0, totNeto = 0, totIvaFact = 0, totIvaNc = 0, totIvaNeto = 0;
+    items.forEach(r => {
+      totFact    += Number(r.total_facturas  || 0);
+      totNc      += Number(r.total_nc        || 0);
+      totNeto    += Number(r.ventas_netas    || 0);
+      totIvaFact += Number(r.iva_facturas    || 0);
+      totIvaNc   += Number(r.iva_nc          || 0);
+      totIvaNeto += Number(r.iva_neto        || 0);
+    });
+
     const rows = items.map(r => `
       <div class="tr">
         <div>${r.fecha}</div>
         <div>$ ${money(r.total_facturas)}</div>
         <div>$ ${money(r.total_nc)}</div>
         <div><b>$ ${money(r.ventas_netas)}</b></div>
-        <div><button class="btn secondary" data-ver-dia="${r.fecha}">Ver día</button></div>
+        <div style="color:#f59e0b">$ ${money(r.iva_facturas)}</div>
+        <div style="color:#f59e0b">$ ${money(r.iva_nc)}</div>
+        <div style="color:#f59e0b"><b>$ ${money(r.iva_neto)}</b></div>
+        <div><button class="arca-btn arca-btn--outline arca-btn--sm" data-ver-dia="${r.fecha}">Ver día</button></div>
       </div>
     `).join("");
 
- wrap.innerHTML = `
-  <div class="gtable" style="--cols: 140px 1fr 1fr 1fr 140px">
+    wrap.innerHTML = `
+  <div class="gtable" style="--cols: 130px 1fr 1fr 1fr 1fr 1fr 1fr 130px">
     <div class="thead tr">
       <div>Fecha</div>
-      <div>Total facturado</div>
-      <div>Total NC</div>
+      <div>Facturado</div>
+      <div>NC</div>
       <div>Neto ventas</div>
+      <div style="color:#f59e0b">IVA 21% fact.</div>
+      <div style="color:#f59e0b">IVA 21% NC</div>
+      <div style="color:#f59e0b">IVA 21% neto</div>
       <div></div>
     </div>
     ${rows}
+    <div class="tr" style="border-top:2px solid rgba(240,244,255,0.2);font-weight:700;margin-top:4px">
+      <div style="color:rgba(240,244,255,0.5)">TOTAL PERÍODO</div>
+      <div>$ ${money(totFact)}</div>
+      <div>$ ${money(totNc)}</div>
+      <div><b>$ ${money(totNeto)}</b></div>
+      <div style="color:#f59e0b">$ ${money(totIvaFact)}</div>
+      <div style="color:#f59e0b">$ ${money(totIvaNc)}</div>
+      <div style="color:#f59e0b"><b>$ ${money(totIvaNeto)}</b></div>
+      <div></div>
+    </div>
+  </div>
+  <div style="margin-top:8px;padding:10px 12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:13px;color:#f59e0b">
+    <strong>IVA 21% a pagar en el período:</strong>
+    &nbsp; Facturas: <b>$ ${money(totIvaFact)}</b>
+    &nbsp;·&nbsp; NC: <b>$ ${money(totIvaNc)}</b>
+    &nbsp;·&nbsp; <strong>Neto IVA: $ ${money(totIvaNeto)}</strong>
   </div>
 `;
-
-
 
     wrap.querySelectorAll("[data-ver-dia]").forEach(btn=>{
       btn.addEventListener("click", ()=> {
@@ -1385,6 +1416,26 @@ if (btnInformePdf) {
     );
   });
 }
+
+  // PDF del período (rango desde/hasta)
+  const btnRepPdf = $("#btnRepPdf");
+  if (btnRepPdf) {
+    btnRepPdf.addEventListener("click", (e) => {
+      e.preventDefault();
+      const d = repDesde?.value;
+      const h = repHasta?.value;
+      if (!d || !h) {
+        Swal.fire({ icon: "warning", title: "Faltan fechas", text: "Seleccioná Desde y Hasta antes de generar el PDF." });
+        return;
+      }
+      const tipo   = repTipo?.value   || "";
+      const estado = repEstado?.value || "";
+      const qs = new URLSearchParams({ desde: d, hasta: h, v: Date.now() });
+      if (tipo)   qs.set("cbte_tipo", tipo);
+      if (estado) qs.set("estado", estado);
+      window.open(`/arca/reportes/periodo.pdf?${qs.toString()}`, "_blank", "noopener");
+    });
+  }
  async function crearCierre(){ // (podés renombrarla a generarInforme)
   try{
     const f = cierreFecha.value;
