@@ -18,7 +18,7 @@
   function normalizeAplicaciones(raw){
     let s = String(raw ?? '').trim();
     if (!s) return { subtitle:'', lines:[] };
-    // Separar por 2+ espacios/tabs consecutivos (formato real de la DB)
+    // Trabajar sobre el texto crudo: separar por 2+ espacios/tabs consecutivos
     s = s.replace(/<br\s*\/?>\s*/gi, ' ').replace(/\r?\n/g, ' ');
     const partes = s.split(/[ \t]{2,}/).map(x => x.trim()).filter(Boolean);
     let subtitle = '';
@@ -27,7 +27,8 @@
     return { subtitle, lines };
   }
 
-  const appsData = normalizeAplicaciones(_cleanDescripcion);
+  // Importante: usar _raw (sin aplanar espacios) para preservar los separadores
+  const appsData = normalizeAplicaciones(_raw);
   const preview  = (appsData.lines || []).slice(0, 5);
 
   // ── Label de calidad ─────────────────────────────────────
@@ -409,8 +410,7 @@ mark.apps-hl {
           </div>
 
           <!-- Lista filtrable -->
-          <ul class="det-apps__list" id="appsList"
-            data-items="<%- JSON.stringify(appsData.lines).replace(/'/g, '&#39;') %>">
+          <ul class="det-apps__list" id="appsList">
             <% appsData.lines.forEach(l => { %>
               <li class="det-apps__item">
                 <i class="fa-solid fa-car-side"></i>
@@ -418,6 +418,8 @@ mark.apps-hl {
               </li>
             <% }) %>
           </ul>
+          <!-- Datos para el buscador JS -->
+          <div id="appsData" style="display:none" data-items='<%- JSON.stringify(appsData.lines).replace(/'/g, "&apos;") %>'></div>
 
           <div class="det-apps__empty" id="appsEmpty" style="display:none;">
             <i class="fa-solid fa-circle-xmark"></i>

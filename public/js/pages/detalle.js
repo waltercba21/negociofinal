@@ -91,7 +91,8 @@
   if (!list || !input) return;
 
   let allItems = [];
-  try { allItems = JSON.parse(list.dataset.items || '[]'); } catch(_) {}
+  const _d = document.getElementById('appsData');
+  try { allItems = _d ? JSON.parse(_d.dataset.items || '[]') : []; } catch(_) {}
 
   const totalCount = allItems.length;
 
