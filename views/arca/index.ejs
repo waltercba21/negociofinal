@@ -16,7 +16,13 @@
           <h1 class="arca-page-header__title">ARCA</h1>
           <p class="arca-page-header__sub">Emisión desde facturas del mostrador · módulo paralelo (no toca stock)</p>
         </div>
-        <div class="arca-controls">
+        <div class="arca-controls" style="flex-wrap:wrap;gap:8px;">
+          <!-- Filtro de día -->
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label for="arcaFechaFiltro" class="arca-muted" style="font-size:13px;white-space:nowrap">Día:</label>
+            <input type="date" id="arcaFechaFiltro" class="arca-input" style="width:150px" />
+            <button id="arcaVerTodo" class="arca-btn arca-btn--outline" title="Ver todos los días">Todos</button>
+          </div>
           <input id="arcaSearch" class="arca-input" placeholder="Buscar por ID o vendedor…" />
           <button id="arcaReload" class="arca-btn arca-btn--outline">
             <i class="fa-solid fa-rotate-right"></i> Recargar
@@ -30,7 +36,7 @@
         <!-- LISTA -->
         <section class="arca-panel">
           <div class="arca-panel__hd">
-            <strong>Últimas facturas</strong>
+            <strong id="arcaListTitle">Facturas del día</strong>
             <div class="arca-controls">
               <button id="arcaPrev" class="arca-btn arca-btn--icon">‹</button>
               <span id="arcaPage" class="arca-muted">0–0</span>
