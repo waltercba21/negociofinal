@@ -1343,18 +1343,20 @@ generarResumenComprasPeriodoPDF: (req, res) => {
       return;
     }
 
-    const cFecha = left,       wFecha = 68;
-    const cNum   = left + 68,  wNum   = 95;
-    const cProv  = left + 163, wProv  = 115;
-    const cIvaP  = left + 278, wIvaP  = 38;
-    const cNeto  = left + 316, wNeto  = 90;
-    const cIva   = left + 406, wIva   = 75;
-    const cTotal = left + 481, wTotal = right - (left + 481);
+    // Ancho total disponible: right - left = ~515px
+    // 7 columnas: Fecha | N°Factura | Proveedor | IVA% | Neto | IVA$ | Total
+    const cFecha = left;        const wFecha = 62;   // 62
+    const cNum   = left + 62;   const wNum   = 90;   // 152
+    const cProv  = left + 152;  const wProv  = 110;  // 262
+    const cIvaP  = left + 262;  const wIvaP  = 35;   // 297
+    const cNeto  = left + 297;  const wNeto  = 72;   // 369
+    const cIva   = left + 369;  const wIva   = 68;   // 437
+    const cTotal = left + 437;  const wTotal = right - (left + 437); // ~78
 
     const drawTableHeader = () => {
       const y = doc.y;
       doc.rect(left, y, W, 14).fillColor('#e8edf5').fill();
-      doc.fillColor('#1a2a4a').font('Helvetica-Bold').fontSize(7.5);
+      doc.fillColor('#1a2a4a').font('Helvetica-Bold').fontSize(7);
       doc.text('Fecha',      cFecha, y+3, { width: wFecha });
       doc.text('N° Factura', cNum,   y+3, { width: wNum   });
       doc.text('Proveedor',  cProv,  y+3, { width: wProv  });
@@ -1390,7 +1392,7 @@ generarResumenComprasPeriodoPDF: (req, res) => {
       if (even) doc.rect(left, y, W, rowH).fillColor('#f7f9fc').fill();
       even = !even;
 
-      doc.fillColor('#000').font('Helvetica').fontSize(7.5);
+      doc.fillColor('#000').font('Helvetica').fontSize(7);
       doc.text(fmtFecha(f),                              cFecha, y+3, { width: wFecha });
       doc.text(String(f.numero_factura || '-'),           cNum,   y+3, { width: wNum   });
       doc.text(String(f.proveedor || '-'),                cProv,  y+3, { width: wProv  });
@@ -1399,7 +1401,7 @@ generarResumenComprasPeriodoPDF: (req, res) => {
       doc.fillColor('#92400e').font('Helvetica-Bold')
         .text(`$ ${fmtM(iva)}`,                          cIva,   y+3, { width: wIva,  align: 'right' });
       doc.fillColor('#000').font('Helvetica')
-        .text(`$ ${fmtM(total)}`,                        cTotal, y+3, { width: wTotal,align: 'right' });
+        .text(`$ ${fmtM(total)}`,                        cTotal, y+3, { width: wTotal, align: 'right' });
 
       doc.moveTo(left, y+rowH).lineTo(right, y+rowH).strokeColor('#e8edf5').lineWidth(0.3).stroke();
       doc.lineWidth(1);
@@ -1413,7 +1415,7 @@ generarResumenComprasPeriodoPDF: (req, res) => {
     doc.lineWidth(1);
     const ty = doc.y + 4, totH = 16;
     doc.rect(left, ty, W, totH).fillColor('#dce3ef').fill();
-    doc.fillColor('#1a2a4a').font('Helvetica-Bold').fontSize(9);
+    doc.fillColor('#1a2a4a').font('Helvetica-Bold').fontSize(7);
     doc.text(`TOTAL — ${facturas.length} comprobante${facturas.length !== 1 ? 's' : ''}`,
       cFecha, ty+4, { width: wFecha + wNum + wProv + wIvaP });
     doc.text(`$ ${fmtM(netoGeneral)}`,  cNeto,  ty+4, { width: wNeto, align: 'right' });
