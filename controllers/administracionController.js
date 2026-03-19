@@ -1215,5 +1215,244 @@ verificarNotaCreditoDuplicadaAPI: (req, res) => {
   });
 },
 
+// ── Resumen de compras por período (agrupado por día, con IVA) ────────────────
+resumenComprasPorPeriodo: (req, res) => {
+  const { desde, hasta, proveedor, condicion } = req.query;
+  if (!desde || !hasta) {
+    return res.status(400).json({ error: 'Faltan parámetros: desde y hasta (YYYY-MM-DD)' });
+  }
+
+  administracion.getFacturasEntreFechas(desde, hasta, proveedor || null, condicion || null, (err, facturas) => {
+    if (err) {
+      console.error('❌ [resumenComprasPorPeriodo]', err);
+      return res.status(500).json({ error: 'Error al obtener facturas' });
+    }
+
+    // Agrupar por fecha y calcular totales + IVA
+    const mapaFechas = new Map();
+    facturas.forEach(f => {
+      const fecha = formatDate(f.fecha);
+      const total    = parseFloat(f.importe_factura || 0);
+      const ivaPorc  = parseFloat(f.iva || 0);
+      // importe neto (sin IVA) = total / (1 + iva/100)
+      const neto     = ivaPorc > 0 ? total / (1 + ivaPorc / 100) : total;
+      const iva      = total - neto;
+
+      if (!mapaFechas.has(fecha)) {
+        mapaFechas.set(fecha, { fecha, cant: 0, total: 0, neto: 0, iva: 0 });
+      }
+      const d = mapaFechas.get(fecha);
+      d.cant  += 1;
+      d.total += total;
+      d.neto  += neto;
+      d.iva   += iva;
+    });
+
+    const dias = [...mapaFechas.values()]
+      .sort((a, b) => a.fecha.localeCompare(b.fecha))
+      .map(d => ({
+        fecha:   d.fecha,
+        cant:    d.cant,
+        total:   +d.total.toFixed(2),
+        neto:    +d.neto.toFixed(2),
+        iva:     +d.iva.toFixed(2),
+      }));
+
+    const totales = dias.reduce((acc, d) => {
+      acc.cant  += d.cant;
+      acc.total += d.total;
+      acc.neto  += d.neto;
+      acc.iva   += d.iva;
+      return acc;
+    }, { cant: 0, total: 0, neto: 0, iva: 0 });
+
+    totales.total = +totales.total.toFixed(2);
+    totales.neto  = +totales.neto.toFixed(2);
+    totales.iva   = +totales.iva.toFixed(2);
+
+    res.json({ desde, hasta, dias, totales });
+  });
+},
+
+// ── PDF de período de compras (una fila por día, resumen IVA al pie) ──────────
+generarResumenComprasPeriodoPDF: (req, res) => {
+  const { desde, hasta, proveedor, condicion } = req.query;
+  if (!desde || !hasta) {
+    return res.status(400).send('Debés especificar fecha desde y hasta');
+  }
+
+  administracion.getFacturasEntreFechas(desde, hasta, proveedor || null, condicion || null, (err, facturas) => {
+    if (err) {
+      console.error('❌ [generarResumenComprasPeriodoPDF]', err);
+      return res.status(500).send('Error al generar el PDF');
+    }
+
+    // Agrupar igual que la API
+    const mapaFechas = new Map();
+    facturas.forEach(f => {
+      const fecha   = formatDate(f.fecha);
+      const total   = parseFloat(f.importe_factura || 0);
+      const ivaPorc = parseFloat(f.iva || 0);
+      const neto    = ivaPorc > 0 ? total / (1 + ivaPorc / 100) : total;
+      const iva     = total - neto;
+      if (!mapaFechas.has(fecha)) mapaFechas.set(fecha, { fecha, cant: 0, total: 0, neto: 0, iva: 0 });
+      const d = mapaFechas.get(fecha);
+      d.cant += 1; d.total += total; d.neto += neto; d.iva += iva;
+    });
+
+    const dias = [...mapaFechas.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
+    const tot  = dias.reduce((acc, d) => {
+      acc.cant += d.cant; acc.total += d.total; acc.neto += d.neto; acc.iva += d.iva;
+      return acc;
+    }, { cant: 0, total: 0, neto: 0, iva: 0 });
+
+    const fmtM = n => (+n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtD = s => { const d = new Date(s + 'T00:00:00'); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; };
+
+    const genTs = new Intl.DateTimeFormat('es-AR', {
+      timeZone: 'America/Argentina/Cordoba', dateStyle: 'short', timeStyle: 'medium'
+    }).format(new Date());
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="COMPRAS_PERIODO_${desde}_${hasta}.pdf"`);
+    res.setHeader('Cache-Control', 'no-store');
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    doc.pipe(res);
+
+    const left  = 40;
+    const right = doc.page.width - 40;
+    const W     = right - left;
+
+    // ── Columnas ────────────────────────────────────────────────────────────
+    const wFecha = 85, wCant = 50, wNeto = 105, wIva = 105, wTotal = 110;
+    const xFecha = left;
+    const xCant  = xFecha + wFecha;
+    const xNeto  = xCant  + wCant;
+    const xIva   = xNeto  + wNeto;
+    const xTotal = xIva   + wIva;
+
+    const drawHeader = () => {
+      doc.fillColor('#0B2A6B').font('Helvetica-Bold').fontSize(16)
+        .text('AUTOFAROS', left, 40, { width: W });
+      doc.fillColor('#000').font('Helvetica').fontSize(9)
+        .text('Resumen de Compras a Proveedores', left, 62, { width: W });
+      doc.fillColor('#444').fontSize(8)
+        .text(`Período: ${fmtD(desde)} al ${fmtD(hasta)}${proveedor ? '  |  Proveedor filtrado' : ''}${condicion ? '  |  Condición: ' + condicion.toUpperCase() : ''}`, left, 75, { width: W });
+      doc.fillColor('#666').fontSize(8)
+        .text(`Generado: ${genTs}`, left, 88, { width: W });
+      doc.moveTo(left, 100).lineTo(right, 100).strokeColor('#ccc').stroke();
+      doc.y = 110;
+    };
+
+    const drawTableHeader = () => {
+      const y = doc.y;
+      const rowH = 14;
+      doc.rect(left, y, W, rowH).fillColor('#e8edf5').fill();
+      doc.fillColor('#1a2a4a').font('Helvetica-Bold').fontSize(8);
+      doc.text('Fecha',         xFecha, y + 3, { width: wFecha });
+      doc.text('Facturas',      xCant,  y + 3, { width: wCant,  align: 'center' });
+      doc.text('Neto (sin IVA)',xNeto,  y + 3, { width: wNeto,  align: 'right' });
+      doc.text('IVA',           xIva,   y + 3, { width: wIva,   align: 'right' });
+      doc.text('Total comprado',xTotal, y + 3, { width: wTotal, align: 'right' });
+      doc.y = y + rowH + 3;
+    };
+
+    const ensureRoom = (extra = 18) => {
+      if (doc.y + extra > doc.page.height - doc.page.margins.bottom) {
+        doc.addPage();
+        drawHeader();
+        drawTableHeader();
+      }
+    };
+
+    drawHeader();
+    drawTableHeader();
+
+    if (!dias.length) {
+      doc.fillColor('#666').font('Helvetica').fontSize(10)
+        .text('Sin compras en el período seleccionado.', left, doc.y + 12);
+    } else {
+      let even = false;
+      for (const d of dias) {
+        ensureRoom(18);
+        const y = doc.y;
+        const rowH = 15;
+        if (even) doc.rect(left, y, W, rowH).fillColor('#f7f9fc').fill();
+        even = !even;
+
+        doc.fillColor('#000').font('Helvetica').fontSize(8.5);
+        doc.text(fmtD(d.fecha),       xFecha, y + 3, { width: wFecha });
+        doc.text(String(d.cant),       xCant,  y + 3, { width: wCant,  align: 'center' });
+        doc.text(`$ ${fmtM(d.neto)}`,  xNeto,  y + 3, { width: wNeto,  align: 'right' });
+        doc.fillColor('#92400e').font('Helvetica-Bold')
+          .text(`$ ${fmtM(d.iva)}`,    xIva,   y + 3, { width: wIva,   align: 'right' });
+        doc.fillColor('#000').font('Helvetica')
+          .text(`$ ${fmtM(d.total)}`,  xTotal, y + 3, { width: wTotal, align: 'right' });
+
+        doc.moveTo(left, y + rowH).lineTo(right, y + rowH).strokeColor('#e2e8f0').lineWidth(0.4).stroke();
+        doc.lineWidth(1);
+        doc.y = y + rowH + 1;
+      }
+    }
+
+    // ── Fila totales ─────────────────────────────────────────────────────────
+    ensureRoom(130);
+    doc.moveDown(0.5);
+    doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor('#aaa').lineWidth(0.8).stroke();
+    doc.lineWidth(1);
+    doc.moveDown(0.5);
+
+    const ty = doc.y, totRowH = 17;
+    doc.rect(left, ty, W, totRowH).fillColor('#e8edf5').fill();
+    doc.fillColor('#1a2a4a').font('Helvetica-Bold').fontSize(9);
+    doc.text('TOTAL PERÍODO',       xFecha, ty + 4, { width: wFecha });
+    doc.text(String(tot.cant),      xCant,  ty + 4, { width: wCant,  align: 'center' });
+    doc.text(`$ ${fmtM(tot.neto)}`, xNeto,  ty + 4, { width: wNeto,  align: 'right' });
+    doc.fillColor('#92400e')
+      .text(`$ ${fmtM(tot.iva)}`,   xIva,   ty + 4, { width: wIva,   align: 'right' });
+    doc.fillColor('#1a2a4a')
+      .text(`$ ${fmtM(tot.total)}`, xTotal, ty + 4, { width: wTotal, align: 'right' });
+    doc.y = ty + totRowH + 14;
+
+    // ── Cuadro resumen IVA ───────────────────────────────────────────────────
+    ensureRoom(100);
+    const bx = left, by = doc.y, bw = W;
+    const lineH = 18, boxH = lineH * 3 + 20;
+    doc.rect(bx, by, bw, boxH).fillColor('#fffbeb').fill();
+    doc.rect(bx, by, bw, boxH).strokeColor('#f59e0b').lineWidth(0.8).stroke();
+    doc.lineWidth(1);
+
+    const colL = bx + 14;
+    let ly = by + 12;
+    doc.fillColor('#92400e').font('Helvetica-Bold').fontSize(10)
+      .text('RESUMEN DE IVA — COMPRAS DEL PERÍODO', colL, ly, { width: bw - 28 });
+    ly += lineH + 2;
+
+    const ivaRow = (label, val, bold = false) => {
+      doc.fillColor('#555').font('Helvetica').fontSize(9)
+        .text(label, colL, ly, { width: bw * 0.55 });
+      doc.fillColor(bold ? '#92400e' : '#000')
+        .font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(bold ? 10 : 9)
+        .text(`$ ${fmtM(val)}`, colL, ly, { width: bw - 28, align: 'right' });
+      ly += lineH;
+    };
+
+    ivaRow('Total neto comprado (sin IVA):', tot.neto);
+
+    doc.moveTo(colL, ly - 2).lineTo(right - 14, ly - 2)
+      .strokeColor('#f59e0b').lineWidth(0.5).stroke();
+    doc.lineWidth(1);
+
+    ivaRow('IVA TOTAL EN COMPRAS:', tot.iva, true);
+    doc.y = by + boxH + 16;
+
+    doc.fillColor('#000').font('Helvetica-Bold').fontSize(11)
+      .text(`Total comprado en el período: $ ${fmtM(tot.total)}`, left, doc.y, { width: W, align: 'right' });
+
+    doc.end();
+  });
+},
+
 
 }
