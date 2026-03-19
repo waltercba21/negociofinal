@@ -1609,6 +1609,23 @@ async function listarFacturasMostrador(req, res) {
     const limit = Math.min(parseInt(req.query.limit || "50", 10), 200);
     const offset = Math.max(parseInt(req.query.offset || "0", 10), 0);
 
+    // Filtro de fecha: por defecto hoy (Argentina UTC-3)
+    // Acepta ?fecha=YYYY-MM-DD para ver otro día, o ?fecha=all para ver todo
+    const fechaParam = (req.query.fecha || "").trim();
+    const todayAR = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const fechaFiltro = fechaParam === "all" ? null : (fechaParam || todayAR);
+
+    const params = [];
+    let whereClause = "";
+
+    if (fechaFiltro) {
+      // Filtra por fecha de la factura del mostrador (creado_en o fecha)
+      whereClause = `WHERE DATE(fm.creado_en) = ?`;
+      params.push(fechaFiltro);
+    }
+
+    params.push(limit, offset);
+
     const rows = await query(
       `
       SELECT
@@ -1673,13 +1690,69 @@ async function listarFacturasMostrador(req, res) {
          AND t1.id = t2.max_id
       ) ac
         ON ac.factura_mostrador_id = fm.id
+      ${whereClause}
       ORDER BY fm.id DESC
       LIMIT ? OFFSET ?
       `,
-      [limit, offset]
+      params
     );
 
-    return res.json({ rows, limit, offset });
+    // ── NC del día: notas de crédito emitidas en el período filtrado ────────────
+    // Las NC no tienen factura_mostrador_id (son null), así que se listan aparte
+    // y se agregan al resultado para que aparezcan en el listado con su relación.
+    let ncRows = [];
+    if (fechaFiltro) {
+      ncRows = await query(
+        `
+        SELECT
+          NULL                                    AS id,
+          NULL                                    AS vendedor,
+          COALESCE(ac.receptor_nombre, 'CONSUMIDOR FINAL') AS cliente,
+          CASE
+            WHEN ac.cbte_tipo IN (3, 53) THEN 'NC A'
+            WHEN ac.cbte_tipo = 8        THEN 'NC B'
+            WHEN ac.cbte_tipo = 13       THEN 'NC C'
+            ELSE 'NC'
+          END                                     AS tipo,
+          DATE_FORMAT(STR_TO_DATE(ac.cbte_fch, '%Y%m%d'), '%Y-%m-%d') AS fecha,
+          ac.imp_total                            AS total,
+          NULL                                    AS metodos_pago,
+          DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') AS creado_en,
+
+          ac.estado      AS arca_estado,
+          ac.resultado   AS arca_resultado,
+          ac.cae         AS arca_cae,
+          ac.cae_vto     AS arca_cae_vto,
+          ac.cbte_tipo   AS arca_cbte_tipo,
+          ac.cbte_nro    AS arca_cbte_nro,
+          ac.doc_tipo    AS arca_doc_tipo,
+          ac.doc_nro     AS arca_doc_nro,
+          ac.receptor_nombre      AS arca_receptor_nombre,
+          ac.receptor_cond_iva_id AS arca_receptor_cond_iva_id,
+          ac.obs_code    AS arca_obs_code,
+          ac.obs_msg     AS arca_obs_msg,
+
+          ac.id          AS nc_arca_id,
+          asoc.asociado_arca_id AS nc_origen_arca_id,
+          origen.cbte_nro       AS nc_origen_cbte_nro,
+          origen.cbte_tipo      AS nc_origen_cbte_tipo,
+          origen.factura_mostrador_id AS nc_origen_factura_id
+
+        FROM arca_comprobantes ac
+        LEFT JOIN arca_cbtes_asoc asoc ON asoc.arca_comprobante_id = ac.id
+        LEFT JOIN arca_comprobantes origen ON origen.id = asoc.asociado_arca_id
+        WHERE ac.factura_mostrador_id IS NULL
+          AND ac.cbte_tipo IN (3, 8, 13, 53)
+          AND DATE(ac.created_at) = ?
+        ORDER BY ac.id DESC
+        `,
+        [fechaFiltro]
+      );
+    }
+
+    const allRows = [...rows, ...ncRows];
+
+    return res.json({ rows: allRows, limit, offset, fecha: fechaFiltro });
   } catch (e) {
     return res.status(500).json({ error: e.message || "Error listando facturas" });
   }

@@ -26,6 +26,12 @@ const ARCA_SWAL = (() => {
 (() => {
   const $ = (id) => document.getElementById(id);
 
+function todayISO() {
+  // Fecha de hoy en Argentina (UTC-3)
+  const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 10);
+}
+
 const state = {
   limit: 50,
   offset: 0,
@@ -33,8 +39,9 @@ const state = {
   selectedId: null,
   selectedArcaId: null,
   selectedArcaEstado: null,
-  selectedHasItems: false,   // <-- agregar
+  selectedHasItems: false,
   search: "",
+  fecha: todayISO(), // filtro de día activo por defecto
 };
 
 
@@ -203,23 +210,44 @@ function renderList() {
   const rows = applySearch(state.rows);
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="muted">Sin resultados</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="muted">Sin resultados para este día. <a href="#" id="linkVerTodo" style="color:var(--c-primary)">Ver todos</a></td></tr>`;
+    const lnk = document.getElementById("linkVerTodo");
+    if (lnk) lnk.addEventListener("click", (e) => { e.preventDefault(); state.fecha = "all"; loadList(); updateFechaUI(); });
     return;
   }
 
   tbody.innerHTML = rows.map((r) => {
-    const vendedor = String(r.vendedor || "—").trim();
+    const esNC = r.nc_arca_id != null || [3, 8, 13, 53].includes(Number(r.arca_cbte_tipo));
+    const vendedor = esNC ? "—" : String(r.vendedor || "—").trim();
     const cliente  = String(clienteArcaLabelFromRow(r) || r.cliente || "—").trim();
     const tipo     = tipoLabelFromCbteTipo(r.arca_cbte_tipo);
 
+    // Celda ID: para NC sin factura mostramos el arca_id de la NC
+    let idCell;
+    if (esNC && !r.id) {
+      const origenRef = r.nc_origen_factura_id
+        ? `<div class="muted" style="font-size:11px">⮑ Fact #${r.nc_origen_factura_id}</div>`
+        : (r.nc_origen_cbte_nro ? `<div class="muted" style="font-size:11px">⮑ Cbte ${r.nc_origen_cbte_nro}</div>` : "");
+      idCell = `<strong class="nc-label">NC #${r.nc_arca_id}</strong>${origenRef}`;
+    } else {
+      idCell = `<strong>#${r.id}</strong>`;
+    }
+
+    const rowClass = esNC
+      ? `arca-row arca-row--nc ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}`
+      : `arca-row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}`;
+
+    // Para NC sin factura propia, al hacer click no hay detalle de factura que cargar
+    const dataId = r.id ? `data-id="${r.id}"` : `data-nc-id="${r.nc_arca_id}"`;
+
     return `
-      <tr class="arca-row ${Number(r.id) === Number(state.selectedId) ? "is-selected" : ""}" data-id="${r.id}">
-        <td><strong>#${r.id}</strong></td>
+      <tr class="${rowClass}" ${dataId}>
+        <td>${idCell}</td>
         <td class="muted" style="white-space:nowrap">${esc(fmtFecha(r.fecha))}</td>
         <td>${esc(vendedor.toUpperCase())}</td>
         <td>${esc(cliente.toUpperCase())}</td>
         <td class="muted"><strong>${esc(tipo)}</strong></td>
-        <td><strong>${money(r.total)}</strong></td>
+        <td><strong ${esNC ? 'style="color:#b45309"' : ""}>${esNC ? "−" : ""}${money(r.total)}</strong></td>
         <td class="muted">${esc(r.metodos_pago || "-")}</td>
         <td>
           ${badge(r.arca_estado)}
@@ -232,17 +260,32 @@ function renderList() {
   tbody.querySelectorAll("tr[data-id]").forEach((tr) => {
     tr.addEventListener("click", () => onSelect(Number(tr.dataset.id)));
   });
+
+  // NC sin factura: al hacer click ir al PDF directamente (no tienen detalle de factura)
+  tbody.querySelectorAll("tr[data-nc-id]").forEach((tr) => {
+    tr.addEventListener("click", () => {
+      const ncId = tr.dataset.ncId;
+      if (ncId) window.open(`/arca/pdf/${ncId}`, "_blank", "noopener");
+    });
+  });
 }
 
 
   async function loadList() {
     $("arcaTbody").innerHTML = `<tr><td colspan="8" class="muted">Cargando…</td></tr>`;
 
-
     const q = new URLSearchParams({
       limit: String(state.limit),
       offset: String(state.offset),
     });
+
+    // Filtro de fecha: "all" si el usuario lo pide, o la fecha seleccionada
+    if (state.fecha === "all") {
+      q.set("fecha", "all");
+    } else {
+      q.set("fecha", state.fecha || todayISO());
+    }
+
     const data = await fetchJSON(`/arca/ui/facturas?${q.toString()}`);
     state.rows = data.rows || [];
     renderList();
@@ -1159,6 +1202,50 @@ preConfirm: () => {
     }
   }
 
+  // ── Filtro de fecha ──────────────────────────────────────────────────────────
+  function updateFechaUI() {
+    const inp = $("arcaFechaFiltro");
+    const title = $("arcaListTitle");
+    const btnTodo = $("arcaVerTodo");
+
+    if (state.fecha === "all") {
+      if (inp) inp.value = "";
+      if (title) title.textContent = "Todas las facturas";
+      if (btnTodo) { btnTodo.textContent = "Hoy"; btnTodo.title = "Volver al día de hoy"; }
+    } else {
+      if (inp) inp.value = state.fecha || "";
+      if (title) title.textContent = `Facturas del ${state.fecha === todayISO() ? "día (hoy)" : state.fecha}`;
+      if (btnTodo) { btnTodo.textContent = "Todos"; btnTodo.title = "Ver todos los días"; }
+    }
+  }
+
+  const arcaFechaFiltro = $("arcaFechaFiltro");
+  if (arcaFechaFiltro) {
+    arcaFechaFiltro.value = state.fecha || todayISO();
+    arcaFechaFiltro.addEventListener("change", () => {
+      const v = arcaFechaFiltro.value;
+      state.fecha = v || todayISO();
+      state.offset = 0;
+      updateFechaUI();
+      loadList();
+    });
+  }
+
+  const arcaVerTodo = $("arcaVerTodo");
+  if (arcaVerTodo) {
+    arcaVerTodo.addEventListener("click", () => {
+      if (state.fecha === "all") {
+        // Volver a hoy
+        state.fecha = todayISO();
+      } else {
+        state.fecha = "all";
+      }
+      state.offset = 0;
+      updateFechaUI();
+      loadList();
+    });
+  }
+
   // Eventos
   $("arcaReload").addEventListener("click", () => loadList());
   $("arcaPrev").addEventListener("click", () => {
@@ -1179,7 +1266,9 @@ preConfirm: () => {
   $("btnEmitir").addEventListener("click", emitirSeleccionada);
   if (btnAuditarWsfe) btnAuditarWsfe.addEventListener("click", auditarWsfeActual);
   if (btnAnular) btnAnular.addEventListener("click", anularSeleccionada);
+
   // Init
+  updateFechaUI();
   loadList().catch((err) => {
     $("arcaTbody").innerHTML = `<tr><td colspan="8" class="muted">${err.message}</td></tr>`;
   });
