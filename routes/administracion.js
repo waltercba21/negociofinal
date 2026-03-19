@@ -106,6 +106,7 @@ router.post('/gastos', administracionController.postGasto);
 router.get('/api/gastos', administracionController.listarGastos);
 router.get('/api/objetivos-gastos', administracionController.apiObjetivosGastos);
 router.post('/gastos/:id/eliminar', administracionController.eliminarGasto);
+router.get('/api/top-productos', administracionController.topProductos);
 
 // ── Catálogos ─────────────────────────────────────────────────────────────────
 router.get('/api/categorias', administracionController.getCategorias);
