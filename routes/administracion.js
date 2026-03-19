@@ -77,11 +77,16 @@ router.put('/api/notas-credito/:id', administracionController.actualizarNotaCred
 router.delete('/api/notas-credito/:id', administracionController.eliminarNotaCredito);
 router.get('/api/verificar-nota-credito-duplicada', administracionController.verificarNotaCreditoDuplicadaAPI);
 
+// ── API resumen compras ───────────────────────────────────────────────────────
+router.get('/api/resumen-compras', administracionController.resumenComprasPorPeriodo);
+
 // ── PDFs ─────────────────────────────────────────────────────────────────────
-// ⚠️  Las rutas específicas ANTES de la genérica /:tipo/:id
-router.get('/pdf/resumen/facturas', administracionController.generarResumenFacturasPDF);
-router.get('/pdf/resumen/presupuestos', administracionController.generarResumenPresupuestosPDF);
-router.get('/pdf/:tipo/:id', administracionController.generarPDFIndividual);
+// ⚠️  TODAS las rutas específicas ANTES de la genérica /:tipo/:id
+router.get('/pdf/resumen/facturas',       administracionController.generarResumenFacturasPDF);
+router.get('/pdf/resumen/presupuestos',   administracionController.generarResumenPresupuestosPDF);
+router.get('/pdf/resumen/compras-periodo',administracionController.generarResumenComprasPeriodoPDF);
+router.get('/pdf/deuda-pendiente',        administracionController.generarPDFDeudaPendiente);
+router.get('/pdf/:tipo/:id',              administracionController.generarPDFIndividual);
 
 // ── Verificación duplicados ───────────────────────────────────────────────────
 router.get('/verificar-duplicado', administracionController.verificarDocumentoDuplicado);
@@ -89,11 +94,6 @@ router.get('/verificar-duplicado', administracionController.verificarDocumentoDu
 // ── Eliminar documentos ───────────────────────────────────────────────────────
 router.delete('/api/factura/:id', administracionController.eliminarFactura);
 router.delete('/api/presupuesto/:id', administracionController.eliminarPresupuesto);
-
-// ── PDF deuda pendiente ───────────────────────────────────────────────────────
-router.get('/pdf/deuda-pendiente', administracionController.generarPDFDeudaPendiente);
-router.get('/api/resumen-compras', administracionController.resumenComprasPorPeriodo);
-router.get('/pdf/resumen/compras-periodo', administracionController.generarResumenComprasPeriodoPDF);
 
 // ── Objetivos ─────────────────────────────────────────────────────────────────
 router.get('/objetivos', administracionController.objetivos);
@@ -126,18 +126,13 @@ router.delete('/api/modelos/:id', administracionController.eliminarModelo);
 // ═════════════════════════════════════════════════════════════════════════════
 // CARTAS DE PAGO
 // ═════════════════════════════════════════════════════════════════════════════
-
-// ⚠️  Esta ruta DEBE ir ANTES de /api/cartas-pago/:id para que no sea
-//     interpretada como un :id con valor "documentos-disponibles"
-router.get('/api/cartas-pago/documentos-disponibles',   cartasPagoController.documentosDisponibles);
+router.get('/api/cartas-pago/documentos-disponibles',    cartasPagoController.documentosDisponibles);
 router.get('/api/cartas-pago/notas-credito-disponibles', cartasPagoController.notasCreditoDisponibles);
 
-router.post('/api/cartas-pago',               cartasPagoController.crearCarta);
-router.get('/api/cartas-pago',                cartasPagoController.listarCartas);
-router.get('/api/cartas-pago/:id',            cartasPagoController.obtenerCarta);
-router.put('/api/cartas-pago/:id/anular',     cartasPagoController.anularCarta);
-router.get('/api/cartas-pago/:id/pdf',        cartasPagoController.generarPDF);
-
-// ═════════════════════════════════════════════════════════════════════════════
+router.post('/api/cartas-pago',            cartasPagoController.crearCarta);
+router.get('/api/cartas-pago',             cartasPagoController.listarCartas);
+router.get('/api/cartas-pago/:id',         cartasPagoController.obtenerCarta);
+router.put('/api/cartas-pago/:id/anular',  cartasPagoController.anularCarta);
+router.get('/api/cartas-pago/:id/pdf',     cartasPagoController.generarPDF);
 
 module.exports = router;
