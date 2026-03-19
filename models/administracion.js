@@ -853,7 +853,7 @@ obtenerDocumentosFiltrados: function (tipo, proveedor, fechaDesde, fechaHasta, c
 
 getFacturasEntreFechas: function(desde, hasta, proveedorId, condicion, callback) {
   let sql = `
-    SELECT f.numero_factura, f.fecha, f.importe_factura, f.condicion, p.nombre AS proveedor
+    SELECT f.numero_factura, f.fecha, f.importe_bruto, f.iva, f.importe_factura, f.condicion, p.nombre AS proveedor
     FROM facturas f
     JOIN proveedores p ON f.id_proveedor = p.id
     WHERE f.fecha BETWEEN ? AND ?

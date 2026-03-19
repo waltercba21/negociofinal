@@ -1216,6 +1216,7 @@ verificarNotaCreditoDuplicadaAPI: (req, res) => {
 },
 
 // ── API: resumen de compras del período (totales + IVA desglosado por alícuota) ──
+// ── API: resumen de compras del período (totales + IVA desglosado por alícuota) ──
 resumenComprasPorPeriodo: (req, res) => {
   const { desde, hasta, proveedor, condicion } = req.query;
   if (!desde || !hasta) {
@@ -1228,8 +1229,7 @@ resumenComprasPorPeriodo: (req, res) => {
       return res.status(500).json({ error: 'Error al obtener facturas' });
     }
 
-    // Acumuladores por alícuota
-    const porAlicuota = {};  // e.g. { '21': { base, iva, total, cant }, '10.5': {...} }
+    const porAlicuota = {};
     let totalGeneral = 0, netoGeneral = 0, ivaGeneral = 0;
 
     (facturas || []).forEach(f => {
@@ -1244,13 +1244,11 @@ resumenComprasPorPeriodo: (req, res) => {
       porAlicuota[key].neto  += neto;
       porAlicuota[key].iva   += iva;
       porAlicuota[key].total += total;
-
       totalGeneral += total;
       netoGeneral  += neto;
       ivaGeneral   += iva;
     });
 
-    // Redondear
     const alicuotas = Object.values(porAlicuota).map(a => ({
       alicuota: a.alicuota,
       cant:     a.cant,
@@ -1284,12 +1282,9 @@ generarResumenComprasPeriodoPDF: (req, res) => {
     }
 
     const fmtM = n => (+n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const fmtD = s => {
-      const d = new Date(s + 'T00:00:00');
-      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-    };
+    // f.fecha puede ser Date (MySQL) o string — formatFechaDMY ya maneja ambos
+    const fmtFecha = f => formatFechaDMY(f.fecha);
 
-    // ── Calcular totales agrupados por alícuota ──────────────────────────────
     const porAlicuota = {};
     let totalGeneral = 0, netoGeneral = 0, ivaGeneral = 0;
 
@@ -1305,14 +1300,12 @@ generarResumenComprasPeriodoPDF: (req, res) => {
       porAlicuota[key].neto  += neto;
       porAlicuota[key].iva   += iva;
       porAlicuota[key].total += total;
-
       totalGeneral += total;
       netoGeneral  += neto;
       ivaGeneral   += iva;
     });
 
-    const alicuotas = Object.values(porAlicuota)
-      .sort((a, b) => b.alicuota - a.alicuota);
+    const alicuotas = Object.values(porAlicuota).sort((a, b) => b.alicuota - a.alicuota);
 
     const genTs = new Intl.DateTimeFormat('es-AR', {
       timeZone: 'America/Argentina/Cordoba', dateStyle: 'short', timeStyle: 'medium'
@@ -1329,7 +1322,6 @@ generarResumenComprasPeriodoPDF: (req, res) => {
     const right = doc.page.width - 40;
     const W     = right - left;
 
-    // ── Encabezado ───────────────────────────────────────────────────────────
     doc.fillColor('#0B2A6B').font('Helvetica-Bold').fontSize(18)
       .text('AUTOFAROS', left, 40, { width: W });
     doc.fillColor('#000').font('Helvetica').fontSize(9)
@@ -1337,10 +1329,9 @@ generarResumenComprasPeriodoPDF: (req, res) => {
     doc.fillColor('#000').font('Helvetica-Bold').fontSize(13)
       .text('RESUMEN DE COMPRAS A PROVEEDORES', left, 80, { width: W });
     doc.fillColor('#444').font('Helvetica').fontSize(9)
-      .text(`Período: ${fmtD(desde)} al ${fmtD(hasta)}`
+      .text(`Período: ${formatFechaDMY(desde)} al ${formatFechaDMY(hasta)}`
         + (condicion ? `  |  Condición: ${condicion.toUpperCase()}` : ''), left, 96, { width: W });
-    doc.fillColor('#666').fontSize(8)
-      .text(`Generado: ${genTs}`, left, 108, { width: W });
+    doc.fillColor('#666').fontSize(8).text(`Generado: ${genTs}`, left, 108, { width: W });
     doc.moveTo(left, 120).lineTo(right, 120).strokeColor('#ccc').lineWidth(0.8).stroke();
     doc.lineWidth(1);
     doc.y = 130;
@@ -1352,17 +1343,14 @@ generarResumenComprasPeriodoPDF: (req, res) => {
       return;
     }
 
-    // ── Tabla: comprobante por comprobante ───────────────────────────────────
-    const cFecha  = left,       wFecha  = 72;
-    const cNum    = left + 72,  wNum    = 110;
-    const cProv   = left + 182, wProv   = 140;
-    const cIvaP   = left + 322, wIvaP   = 44;
-    const cNeto   = left + 366, wNeto   = 80;
-    const cIva    = left + 446, wIva    = 70;
-    // Total al extremo derecho
-    const cTotal  = right - 80, wTotal  = 80;
+    const cFecha = left,       wFecha = 72;
+    const cNum   = left + 72,  wNum   = 110;
+    const cProv  = left + 182, wProv  = 140;
+    const cIvaP  = left + 322, wIvaP  = 44;
+    const cNeto  = left + 366, wNeto  = 80;
+    const cIva   = left + 446, wIva   = 70;
+    const cTotal = right - 80, wTotal = 80;
 
-    // Cabecera de tabla
     const drawTableHeader = () => {
       const y = doc.y;
       doc.rect(left, y, W, 14).fillColor('#e8edf5').fill();
@@ -1371,18 +1359,17 @@ generarResumenComprasPeriodoPDF: (req, res) => {
       doc.text('N° Factura', cNum,   y+3, { width: wNum   });
       doc.text('Proveedor',  cProv,  y+3, { width: wProv  });
       doc.text('IVA%',       cIvaP,  y+3, { width: wIvaP, align: 'center' });
-      doc.text('Neto',       cNeto,  y+3, { width: wNeto,  align: 'right' });
-      doc.text('IVA $',      cIva,   y+3, { width: wIva,   align: 'right' });
-      doc.text('Total',      cTotal, y+3, { width: wTotal, align: 'right' });
+      doc.text('Neto',       cNeto,  y+3, { width: wNeto, align: 'right' });
+      doc.text('IVA $',      cIva,   y+3, { width: wIva,  align: 'right' });
+      doc.text('Total',      cTotal, y+3, { width: wTotal,align: 'right' });
       doc.y = y + 17;
     };
 
     const ensureRoom = (extra = 16) => {
       if (doc.y + extra > doc.page.height - doc.page.margins.bottom) {
         doc.addPage();
-        // mini encabezado en páginas siguientes
         doc.fillColor('#0B2A6B').font('Helvetica-Bold').fontSize(10)
-          .text('AUTOFAROS — Resumen de Compras (continuación)', left, 40, { width: W });
+          .text('AUTOFAROS — Compras (continuación)', left, 40, { width: W });
         doc.y = 58;
         drawTableHeader();
       }
@@ -1404,47 +1391,43 @@ generarResumenComprasPeriodoPDF: (req, res) => {
       even = !even;
 
       doc.fillColor('#000').font('Helvetica').fontSize(7.5);
-      doc.text(fmtD(f.fecha),                      cFecha, y+3, { width: wFecha });
-      doc.text(String(f.numero_factura || '-'),     cNum,   y+3, { width: wNum   });
-      doc.text(String(f.proveedor || f.nombre_proveedor || '-'), cProv, y+3, { width: wProv, ellipsis: true });
-      doc.text(ivaPorc ? `${ivaPorc}%` : '-',      cIvaP,  y+3, { width: wIvaP, align: 'center' });
-      doc.text(`$ ${fmtM(neto)}`,                  cNeto,  y+3, { width: wNeto,  align: 'right' });
+      doc.text(fmtFecha(f),                              cFecha, y+3, { width: wFecha });
+      doc.text(String(f.numero_factura || '-'),           cNum,   y+3, { width: wNum   });
+      doc.text(String(f.proveedor || '-'),                cProv,  y+3, { width: wProv  });
+      doc.text(ivaPorc ? `${ivaPorc}%` : '-',            cIvaP,  y+3, { width: wIvaP, align: 'center' });
+      doc.text(`$ ${fmtM(neto)}`,                        cNeto,  y+3, { width: wNeto, align: 'right' });
       doc.fillColor('#92400e').font('Helvetica-Bold')
-        .text(`$ ${fmtM(iva)}`,                    cIva,   y+3, { width: wIva,   align: 'right' });
+        .text(`$ ${fmtM(iva)}`,                          cIva,   y+3, { width: wIva,  align: 'right' });
       doc.fillColor('#000').font('Helvetica')
-        .text(`$ ${fmtM(total)}`,                  cTotal, y+3, { width: wTotal, align: 'right' });
+        .text(`$ ${fmtM(total)}`,                        cTotal, y+3, { width: wTotal,align: 'right' });
 
       doc.moveTo(left, y+rowH).lineTo(right, y+rowH).strokeColor('#e8edf5').lineWidth(0.3).stroke();
       doc.lineWidth(1);
       doc.y = y + rowH + 1;
     });
 
-    // ── Fila TOTAL general ───────────────────────────────────────────────────
+    // Fila TOTAL
     ensureRoom(100);
-    doc.moveDown(0.5);
+    doc.moveDown(0.4);
     doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor('#aaa').lineWidth(0.8).stroke();
     doc.lineWidth(1);
-
     const ty = doc.y + 4, totH = 16;
     doc.rect(left, ty, W, totH).fillColor('#dce3ef').fill();
     doc.fillColor('#1a2a4a').font('Helvetica-Bold').fontSize(9);
     doc.text(`TOTAL — ${facturas.length} comprobante${facturas.length !== 1 ? 's' : ''}`,
       cFecha, ty+4, { width: wFecha + wNum + wProv + wIvaP });
-    doc.text(`$ ${fmtM(netoGeneral)}`,  cNeto,  ty+4, { width: wNeto,  align: 'right' });
+    doc.text(`$ ${fmtM(netoGeneral)}`,  cNeto,  ty+4, { width: wNeto, align: 'right' });
     doc.fillColor('#92400e')
-      .text(`$ ${fmtM(ivaGeneral)}`,    cIva,   ty+4, { width: wIva,   align: 'right' });
+      .text(`$ ${fmtM(ivaGeneral)}`,    cIva,   ty+4, { width: wIva,  align: 'right' });
     doc.fillColor('#1a2a4a')
-      .text(`$ ${fmtM(totalGeneral)}`,  cTotal, ty+4, { width: wTotal, align: 'right' });
+      .text(`$ ${fmtM(totalGeneral)}`,  cTotal, ty+4, { width: wTotal,align: 'right' });
     doc.y = ty + totH + 20;
 
-    // ── Cuadro resumen IVA por alícuota ──────────────────────────────────────
-    ensureRoom(40 + alicuotas.length * 20 + 30);
-
-    const bx = left, bw = W;
-    const lineH = 18;
-    const boxH  = 14 + lineH + (alicuotas.length * lineH) + 10 + lineH + 8;
-    const by    = doc.y;
-
+    // Cuadro IVA por alícuota
+    ensureRoom(40 + alicuotas.length * 20 + 50);
+    const bx = left, bw = W, lineH = 18;
+    const boxH = 14 + lineH + (alicuotas.length * lineH) + 14 + lineH + 8;
+    const by   = doc.y;
     doc.rect(bx, by, bw, boxH).fillColor('#fffbeb').fill();
     doc.rect(bx, by, bw, boxH).strokeColor('#f59e0b').lineWidth(0.8).stroke();
     doc.lineWidth(1);
@@ -1453,45 +1436,38 @@ generarResumenComprasPeriodoPDF: (req, res) => {
     doc.fillColor('#92400e').font('Helvetica-Bold').fontSize(10)
       .text('RESUMEN DE IVA — COMPRAS DEL PERÍODO', bx + 14, ly, { width: bw - 28 });
     ly += lineH;
-
-    // Cabecera subtabla IVA
-    doc.fillColor('#92400e').font('Helvetica-Bold').fontSize(8)
-      .text('Alícuota', bx + 14, ly, { width: 80 });
-    doc.text('Facturas',  bx + 100, ly, { width: 60, align: 'center' });
+    doc.fillColor('#92400e').font('Helvetica-Bold').fontSize(8);
+    doc.text('Alícuota',  bx + 14,  ly, { width: 80 });
+    doc.text('Facturas',  bx + 100, ly, { width: 60,  align: 'center' });
     doc.text('Base Neta', bx + 180, ly, { width: 110, align: 'right' });
     doc.text('IVA $',     bx + 300, ly, { width: 100, align: 'right' });
     doc.text('Total',     bx + 410, ly, { width: bw - 424, align: 'right' });
-    ly += 14;
-    doc.moveTo(bx + 14, ly - 2).lineTo(bx + bw - 14, ly - 2)
-      .strokeColor('#f59e0b').lineWidth(0.4).stroke();
-    doc.lineWidth(1);
-
-    alicuotas.forEach(a => {
-      doc.fillColor('#333').font('Helvetica').fontSize(9)
-        .text(`IVA ${a.alicuota}%`, bx + 14, ly, { width: 80 });
-      doc.text(String(a.cant),         bx + 100, ly, { width: 60,  align: 'center' });
-      doc.text(`$ ${fmtM(a.neto)}`,    bx + 180, ly, { width: 110, align: 'right' });
-      doc.fillColor('#92400e').font('Helvetica-Bold')
-        .text(`$ ${fmtM(a.iva)}`,      bx + 300, ly, { width: 100, align: 'right' });
-      doc.fillColor('#333').font('Helvetica')
-        .text(`$ ${fmtM(a.total)}`,    bx + 410, ly, { width: bw - 424, align: 'right' });
-      ly += lineH;
-    });
-
-    // Línea separadora total IVA
-    doc.moveTo(bx + 14, ly - 2).lineTo(bx + bw - 14, ly - 2)
-      .strokeColor('#f59e0b').lineWidth(0.5).stroke();
+    ly += 12;
+    doc.moveTo(bx+14, ly).lineTo(bx+bw-14, ly).strokeColor('#f59e0b').lineWidth(0.4).stroke();
     doc.lineWidth(1);
     ly += 4;
 
+    alicuotas.forEach(a => {
+      doc.fillColor('#333').font('Helvetica').fontSize(9)
+        .text(`IVA ${a.alicuota}%`,  bx + 14,  ly, { width: 80 });
+      doc.text(String(a.cant),        bx + 100, ly, { width: 60,  align: 'center' });
+      doc.text(`$ ${fmtM(a.neto)}`,  bx + 180, ly, { width: 110, align: 'right' });
+      doc.fillColor('#92400e').font('Helvetica-Bold')
+        .text(`$ ${fmtM(a.iva)}`,    bx + 300, ly, { width: 100, align: 'right' });
+      doc.fillColor('#333').font('Helvetica')
+        .text(`$ ${fmtM(a.total)}`,  bx + 410, ly, { width: bw - 424, align: 'right' });
+      ly += lineH;
+    });
+
+    doc.moveTo(bx+14, ly-2).lineTo(bx+bw-14, ly-2).strokeColor('#f59e0b').lineWidth(0.5).stroke();
+    doc.lineWidth(1);
+    ly += 4;
     doc.fillColor('#92400e').font('Helvetica-Bold').fontSize(10)
       .text('IVA TOTAL A CONSIDERAR:', bx + 14, ly, { width: bw * 0.55 });
     doc.fillColor('#92400e').font('Helvetica-Bold').fontSize(11)
       .text(`$ ${fmtM(ivaGeneral)}`, bx + 14, ly, { width: bw - 28, align: 'right' });
-
     doc.y = by + boxH + 16;
 
-    // ── Total final ──────────────────────────────────────────────────────────
     doc.fillColor('#000').font('Helvetica').fontSize(9)
       .text(`Base neta total: $ ${fmtM(netoGeneral)}`, left, doc.y, { width: W, align: 'right' });
     doc.font('Helvetica-Bold').fontSize(12)
