@@ -1479,5 +1479,58 @@ generarResumenComprasPeriodoPDF: (req, res) => {
   });
 },
 
+// ── TOP PRODUCTOS VENDIDOS ─────────────────────────────────────────────────────
+// GET /administracion/api/top-productos?desde=YYYY-MM-DD&hasta=YYYY-MM-DD&limit=15
+// Une factura_items + presupuesto_items, agrupa por producto y ordena por cantidad
+topProductos: async (req, res) => {
+  try {
+    const conexion = require('../config/conexion');
+    const { desde, hasta } = req.query;
+    const limit = Math.min(parseInt(req.query.limit) || 15, 50);
+
+    const params = [];
+    let filtroFac  = '';
+    let filtroPres = '';
+
+    if (desde && hasta) {
+      filtroFac  = 'WHERE fm.fecha BETWEEN ? AND ?';
+      filtroPres = 'WHERE pm.fecha BETWEEN ? AND ?';
+      params.push(desde, hasta, desde, hasta);
+    }
+
+    const sql = `
+      SELECT p.id, p.nombre, SUM(v.cantidad) AS total_vendido
+      FROM (
+        SELECT fi.producto_id, fi.cantidad
+        FROM factura_items fi
+        INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
+        ${filtroFac}
+
+        UNION ALL
+
+        SELECT pi.producto_id, pi.cantidad
+        FROM presupuesto_items pi
+        INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
+        ${filtroPres}
+      ) v
+      INNER JOIN productos p ON p.id = v.producto_id
+      GROUP BY p.id, p.nombre
+      ORDER BY total_vendido DESC
+      LIMIT ${limit}
+    `;
+
+    conexion.query(sql, params, (err, rows) => {
+      if (err) {
+        console.error('❌ topProductos:', err);
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(rows);
+    });
+
+  } catch (e) {
+    console.error('❌ topProductos:', e);
+    res.status(500).json({ error: e.message });
+  }
+},
 
 }
