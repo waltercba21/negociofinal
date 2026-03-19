@@ -1,1093 +1,380 @@
 <%- include('./layouts/head.ejs') %>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
-/* ═══════════════════════════════════════════════════════════════
-   ESTADÍSTICAS — Dashboard Ejecutivo
-   Paleta: fondo oscuro azul-medianoche, acentos ámbar/dorado,
-   texto en crema. Tipografía: Syne (títulos) + DM Mono (números)
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   ESTADÍSTICAS — Dashboard Ejecutivo  (Roboto)
+═══════════════════════════════════════════════════ */
 :root {
-  --bg-base:     #080c14;
-  --bg-card:     #0e1520;
-  --bg-card2:    #111927;
-  --border:      rgba(255,255,255,0.06);
-  --border-hi:   rgba(255,200,80,0.18);
-  --gold:        #f5c842;
-  --gold-dim:    rgba(245,200,66,0.15);
-  --gold-glow:   rgba(245,200,66,0.08);
-  --blue:        #3b82f6;
-  --blue-dim:    rgba(59,130,246,0.12);
-  --green:       #34d399;
-  --green-dim:   rgba(52,211,153,0.12);
-  --red:         #f87171;
-  --red-dim:     rgba(248,113,113,0.12);
-  --purple:      #a78bfa;
-  --text-hi:     #f0f4ff;
-  --text-mid:    rgba(240,244,255,0.60);
-  --text-lo:     rgba(240,244,255,0.30);
-  --radius:      14px;
-  --radius-sm:   8px;
+  --bg:        #080c14;
+  --bg-card:   #0e1520;
+  --bg-card2:  #111927;
+  --border:    rgba(255,255,255,0.07);
+  --border-hi: rgba(245,200,66,0.20);
+  --gold:      #f5c842;
+  --gold-dim:  rgba(245,200,66,0.10);
+  --blue:      #3b82f6;
+  --green:     #34d399;
+  --red:       #f87171;
+  --purple:    #a78bfa;
+  --txt-hi:    #f0f4ff;
+  --txt-mid:   rgba(240,244,255,0.58);
+  --txt-lo:    rgba(240,244,255,0.30);
+  --r:         12px;
+  --r-sm:      8px;
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt-hi);font-family:'Roboto',sans-serif}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+.pg{max-width:1400px;margin:0 auto;padding:24px 20px 60px}
 
-body {
-  background: var(--bg-base);
-  color: var(--text-hi);
-  font-family: 'DM Sans', sans-serif;
-  min-height: 100vh;
-}
+/* TOPBAR */
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:22px}
+.topbar__ey{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:5px;display:flex;align-items:center;gap:7px}
+.topbar__ey::before{content:'';width:16px;height:1px;background:var(--gold)}
+.topbar__title{font-size:28px;font-weight:900;letter-spacing:-.3px}
+.topbar__sub{font-size:12px;color:var(--txt-mid);margin-top:3px}
+.btn-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--txt-mid);background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px 16px;text-decoration:none;transition:all .2s;white-space:nowrap}
+.btn-back:hover{color:var(--txt-hi);border-color:rgba(255,255,255,.13)}
 
-/* ── PAGE SHELL ── */
-.est-root {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 28px 24px 60px;
-}
+/* PERIOD */
+.period-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.period-tabs{display:flex;background:var(--bg-card);border:1px solid var(--border);border-radius:30px;padding:3px;gap:2px}
+.period-tab{font-size:12px;font-weight:500;color:var(--txt-mid);background:none;border:none;border-radius:24px;padding:6px 16px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.period-tab:hover{color:var(--txt-hi)}
+.period-tab.active{background:var(--gold);color:#080c14;font-weight:700}
+.sub-filters{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sub-filters select{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--txt-hi);background:var(--bg-card2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;outline:none;cursor:pointer}
+.sub-filters select:focus{border-color:var(--border-hi)}
+.btn-act{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;background:var(--gold);color:#080c14;border:none;border-radius:24px;padding:8px 22px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-act:hover{opacity:.88;transform:translateY(-1px)}
+.loading{display:none;align-items:center;gap:8px;font-family:'Roboto Mono',monospace;font-size:11px;color:var(--gold);background:var(--gold-dim);border:1px solid var(--border-hi);border-radius:7px;padding:6px 14px}
+.loading.on{display:flex}
+.spinner{width:13px;height:13px;border:2px solid rgba(245,200,66,.25);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── TOPBAR ── */
-.est-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
+.rango-lbl{display:none;font-family:'Roboto Mono',monospace;font-size:11px;color:var(--txt-lo);padding:7px 14px;background:var(--bg-card);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;margin-bottom:18px;width:fit-content}
+.rango-lbl span{color:var(--txt-mid)}
+.err-box{display:none;padding:11px 16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.22);border-radius:8px;font-size:12px;color:var(--red);margin-bottom:16px}
+.err-box.on{display:block}
 
-.est-topbar__left {}
+/* BALANCE CARD */
+.bal-card{background:linear-gradient(135deg,#0c1829 0%,var(--bg-card) 100%);border:1px solid var(--border-hi);border-radius:var(--r);padding:22px 26px;margin-bottom:18px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;animation:fadeUp .35s ease both}
+.bal-card::before{content:'BALANCE';position:absolute;right:-6px;top:-4px;font-weight:900;font-size:48px;color:rgba(245,200,66,.03);pointer-events:none;white-space:nowrap}
+.bal-ey{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:7px}
+/* valor balance con clamp para no escapar */
+.bal-val{font-size:clamp(22px,3.5vw,40px);font-weight:900;line-height:1;transition:color .5s}
+.bal-val.pos{color:var(--green)}.bal-val.neg{color:var(--red)}.bal-val.neu{color:var(--txt-hi)}
+.bal-verdict{font-size:12px;color:var(--txt-mid);margin-top:7px;display:flex;align-items:center;gap:6px}
+.bal-right{display:flex;gap:14px;flex-wrap:wrap}
+.bal-col{text-align:center;min-width:90px}
+.bal-col-lbl{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-lo);margin-bottom:3px}
+/* valores columna con clamp */
+.bal-col-val{font-size:clamp(12px,1.5vw,16px);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bal-col-val.ing{color:var(--blue)}.bal-col-val.comp{color:var(--red)}.bal-col-val.gast{color:rgba(248,113,113,.7)}.bal-col-val.marg{color:var(--green)}
+.bal-bar{height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:5px;overflow:hidden}
+.bal-bar-fill{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
 
-.est-eyebrow {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  color: var(--gold);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.est-eyebrow::before {
-  content: '';
-  width: 20px; height: 1px;
-  background: var(--gold);
-}
+/* SEC TITLE */
+.sec-title{font-size:11px;font-weight:700;color:var(--txt-lo);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.sec-title i{font-size:11px}
 
-.est-title {
-  font-family: 'Syne', sans-serif;
-  font-size: clamp(26px, 4vw, 40px);
-  font-weight: 800;
-  color: var(--text-hi);
-  line-height: 1.05;
-  letter-spacing: -0.5px;
-}
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:11px;margin-bottom:18px}
+.kpi{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .25s,transform .2s;animation:fadeUp .4s ease both}
+.kpi:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.12)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--k-ac,var(--gold))}
+.kpi--gold{--k-ac:var(--gold)}.kpi--blue{--k-ac:var(--blue)}.kpi--green{--k-ac:var(--green)}.kpi--red{--k-ac:var(--red)}.kpi--purple{--k-ac:var(--purple)}
+.kpi-lbl{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-lo);margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.kpi-lbl i{color:var(--k-ac);font-size:10px}
+/* KPI VALUE: clamp + overflow hidden para que no escape */
+.kpi-val{font-size:clamp(13px,1.8vw,18px);font-weight:700;color:var(--txt-hi);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.kpi-sub{font-size:10px;color:var(--txt-lo);margin-top:3px}
+.kpi:nth-child(1){animation-delay:.04s}.kpi:nth-child(2){animation-delay:.08s}.kpi:nth-child(3){animation-delay:.12s}.kpi:nth-child(4){animation-delay:.16s}.kpi:nth-child(5){animation-delay:.20s}
 
-.est-subtitle {
-  font-size: 13px;
-  color: var(--text-mid);
-  margin-top: 4px;
-}
+/* RATIO STRIP */
+.ratio-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+.ratio{background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;text-align:center}
+.ratio-num{font-size:clamp(16px,2vw,24px);font-weight:700;margin-bottom:3px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ratio-lbl{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-lo)}
+.ratio-desc{font-size:10px;color:var(--txt-mid);margin-top:4px}
 
-.est-topbar__actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
+/* CARDS */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;animation:fadeUp .4s ease both}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 17px 9px;border-bottom:1px solid var(--border)}
+.card-title{font-size:13px;font-weight:700;color:var(--txt-hi);display:flex;align-items:center;gap:7px}
+.card-title i{color:var(--c-ac,var(--gold));font-size:12px}
+.card-badge{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-lo);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:20px;padding:3px 9px}
+.card-body{padding:13px 17px}
+.ch-md{position:relative;height:230px}
+.ch-sm{position:relative;height:170px}
 
-/* ── PERIOD SELECTOR ── */
-.est-period-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 40px;
-  padding: 4px;
-}
+/* GRIDS */
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:18px}
+.g-4060{display:grid;grid-template-columns:1fr 1.5fr;gap:14px;margin-bottom:18px}
+.g-6040{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:18px}
+@media(max-width:900px){.g2,.g-4060,.g-6040{grid-template-columns:1fr}}
 
-.est-period-btn {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-mid);
-  background: none;
-  border: none;
-  border-radius: 30px;
-  padding: 6px 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-.est-period-btn:hover { color: var(--text-hi); }
-.est-period-btn.active {
-  background: var(--gold);
-  color: #080c14;
-}
+/* PIE */
+.pie-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center}
+.pie-cw{position:relative;height:170px}
+.legend{display:flex;flex-direction:column;gap:6px}
+.leg-row{display:flex;align-items:center;gap:7px}
+.leg-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.leg-name{font-size:11px;color:var(--txt-mid);flex:1}
+.leg-pct{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--txt-hi)}
+.leg-val{font-family:'Roboto Mono',monospace;font-size:9px;color:var(--txt-lo);margin-left:14px;margin-top:1px}
 
-.est-period-custom {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  margin-left: 4px;
-}
-.est-period-custom select,
-.est-period-custom input {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--text-hi);
-  background: var(--bg-card2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 5px 8px;
-  outline: none;
-  cursor: pointer;
-}
-.est-period-custom select:focus,
-.est-period-custom input:focus { border-color: var(--border-hi); }
+/* RANKING */
+.ranking{display:flex;flex-direction:column;gap:6px}
+.rk-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;background:rgba(255,255,255,.02);border:1px solid transparent;transition:all .18s}
+.rk-row:hover{background:rgba(255,255,255,.04);border-color:var(--border)}
+.rk-row.top{background:var(--gold-dim);border-color:var(--border-hi)}
+.rk-pos{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--txt-lo);width:20px;flex-shrink:0;text-align:center}
+.rk-row.top .rk-pos{color:var(--gold)}
+.rk-name{font-size:11px;font-weight:500;color:var(--txt-hi);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rk-bar-w{width:55px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.rk-bar-f{height:100%;border-radius:2px;transition:width .7s ease}
+.rk-val{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--txt-mid);white-space:nowrap;min-width:70px;text-align:right}
 
-.est-btn-buscar {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  background: var(--gold);
-  color: #080c14;
-  border: none;
-  border-radius: 30px;
-  padding: 8px 20px;
-  cursor: pointer;
-  letter-spacing: 0.3px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.est-btn-buscar:hover { opacity: 0.85; transform: translateY(-1px); }
-.est-btn-buscar:active { transform: translateY(0); }
+/* GASTOS */
+.gastos-list{display:flex;flex-direction:column;gap:4px}
+.gasto-row{display:flex;align-items:center;gap:7px;padding:6px 7px;border-radius:6px;transition:background .15s}
+.gasto-row:hover{background:rgba(255,255,255,.03)}
+.gasto-ico{width:24px;height:24px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px}
+.gasto-name{font-size:11px;color:var(--txt-mid);flex:1;text-transform:capitalize}
+.gasto-bw{width:50px;height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden}
+.gasto-bf{height:100%;border-radius:2px;transition:width .6s ease}
+.gasto-val{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--txt-hi);white-space:nowrap;min-width:80px;text-align:right}
 
-/* ── LOADING OVERLAY ── */
-.est-loading {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  color: var(--gold);
-  padding: 8px 16px;
-  background: var(--gold-dim);
-  border: 1px solid var(--border-hi);
-  border-radius: 8px;
-}
-.est-loading.visible { display: flex; }
-.est-spinner {
-  width: 14px; height: 14px;
-  border: 2px solid rgba(245,200,66,0.3);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+/* TABS */
+.tabs{display:flex;gap:3px;background:rgba(255,255,255,.04);border-radius:7px;padding:3px}
+.tab{font-size:11px;font-weight:500;color:var(--txt-lo);background:none;border:none;border-radius:5px;padding:4px 11px;cursor:pointer;transition:all .18s}
+.tab:hover{color:var(--txt-hi)}
+.tab.active{background:var(--bg-card);color:var(--txt-hi);box-shadow:0 1px 4px rgba(0,0,0,.3)}
 
-/* ── RANGO LABEL ── */
-.est-rango-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--text-lo);
-  margin-bottom: 24px;
-  padding: 8px 16px;
-  background: var(--bg-card);
-  border-left: 2px solid var(--gold);
-  border-radius: 0 6px 6px 0;
-  display: inline-block;
-}
-#rangoTexto { color: var(--text-mid); }
+/* EMPTY */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;gap:7px;color:var(--txt-lo);text-align:center}
+.empty i{font-size:22px;opacity:.25}
+.empty p{font-size:11px}
 
-/* ── KPI STRIP (fila superior de métricas) ── */
-.est-kpi-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 14px;
-  margin-bottom: 24px;
-}
-
-.est-kpi {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px 22px;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.3s, transform 0.2s;
-  animation: fadeUp 0.4s ease both;
-}
-.est-kpi:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255,255,255,0.12);
-}
-.est-kpi::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--kpi-accent, var(--gold));
-}
-
-.est-kpi--gold  { --kpi-accent: var(--gold); }
-.est-kpi--blue  { --kpi-accent: var(--blue); }
-.est-kpi--green { --kpi-accent: var(--green); }
-.est-kpi--red   { --kpi-accent: var(--red); }
-.est-kpi--purple { --kpi-accent: var(--purple); }
-
-.est-kpi__label {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--text-lo);
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.est-kpi__icon {
-  font-size: 11px;
-  color: var(--kpi-accent, var(--gold));
-}
-
-.est-kpi__value {
-  font-family: 'Syne', sans-serif;
-  font-size: clamp(22px, 3vw, 32px);
-  font-weight: 800;
-  color: var(--text-hi);
-  line-height: 1;
-  margin-bottom: 6px;
-  transition: all 0.5s;
-}
-
-.est-kpi__delta {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.est-kpi__delta--up   { color: var(--green); }
-.est-kpi__delta--down { color: var(--red); }
-.est-kpi__delta--neu  { color: var(--text-lo); }
-
-.est-kpi__sub {
-  font-size: 11px;
-  color: var(--text-lo);
-  margin-top: 2px;
-}
-
-/* ── BALANCE CARD ── */
-.est-balance-card {
-  background: linear-gradient(135deg, #0f1d33 0%, #0e1520 100%);
-  border: 1px solid var(--border-hi);
-  border-radius: var(--radius);
-  padding: 28px 32px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
-  position: relative;
-  overflow: hidden;
-  animation: fadeUp 0.3s ease both;
-}
-.est-balance-card::before {
-  content: 'BALANCE OPERATIVO';
-  position: absolute;
-  right: -10px; top: -8px;
-  font-family: 'Syne', sans-serif;
-  font-size: 60px;
-  font-weight: 800;
-  color: rgba(245,200,66,0.03);
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-.est-balance__left {}
-.est-balance__eyebrow {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 8px;
-}
-.est-balance__value {
-  font-family: 'Syne', sans-serif;
-  font-size: clamp(36px, 6vw, 56px);
-  font-weight: 800;
-  line-height: 1;
-  transition: color 0.5s;
-}
-.est-balance__value.positive { color: var(--green); }
-.est-balance__value.negative { color: var(--red); }
-.est-balance__value.neutral  { color: var(--text-hi); }
-
-.est-balance__verdict {
-  font-size: 13px;
-  color: var(--text-mid);
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.est-balance__verdict i { font-size: 14px; }
-
-.est-balance__right {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.est-balance__col {
-  text-align: center;
-  min-width: 120px;
-}
-.est-balance__col-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--text-lo);
-  margin-bottom: 4px;
-}
-.est-balance__col-val {
-  font-family: 'Syne', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-}
-.est-balance__col-val.income { color: var(--blue); }
-.est-balance__col-val.expense { color: var(--red); }
-.est-balance__col-val.margin { color: var(--green); }
-
-.est-balance__bar {
-  height: 4px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 2px;
-  margin-top: 8px;
-  overflow: hidden;
-}
-.est-balance__bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
-}
-
-/* ── SECTION TITLE ── */
-.est-section-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-lo);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.est-section-title::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
-/* ── GRID LAYOUTS ── */
-.est-grid-2 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.est-grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.est-grid-half {
-  display: grid;
-  grid-template-columns: 1fr 1.6fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.est-grid-half-r {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 900px) {
-  .est-grid-2, .est-grid-3, .est-grid-half, .est-grid-half-r {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ── CHART CARD ── */
-.est-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  animation: fadeUp 0.4s ease both;
-}
-
-.est-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid var(--border);
-}
-.est-card__title {
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-hi);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.est-card__title i { color: var(--card-accent, var(--gold)); font-size: 13px; }
-
-.est-card__badge {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text-lo);
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 3px 10px;
-}
-
-.est-card__body {
-  padding: 16px 20px;
-}
-
-.est-chart-wrap {
-  position: relative;
-  height: 220px;
-}
-.est-chart-wrap--tall { height: 280px; }
-.est-chart-wrap--sm   { height: 180px; }
-
-/* ── TABLA RANKING ── */
-.est-ranking {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.est-ranking-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background: rgba(255,255,255,0.02);
-  border: 1px solid transparent;
-  transition: all 0.2s;
-}
-.est-ranking-row:hover {
-  background: rgba(255,255,255,0.04);
-  border-color: var(--border);
-}
-.est-ranking-row:first-child {
-  background: var(--gold-glow);
-  border-color: var(--border-hi);
-}
-
-.est-ranking__pos {
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-lo);
-  width: 20px;
-  flex-shrink: 0;
-}
-.est-ranking-row:first-child .est-ranking__pos { color: var(--gold); }
-
-.est-ranking__name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-hi);
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.est-ranking__val {
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  color: var(--text-mid);
-  white-space: nowrap;
-}
-.est-ranking__bar-wrap {
-  width: 70px;
-  height: 4px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.est-ranking__bar-fill {
-  height: 100%;
-  background: var(--ranking-color, var(--gold));
-  border-radius: 2px;
-  transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
-}
-
-/* ── DISTRIBUCIÓN (Pie legend) ── */
-.est-pie-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-.est-pie-grid .est-chart-wrap { height: 200px; }
-
-.est-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  justify-content: center;
-}
-.est-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.est-legend-dot {
-  width: 8px; height: 8px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-.est-legend-label {
-  font-size: 12px;
-  color: var(--text-mid);
-  flex: 1;
-}
-.est-legend-val {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--text-hi);
-}
-
-/* ── GASTOS DETALLE ── */
-.est-gastos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.est-gasto-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 10px;
-  border-radius: 7px;
-  transition: background 0.15s;
-}
-.est-gasto-item:hover { background: rgba(255,255,255,0.03); }
-.est-gasto-icon {
-  width: 28px; height: 28px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  flex-shrink: 0;
-}
-.est-gasto-name {
-  font-size: 12px;
-  color: var(--text-mid);
-  flex: 1;
-  text-transform: capitalize;
-}
-.est-gasto-bar-wrap {
-  width: 60px;
-  height: 3px;
-  background: rgba(255,255,255,0.05);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.est-gasto-bar { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
-.est-gasto-val {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--text-hi);
-  white-space: nowrap;
-  min-width: 90px;
-  text-align: right;
-}
-
-/* ── INDICADORES / RATIOS ── */
-.est-ratio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-}
-.est-ratio {
-  background: var(--bg-card2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  text-align: center;
-}
-.est-ratio__num {
-  font-family: 'Syne', sans-serif;
-  font-size: 26px;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-.est-ratio__label {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--text-lo);
-}
-.est-ratio__desc {
-  font-size: 11px;
-  color: var(--text-mid);
-  margin-top: 6px;
-}
-
-/* ── EMPTY STATE ── */
-.est-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  color: var(--text-lo);
-  gap: 8px;
-  text-align: center;
-}
-.est-empty i { font-size: 28px; opacity: 0.3; }
-.est-empty p { font-size: 12px; }
-
-/* ── ERROR ── */
-.est-error {
-  display: none;
-  padding: 12px 16px;
-  background: var(--red-dim);
-  border: 1px solid rgba(248,113,113,0.25);
-  border-radius: 8px;
-  font-size: 13px;
-  color: var(--red);
-  margin-bottom: 20px;
-}
-.est-error.visible { display: block; }
-
-/* ── ANIMATIONS ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* delay cascade */
-.est-kpi:nth-child(1) { animation-delay: 0.05s; }
-.est-kpi:nth-child(2) { animation-delay: 0.10s; }
-.est-kpi:nth-child(3) { animation-delay: 0.15s; }
-.est-kpi:nth-child(4) { animation-delay: 0.20s; }
-.est-kpi:nth-child(5) { animation-delay: 0.25s; }
-
-/* ── NUMBER COUNTER ANIMATION ── */
-.counting { animation: numPop 0.3s ease; }
-@keyframes numPop {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.06); }
-  100% { transform: scale(1); }
-}
-
-/* ── TREND SPARKLINE ── */
-.est-sparkline { height: 36px; width: 80px; }
-
-/* ── TABS ── */
-.est-tabs {
-  display: flex;
-  gap: 4px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 8px;
-  padding: 3px;
-}
-.est-tab {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-lo);
-  background: none;
-  border: none;
-  border-radius: 6px;
-  padding: 5px 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.est-tab:hover { color: var(--text-hi); }
-.est-tab.active {
-  background: var(--bg-card);
-  color: var(--text-hi);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-}
-
-/* ── DIVIDER ── */
-.est-divider { height: 1px; background: var(--border); margin: 24px 0; }
-
-/* ── BACK BTN ── */
-.est-back {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-mid);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 16px;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
-}
-.est-back:hover { color: var(--text-hi); border-color: rgba(255,255,255,0.12); }
-
-/* ── PROFIT INDICATOR ── */
-.est-verdict-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  padding: 6px 14px;
-  border-radius: 20px;
-}
-.est-verdict-badge.ganando {
-  background: rgba(52,211,153,0.12);
-  color: var(--green);
-  border: 1px solid rgba(52,211,153,0.25);
-}
-.est-verdict-badge.perdiendo {
-  background: rgba(248,113,113,0.12);
-  color: var(--red);
-  border: 1px solid rgba(248,113,113,0.25);
-}
-.est-verdict-badge.neutro {
-  background: rgba(245,200,66,0.08);
-  color: var(--gold);
-  border: 1px solid rgba(245,200,66,0.2);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+/* ANIM */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
 </style>
 
 <%- include('./layouts/header.ejs') %>
 
 <body>
-<div class="est-root">
+<div class="pg">
 
-  <!-- ══════════ TOPBAR ══════════ -->
-  <div class="est-topbar">
-    <div class="est-topbar__left">
-      <div class="est-eyebrow"><i class="fa-solid fa-chart-mixed"></i> Panel Ejecutivo</div>
-      <h1 class="est-title">Estadísticas</h1>
-      <p class="est-subtitle">Métricas y análisis operativo del negocio en tiempo real</p>
+  <div class="topbar">
+    <div>
+      <div class="topbar__ey"><i class="fa-solid fa-chart-mixed"></i>Panel Ejecutivo</div>
+      <h1 class="topbar__title">Estadísticas</h1>
+      <p class="topbar__sub">Métricas operativas del negocio en tiempo real</p>
     </div>
-    <div class="est-topbar__actions">
-      <a href="/administracion" class="est-back">
-        <i class="fa-solid fa-arrow-left"></i> Administración
-      </a>
-    </div>
+    <a href="/administracion" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Administración</a>
   </div>
 
-  <!-- ══════════ FILTROS PERIODO ══════════ -->
-  <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:20px;">
-    <div class="est-period-bar">
-      <button class="est-period-btn" data-periodo="semanal">Semana</button>
-      <button class="est-period-btn active" data-periodo="mensual">Mes</button>
-      <button class="est-period-btn" data-periodo="anual">Año</button>
+  <div class="period-wrap">
+    <div class="period-tabs">
+      <button class="period-tab" data-p="semanal">Semana</button>
+      <button class="period-tab active" data-p="mensual">Mes</button>
+      <button class="period-tab" data-p="anual">Año</button>
     </div>
-
-    <!-- Sub-filtros semanal -->
-    <div id="sub-semanal" class="est-period-custom" style="display:none;">
-      <select id="f-anSem"></select>
-      <select id="f-mesSem"></select>
+    <div id="sub-semanal" class="sub-filters" style="display:none">
+      <select id="f-anSem"></select><select id="f-mesSem"></select>
       <select id="f-semanaMes">
         <option value="1">Semana 1</option><option value="2">Semana 2</option>
         <option value="3">Semana 3</option><option value="4">Semana 4</option>
         <option value="5">Semana 5</option>
       </select>
     </div>
-
-    <!-- Sub-filtros mensual -->
-    <div id="sub-mensual" class="est-period-custom">
-      <select id="f-anMen"></select>
-      <select id="f-mesMen"></select>
+    <div id="sub-mensual" class="sub-filters">
+      <select id="f-anMen"></select><select id="f-mesMen"></select>
     </div>
-
-    <!-- Sub-filtros anual -->
-    <div id="sub-anual" class="est-period-custom" style="display:none;">
+    <div id="sub-anual" class="sub-filters" style="display:none">
       <select id="f-anAnu"></select>
     </div>
-
-    <button class="est-btn-buscar" id="btnActualizar">
-      <i class="fa-solid fa-rotate"></i> Actualizar
-    </button>
-
-    <div class="est-loading" id="loadingIndicator">
-      <div class="est-spinner"></div>
-      Cargando datos...
-    </div>
+    <button class="btn-act" id="btnActualizar"><i class="fa-solid fa-rotate"></i> Actualizar</button>
+    <div class="loading" id="loadingEl"><div class="spinner"></div>Cargando…</div>
   </div>
 
-  <div id="rangoLabel" class="est-rango-label" style="display:none;">
-    Mostrando: <span id="rangoTexto">—</span>
+  <div class="rango-lbl" id="rangoLbl">Mostrando: <span id="rangoTxt">—</span></div>
+  <div class="err-box" id="errBox"></div>
+
+  <div id="dash" style="display:none">
+
+    <!-- BALANCE -->
+    <div class="bal-card">
+      <div>
+        <div class="bal-ey">Balance Operativo del Período</div>
+        <div class="bal-val neu" id="balVal">$0</div>
+        <div class="bal-verdict" id="balVerdict"><i class="fa-solid fa-circle-info"></i> Cargando análisis…</div>
+      </div>
+      <div class="bal-right">
+        <div class="bal-col">
+          <div class="bal-col-lbl">Ingresos</div>
+          <div class="bal-col-val ing" id="balIng">$0</div>
+          <div class="bal-bar"><div class="bal-bar-fill" id="bIng" style="width:0%;background:var(--blue)"></div></div>
+        </div>
+        <div class="bal-col">
+          <div class="bal-col-lbl">Compras</div>
+          <div class="bal-col-val comp" id="balComp">$0</div>
+          <div class="bal-bar"><div class="bal-bar-fill" id="bComp" style="width:0%;background:var(--red)"></div></div>
+        </div>
+        <div class="bal-col">
+          <div class="bal-col-lbl">Gastos</div>
+          <div class="bal-col-val gast" id="balGast">$0</div>
+          <div class="bal-bar"><div class="bal-bar-fill" id="bGast" style="width:0%;background:rgba(248,113,113,.5)"></div></div>
+        </div>
+        <div class="bal-col">
+          <div class="bal-col-lbl">Margen</div>
+          <div class="bal-col-val marg" id="balMarg">0%</div>
+          <div class="bal-bar"><div class="bal-bar-fill" id="bMarg" style="width:0%;background:var(--green)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="sec-title"><i class="fa-solid fa-gauge-high" style="color:var(--gold)"></i>Métricas Clave</div>
+    <div class="kpi-strip">
+      <div class="kpi kpi--blue">
+        <div class="kpi-lbl"><i class="fa-solid fa-file-invoice-dollar"></i>Ventas A</div>
+        <div class="kpi-val" id="kVentaA">—</div>
+        <div class="kpi-sub">Ingresos facturados</div>
+      </div>
+      <div class="kpi kpi--purple">
+        <div class="kpi-lbl"><i class="fa-solid fa-file-lines"></i>Ventas B</div>
+        <div class="kpi-val" id="kVentaB">—</div>
+        <div class="kpi-sub">Ingresos presupuestados</div>
+      </div>
+      <div class="kpi kpi--red">
+        <div class="kpi-lbl"><i class="fa-solid fa-cart-shopping"></i>Compras</div>
+        <div class="kpi-val" id="kCompra">—</div>
+        <div class="kpi-sub">Stock e insumos</div>
+      </div>
+      <div class="kpi kpi--gold">
+        <div class="kpi-lbl"><i class="fa-solid fa-coins"></i>Gastos Op.</div>
+        <div class="kpi-val" id="kGastos">—</div>
+        <div class="kpi-sub">Servicios, sueldos, otros</div>
+      </div>
+      <div class="kpi kpi--green">
+        <div class="kpi-lbl"><i class="fa-solid fa-percent"></i>Margen Bruto</div>
+        <div class="kpi-val" id="kMargen">—</div>
+        <div class="kpi-sub">Ventas − Compras / Ventas</div>
+      </div>
+    </div>
+
+    <!-- INDICADORES -->
+    <div class="sec-title"><i class="fa-solid fa-sliders" style="color:var(--purple)"></i>Indicadores Financieros</div>
+    <div class="ratio-strip">
+      <div class="ratio"><div class="ratio-num" id="rRentab" style="color:var(--green)">—</div><div class="ratio-lbl">Rentabilidad Neta</div><div class="ratio-desc">Balance / Ingresos</div></div>
+      <div class="ratio"><div class="ratio-num" id="rCV" style="color:var(--blue)">—</div><div class="ratio-lbl">Compra / Venta</div><div class="ratio-desc">Qué % de ventas se compra</div></div>
+      <div class="ratio"><div class="ratio-num" id="rGV" style="color:var(--gold)">—</div><div class="ratio-lbl">Gastos / Ventas</div><div class="ratio-desc">Peso gastos sobre ingresos</div></div>
+      <div class="ratio"><div class="ratio-num" id="rPesoA" style="color:var(--purple)">—</div><div class="ratio-lbl">Participación A</div><div class="ratio-desc">Factura A sobre total ventas</div></div>
+    </div>
+
+    <!-- EVOLUCIÓN -->
+    <div class="sec-title"><i class="fa-solid fa-chart-line" style="color:var(--blue)"></i>Evolución Temporal</div>
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-hdr">
+        <div class="card-title" style="--c-ac:var(--blue)"><i class="fa-solid fa-chart-area"></i>Ventas · Compras · Gastos</div>
+        <div class="tabs" id="evolTabs">
+          <button class="tab active" data-t="linea">Línea</button>
+          <button class="tab" data-t="barra">Barras</button>
+        </div>
+      </div>
+      <div class="card-body"><div class="ch-md"><canvas id="cEvol"></canvas></div></div>
+    </div>
+
+    <!-- VENTAS PIE + PROVEEDORES -->
+    <div class="g-4060">
+      <div class="card" style="--c-ac:var(--blue)">
+        <div class="card-hdr">
+          <div class="card-title"><i class="fa-solid fa-chart-pie"></i>Distribución Ventas</div>
+          <span class="card-badge">A vs B</span>
+        </div>
+        <div class="card-body">
+          <div class="pie-wrap">
+            <div class="pie-cw"><canvas id="cVentasPie"></canvas></div>
+            <div class="legend" id="legVentas"><div class="empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="--c-ac:var(--red)">
+        <div class="card-hdr">
+          <div class="card-title"><i class="fa-solid fa-truck"></i>Top Proveedores</div>
+          <span class="card-badge">Por compras del período</span>
+        </div>
+        <div class="card-body">
+          <div class="ranking" id="rkProv"><div class="empty"><i class="fa-solid fa-truck"></i><p>Cargando…</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTOS + COMPRAS PIE -->
+    <div class="g-6040">
+      <div class="card" style="--c-ac:var(--green)">
+        <div class="card-hdr">
+          <div class="card-title"><i class="fa-solid fa-trophy"></i>Productos más Vendidos</div>
+          <span class="card-badge">Por cantidad</span>
+        </div>
+        <div class="card-body">
+          <div class="ranking" id="rkProd"><div class="empty"><i class="fa-solid fa-trophy"></i><p>Cargando…</p></div></div>
+        </div>
+      </div>
+      <div class="card" style="--c-ac:var(--red)">
+        <div class="card-hdr">
+          <div class="card-title"><i class="fa-solid fa-chart-donut"></i>Compras por Tipo</div>
+          <span class="card-badge">A · B</span>
+        </div>
+        <div class="card-body">
+          <div class="pie-wrap">
+            <div class="pie-cw"><canvas id="cComprasPie"></canvas></div>
+            <div class="legend" id="legCompras"><div class="empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GASTOS -->
+    <div class="sec-title"><i class="fa-solid fa-receipt" style="color:var(--gold)"></i>Gastos Operativos</div>
+    <div class="g2">
+      <div class="card" style="--c-ac:var(--gold)">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-list-ul"></i>Desglose por Categoría</div></div>
+        <div class="card-body"><div class="gastos-list" id="gastosLista"><div class="empty"><i class="fa-solid fa-receipt"></i><p>Sin gastos</p></div></div></div>
+      </div>
+      <div class="card" style="--c-ac:var(--gold)">
+        <div class="card-hdr"><div class="card-title"><i class="fa-solid fa-chart-pie"></i>Distribución Gastos</div></div>
+        <div class="card-body">
+          <div class="pie-wrap">
+            <div class="pie-cw"><canvas id="cGastosPie"></canvas></div>
+            <div class="legend" id="legGastos"><div class="empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIAGNÓSTICO -->
+    <div class="sec-title"><i class="fa-solid fa-magnifying-glass-chart" style="color:var(--green)"></i>Diagnóstico del Negocio</div>
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-body" id="diagPanel"><div class="empty"><i class="fa-solid fa-magnifying-glass"></i><p>El diagnóstico aparecerá luego de cargar los datos</p></div></div>
+    </div>
+
+  </div><!-- /dash -->
+
+  <div id="estadoInicial" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 20px;gap:14px;text-align:center">
+    <i class="fa-solid fa-chart-mixed" style="font-size:44px;color:var(--gold);opacity:.35"></i>
+    <p style="font-size:17px;font-weight:700;color:var(--txt-mid)">Seleccioná el período y presioná Actualizar</p>
+    <p style="font-size:12px;color:var(--txt-lo)">El dashboard cargará ventas, compras, gastos, proveedores y balance operativo.</p>
   </div>
 
-  <div class="est-error" id="errorGlobal"></div>
-
-  <!-- ══════════ CONTENIDO PRINCIPAL (oculto hasta cargar) ══════════ -->
-  <div id="dashContent" style="display:none;">
-
-    <!-- ── BALANCE OPERATIVO (la carta grande) ── -->
-    <div class="est-balance-card" id="balanceCard">
-      <div class="est-balance__left">
-        <div class="est-balance__eyebrow">Balance Operativo del Período</div>
-        <div class="est-balance__value neutral" id="balanceValue">$0</div>
-        <div class="est-balance__verdict" id="balanceVerdict">
-          <i class="fa-solid fa-circle-info"></i> Seleccione un período para ver el balance
-        </div>
-      </div>
-      <div class="est-balance__right">
-        <div class="est-balance__col">
-          <div class="est-balance__col-label">Ingresos Totales</div>
-          <div class="est-balance__col-val income" id="balIngreso">$0</div>
-          <div class="est-balance__bar"><div class="est-balance__bar-fill" id="barIngreso" style="width:0%;background:var(--blue);"></div></div>
-        </div>
-        <div class="est-balance__col">
-          <div class="est-balance__col-label">Compras</div>
-          <div class="est-balance__col-val expense" id="balCompra">$0</div>
-          <div class="est-balance__bar"><div class="est-balance__bar-fill" id="barCompra" style="width:0%;background:var(--red);"></div></div>
-        </div>
-        <div class="est-balance__col">
-          <div class="est-balance__col-label">Gastos Op.</div>
-          <div class="est-balance__col-val expense" id="balGastos">$0</div>
-          <div class="est-balance__bar"><div class="est-balance__bar-fill" id="barGastos" style="width:0%;background:rgba(248,113,113,0.5);"></div></div>
-        </div>
-        <div class="est-balance__col">
-          <div class="est-balance__col-label">Margen</div>
-          <div class="est-balance__col-val margin" id="balMargen">0%</div>
-          <div class="est-balance__bar"><div class="est-balance__bar-fill" id="barMargen" style="width:0%;background:var(--green);"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── KPIs PRINCIPALES ── -->
-    <div class="est-section-title"><i class="fa-solid fa-gauge-high" style="color:var(--gold)"></i> Métricas Clave</div>
-    <div class="est-kpi-strip">
-      <div class="est-kpi est-kpi--blue">
-        <div class="est-kpi__label"><i class="fa-solid fa-arrow-trend-up est-kpi__icon"></i>Ventas Factura A</div>
-        <div class="est-kpi__value" id="kpiVentaA">—</div>
-        <div class="est-kpi__sub">Ingresos facturados (A)</div>
-      </div>
-      <div class="est-kpi est-kpi--purple">
-        <div class="est-kpi__label"><i class="fa-solid fa-file-lines est-kpi__icon"></i>Ventas Presupuesto B</div>
-        <div class="est-kpi__value" id="kpiVentaB">—</div>
-        <div class="est-kpi__sub">Ingresos por presupuesto (B)</div>
-      </div>
-      <div class="est-kpi est-kpi--red">
-        <div class="est-kpi__label"><i class="fa-solid fa-cart-shopping est-kpi__icon"></i>Compras Proveedores</div>
-        <div class="est-kpi__value" id="kpiCompra">—</div>
-        <div class="est-kpi__sub">Stock e insumos adquiridos</div>
-      </div>
-      <div class="est-kpi est-kpi--gold">
-        <div class="est-kpi__label"><i class="fa-solid fa-coins est-kpi__icon"></i>Gastos Operativos</div>
-        <div class="est-kpi__value" id="kpiGastos">—</div>
-        <div class="est-kpi__sub">Servicios, sueldos, otros</div>
-      </div>
-      <div class="est-kpi est-kpi--green">
-        <div class="est-kpi__label"><i class="fa-solid fa-percent est-kpi__icon"></i>Margen Bruto</div>
-        <div class="est-kpi__value" id="kpiMargen">—</div>
-        <div class="est-kpi__sub">Ventas − Compras / Ventas</div>
-      </div>
-    </div>
-
-    <!-- ── INDICADORES FINANCIEROS ── -->
-    <div class="est-section-title"><i class="fa-solid fa-sliders" style="color:var(--purple)"></i> Indicadores Financieros</div>
-    <div class="est-ratio-grid" style="margin-bottom:24px;">
-      <div class="est-ratio">
-        <div class="est-ratio__num" id="ratioRentabilidad" style="color:var(--green)">—</div>
-        <div class="est-ratio__label">Rentabilidad Neta</div>
-        <div class="est-ratio__desc">Balance / Ingresos totales</div>
-      </div>
-      <div class="est-ratio">
-        <div class="est-ratio__num" id="ratioCobro" style="color:var(--blue)">—</div>
-        <div class="est-ratio__label">Relación Compra/Venta</div>
-        <div class="est-ratio__desc">Cuánto compramos vs vendemos</div>
-      </div>
-      <div class="est-ratio">
-        <div class="est-ratio__num" id="ratioGastoVenta" style="color:var(--gold)">—</div>
-        <div class="est-ratio__label">Gastos / Ventas</div>
-        <div class="est-ratio__desc">Peso de gastos sobre ingresos</div>
-      </div>
-      <div class="est-ratio">
-        <div class="est-ratio__num" id="ratioPesoA" style="color:var(--purple)">—</div>
-        <div class="est-ratio__label">Participación A vs B</div>
-        <div class="est-ratio__desc">Factura A sobre total ventas</div>
-      </div>
-    </div>
-
-    <!-- ── EVOLUCIÓN TEMPORAL ── -->
-    <div class="est-section-title"><i class="fa-solid fa-chart-line" style="color:var(--blue)"></i> Evolución Temporal</div>
-    <div class="est-card" style="margin-bottom:24px;">
-      <div class="est-card__header">
-        <div class="est-card__title"><i class="fa-solid fa-chart-area"></i> Ventas vs Compras vs Gastos</div>
-        <div class="est-tabs" id="chartEvolTabs">
-          <button class="est-tab active" data-chart="evol-linea">Línea</button>
-          <button class="est-tab" data-chart="evol-barra">Barras</button>
-        </div>
-      </div>
-      <div class="est-card__body">
-        <div class="est-chart-wrap--tall">
-          <canvas id="chartEvolucion"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── VENTAS + PROVEEDORES ── -->
-    <div class="est-grid-half-r">
-      <!-- Distribución ventas A/B -->
-      <div class="est-card" style="--card-accent:var(--blue)">
-        <div class="est-card__header">
-          <div class="est-card__title"><i class="fa-solid fa-chart-pie"></i> Distribución de Ventas</div>
-          <span class="est-card__badge">A vs B</span>
-        </div>
-        <div class="est-card__body">
-          <div class="est-pie-grid">
-            <div style="position:relative;height:200px;">
-              <canvas id="chartVentasPie"></canvas>
-            </div>
-            <div class="est-legend" id="legendVentas">
-              <div class="est-empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Top proveedores -->
-      <div class="est-card" style="--card-accent:var(--red)">
-        <div class="est-card__header">
-          <div class="est-card__title"><i class="fa-solid fa-truck"></i> Top Proveedores</div>
-          <span class="est-card__badge">Por compra</span>
-        </div>
-        <div class="est-card__body">
-          <div class="est-ranking" id="rankingProveedores">
-            <div class="est-empty"><i class="fa-solid fa-truck"></i><p>Sin datos de proveedores</p></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── COMPRAS POR TIPO + GASTOS ── -->
-    <div class="est-grid-2">
-      <!-- Compras A vs B -->
-      <div class="est-card" style="--card-accent:var(--red)">
-        <div class="est-card__header">
-          <div class="est-card__title"><i class="fa-solid fa-boxes-stacked"></i> Compras por Tipo</div>
-          <span class="est-card__badge">Facturas A · B</span>
-        </div>
-        <div class="est-card__body">
-          <div class="est-chart-wrap">
-            <canvas id="chartComprasTipo"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gastos por categoría -->
-      <div class="est-card" style="--card-accent:var(--gold)">
-        <div class="est-card__header">
-          <div class="est-card__title"><i class="fa-solid fa-receipt"></i> Gastos por Categoría</div>
-          <span class="est-card__badge">Desglose</span>
-        </div>
-        <div class="est-card__body">
-          <div id="gastosDetalleList" class="est-gastos-list">
-            <div class="est-empty"><i class="fa-solid fa-receipt"></i><p>Sin gastos registrados</p></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── GASTOS PIE + VENTAS BARRAS ── -->
-    <div class="est-grid-half">
-      <!-- Pie gastos -->
-      <div class="est-card" style="--card-accent:var(--gold)">
-        <div class="est-card__header">
-          <div class="est-card__title"><i class="fa-solid fa-chart-donut"></i> Distribución de Gastos</div>
-        </div>
-        <div class="est-card__body">
-          <div class="est-pie-grid">
-            <div style="position:relative;height:200px;">
-              <canvas id="chartGastosPie"></canvas>
-            </div>
-            <div class="est-legend" id="legendGastos">
-              <div class="est-empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Barras ventas por período -->
-      <div class="est-card" style="--card-accent:var(--blue)">
-        <div class="est-card__header">
-          <div class="est-card__title"><i class="fa-solid fa-chart-bar"></i> Ventas del Período</div>
-          <span class="est-card__badge">Detalle</span>
-        </div>
-        <div class="est-card__body">
-          <div class="est-chart-wrap--tall">
-            <canvas id="chartVentasBarra"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── ANÁLISIS FINAL ── -->
-    <div class="est-section-title"><i class="fa-solid fa-magnifying-glass-chart" style="color:var(--green)"></i> Diagnóstico del Negocio</div>
-    <div class="est-card" style="margin-bottom:24px;">
-      <div class="est-card__body" id="diagnosticoPanel">
-        <div class="est-empty"><i class="fa-solid fa-magnifying-glass"></i><p>El diagnóstico aparecerá luego de cargar los datos</p></div>
-      </div>
-    </div>
-
-  </div><!-- /dashContent -->
-
-  <!-- ESTADO INICIAL (antes de la primera búsqueda) -->
-  <div id="estadoInicial" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px 20px; gap:16px; text-align:center;">
-    <i class="fa-solid fa-chart-mixed" style="font-size:48px; color:var(--gold); opacity:0.4;"></i>
-    <p style="font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--text-mid);">Seleccioná el período y presioná Actualizar</p>
-    <p style="font-size:13px; color:var(--text-lo);">El dashboard cargará ventas, compras, gastos, proveedores y balance operativo completo.</p>
-  </div>
-
-</div><!-- /est-root -->
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/js/estadisticas.js"></script>

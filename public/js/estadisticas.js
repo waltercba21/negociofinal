@@ -1,717 +1,515 @@
 /**
  * estadisticas.js
- * Dashboard ejecutivo de estadísticas — lógica completa
- * Conecta con las APIs existentes de compras, ventas y gastos
- * y arma gráficos + KPIs + balance + diagnóstico.
+ * Dashboard ejecutivo — extrae proveedores y productos directamente
+ * de los datos de presupuestos y facturas (APIs que sí existen).
+ * APIs usadas:
+ *   GET /administracion/api/objetivos-compras?periodo&tipo&desde&hasta
+ *       → { ok, totales:{A,B,TOTAL}, series:{labels,A,B,TOTAL} }
+ *   GET /administracion/api/objetivos-ventas?periodo&tipo&desde&hasta
+ *       → { ok, totales:{A,B,TOTAL}, series:{labels,A,B,TOTAL} }
+ *   GET /administracion/api/objetivos-gastos?periodo&categoria&desde&hasta
+ *       → { ok, totales:{TOTAL,...cats}, series:{etiquetas,TOTAL} }
+ *   GET /productos/api/presupuestos?fechaInicio&fechaFin
+ *       → [ { id, nombre_cliente, fecha, total, items:[{nombre,cantidad,precio_unitario}] } ]
+ *   GET /productos/api/facturas?fechaInicio&fechaFin
+ *       → [ { id, nombre_cliente, fecha, total, items:[{nombre,cantidad,precio_unitario}] } ]
  */
-
 'use strict';
 
-/* ══════════════════════════════════════
-   HELPERS GLOBALES
-══════════════════════════════════════ */
+/* ── CONSTANTES ── */
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const pad = n => String(n).padStart(2, '0');
-const lastDayOfMonth = (y, m) => new Date(y, m, 0).getDate();
-
-const money = n =>
-  Number(n || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
-
-const pct = (num, den) =>
-  den === 0 ? '—' : (num / den * 100).toFixed(1) + '%';
-
-const animateNumber = (el, target, formatter = money) => {
-  if (!el) return;
-  const start = 0;
-  const duration = 700;
-  const startTime = performance.now();
-  const update = now => {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const ease = 1 - Math.pow(1 - progress, 3);
-    el.textContent = formatter(Math.round(target * ease));
-    if (progress < 1) requestAnimationFrame(update);
-    else { el.textContent = formatter(target); el.classList.add('counting'); setTimeout(() => el.classList.remove('counting'), 300); }
-  };
-  requestAnimationFrame(update);
+const lastDay = (y, m) => new Date(y, m, 0).getDate();
+const PALETTE = ['#f5c842','#3b82f6','#34d399','#f87171','#a78bfa',
+                 '#fb923c','#38bdf8','#4ade80','#e879f9','#facc15'];
+const GASTO_META = {
+  luz:             { ico:'fa-bolt',              col:'#facc15', bg:'rgba(250,204,21,.12)' },
+  agua:            { ico:'fa-droplet',            col:'#38bdf8', bg:'rgba(56,189,248,.12)' },
+  gas:             { ico:'fa-fire-flame-curved',  col:'#fb923c', bg:'rgba(251,146,60,.12)' },
+  municipalidad:   { ico:'fa-building-columns',   col:'#a78bfa', bg:'rgba(167,139,250,.12)' },
+  'rentas provincia':{ ico:'fa-landmark',          col:'#818cf8', bg:'rgba(129,140,248,.12)' },
+  contador:        { ico:'fa-calculator',          col:'#34d399', bg:'rgba(52,211,153,.12)' },
+  empleados:       { ico:'fa-users',               col:'#60a5fa', bg:'rgba(96,165,250,.12)' },
+  alquiler:        { ico:'fa-house',               col:'#f87171', bg:'rgba(248,113,113,.12)' },
+  internet:        { ico:'fa-wifi',                col:'#2dd4bf', bg:'rgba(45,212,191,.12)' },
+  limpieza:        { ico:'fa-broom',               col:'#86efac', bg:'rgba(134,239,172,.12)' },
+  seguro:          { ico:'fa-shield',              col:'#c4b5fd', bg:'rgba(196,181,253,.12)' },
+  otros:           { ico:'fa-ellipsis',            col:'#94a3b8', bg:'rgba(148,163,184,.12)' }
 };
 
-/* ══════════════════════════════════════
-   RANGOS DE FECHA
-══════════════════════════════════════ */
-function weekRange(year, month, week) {
-  const startDay = (week - 1) * 7 + 1;
-  const endDay   = Math.min(week * 7, lastDayOfMonth(year, month));
-  const desde = `${year}-${pad(month)}-${pad(startDay)}`;
-  const hasta = `${year}-${pad(month)}-${pad(endDay)}`;
-  const label = `Semana ${week} del ${pad(month)}/${year} (${pad(startDay)}/${pad(month)} → ${pad(endDay)}/${pad(month)})`;
-  return { desde, hasta, label };
-}
+const money = n =>
+  Number(n || 0).toLocaleString('es-AR', { style:'currency', currency:'ARS', maximumFractionDigits:0 });
+const pct = (n, d) => d === 0 ? '—' : (n / d * 100).toFixed(1) + '%';
 
-function monthRange(year, month) {
-  const desde = `${year}-${pad(month)}-01`;
-  const hasta = `${year}-${pad(month)}-${pad(lastDayOfMonth(year, month))}`;
-  const label = `${MESES[month - 1]} ${year}`;
-  return { desde, hasta, label };
-}
-
-function yearRange(year) {
-  return { desde: `${year}-01-01`, hasta: `${year}-12-31`, label: `Año ${year}` };
-}
-
-/* ══════════════════════════════════════
-   LLENADO SELECTORES
-══════════════════════════════════════ */
-(function initSelectors() {
-  const now = new Date();
-  const y   = now.getFullYear();
-  const m   = now.getMonth() + 1;
-
-  const years = [];
-  for (let i = y; i >= y - 6; i--) years.push(i);
-
-  const fill = (id, options) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = options.map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+/* ── RANGOS ── */
+function weekRange(y, m, w) {
+  const s = (w - 1) * 7 + 1;
+  const e = Math.min(w * 7, lastDay(y, m));
+  return {
+    desde: `${y}-${pad(m)}-${pad(s)}`,
+    hasta: `${y}-${pad(m)}-${pad(e)}`,
+    label: `Semana ${w} — ${MESES[m-1]} ${y}`
   };
+}
+function monthRange(y, m) {
+  return {
+    desde: `${y}-${pad(m)}-01`,
+    hasta: `${y}-${pad(m)}-${pad(lastDay(y, m))}`,
+    label: `${MESES[m-1]} ${y}`
+  };
+}
+function yearRange(y) {
+  return { desde: `${y}-01-01`, hasta: `${y}-12-31`, label: `Año ${y}` };
+}
 
-  const yearOpts  = years.map(yr => [yr, yr]);
-  const monthOpts = Array.from({ length: 12 }, (_, i) => [i + 1, `${pad(i + 1)} — ${MESES[i]}`]);
-
-  fill('f-anSem', yearOpts);  fill('f-anMen', yearOpts);  fill('f-anAnu', yearOpts);
-  fill('f-mesSem', monthOpts); fill('f-mesMen', monthOpts);
-
-  ['f-anSem','f-anMen','f-anAnu'].forEach(id => { const el = document.getElementById(id); if (el) el.value = y; });
-  ['f-mesSem','f-mesMen'].forEach(id => { const el = document.getElementById(id); if (el) el.value = m; });
+/* ── SELECTORES ── */
+(function initSels() {
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth() + 1;
+  const years = Array.from({ length: 7 }, (_, i) => y - i);
+  const fill = (id, opts) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts.map(([v,t]) => `<option value="${v}">${t}</option>`).join('');
+  };
+  const yOpts = years.map(yr => [yr, yr]);
+  const mOpts = Array.from({ length: 12 }, (_, i) => [i+1, `${pad(i+1)} — ${MESES[i]}`]);
+  fill('f-anSem', yOpts); fill('f-anMen', yOpts); fill('f-anAnu', yOpts);
+  fill('f-mesSem', mOpts); fill('f-mesMen', mOpts);
+  ['f-anSem','f-anMen','f-anAnu'].forEach(id => { const e = document.getElementById(id); if (e) e.value = y; });
+  ['f-mesSem','f-mesMen'].forEach(id => { const e = document.getElementById(id); if (e) e.value = m; });
 })();
 
-/* ══════════════════════════════════════
-   LÓGICA DE PERÍODO
-══════════════════════════════════════ */
-let periodoActivo = 'mensual';
-
-const subSemanal = document.getElementById('sub-semanal');
-const subMensual = document.getElementById('sub-mensual');
-const subAnual   = document.getElementById('sub-anual');
-
+/* ── PERIODO ACTIVO ── */
+let periodo = 'mensual';
 function showSubs(p) {
-  subSemanal.style.display = p === 'semanal' ? 'flex' : 'none';
-  subMensual.style.display = p === 'mensual' ? 'flex' : 'none';
-  subAnual.style.display   = p === 'anual'   ? 'flex' : 'none';
+  document.getElementById('sub-semanal').style.display = p === 'semanal' ? 'flex' : 'none';
+  document.getElementById('sub-mensual').style.display = p === 'mensual' ? 'flex' : 'none';
+  document.getElementById('sub-anual').style.display   = p === 'anual'   ? 'flex' : 'none';
 }
-showSubs(periodoActivo);
-
-document.querySelectorAll('.est-period-btn').forEach(btn => {
+showSubs(periodo);
+document.querySelectorAll('.period-tab').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.est-period-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    periodoActivo = btn.dataset.periodo;
-    showSubs(periodoActivo);
+    periodo = btn.dataset.p;
+    showSubs(periodo);
   });
 });
 
 function getRango() {
-  const p = periodoActivo;
-  if (p === 'semanal') {
-    return weekRange(
-      parseInt(document.getElementById('f-anSem').value, 10),
-      parseInt(document.getElementById('f-mesSem').value, 10),
-      parseInt(document.getElementById('f-semanaMes').value, 10)
-    );
-  }
-  if (p === 'mensual') {
-    return monthRange(
-      parseInt(document.getElementById('f-anMen').value, 10),
-      parseInt(document.getElementById('f-mesMen').value, 10)
-    );
-  }
-  return yearRange(parseInt(document.getElementById('f-anAnu').value, 10));
+  if (periodo === 'semanal')
+    return weekRange(+document.getElementById('f-anSem').value, +document.getElementById('f-mesSem').value, +document.getElementById('f-semanaMes').value);
+  if (periodo === 'mensual')
+    return monthRange(+document.getElementById('f-anMen').value, +document.getElementById('f-mesMen').value);
+  return yearRange(+document.getElementById('f-anAnu').value);
 }
 
-/* ══════════════════════════════════════
-   CHART INSTANCES
-══════════════════════════════════════ */
-const charts = {};
-
-function destroyChart(key) {
-  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
-}
-
-const CHART_DEFAULTS = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { display: false } },
-  scales: {
-    x: { ticks: { color: 'rgba(240,244,255,0.45)', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' }, border: { color: 'rgba(255,255,255,0.1)' } },
-    y: { beginAtZero: true, ticks: { color: 'rgba(240,244,255,0.45)', font: { family: 'DM Mono', size: 10 }, callback: v => money(v) }, grid: { color: 'rgba(255,255,255,0.05)' }, border: { color: 'rgba(255,255,255,0.1)' } }
-  }
-};
-
-/* ══════════════════════════════════════
-   FORMATO ETIQUETAS
-══════════════════════════════════════ */
-function fmtLabel(lbl, periodo) {
+/* ── LABEL FORMATTER ── */
+function fmtLbl(lbl, p) {
   if (!lbl) return '-';
-  if (periodo === 'anual' && /^\d{4}-\d{2}$/.test(lbl)) {
-    const [, m] = lbl.split('-');
-    return MESES[parseInt(m, 10) - 1]?.slice(0, 3) ?? lbl;
-  }
-  if (/^\d{4}-\d{2}-\d{2}/.test(lbl)) {
-    const [y, m, d] = lbl.slice(0, 10).split('-');
-    return `${d}/${m}`;
-  }
-  if (/^\d{4}-\d{2}$/.test(lbl)) {
-    const [, m] = lbl.split('-'); return `${m}`;
-  }
+  if (p === 'anual' && /^\d{4}-\d{2}$/.test(lbl)) return MESES[parseInt(lbl.split('-')[1]) - 1]?.slice(0,3) ?? lbl;
+  if (/^\d{4}-\d{2}-\d{2}/.test(lbl)) { const [y,m,d] = lbl.slice(0,10).split('-'); return `${d}/${m}`; }
+  if (/^\d{4}-\d{2}$/.test(lbl)) return lbl.split('-')[1];
   return String(lbl);
 }
 
-/* ══════════════════════════════════════
-   COLORES
-══════════════════════════════════════ */
-const PALETTE = [
-  '#f5c842','#3b82f6','#34d399','#f87171','#a78bfa',
-  '#fb923c','#38bdf8','#4ade80','#e879f9','#facc15'
-];
+/* ── CHARTS ── */
+const _charts = {};
+function killChart(k) { if (_charts[k]) { _charts[k].destroy(); delete _charts[k]; } }
 
-const GASTOS_ICONS = {
-  luz: { icon: 'fa-bolt', color: '#facc15', bg: 'rgba(250,204,21,0.12)' },
-  agua: { icon: 'fa-droplet', color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
-  gas: { icon: 'fa-fire-flame-curved', color: '#fb923c', bg: 'rgba(251,146,60,0.12)' },
-  municipalidad: { icon: 'fa-building-columns', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
-  'rentas provincia': { icon: 'fa-landmark', color: '#818cf8', bg: 'rgba(129,140,248,0.12)' },
-  contador: { icon: 'fa-calculator', color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
-  empleados: { icon: 'fa-users', color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
-  alquiler: { icon: 'fa-house', color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
-  internet: { icon: 'fa-wifi', color: '#2dd4bf', bg: 'rgba(45,212,191,0.12)' },
-  limpieza: { icon: 'fa-broom', color: '#86efac', bg: 'rgba(134,239,172,0.12)' },
-  seguro: { icon: 'fa-shield', color: '#c4b5fd', bg: 'rgba(196,181,253,0.12)' },
-  otros: { icon: 'fa-ellipsis', color: '#94a3b8', bg: 'rgba(148,163,184,0.12)' }
+const BASE_SCALES = {
+  x: { ticks:{ color:'rgba(240,244,255,.4)', font:{ family:'Roboto Mono', size:10 } }, grid:{ color:'rgba(255,255,255,.05)' }, border:{ color:'rgba(255,255,255,.08)' } },
+  y: { beginAtZero:true, ticks:{ color:'rgba(240,244,255,.4)', font:{ family:'Roboto Mono', size:10 }, callback: v => money(v) }, grid:{ color:'rgba(255,255,255,.05)' }, border:{ color:'rgba(255,255,255,.08)' } }
 };
 
-/* ══════════════════════════════════════
-   FETCH API HELPERS
-══════════════════════════════════════ */
-async function fetchAPI(url) {
-  const res = await fetch(url);
-  const data = await res.json();
-  if (!res.ok || !data.ok) throw new Error(data.error || `Error en ${url}`);
-  return data;
+/* ── FETCH ── */
+async function api(url) {
+  const r = await fetch(url);
+  const d = await r.json();
+  if (!r.ok || (d.ok === false)) throw new Error(d.error || `HTTP ${r.status}`);
+  return d;
 }
 
-/* ══════════════════════════════════════
-   RENDER FUNCTIONS
-══════════════════════════════════════ */
-
-// ── KPIs + Balance
-function renderBalance(ventaA, ventaB, compra, gastos) {
-  const ingresos = ventaA + ventaB;
-  const egresos  = compra + gastos;
-  const balance  = ingresos - egresos;
-  const margen   = ingresos > 0 ? (ingresos - compra) / ingresos * 100 : 0;
-
-  // KPI valores
-  animateNumber(document.getElementById('kpiVentaA'), ventaA);
-  animateNumber(document.getElementById('kpiVentaB'), ventaB);
-  animateNumber(document.getElementById('kpiCompra'), compra);
-  animateNumber(document.getElementById('kpiGastos'), gastos);
-
-  const kpiMargenEl = document.getElementById('kpiMargen');
-  if (kpiMargenEl) kpiMargenEl.textContent = margen.toFixed(1) + '%';
-
-  // Balance card
-  animateNumber(document.getElementById('balIngreso'), ingresos);
-  animateNumber(document.getElementById('balCompra'), compra);
-  animateNumber(document.getElementById('balGastos'), gastos);
-  const balMargenEl = document.getElementById('balMargen');
-  if (balMargenEl) balMargenEl.textContent = margen.toFixed(1) + '%';
-
-  const balValEl = document.getElementById('balanceValue');
-  if (balValEl) {
-    animateNumber(balValEl, balance);
-    balValEl.className = 'est-balance__value ' + (balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral');
-  }
-
-  const verdictEl = document.getElementById('balanceVerdict');
-  if (verdictEl) {
-    if (balance > 0)
-      verdictEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--green)"></i> El negocio está <strong style="color:var(--green)">generando ganancias</strong> en este período`;
-    else if (balance < 0)
-      verdictEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i> Los egresos <strong style="color:var(--red)">superan a los ingresos</strong> en este período`;
-    else
-      verdictEl.innerHTML = `<i class="fa-solid fa-minus" style="color:var(--gold)"></i> El negocio está en <strong style="color:var(--gold)">punto de equilibrio</strong>`;
-  }
-
-  // Barras de balance
-  const maxVal = Math.max(ingresos, compra, gastos, 1);
-  const setBar = (id, val) => { const el = document.getElementById(id); if (el) el.style.width = Math.min(100, val / maxVal * 100) + '%'; };
-  setBar('barIngreso', ingresos);
-  setBar('barCompra', compra);
-  setBar('barGastos', gastos);
-  setBar('barMargen', Math.max(0, margen));
-
-  // Ratios
-  const setRatio = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  const rentNet = ingresos > 0 ? (balance / ingresos * 100).toFixed(1) + '%' : '—';
-  const relCV   = ventaA + ventaB > 0 ? (compra / (ventaA + ventaB) * 100).toFixed(1) + '%' : '—';
-  const gv      = ingresos > 0 ? (gastos / ingresos * 100).toFixed(1) + '%' : '—';
-  const pesoA   = ingresos > 0 ? (ventaA / ingresos * 100).toFixed(1) + '%' : '—';
-
-  setRatio('ratioRentabilidad', rentNet);
-  setRatio('ratioCobro', relCV);
-  setRatio('ratioGastoVenta', gv);
-  setRatio('ratioPesoA', pesoA);
-
-  // Color condicional en rentabilidad
-  const rentEl = document.getElementById('ratioRentabilidad');
-  if (rentEl && balance !== 0)
-    rentEl.style.color = balance > 0 ? 'var(--green)' : 'var(--red)';
+/* Fetch silencioso: no lanza, devuelve null si falla */
+async function apiSilent(url) {
+  try { return await api(url); } catch { return null; }
 }
 
-// ── Gráfico de evolución temporal (línea / barra)
-function renderEvolucion(labelsSerie, serieVentas, serieCompras, serieGastos, tipo = 'linea') {
-  destroyChart('evol');
-  const canvas = document.getElementById('chartEvolucion');
+/* ══════════════════════════════════════════════════════
+   RENDER: BALANCE + KPIs
+══════════════════════════════════════════════════════ */
+function renderBalance(vA, vB, comp, gast) {
+  const ing  = vA + vB;
+  const egr  = comp + gast;
+  const bal  = ing - egr;
+  const margen = ing > 0 ? (ing - comp) / ing * 100 : 0;
+
+  const set = (id, txt) => { const e = document.getElementById(id); if (e) e.textContent = txt; };
+
+  set('kVentaA', money(vA));
+  set('kVentaB', money(vB));
+  set('kCompra', money(comp));
+  set('kGastos', money(gast));
+  set('kMargen', margen.toFixed(1) + '%');
+
+  set('balIng',  money(ing));
+  set('balComp', money(comp));
+  set('balGast', money(gast));
+  set('balMarg', margen.toFixed(1) + '%');
+  set('balVal',  money(bal));
+
+  const balEl = document.getElementById('balVal');
+  if (balEl) balEl.className = 'bal-val ' + (bal > 0 ? 'pos' : bal < 0 ? 'neg' : 'neu');
+
+  const verd = document.getElementById('balVerdict');
+  if (verd) {
+    if (bal > 0) verd.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--green)"></i> El negocio <strong style="color:var(--green)">está generando ganancias</strong> en este período`;
+    else if (bal < 0) verd.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i> Los egresos <strong style="color:var(--red)">superan a los ingresos</strong> en este período`;
+    else verd.innerHTML = `<i class="fa-solid fa-minus" style="color:var(--gold)"></i> El negocio está en <strong style="color:var(--gold)">punto de equilibrio</strong>`;
+  }
+
+  const max = Math.max(ing, comp, gast, 1);
+  const setBar = (id, v) => { const e = document.getElementById(id); if (e) e.style.width = Math.min(100, v / max * 100) + '%'; };
+  setBar('bIng', ing); setBar('bComp', comp); setBar('bGast', gast); setBar('bMarg', Math.max(0, margen));
+
+  /* INDICADORES */
+  const rentNet = ing > 0 ? (bal / ing * 100).toFixed(1) + '%' : '—';
+  const relCV   = ing > 0 ? (comp / ing * 100).toFixed(1) + '%' : '—';
+  const gv      = ing > 0 ? (gast / ing * 100).toFixed(1) + '%' : '—';
+  const pesoA   = ing > 0 ? (vA / ing * 100).toFixed(1) + '%' : '—';
+  set('rRentab', rentNet); set('rCV', relCV); set('rGV', gv); set('rPesoA', pesoA);
+
+  const rentEl = document.getElementById('rRentab');
+  if (rentEl && bal !== 0) rentEl.style.color = bal > 0 ? 'var(--green)' : 'var(--red)';
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER: EVOLUCIÓN
+══════════════════════════════════════════════════════ */
+let lastEvol = null;
+function renderEvol(labels, ventas, compras, gastos, tipo = 'linea') {
+  killChart('evol');
+  const canvas = document.getElementById('cEvol');
   if (!canvas) return;
-
-  const esLinea = tipo === 'linea';
-
-  charts.evol = new Chart(canvas.getContext('2d'), {
-    type: esLinea ? 'line' : 'bar',
-    data: {
-      labels: labelsSerie,
-      datasets: [
-        {
-          label: 'Ventas',
-          data: serieVentas,
-          borderColor: '#3b82f6',
-          backgroundColor: esLinea ? 'rgba(59,130,246,0.08)' : 'rgba(59,130,246,0.55)',
-          borderWidth: esLinea ? 2 : 0,
-          fill: esLinea,
-          tension: 0.35,
-          pointRadius: esLinea ? 3 : 0,
-          pointBackgroundColor: '#3b82f6'
-        },
-        {
-          label: 'Compras',
-          data: serieCompras,
-          borderColor: '#f87171',
-          backgroundColor: esLinea ? 'rgba(248,113,113,0.06)' : 'rgba(248,113,113,0.55)',
-          borderWidth: esLinea ? 2 : 0,
-          fill: esLinea,
-          tension: 0.35,
-          pointRadius: esLinea ? 3 : 0,
-          pointBackgroundColor: '#f87171'
-        },
-        {
-          label: 'Gastos',
-          data: serieGastos,
-          borderColor: '#f5c842',
-          backgroundColor: esLinea ? 'rgba(245,200,66,0.06)' : 'rgba(245,200,66,0.45)',
-          borderWidth: esLinea ? 2 : 0,
-          fill: esLinea,
-          tension: 0.35,
-          pointRadius: esLinea ? 3 : 0,
-          pointBackgroundColor: '#f5c842'
-        }
-      ]
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: {
-            color: 'rgba(240,244,255,0.6)',
-            font: { family: 'DM Sans', size: 11 },
-            boxWidth: 10, boxHeight: 10,
-            padding: 16,
-            usePointStyle: true
-          }
-        },
-        tooltip: {
-          callbacks: { label: c => `${c.dataset.label}: ${money(c.parsed.y)}` }
-        }
-      }
-    }
-  });
-}
-
-// ── Pie ventas A / B
-function renderVentasPie(ventaA, ventaB) {
-  destroyChart('ventasPie');
-  const canvas = document.getElementById('chartVentasPie');
-  const legend = document.getElementById('legendVentas');
-  if (!canvas) return;
-
-  const total = ventaA + ventaB;
-  if (total === 0) {
-    if (legend) legend.innerHTML = '<div class="est-empty"><i class="fa-solid fa-chart-pie"></i><p>Sin ventas</p></div>';
-    return;
-  }
-
-  const data   = [ventaA, ventaB];
-  const labels = ['Factura A', 'Presupuesto B'];
-  const colors = ['#3b82f6', '#a78bfa'];
-
-  charts.ventasPie = new Chart(canvas.getContext('2d'), {
-    type: 'doughnut',
-    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '65%',
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: c => `${c.label}: ${money(c.parsed)}` } }
-      }
-    }
-  });
-
-  if (legend) {
-    legend.innerHTML = data.map((v, i) => `
-      <div class="est-legend-item">
-        <div class="est-legend-dot" style="background:${colors[i]}"></div>
-        <span class="est-legend-label">${labels[i]}</span>
-        <span class="est-legend-val">${pct(v, total)}</span>
-      </div>
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-lo);margin-left:16px;margin-bottom:4px;">${money(v)}</div>
-    `).join('');
-  }
-}
-
-// ── Pie gastos
-function renderGastosPie(gastosPorCat) {
-  destroyChart('gastosPie');
-  const canvas = document.getElementById('chartGastosPie');
-  const legend = document.getElementById('legendGastos');
-  if (!canvas) return;
-
-  const cats   = Object.keys(gastosPorCat).filter(k => gastosPorCat[k] > 0);
-  const vals   = cats.map(k => gastosPorCat[k]);
-  const total  = vals.reduce((a, b) => a + b, 0);
-
-  if (!cats.length || total === 0) {
-    if (legend) legend.innerHTML = '<div class="est-empty"><i class="fa-solid fa-chart-pie"></i><p>Sin gastos</p></div>';
-    return;
-  }
-
-  const colors = cats.map((_, i) => PALETTE[i % PALETTE.length]);
-
-  charts.gastosPie = new Chart(canvas.getContext('2d'), {
-    type: 'doughnut',
-    data: { labels: cats, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '60%',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.label}: ${money(c.parsed)}` } } }
-    }
-  });
-
-  if (legend) {
-    const sorted = cats.map((k, i) => ({ k, v: vals[i], color: colors[i] })).sort((a, b) => b.v - a.v).slice(0, 6);
-    legend.innerHTML = sorted.map(({ k, v, color }) => `
-      <div class="est-legend-item">
-        <div class="est-legend-dot" style="background:${color}"></div>
-        <span class="est-legend-label">${k}</span>
-        <span class="est-legend-val">${pct(v, total)}</span>
-      </div>
-    `).join('');
-  }
-}
-
-// ── Compras A / B barras
-function renderComprasTipo(compraA, compraB) {
-  destroyChart('comprasTipo');
-  const canvas = document.getElementById('chartComprasTipo');
-  if (!canvas) return;
-
-  charts.comprasTipo = new Chart(canvas.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: ['Facturas A', 'Presupuestos B'],
-      datasets: [{
-        data: [compraA, compraB],
-        backgroundColor: ['rgba(248,113,113,0.65)', 'rgba(251,146,60,0.65)'],
-        borderRadius: 6, borderWidth: 0
-      }]
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      plugins: {
-        ...CHART_DEFAULTS.plugins,
-        tooltip: { callbacks: { label: c => money(c.parsed.y) } }
-      }
-    }
-  });
-}
-
-// ── Barras ventas período
-function renderVentasBarra(labels, serieA, serieB, periodo) {
-  destroyChart('ventasBarra');
-  const canvas = document.getElementById('chartVentasBarra');
-  if (!canvas) return;
-
-  charts.ventasBarra = new Chart(canvas.getContext('2d'), {
-    type: 'bar',
+  const esL = tipo === 'linea';
+  _charts.evol = new Chart(canvas.getContext('2d'), {
+    type: esL ? 'line' : 'bar',
     data: {
       labels,
       datasets: [
-        { label: 'A (Factura)', data: serieA, backgroundColor: 'rgba(59,130,246,0.6)', borderRadius: 4, borderWidth: 0 },
-        { label: 'B (Presupuesto)', data: serieB, backgroundColor: 'rgba(167,139,250,0.6)', borderRadius: 4, borderWidth: 0 }
+        { label:'Ventas',  data:ventas,  borderColor:'#3b82f6', backgroundColor: esL ? 'rgba(59,130,246,.07)'  : 'rgba(59,130,246,.55)',  borderWidth: esL?2:0, fill:esL, tension:.35, pointRadius: esL?3:0, pointBackgroundColor:'#3b82f6' },
+        { label:'Compras', data:compras, borderColor:'#f87171', backgroundColor: esL ? 'rgba(248,113,113,.07)' : 'rgba(248,113,113,.55)', borderWidth: esL?2:0, fill:esL, tension:.35, pointRadius: esL?3:0, pointBackgroundColor:'#f87171' },
+        { label:'Gastos',  data:gastos,  borderColor:'#f5c842', backgroundColor: esL ? 'rgba(245,200,66,.07)'  : 'rgba(245,200,66,.45)',  borderWidth: esL?2:0, fill:esL, tension:.35, pointRadius: esL?3:0, pointBackgroundColor:'#f5c842' }
       ]
     },
     options: {
-      ...CHART_DEFAULTS,
+      responsive:true, maintainAspectRatio:false,
       plugins: {
-        legend: {
-          display: true, position: 'top',
-          labels: { color: 'rgba(240,244,255,0.5)', font: { family: 'DM Sans', size: 11 }, boxWidth: 10, boxHeight: 10, usePointStyle: true }
-        },
-        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${money(c.parsed.y)}` } }
+        legend: { display:true, position:'top', labels:{ color:'rgba(240,244,255,.55)', font:{ family:'Roboto', size:11 }, boxWidth:10, boxHeight:10, usePointStyle:true, padding:16 } },
+        tooltip: { callbacks:{ label: c => `${c.dataset.label}: ${money(c.parsed.y)}` } }
       },
-      scales: {
-        ...CHART_DEFAULTS.scales,
-        x: { ...CHART_DEFAULTS.scales.x, stacked: true },
-        y: { ...CHART_DEFAULTS.scales.y, stacked: true }
-      }
+      scales: BASE_SCALES
     }
   });
 }
 
-// ── Ranking proveedores
-function renderRankingProveedores(proveedores) {
-  const el = document.getElementById('rankingProveedores');
-  if (!el) return;
-
-  if (!proveedores || !proveedores.length) {
-    el.innerHTML = '<div class="est-empty"><i class="fa-solid fa-truck"></i><p>Sin datos de proveedores</p></div>';
+/* ══════════════════════════════════════════════════════
+   RENDER: DOUGHNUT GENÉRICO
+══════════════════════════════════════════════════════ */
+function renderDoughnut(canvasId, legendId, labels, values, colors) {
+  killChart(canvasId);
+  const canvas = document.getElementById(canvasId);
+  const legEl  = document.getElementById(legendId);
+  if (!canvas) return;
+  const total = values.reduce((a, b) => a + b, 0);
+  if (!total) {
+    if (legEl) legEl.innerHTML = '<div class="empty"><i class="fa-solid fa-chart-pie"></i><p>Sin datos</p></div>';
     return;
   }
-
-  const max = proveedores[0]?.total || 1;
-  el.innerHTML = proveedores.slice(0, 8).map((p, i) => `
-    <div class="est-ranking-row">
-      <span class="est-ranking__pos">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1)}</span>
-      <span class="est-ranking__name">${p.nombre || p.proveedor || 'Desconocido'}</span>
-      <div class="est-ranking__bar-wrap">
-        <div class="est-ranking__bar-fill" style="width:${(p.total / max * 100).toFixed(1)}%; --ranking-color:${PALETTE[i % PALETTE.length]}; background:${PALETTE[i % PALETTE.length]}"></div>
+  _charts[canvasId] = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: { labels, datasets:[{ data:values, backgroundColor:colors, borderWidth:0, hoverOffset:6 }] },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins: { legend:{ display:false }, tooltip:{ callbacks:{ label: c => `${c.label}: ${money(c.parsed)}` } } }
+    }
+  });
+  if (legEl) {
+    legEl.innerHTML = labels.map((l, i) => `
+      <div class="leg-row"><div class="leg-dot" style="background:${colors[i]}"></div>
+        <span class="leg-name">${l}</span>
+        <span class="leg-pct">${pct(values[i], total)}</span>
       </div>
-      <span class="est-ranking__val">${money(p.total)}</span>
-    </div>
-  `).join('');
+      <div class="leg-val">${money(values[i])}</div>
+    `).join('');
+  }
 }
 
-// ── Gastos por categoría (lista)
-function renderGastosDetalle(gastosPorCat) {
-  const el = document.getElementById('gastosDetalleList');
+/* ══════════════════════════════════════════════════════
+   RENDER: RANKING GENÉRICO
+══════════════════════════════════════════════════════ */
+function renderRanking(elId, items, colorFn, valFmt) {
+  const el = document.getElementById(elId);
   if (!el) return;
-
-  const cats   = Object.entries(gastosPorCat).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a);
-  const total  = cats.reduce((s, [, v]) => s + v, 0);
-
-  if (!cats.length) {
-    el.innerHTML = '<div class="est-empty"><i class="fa-solid fa-receipt"></i><p>Sin gastos registrados</p></div>';
+  if (!items || !items.length) {
+    el.innerHTML = '<div class="empty"><i class="fa-solid fa-inbox"></i><p>Sin datos para el período</p></div>';
     return;
   }
-
-  el.innerHTML = cats.map(([cat, val]) => {
-    const info = GASTOS_ICONS[cat] || GASTOS_ICONS.otros;
-    const pctVal = total > 0 ? (val / total * 100) : 0;
+  const max = items[0].val || 1;
+  el.innerHTML = items.slice(0, 8).map((item, i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+    const color = colorFn(i);
     return `
-      <div class="est-gasto-item">
-        <div class="est-gasto-icon" style="background:${info.bg}; color:${info.color}">
-          <i class="fa-solid ${info.icon}"></i>
-        </div>
-        <span class="est-gasto-name">${cat}</span>
-        <div class="est-gasto-bar-wrap">
-          <div class="est-gasto-bar" style="width:${pctVal.toFixed(1)}%;background:${info.color}"></div>
-        </div>
-        <span class="est-gasto-val">${money(val)}</span>
-      </div>
-    `;
+      <div class="rk-row ${i === 0 ? 'top' : ''}">
+        <span class="rk-pos">${medal}</span>
+        <span class="rk-name" title="${item.name}">${item.name}</span>
+        <div class="rk-bar-w"><div class="rk-bar-f" style="width:${(item.val / max * 100).toFixed(1)}%;background:${color}"></div></div>
+        <span class="rk-val">${valFmt(item.val)}</span>
+      </div>`;
   }).join('');
 }
 
-// ── Diagnóstico
-function renderDiagnostico(ventaA, ventaB, compra, gastos) {
-  const el = document.getElementById('diagnosticoPanel');
+/* ══════════════════════════════════════════════════════
+   RENDER: GASTOS LISTA
+══════════════════════════════════════════════════════ */
+function renderGastosLista(gastosCat) {
+  const el = document.getElementById('gastosLista');
   if (!el) return;
-
-  const ingresos  = ventaA + ventaB;
-  const egresos   = compra + gastos;
-  const balance   = ingresos - egresos;
-  const margen    = ingresos > 0 ? (ingresos - compra) / ingresos * 100 : 0;
-  const rentNet   = ingresos > 0 ? balance / ingresos * 100 : 0;
-  const relCV     = ingresos > 0 ? compra / ingresos * 100 : 0;
-  const pesoGasCom = compra > 0 ? gastos / compra * 100 : 0;
-
-  const alerts = [];
-
-  if (balance < 0)
-    alerts.push({ tipo: 'red', icon: 'fa-triangle-exclamation', texto: `<strong>Pérdida neta de ${money(Math.abs(balance))}</strong>. Los egresos superan a los ingresos. Revisá estructura de costos urgente.` });
-  else if (balance > 0)
-    alerts.push({ tipo: 'green', icon: 'fa-circle-check', texto: `<strong>Ganancia neta de ${money(balance)}</strong>. El negocio es rentable en este período.` });
-
-  if (margen < 15 && ingresos > 0)
-    alerts.push({ tipo: 'red', icon: 'fa-arrow-trend-down', texto: `<strong>Margen bruto bajo (${margen.toFixed(1)}%)</strong>. El costo de mercadería consume demasiado de las ventas. Analizar precios de compra o de venta.` });
-  else if (margen >= 30 && ingresos > 0)
-    alerts.push({ tipo: 'green', icon: 'fa-thumbs-up', texto: `<strong>Margen bruto saludable (${margen.toFixed(1)}%)</strong>. La diferencia entre compra y venta es adecuada.` });
-  else if (ingresos > 0)
-    alerts.push({ tipo: 'gold', icon: 'fa-circle-info', texto: `<strong>Margen bruto moderado (${margen.toFixed(1)}%)</strong>. Hay espacio para mejorar márgenes ajustando precios de venta.` });
-
-  if (relCV > 80 && ingresos > 0)
-    alerts.push({ tipo: 'red', icon: 'fa-boxes-stacked', texto: `<strong>Alto ratio Compra/Venta (${relCV.toFixed(1)}%)</strong>. Estás comprando casi todo lo que vendés. Puede indicar margen muy ajustado o stock excesivo.` });
-
-  if (gastos > 0 && ingresos > 0 && gastos / ingresos > 0.3)
-    alerts.push({ tipo: 'gold', icon: 'fa-coins', texto: `<strong>Gastos operativos elevados (${(gastos / ingresos * 100).toFixed(1)}% de ventas)</strong>. Revisá gastos fijos: sueldos, alquiler, servicios.` });
-
-  if (ventaA === 0 && ventaB > 0 && ingresos > 0)
-    alerts.push({ tipo: 'gold', icon: 'fa-file-lines', texto: `<strong>Sin ventas facturadas (A)</strong>. Todas las ventas son por presupuesto B. Verificá si corresponde emitir facturas A.` });
-
-  if (compra === 0 && ingresos > 0)
-    alerts.push({ tipo: 'gold', icon: 'fa-boxes-stacked', texto: `<strong>Sin compras registradas</strong> en el período. ¿Se cargaron las facturas de proveedores correctamente?` });
-
-  if (!alerts.length)
-    alerts.push({ tipo: 'gold', icon: 'fa-circle-info', texto: 'No hay suficientes datos para generar un diagnóstico completo. Asegurate de tener ventas, compras y gastos cargados.' });
-
-  const colorMap = { red: 'var(--red)', green: 'var(--green)', gold: 'var(--gold)', blue: 'var(--blue)' };
-  const bgMap    = { red: 'rgba(248,113,113,0.06)', green: 'rgba(52,211,153,0.06)', gold: 'rgba(245,200,66,0.06)', blue: 'rgba(59,130,246,0.06)' };
-
-  el.innerHTML = `
-    <div style="display:flex; flex-direction:column; gap:10px;">
-      ${alerts.map(a => `
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:${bgMap[a.tipo]};border:1px solid ${colorMap[a.tipo]}33;border-radius:10px;">
-          <i class="fa-solid ${a.icon}" style="font-size:16px;color:${colorMap[a.tipo]};margin-top:1px;flex-shrink:0;"></i>
-          <p style="font-size:13px;color:rgba(240,244,255,0.8);line-height:1.55;">${a.texto}</p>
-        </div>
-      `).join('')}
-    </div>
-  `;
+  const cats = Object.entries(gastosCat).filter(([,v]) => v > 0).sort(([,a],[,b]) => b - a);
+  const tot  = cats.reduce((s,[,v]) => s + v, 0);
+  if (!cats.length) { el.innerHTML = '<div class="empty"><i class="fa-solid fa-receipt"></i><p>Sin gastos</p></div>'; return; }
+  el.innerHTML = cats.map(([cat, val]) => {
+    const m = GASTO_META[cat] || GASTO_META.otros;
+    const w = tot > 0 ? (val / tot * 100).toFixed(1) : 0;
+    return `<div class="gasto-row">
+      <div class="gasto-ico" style="background:${m.bg};color:${m.col}"><i class="fa-solid ${m.ico}"></i></div>
+      <span class="gasto-name">${cat}</span>
+      <div class="gasto-bw"><div class="gasto-bf" style="width:${w}%;background:${m.col}"></div></div>
+      <span class="gasto-val">${money(val)}</span>
+    </div>`;
+  }).join('');
 }
 
-/* ══════════════════════════════════════
-   TABS EVOLUCIÓN
-══════════════════════════════════════ */
-let lastEvolData = null;
+/* ══════════════════════════════════════════════════════
+   RENDER: DIAGNÓSTICO
+══════════════════════════════════════════════════════ */
+function renderDiag(vA, vB, comp, gast) {
+  const el = document.getElementById('diagPanel');
+  if (!el) return;
+  const ing = vA + vB, bal = ing - comp - gast;
+  const margen = ing > 0 ? (ing - comp) / ing * 100 : 0;
+  const alerts = [];
 
-document.querySelectorAll('[data-chart]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-chart]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    if (lastEvolData) {
-      const tipo = btn.dataset.chart === 'evol-linea' ? 'linea' : 'barra';
-      renderEvolucion(lastEvolData.labels, lastEvolData.ventas, lastEvolData.compras, lastEvolData.gastos, tipo);
-    }
+  if (bal < 0)
+    alerts.push({ t:'red', i:'fa-triangle-exclamation', msg:`<strong>Pérdida neta de ${money(Math.abs(bal))}</strong>. Los egresos superan a los ingresos. Revisá estructura de costos.` });
+  else if (bal > 0)
+    alerts.push({ t:'green', i:'fa-circle-check', msg:`<strong>Ganancia neta de ${money(bal)}</strong>. El negocio es rentable en este período.` });
+
+  if (margen < 15 && ing > 0)
+    alerts.push({ t:'red', i:'fa-arrow-trend-down', msg:`<strong>Margen bruto bajo (${margen.toFixed(1)}%)</strong>. El costo de mercadería consume demasiado de las ventas.` });
+  else if (margen >= 30 && ing > 0)
+    alerts.push({ t:'green', i:'fa-thumbs-up', msg:`<strong>Margen bruto saludable (${margen.toFixed(1)}%)</strong>. La diferencia entre compra y venta es adecuada.` });
+  else if (ing > 0)
+    alerts.push({ t:'gold', i:'fa-circle-info', msg:`<strong>Margen moderado (${margen.toFixed(1)}%)</strong>. Hay margen para mejorar ajustando precios de venta o de compra.` });
+
+  if (ing > 0 && comp / ing > 0.8)
+    alerts.push({ t:'red', i:'fa-boxes-stacked', msg:`<strong>Alto ratio Compra/Venta (${(comp/ing*100).toFixed(1)}%)</strong>. Estás comprando casi todo lo que vendés. Margen muy ajustado.` });
+
+  if (ing > 0 && gast / ing > 0.3)
+    alerts.push({ t:'gold', i:'fa-coins', msg:`<strong>Gastos operativos elevados (${(gast/ing*100).toFixed(1)}% de ventas)</strong>. Revisá sueldos, alquiler y servicios fijos.` });
+
+  if (vA === 0 && vB > 0)
+    alerts.push({ t:'gold', i:'fa-file-lines', msg:`<strong>Sin ventas facturadas (A)</strong>. Todas las ventas son por presupuesto B. Verificá emisión de facturas.` });
+
+  if (!alerts.length)
+    alerts.push({ t:'gold', i:'fa-circle-info', msg:'Datos insuficientes para un diagnóstico completo. Asegurate de tener ventas, compras y gastos cargados.' });
+
+  const BG  = { red:'rgba(248,113,113,.07)', green:'rgba(52,211,153,.07)', gold:'rgba(245,200,66,.07)' };
+  const CLR = { red:'var(--red)', green:'var(--green)', gold:'var(--gold)' };
+  el.innerHTML = alerts.map(a =>
+    `<div class="diag-item" style="background:${BG[a.t]};border:1px solid ${CLR[a.t]}33">
+      <i class="fa-solid ${a.i}" style="color:${CLR[a.t]}"></i>
+      <p>${a.msg}</p>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   EXTRAE PROVEEDORES y PRODUCTOS de docs (presupuestos/facturas)
+   Cada doc puede tener:
+     - doc.proveedor / doc.proveedor_nombre  (en compras)
+     - doc.items[].nombre, cantidad, precio_unitario  (en ventas)
+══════════════════════════════════════════════════════ */
+function extractProveedores(docs) {
+  /* docs son las compras (presupuestos de proveedor)
+     esperamos que cada doc tenga proveedor_nombre o proveedor */
+  const map = {};
+  (docs || []).forEach(doc => {
+    const nombre = doc.proveedor_nombre || doc.proveedor || doc.nombre_proveedor || null;
+    if (!nombre) return;
+    const total = Number(doc.total || 0);
+    map[nombre] = (map[nombre] || 0) + total;
   });
-});
+  return Object.entries(map)
+    .map(([name, val]) => ({ name, val }))
+    .sort((a, b) => b.val - a.val);
+}
 
-/* ══════════════════════════════════════
-   MAIN: CARGAR TODO
-══════════════════════════════════════ */
-async function cargarDashboard() {
-  const loadEl  = document.getElementById('loadingIndicator');
-  const errEl   = document.getElementById('errorGlobal');
-  const content = document.getElementById('dashContent');
-  const inicial = document.getElementById('estadoInicial');
-  const rangoLbl = document.getElementById('rangoLabel');
-  const rangoTxt = document.getElementById('rangoTexto');
+function extractProductos(docs) {
+  /* docs son facturas o presupuestos de ventas.
+     Cada doc.items[] tiene: nombre, cantidad, precio_unitario */
+  const map = {};
+  (docs || []).forEach(doc => {
+    (doc.items || []).forEach(item => {
+      const nombre = item.nombre || item.producto || item.descripcion || null;
+      if (!nombre) return;
+      const qty = Number(item.cantidad || 1);
+      map[nombre] = (map[nombre] || 0) + qty;
+    });
+  });
+  return Object.entries(map)
+    .map(([name, val]) => ({ name, val }))
+    .sort((a, b) => b.val - a.val);
+}
 
-  if (loadEl) loadEl.classList.add('visible');
-  if (errEl) { errEl.classList.remove('visible'); errEl.textContent = ''; }
+/* ══════════════════════════════════════════════════════
+   MAIN
+══════════════════════════════════════════════════════ */
+async function cargar() {
+  const loadEl   = document.getElementById('loadingEl');
+  const errEl    = document.getElementById('errBox');
+  const dash     = document.getElementById('dash');
+  const inicial  = document.getElementById('estadoInicial');
+  const rangoLbl = document.getElementById('rangoLbl');
+  const rangoTxt = document.getElementById('rangoTxt');
+
+  if (loadEl) loadEl.classList.add('on');
+  if (errEl)  { errEl.classList.remove('on'); errEl.textContent = ''; }
 
   const { desde, hasta, label } = getRango();
-  const periodo = periodoActivo;
+  const p = periodo;
 
   try {
-    // ── 1. Ventas
-    const qsVentaA = new URLSearchParams({ periodo, tipo: 'A', desde, hasta });
-    const qsVentaB = new URLSearchParams({ periodo, tipo: 'B', desde, hasta });
-    const qsVentaT = new URLSearchParams({ periodo, tipo: 'TOTAL', desde, hasta });
+    /* ── PETICIONES PARALELAS ── */
+    const qs = (extra = {}) => new URLSearchParams({ periodo:p, desde, hasta, ...extra }).toString();
 
-    // ── 2. Compras
-    const qsCompraA = new URLSearchParams({ periodo, tipo: 'A', desde, hasta });
-    const qsCompraB = new URLSearchParams({ periodo, tipo: 'B', desde, hasta });
-
-    // ── 3. Gastos
-    const qsGastos = new URLSearchParams({ periodo, categoria: '', desde, hasta });
-
-    // Peticiones paralelas: 3 ventas + 2 compras + 1 gasto + (opcional: proveedores)
-    const [dataVentaA, dataVentaB, dataVentaT, dataCompraA, dataCompraB, dataGastos] = await Promise.all([
-      fetchAPI(`/administracion/api/objetivos-ventas?${qsVentaA}`),
-      fetchAPI(`/administracion/api/objetivos-ventas?${qsVentaB}`),
-      fetchAPI(`/administracion/api/objetivos-ventas?${qsVentaT}`),
-      fetchAPI(`/administracion/api/objetivos-compras?${qsCompraA}`),
-      fetchAPI(`/administracion/api/objetivos-compras?${qsCompraB}`),
-      fetchAPI(`/administracion/api/objetivos-gastos?${qsGastos}`)
+    const [
+      dVentaA, dVentaB, dVentaT,
+      dCompraA, dCompraB,
+      dGastos
+    ] = await Promise.all([
+      api(`/administracion/api/objetivos-ventas?${qs({ tipo:'A' })}`),
+      api(`/administracion/api/objetivos-ventas?${qs({ tipo:'B' })}`),
+      api(`/administracion/api/objetivos-ventas?${qs({ tipo:'TOTAL' })}`),
+      api(`/administracion/api/objetivos-compras?${qs({ tipo:'A' })}`),
+      api(`/administracion/api/objetivos-compras?${qs({ tipo:'B' })}`),
+      api(`/administracion/api/objetivos-gastos?${qs({ categoria:'' })}`)
     ]);
 
-    // ── Totales
-    const ventaA  = dataVentaA.totales?.A  || dataVentaA.totales?.TOTAL || 0;
-    const ventaB  = dataVentaB.totales?.B  || dataVentaB.totales?.TOTAL || 0;
-    const compraA = dataCompraA.totales?.A || dataCompraA.totales?.TOTAL || 0;
-    const compraB = dataCompraB.totales?.B || dataCompraB.totales?.TOTAL || 0;
-    const gastos  = dataGastos.totales?.TOTAL || 0;
+    /* Intentar obtener docs de ventas y compras para proveedores y productos */
+    const qsDocs = new URLSearchParams({ fechaInicio: desde, fechaFin: hasta }).toString();
+    const [docsVentaFact, docsVentaPres, docsCompraFact, docsCompraPres] = await Promise.all([
+      apiSilent(`/productos/api/facturas?${qsDocs}`),
+      apiSilent(`/productos/api/presupuestos?${qsDocs}`),
+      /* Facturas de compra: si hay endpoint específico, sino null */
+      apiSilent(`/administracion/api/facturas-compra?${qsDocs}`),
+      apiSilent(`/administracion/api/presupuestos-compra?${qsDocs}`)
+    ]);
 
-    // ── Series para evolución temporal (usamos ventas total)
-    const evolLabels  = (dataVentaT.series?.etiquetas || []).map(l => fmtLabel(l, periodo));
-    const evolVentas  = dataVentaT.series?.TOTAL || dataVentaT.series?.A || [];
-    const evolCompras = dataCompraA.series?.TOTAL || dataCompraA.series?.A || [];
-    const evolGastos  = dataGastos.series?.TOTAL || [];
+    /* ── TOTALES ── */
+    const vA   = dVentaA.totales?.A  || dVentaA.totales?.TOTAL  || 0;
+    const vB   = dVentaB.totales?.B  || dVentaB.totales?.TOTAL  || 0;
+    const cA   = dCompraA.totales?.A || dCompraA.totales?.TOTAL || 0;
+    const cB   = dCompraB.totales?.B || dCompraB.totales?.TOTAL || 0;
+    const comp = cA + cB;
+    const gast = dGastos.totales?.TOTAL || 0;
 
-    // ── Series para barras de ventas por período
-    const ventaSerieA = dataVentaA.series?.A || dataVentaA.series?.TOTAL || [];
-    const ventaSerieB = dataVentaB.series?.B || dataVentaB.series?.TOTAL || [];
+    /* ── SERIES EVOLUCIÓN ── */
+    const evolLabels  = (dVentaT.series?.labels || dVentaT.series?.etiquetas || []).map(l => fmtLbl(l, p));
+    const evolVentas  = dVentaT.series?.TOTAL || [];
+    const evolCompras = (function() {
+      // Sumamos serie A + serie B de compras (ambas con mismos labels)
+      const sA = dCompraA.series?.TOTAL || dCompraA.series?.A || [];
+      const sB = dCompraB.series?.TOTAL || dCompraB.series?.B || [];
+      return sA.map((v, i) => (Number(v) || 0) + (Number(sB[i]) || 0));
+    })();
+    const evolGastos = dGastos.series?.TOTAL || [];
 
-    // ── Gastos por categoría (del endpoint genérico pedimos cada categoría)
-    // Usamos el listado de categorías conocidas y el breakdown si está en la respuesta,
-    // o hacemos peticiones individuales:
+    /* ── GASTOS POR CATEGORÍA ── */
     const CATS = ['luz','agua','gas','municipalidad','rentas provincia','contador','empleados','alquiler','internet','limpieza','seguro','otros'];
-    let gastosPorCat = {};
+    const gastosCat = {};
+    CATS.forEach(cat => { gastosCat[cat] = Number(dGastos.totales?.[cat] || 0); });
 
-    // Si la API devuelve breakdown por categoría en totales, usarlo directo
-    if (dataGastos.totales && typeof dataGastos.totales === 'object') {
-      CATS.forEach(cat => { gastosPorCat[cat] = dataGastos.totales[cat] || 0; });
+    /* ── PROVEEDORES: intentar varias fuentes ── */
+    let provs = [];
+    const compDocs = [...(docsCompraFact || []), ...(docsCompraPres || [])];
+    if (compDocs.length) {
+      provs = extractProveedores(compDocs);
+    } else {
+      // Fallback: si los endpoints no existen intentamos con el endpoint de compras
+      // que a veces devuelve top_proveedores en data extendida
+      const ext = await apiSilent(`/administracion/api/objetivos-compras?${qs({ tipo:'TOTAL', detalle:'proveedores' })}`);
+      if (ext?.proveedores?.length) {
+        provs = ext.proveedores.map(x => ({ name: x.nombre || x.proveedor, val: Number(x.total || 0) })).sort((a,b) => b.val - a.val);
+      }
     }
 
-    // Proveedores: intentar endpoint si existe, si no, skip silencioso
-    let proveedores = [];
-    try {
-      const qsProv = new URLSearchParams({ desde, hasta });
-      const dataProv = await fetchAPI(`/administracion/api/objetivos-proveedores?${qsProv}`);
-      proveedores = dataProv.proveedores || dataProv.data || [];
-    } catch (_) { /* endpoint opcional */ }
+    /* ── PRODUCTOS MÁS VENDIDOS ── */
+    let prods = [];
+    const ventaDocs = [...(docsVentaFact || []), ...(docsVentaPres || [])];
+    if (ventaDocs.length) {
+      prods = extractProductos(ventaDocs);
+    } else {
+      // Fallback: endpoint masVendidos (no usa desde/hasta, es general)
+      const mv = await apiSilent(`/productos/masVendidos?desde=${desde}&hasta=${hasta}`);
+      // masVendidos devuelve un HTML (render), no JSON → skip silencioso
+      // intentamos endpoint alternativo si existe
+      const mvApi = await apiSilent(`/administracion/api/mas-vendidos?desde=${desde}&hasta=${hasta}`);
+      if (mvApi?.productos?.length) {
+        prods = mvApi.productos.map(x => ({ name: x.nombre, val: Number(x.total_vendido || 0) })).sort((a,b) => b.val - a.val);
+      }
+    }
 
     /* ── RENDER ── */
-    renderBalance(ventaA, ventaB, compraA + compraB, gastos);
-    renderEvolucion(evolLabels, evolVentas, evolCompras, evolGastos, 'linea');
-    lastEvolData = { labels: evolLabels, ventas: evolVentas, compras: evolCompras, gastos: evolGastos };
-    renderVentasPie(ventaA, ventaB);
-    renderGastosPie(gastosPorCat);
-    renderComprasTipo(compraA, compraB);
-    renderVentasBarra(evolLabels, ventaSerieA, ventaSerieB, periodo);
-    renderGastosDetalle(gastosPorCat);
-    renderRankingProveedores(proveedores);
-    renderDiagnostico(ventaA, ventaB, compraA + compraB, gastos);
+    renderBalance(vA, vB, comp, gast);
 
-    // Mostrar contenido
+    renderEvol(evolLabels, evolVentas, evolCompras, evolGastos, 'linea');
+    lastEvol = { labels: evolLabels, ventas: evolVentas, compras: evolCompras, gastos: evolGastos };
+
+    renderDoughnut('cVentasPie', 'legVentas', ['Factura A', 'Presupuesto B'], [vA, vB], ['#3b82f6','#a78bfa']);
+    renderDoughnut('cComprasPie', 'legCompras', ['Facturas A', 'Presupuestos B'], [cA, cB], ['#f87171','#fb923c']);
+
+    const gCats = Object.keys(gastosCat).filter(k => gastosCat[k] > 0);
+    renderDoughnut('cGastosPie', 'legGastos', gCats, gCats.map(k => gastosCat[k]), gCats.map((_,i) => PALETTE[i % PALETTE.length]));
+
+    renderGastosLista(gastosCat);
+
+    renderRanking('rkProv', provs, i => PALETTE[i % PALETTE.length], money);
+    renderRanking('rkProd', prods.map(x => ({ ...x, val: x.val })), i => PALETTE[i % PALETTE.length], n => `${n} uds.`);
+
+    renderDiag(vA, vB, comp, gast);
+
+    /* mostrar dashboard */
     if (inicial) inicial.style.display = 'none';
-    if (content) content.style.display = 'block';
-    if (rangoLbl) rangoLbl.style.display = 'inline-block';
+    if (dash) dash.style.display = 'block';
+    if (rangoLbl) rangoLbl.style.display = 'block';
     if (rangoTxt) rangoTxt.textContent = label;
 
   } catch (err) {
-    console.error('[Dashboard]', err);
-    if (errEl) {
-      errEl.textContent = `❌ Error al cargar datos: ${err.message}`;
-      errEl.classList.add('visible');
-    }
+    console.error('[Estadísticas]', err);
+    if (errEl) { errEl.textContent = `❌ Error al cargar datos: ${err.message}`; errEl.classList.add('on'); }
   } finally {
-    if (loadEl) loadEl.classList.remove('visible');
+    if (loadEl) loadEl.classList.remove('on');
   }
 }
 
-/* ══════════════════════════════════════
-   BOTÓN ACTUALIZAR
-══════════════════════════════════════ */
-document.getElementById('btnActualizar')?.addEventListener('click', cargarDashboard);
+/* ── TABS EVOLUCIÓN ── */
+document.querySelectorAll('#evolTabs .tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#evolTabs .tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (lastEvol) renderEvol(lastEvol.labels, lastEvol.ventas, lastEvol.compras, lastEvol.gastos, btn.dataset.t);
+  });
+});
+
+/* ── BOTÓN ── */
+document.getElementById('btnActualizar')?.addEventListener('click', cargar);
