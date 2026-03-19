@@ -1,0 +1,464 @@
+/* ============================================================
+   gastos.css  —  Autofaros · Vista: Gastos Operativos
+   v2026-03-19
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────
+   1. BASE
+────────────────────────────────────────────────────────── */
+.gastos-main {
+  background: #0b1220;
+  min-height: 100vh;
+  padding: 96px 24px 64px;
+}
+
+.gastos-wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   2. PAGE HEADER
+────────────────────────────────────────────────────────── */
+.gastos-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.gastos-eyebrow {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #1F487E;
+  margin-bottom: 4px;
+}
+
+.gastos-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 800;
+  color: #f0f4ff;
+  margin: 0;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+/* ──────────────────────────────────────────────────────────
+   3. PANEL BASE
+────────────────────────────────────────────────────────── */
+.gastos-panel {
+  background: rgba(17, 28, 48, 0.8);
+  border: 1px solid rgba(31, 72, 126, 0.18);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.gastos-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px;
+  border-bottom: 1px solid rgba(31, 72, 126, 0.15);
+  background: rgba(31, 72, 126, 0.06);
+}
+
+.gastos-panel__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(245, 200, 66, 0.12);
+  border: 1px solid rgba(245, 200, 66, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #f5c842;
+  flex-shrink: 0;
+}
+
+.gastos-panel__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  color: #f0f4ff;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.gastos-panel__body {
+  padding: 22px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   4. FORMULARIO DE REGISTRO
+────────────────────────────────────────────────────────── */
+.gastos-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  align-items: end;
+}
+
+.gastos-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gastos-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.45);
+}
+
+.gastos-input,
+.gastos-select,
+.gastos-textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(31, 72, 126, 0.25);
+  border-radius: 10px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 10px 13px;
+  width: 100%;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  color-scheme: dark;
+}
+
+.gastos-input::placeholder,
+.gastos-textarea::placeholder {
+  color: rgba(240, 244, 255, 0.2);
+}
+
+.gastos-input:focus,
+.gastos-select:focus,
+.gastos-textarea:focus {
+  outline: none;
+  border-color: #1F487E;
+  background: rgba(31, 72, 126, 0.1);
+  box-shadow: 0 0 0 3px rgba(31, 72, 126, 0.18);
+}
+
+.gastos-select option {
+  background: #111c30;
+  color: #f0f4ff;
+}
+
+.gastos-textarea {
+  resize: vertical;
+  min-height: 68px;
+}
+
+/* Span full width */
+.gastos-field--full {
+  grid-column: 1 / -1;
+}
+
+/* Botón guardar */
+.gastos-submit-row {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.gastos-btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 24px;
+  border-radius: 10px;
+  background: #1F487E;
+  border: none;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.gastos-btn-submit:hover {
+  background: #2a5da0;
+  box-shadow: 0 4px 18px rgba(31, 72, 126, 0.45);
+  transform: translateY(-1px);
+}
+
+.gastos-btn-submit:active {
+  transform: none;
+}
+
+/* ──────────────────────────────────────────────────────────
+   5. TOTALES BADGE ROW
+────────────────────────────────────────────────────────── */
+.gastos-totales {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: rgba(31, 72, 126, 0.06);
+  border: 1px solid rgba(31, 72, 126, 0.15);
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.gastos-totales__label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.35);
+  margin-right: 4px;
+}
+
+.gastos-totales__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gastos-totales__chip--a {
+  background: rgba(96, 165, 250, 0.1);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
+}
+
+.gastos-totales__chip--b {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.gastos-totales__chip--total {
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.gastos-totales__chip span.chip-key {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+/* ──────────────────────────────────────────────────────────
+   6. TABLA DE GASTOS
+────────────────────────────────────────────────────────── */
+.gastos-tabla-wrap {
+  overflow-x: auto;
+}
+
+.gastos-tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gastos-tabla thead tr {
+  border-bottom: 1px solid rgba(31, 72, 126, 0.25);
+}
+
+.gastos-tabla th {
+  padding: 12px 18px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(240, 244, 255, 0.4);
+  text-align: left;
+  white-space: nowrap;
+  background: rgba(31, 72, 126, 0.08);
+}
+
+.gastos-tabla th.text-right {
+  text-align: right;
+}
+
+.gastos-tabla tbody tr {
+  border-bottom: 1px solid rgba(31, 72, 126, 0.1);
+  transition: background 0.12s ease;
+}
+
+.gastos-tabla tbody tr:last-child {
+  border-bottom: none;
+}
+
+.gastos-tabla tbody tr:hover {
+  background: rgba(31, 72, 126, 0.07);
+}
+
+.gastos-tabla td {
+  padding: 12px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240, 244, 255, 0.75);
+  vertical-align: middle;
+}
+
+/* Columna fecha */
+.gastos-tabla td.col-fecha {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(240, 244, 255, 0.55);
+  white-space: nowrap;
+}
+
+/* Columna categoría */
+.gastos-tabla td.col-categoria {
+  font-weight: 600;
+  color: #f0f4ff;
+}
+
+/* Columna tipo — badge */
+.gastos-tipo-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.gastos-tipo-badge--a {
+  background: rgba(96, 165, 250, 0.1);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  color: #60a5fa;
+}
+
+.gastos-tipo-badge--b {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  color: #fbbf24;
+}
+
+/* Columna descripción */
+.gastos-tabla td.col-descripcion {
+  color: rgba(240, 244, 255, 0.4);
+  font-style: italic;
+  font-size: 12px;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Columna monto */
+.gastos-tabla td.col-monto {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  color: #f0f4ff;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Columna acciones */
+.gastos-tabla td.col-acciones {
+  white-space: nowrap;
+}
+
+/* Botón eliminar */
+.gastos-btn-eliminar {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 7px;
+  background: rgba(217, 4, 41, 0.1);
+  border: 1px solid rgba(217, 4, 41, 0.25);
+  color: #ff4d6d;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.gastos-btn-eliminar:hover {
+  background: rgba(217, 4, 41, 0.2);
+  border-color: rgba(217, 4, 41, 0.5);
+}
+
+/* Empty state */
+.gastos-empty {
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.gastos-empty__icon {
+  font-size: 40px;
+  color: rgba(31, 72, 126, 0.3);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.gastos-empty p {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: rgba(240, 244, 255, 0.3);
+  margin: 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   7. BACK LINK
+────────────────────────────────────────────────────────── */
+.gastos-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(240, 244, 255, 0.45);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.gastos-back:hover {
+  color: #f0f4ff;
+  text-decoration: none;
+}
+
+/* ──────────────────────────────────────────────────────────
+   8. RESPONSIVE
+────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .gastos-main { padding: 88px 12px 48px; }
+  .gastos-form { grid-template-columns: 1fr 1fr; }
+  .gastos-tabla th,
+  .gastos-tabla td { padding: 10px 12px; }
+}
+
+@media (max-width: 480px) {
+  .gastos-form { grid-template-columns: 1fr; }
+}

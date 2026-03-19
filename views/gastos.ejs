@@ -3,163 +3,193 @@
 <head>
   <%- include('layouts/head') %>
   <meta charset="utf-8"/>
-  <title>Gastos</title>
+  <title>Gastos — Autofaros</title>
+  <link rel="stylesheet" href="/css/pages/gastos.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
-    .gastos-container {
-      max-width: 1000px;
-      margin: 20px auto;
-      padding: 16px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.08);
-    }
-    .gastos-form {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-      align-items: end;
-    }
-    .gastos-form label {
-      font-weight: 600;
-      font-size: .9rem;
-    }
-    .gastos-form input,
-    .gastos-form select,
-    .gastos-form textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    .gastos-form button {
-      padding: 10px 14px;
-      border: none;
-      border-radius: 10px;
-      background: #003f7d;
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .gastos-form button:hover { opacity: .92; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 18px;
-    }
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-    }
-    th {
-      text-align: left;
-      background: #f7f7f7;
-    }
-    .monto {
-      font-variant-numeric: tabular-nums;
-      font-weight: 700;
-    }
-  </style>
 </head>
 <body>
   <%- include('layouts/header') %>
 
-  <div class="gastos-container">
-    <h2>Registrar gasto</h2>
+  <main class="gastos-main">
+    <div class="gastos-wrap">
 
-    <form class="gastos-form" action="/administracion/gastos" method="POST" id="form-gasto">
-      <div>
-        <label for="categoria">Categoría</label>
-        <select id="categoria" name="categoria" required>
-          <% (categorias || []).forEach(c => { %>
-            <option value="<%= c %>"><%= c.toUpperCase() %></option>
-          <% }) %>
-        </select>
+      <!-- PAGE HEADER -->
+      <div class="gastos-page-header">
+        <div>
+          <span class="gastos-eyebrow">Administración</span>
+          <h1 class="gastos-title">Gastos</h1>
+        </div>
+        <a href="/administracion" class="gastos-back">
+          <i class="fa-solid fa-arrow-left"></i> Volver
+        </a>
       </div>
 
-      <div>
-        <label for="tipo">Tipo</label>
-        <select id="tipo" name="tipo" required>
-          <option value="" disabled selected>Seleccione tipo</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-        </select>
-      </div>
+      <!-- PANEL: REGISTRAR GASTO -->
+      <div class="gastos-panel">
+        <div class="gastos-panel__header">
+          <div class="gastos-panel__icon">
+            <i class="fa-solid fa-plus"></i>
+          </div>
+          <h2 class="gastos-panel__title">Registrar gasto</h2>
+        </div>
+        <div class="gastos-panel__body">
 
-      <div>
-        <label for="fecha">Fecha</label>
-        <input type="date" id="fecha" name="fecha" value="<%= hoy %>" required>
-      </div>
+          <form class="gastos-form" action="/administracion/gastos" method="POST" id="form-gasto">
 
-      <div>
-        <label for="monto">Monto ($)</label>
-        <input type="number" id="monto" name="monto" step="0.01" min="0" placeholder="0.00" required>
-      </div>
+            <div class="gastos-field">
+              <label class="gastos-label" for="categoria">Categoría</label>
+              <select id="categoria" name="categoria" class="gastos-select" required>
+                <% (categorias || []).forEach(c => { %>
+                  <option value="<%= c %>"><%= c.toUpperCase() %></option>
+                <% }) %>
+              </select>
+            </div>
 
-      <div style="grid-column: 1 / -1">
-        <label for="descripcion">Descripción (opcional)</label>
-        <textarea id="descripcion" name="descripcion" rows="2" placeholder="Detalle breve del gasto..."></textarea>
-      </div>
+            <div class="gastos-field">
+              <label class="gastos-label" for="tipo">Tipo</label>
+              <select id="tipo" name="tipo" class="gastos-select" required>
+                <option value="" disabled selected>Seleccione tipo</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+              </select>
+            </div>
 
-      <input type="hidden" name="administrador" value="<%= (typeof userLogged !== 'undefined' && userLogged?.nombre) ? userLogged.nombre : 'admin' %>">
+            <div class="gastos-field">
+              <label class="gastos-label" for="fecha">Fecha</label>
+              <input type="date" id="fecha" name="fecha" value="<%= hoy %>" class="gastos-input" required>
+            </div>
 
-      <div style="grid-column: 1 / -1; text-align: right">
-        <button type="submit">Guardar gasto</button>
-      </div>
-    </form>
+            <div class="gastos-field">
+              <label class="gastos-label" for="monto">Monto ($)</label>
+              <input type="number" id="monto" name="monto" step="0.01" min="0" placeholder="0.00" class="gastos-input" required>
+            </div>
 
-    <!-- Detalle totales A, B, Total (se mantiene, opcionalmente ajustar grid-column) -->
-    <p style="grid-column: 1 / -1; margin-top: 8px;">
-      <strong>Detalle totales:</strong>
-      <span id="g-wrapA">A: <span id="g-totA">0</span></span> ·
-      <span id="g-wrapB">B: <span id="g-totB">0</span></span> ·
-      <span id="g-wrapTOTAL">TOTAL: <span id="g-totTotal">0</span></span>
-    </p>
+            <div class="gastos-field gastos-field--full">
+              <label class="gastos-label" for="descripcion">Descripción <span style="font-weight:400;opacity:.5;text-transform:none;letter-spacing:0;">(opcional)</span></label>
+              <textarea id="descripcion" name="descripcion" class="gastos-textarea" rows="2" placeholder="Detalle breve del gasto..."></textarea>
+            </div>
 
-    <h3 style="margin-top: 26px;">Últimos 30 días</h3>
-  <table>
-  <thead>
-    <tr>
-      <th>Fecha</th>
-      <th>Categoría</th>
-      <th>Tipo</th>
-      <th>Descripción</th>
-      <th style="text-align: right;">Monto</th>
-      <th>Acciones</th> <!-- Nueva columna para acciones -->
-    </tr>
-  </thead>
-  <tbody>
-    <% if ((gastos || []).length === 0) { %>
-      <tr><td colspan="6">Sin registros recientes.</td></tr>
-    <% } else { %>
-      <% gastos.forEach(g => { %>
-        <tr>
-          <td><%= new Date(g.fecha).toLocaleDateString('es-AR') %></td>
-          <td><%= g.categoria %></td>
-          <td><%= g.tipo %></td>
-          <td><%= g.descripcion || '' %></td>
-          <td class="monto" style="text-align: right;">
-            $ <%= Number(g.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 }) %>
-          </td>
-          <td>
-            <!-- Formulario para eliminar, con confirmación -->
-            <form action="/administracion/gastos/<%= g.id %>/eliminar" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este gasto?');">
-              <button type="submit" style="background: #d9534f; color: #fff; border: none; padding: 5px 8px; border-radius: 5px; cursor: pointer;">
-                Eliminar
+            <input type="hidden" name="administrador" value="<%= (typeof userLogged !== 'undefined' && userLogged?.nombre) ? userLogged.nombre : 'admin' %>">
+
+            <div class="gastos-submit-row">
+              <button type="submit" class="gastos-btn-submit">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar gasto
               </button>
-            </form>
-          </td>
-        </tr>
-      <% }) %>
-    <% } %>
-  </tbody>
-</table>
+            </div>
 
-  </div>
+          </form>
+
+          <!-- Totales -->
+          <div class="gastos-totales" style="margin-top: 18px;">
+            <span class="gastos-totales__label">Totales</span>
+            <span class="gastos-totales__chip gastos-totales__chip--a">
+              <span class="chip-key">A</span>
+              <span id="g-totA">$ 0,00</span>
+            </span>
+            <span class="gastos-totales__chip gastos-totales__chip--b">
+              <span class="chip-key">B</span>
+              <span id="g-totB">$ 0,00</span>
+            </span>
+            <span class="gastos-totales__chip gastos-totales__chip--total">
+              <span class="chip-key">Total</span>
+              <span id="g-totTotal">$ 0,00</span>
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PANEL: TABLA ÚLTIMOS 30 DÍAS -->
+      <div class="gastos-panel">
+        <div class="gastos-panel__header">
+          <div class="gastos-panel__icon">
+            <i class="fa-solid fa-table-list"></i>
+          </div>
+          <h2 class="gastos-panel__title">Últimos 30 días</h2>
+        </div>
+
+        <div class="gastos-tabla-wrap">
+          <% if ((gastos || []).length === 0) { %>
+            <div class="gastos-empty">
+              <i class="fa-solid fa-inbox gastos-empty__icon"></i>
+              <p>Sin registros recientes.</p>
+            </div>
+          <% } else { %>
+            <table class="gastos-tabla">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Categoría</th>
+                  <th>Tipo</th>
+                  <th>Descripción</th>
+                  <th class="text-right">Monto</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% gastos.forEach(g => { %>
+                  <tr>
+                    <td class="col-fecha">
+                      <%= new Date(g.fecha).toLocaleDateString('es-AR') %>
+                    </td>
+                    <td class="col-categoria"><%= g.categoria %></td>
+                    <td>
+                      <span class="gastos-tipo-badge gastos-tipo-badge--<%= (g.tipo || '').toLowerCase() %>">
+                        <%= g.tipo %>
+                      </span>
+                    </td>
+                    <td class="col-descripcion" title="<%= g.descripcion || '' %>">
+                      <%= g.descripcion || '—' %>
+                    </td>
+                    <td class="col-monto">
+                      $ <%= Number(g.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 }) %>
+                    </td>
+                    <td class="col-acciones">
+                      <form action="/administracion/gastos/<%= g.id %>/eliminar" method="POST"
+                            onsubmit="return confirmarEliminar(event)">
+                        <button type="submit" class="gastos-btn-eliminar">
+                          <i class="fa-solid fa-trash-can"></i> Eliminar
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+
+    </div><!-- /gastos-wrap -->
+  </main>
 
   <script>
-    // === Alerta al cambiar la fecha (usa SweetAlert si disponible) ===
-    (function(){
+    // ── Confirmación eliminar con SweetAlert ──────────────────────
+    function confirmarEliminar(e) {
+      e.preventDefault();
+      const form = e.target;
+      if (window.Swal) {
+        Swal.fire({
+          title: '¿Eliminar gasto?',
+          text: 'Esta acción no se puede deshacer.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar',
+          reverseButtons: true,
+          background: '#111c30',
+          color: '#f0f4ff',
+          confirmButtonColor: '#d90429',
+          cancelButtonColor: 'rgba(31,72,126,0.4)'
+        }).then(r => { if (r.isConfirmed) form.submit(); });
+      } else {
+        if (confirm('¿Estás seguro de eliminar este gasto?')) form.submit();
+      }
+      return false;
+    }
+
+    // ── Alerta al cambiar la fecha ────────────────────────────────
+    (function () {
       const $fecha = document.getElementById('fecha');
       if (!$fecha) return;
       const valorInicial = $fecha.value;
@@ -169,24 +199,26 @@
         let ok = true;
         if (window.Swal) {
           const r = await Swal.fire({
-            title: '⚠️ CUIDADO',
+            title: '⚠️ Cuidado',
             text: 'Estás por cambiar la fecha del gasto. ¿Confirmás?',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, cambiar',
             cancelButtonText: 'No, volver',
-            reverseButtons: true
+            reverseButtons: true,
+            background: '#111c30',
+            color: '#f0f4ff',
+            confirmButtonColor: '#1F487E',
+            cancelButtonColor: 'rgba(31,72,126,0.3)'
           });
           ok = r.isConfirmed;
         } else {
           ok = confirm('Estás por cambiar la fecha del gasto. ¿Confirmás?');
         }
-        if (!ok) {
-          e.target.value = valorInicial; // volver al valor original
-        }
+        if (!ok) e.target.value = valorInicial;
       });
 
-      // === Validación de monto positivo ===
+      // ── Validación monto positivo ─────────────────────────────────
       const $monto = document.getElementById('monto');
       const $form  = document.getElementById('form-gasto');
       $form.addEventListener('submit', (ev) => {
@@ -194,7 +226,14 @@
         if (isNaN(v) || v <= 0) {
           ev.preventDefault();
           if (window.Swal) {
-            Swal.fire('Monto inválido', 'Ingresá un monto mayor a 0', 'error');
+            Swal.fire({
+              title: 'Monto inválido',
+              text: 'Ingresá un monto mayor a 0.',
+              icon: 'error',
+              background: '#111c30',
+              color: '#f0f4ff',
+              confirmButtonColor: '#1F487E'
+            });
           } else {
             alert('Ingresá un monto mayor a 0');
           }
