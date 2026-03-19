@@ -518,6 +518,8 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
+
+            <!-- ── Filtros ──────────────────────────────────────────────── -->
             <div class="mb-3">
               <label class="form-label">Proveedor</label>
               <select id="filtroProveedor" class="form-select">
@@ -535,9 +537,18 @@
                   <option value="nota_credito">Notas de Crédito</option>
                 </select>
               </div>
-              <div class="col-md-6"><label class="form-label">Número</label><input type="text" id="filtroNumero" class="form-control" placeholder="Ej: 001-12345"></div>
-              <div class="col-md-6"><label class="form-label">Fecha Desde</label><input type="date" id="filtroFechaDesde" class="form-control"></div>
-              <div class="col-md-6"><label class="form-label">Fecha Hasta</label><input type="date" id="filtroFechaHasta" class="form-control"></div>
+              <div class="col-md-6">
+                <label class="form-label">Número</label>
+                <input type="text" id="filtroNumero" class="form-control" placeholder="Ej: 001-12345">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Fecha Desde</label>
+                <input type="date" id="filtroFechaDesde" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Fecha Hasta</label>
+                <input type="date" id="filtroFechaHasta" class="form-control">
+              </div>
               <div class="col-md-6">
                 <label class="form-label">Condición</label>
                 <select id="filtroCondicion" class="form-select">
@@ -547,13 +558,57 @@
                 </select>
               </div>
             </div>
+
+            <!-- ── Acciones de búsqueda ─────────────────────────────────── -->
             <div class="d-flex gap-2 mt-3 flex-wrap">
               <button id="btnGenerarPDFResumenFacturas" class="btn btn-primary">📄 Resumen Facturas</button>
               <button id="btnGenerarPDFResumenPresupuestos" class="btn btn-primary">📝 Resumen Presupuestos</button>
               <button id="btnVerVencimientos" class="btn btn-primary">📆 Vencimientos</button>
               <button class="btn btn-success ms-auto" id="btnBuscarListados">Buscar</button>
             </div>
-          </div>
+
+            <!-- ── Separador ────────────────────────────────────────────── -->
+            <hr style="border-color: rgba(240,244,255,0.1); margin: 22px 0 18px;">
+
+            <!-- ── Resumen de compras por período ──────────────────────── -->
+            <div style="
+              font-family: 'Barlow Condensed', sans-serif;
+              font-size: 11px;
+              font-weight: 700;
+              letter-spacing: 2px;
+              text-transform: uppercase;
+              color: rgba(240,244,255,0.4);
+              margin-bottom: 8px;
+            ">
+              <i class="fa-solid fa-chart-bar" style="margin-right:6px; color:rgba(245,158,11,0.6);"></i>
+              Resumen de compras a proveedores
+            </div>
+
+            <p style="
+              font-family: 'DM Sans', sans-serif;
+              font-size: 13px;
+              color: rgba(240,244,255,0.45);
+              margin: 0 0 12px;
+              line-height: 1.5;
+            ">
+              Usá el rango de <strong style="color:rgba(240,244,255,0.65)">Fecha Desde / Hasta</strong> de arriba
+              para ver el total comprado día por día, el desglose de IVA y generar el PDF del período.
+            </p>
+
+            <div class="d-flex gap-2 flex-wrap">
+              <button id="btnVerResumenCompras" class="btn btn-sm btn-outline-warning">
+                <i class="fa-solid fa-table-list" style="margin-right:5px;"></i>Ver resumen por día
+              </button>
+              <button id="btnPDFResumenCompras" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-file-pdf" style="margin-right:5px;"></i>PDF del período
+              </button>
+            </div>
+
+            <!-- Tabla de resumen inyectada por JS -->
+            <div id="contenedorResumenCompras" style="margin-top: 14px;"></div>
+
+          </div><!-- /modal-body -->
+
           <div class="modal-footer">
             <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
           </div>
