@@ -1171,6 +1171,8 @@ actualizar: async function (req, res) {
 
     // ---------- 4) Proveedor asignado + IVA del producto ----------
     let proveedorAsignado = numInt(req.body.proveedor_designado) || 0;
+    // Leer si el admin eligió el proveedor manualmente (flag persistido desde el front)
+    const esManual = req.body.proveedor_es_manual === '1' ? 1 : 0;
 
     // si no hay manual, elegir por menor costo_iva (ya normalizado a UNIDAD por el front)
     if (!proveedorAsignado) {
@@ -1205,7 +1207,7 @@ actualizar: async function (req, res) {
       ivaProducto = Number(String(iva0).replace(',', '.')) || 21;
     }
 
-    await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado || null, IVA: ivaProducto });
+    await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado || null, IVA: ivaProducto, proveedor_id_manual: esManual });
     let idxAsignado = provIds.findIndex(v => numInt(v) === (proveedorAsignado || 0));
     if (idxAsignado < 0) {
       idxAsignado = Math.max(0, provIds.findIndex(v => numInt(v))); // primer válido
@@ -2484,7 +2486,7 @@ actualizarPreciosExcel: async (req, res) => {
       const ids = Array.from(productosTocados);
 
       const [rowsProd] = await conexion.promise().query(
-        `SELECT id, proveedor_id AS asignado_id, utilidad, COALESCE(IVA,21) AS IVA
+        `SELECT id, proveedor_id AS asignado_id, proveedor_id_manual, utilidad, COALESCE(IVA,21) AS IVA
            FROM productos
           WHERE id IN (${ids.map(() => '?').join(',')})`,
         ids
@@ -2493,9 +2495,10 @@ actualizarPreciosExcel: async (req, res) => {
       const mapProd = new Map();
       (rowsProd || []).forEach(r => {
         mapProd.set(Number(r.id), {
-          asignado_id: Number(r.asignado_id || 0),
-          utilidad: Number(r.utilidad || 0),
-          IVA: Number(r.IVA || 21)
+          asignado_id:        Number(r.asignado_id || 0),
+          proveedor_id_manual: Number(r.proveedor_id_manual || 0),
+          utilidad:           Number(r.utilidad || 0),
+          IVA:                Number(r.IVA || 21)
         });
       });
 
@@ -2503,6 +2506,10 @@ actualizarPreciosExcel: async (req, res) => {
         const meta = mapProd.get(prodId);
         if (!meta || !meta.asignado_id) continue;
         if (meta.asignado_id === proveedor_id) continue;
+
+        // Si el admin asignó el proveedor manualmente, no recalculamos PV
+        // (actualizarPreciosPDF ya lo maneja correctamente para ese caso)
+        if (meta.proveedor_id_manual === 1) continue;
 
         const [ppRows] = await conexion.promise().query(
           `SELECT 

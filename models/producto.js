@@ -366,6 +366,9 @@ actualizar: function (conexion, datos, archivo) {
 
     if (isSet(datos.proveedor_id)) add("proveedor_id=?", datos.proveedor_id);
 
+    // Persistir si el proveedor fue elegido manualmente por el admin
+    if (isSet(datos.proveedor_id_manual)) add("proveedor_id_manual=?", datos.proveedor_id_manual ? 1 : 0);
+
     if (isSet(datos.oferta)) add("oferta=?", datos.oferta ? 1 : 0);
 
     query += " WHERE id=?";
@@ -419,6 +422,7 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
         p.id,
         p.utilidad,
         p.proveedor_id AS proveedor_asignado,
+        p.proveedor_id_manual,
         COALESCE(pp.iva, p.IVA, 21) AS iva_aplicado,
         LOWER(COALESCE(pp.presentacion, 'unidad')) AS presentacion,
         pp.precio_lista,
@@ -484,7 +488,11 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
       actualizadosPP++;
 
       // ✅ SOLO actualizar tabla productos si ESTE proveedor es el asignado del producto
-      if (Number(prod.proveedor_asignado) === Number(proveedorId)) {
+      // y el producto NO tiene selección manual que apunte a otro proveedor.
+      const tieneManualOtro = Number(prod.proveedor_id_manual) === 1
+        && Number(prod.proveedor_asignado) !== Number(proveedorId);
+
+      if (Number(prod.proveedor_asignado) === Number(proveedorId) && !tieneManualOtro) {
         const updateProducto = `
           UPDATE productos
              SET costo_neto   = ?,
@@ -622,13 +630,59 @@ actualizarPreciosPDF: async function (precio_lista, codigo, proveedor_id) {
           };
         }
 
+        // ── Verificar si el admin fijó el proveedor manualmente ──
+        const [resManual] = await conn.query(
+          `SELECT proveedor_id, proveedor_id_manual FROM productos WHERE id = ? LIMIT 1`,
+          [producto_id]
+        );
+        const esManual = resManual && resManual.length > 0
+          ? Number(resManual[0].proveedor_id_manual) === 1
+          : false;
+        const proveedorManualId = resManual && resManual.length > 0
+          ? Number(resManual[0].proveedor_id || 0)
+          : 0;
+
+        if (esManual) {
+          // El admin eligió un proveedor a mano: NO reasignamos proveedor_id.
+          // Solo recalculamos precio_venta si el proveedor importado ES el que
+          // está asignado manualmente (actualizamos su precio pero no cambiamos quién está asignado).
+          if (proveedorManualId === Number(proveedor_id)) {
+            // Recalcular PV con los nuevos costos del proveedor asignado manualmente
+            await conn.query(
+              `UPDATE productos
+                  SET precio_venta = ?,
+                      costo_neto   = ?,
+                      costo_iva    = ?
+                WHERE id = ?`,
+              [precio_venta, Math.ceil(costo_neto_raw), costo_iva_unidad, producto_id]
+            );
+            return {
+              codigo,
+              nombre: row.nombre,
+              producto_id,
+              precio_lista: precioListaNum,
+              precio_venta,
+              sin_cambio: false,
+              seleccion_manual: true
+            };
+          }
+          // El proveedor importado NO es el asignado manualmente: no tocar productos.
+          return {
+            codigo,
+            nombre: row.nombre,
+            producto_id,
+            precio_lista: precioListaNum,
+            precio_venta: 0,
+            sin_cambio: true,
+            seleccion_manual: true
+          };
+        }
+
         const proveedorMasBarato = res2[0];
         const esMasBarato = Number(proveedorMasBarato.proveedor_id) === Number(proveedor_id);
 
         if (esMasBarato) {
-          // ✅ FIX Bug 1: actualizar precio_venta + reasignar proveedor_id + costos.
-          // Antes solo se actualizaba precio_venta, dejando proveedor_id desincronizado
-          // cuando este proveedor desplazaba al anterior más barato.
+          // Sin selección manual: reasignar al proveedor más barato y recalcular PV.
           await conn.query(
             `UPDATE productos
                 SET precio_venta = ?,

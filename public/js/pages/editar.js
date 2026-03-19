@@ -339,10 +339,13 @@ function redondearAlCentenar(valor) {
 
     window.__seleccionManualProveedor__ = false;
 
-    // ✅ FIX: al cargar, NO activar seleccionManualProveedor aunque haya proveedor en BD.
-    // El cálculo del precio siempre parte del proveedor más barato (costo_iva menor).
-    // El radio del proveedor en BD se marca visualmente solo como referencia,
-    // pero actualizarPrecioFinal() lo sobreescribirá con el más barato al terminar el init.
+    // ── Leer desde la BD si el proveedor fue seleccionado manualmente ──
+    // Si proveedor_es_manual === '1' (guardado en BD), activamos el flag
+    // y el init respeta esa elección en lugar de forzar el más barato.
+    var esManualBD = $('#proveedor_es_manual').val() === '1';
+    if (esManualBD) {
+      window.__seleccionManualProveedor__ = true;
+    }
     var seleccionadoBD = $('#proveedor_designado').val();
     if (seleccionadoBD) {
       var $radioBD = $('.proveedor-designado-radio').filter(function () {
@@ -350,7 +353,6 @@ function redondearAlCentenar(valor) {
       });
       if ($radioBD.length) {
         $radioBD.prop('checked', true);
-        // NO activamos __seleccionManualProveedor__ aquí — el init debe calcular desde el más barato
         var $bloque = $radioBD.closest('.proveedor');
         var nombre = $bloque.find('.nombre_proveedor').text().trim();
         if (!nombre) {
@@ -372,6 +374,7 @@ function redondearAlCentenar(valor) {
     actualizarPrecioFinal();          // con __EDITAR_FIRST_LOAD__=true: no toca precio_venta
     window.__EDITAR_FIRST_LOAD__ = false;  // apagamos el flag AQUI, una sola vez, al terminar el init
     syncIVAProductoConAsignado();
+    actualizarBadgeManual();          // mostrar/ocultar badge y avisos según estado inicial
     initEscobillasEditar();
 
   });
@@ -549,6 +552,36 @@ function redondearAlCentenar(valor) {
   toggleSection();
 }
 
+  // ===== Badge de selección manual + aviso en proveedor más barato ignorado =====
+  function actualizarBadgeManual() {
+    var esManual = window.__seleccionManualProveedor__;
+
+    // Badge y botón en el header de proveedores
+    $('#badgeManual').toggle(esManual);
+    $('#btnVolverMasBarato').toggle(esManual);
+    $('#labelProveedorAuto').toggle(!esManual);
+
+    // Quitar avisos y borde amarillo de todas las cards
+    $('.proveedor').each(function () {
+      $(this).removeClass('cr-prov-card--mas-barato-ignorado');
+      $(this).find('.cr-aviso-mas-barato').hide();
+    });
+
+    if (esManual) {
+      // Marcar el proveedor más barato si NO es el que está seleccionado
+      var $masBarato = getProveedorConCostoIvaMasBajo();
+      var $radioChecked = $('.proveedor-designado-radio:checked');
+      if ($masBarato && $masBarato.length && $radioChecked.length) {
+        var provManual = $radioChecked.val();
+        var provBarato = $masBarato.find('.proveedor-designado-radio').val();
+        if (provManual !== provBarato) {
+          $masBarato.addClass('cr-prov-card--mas-barato-ignorado');
+          $masBarato.find('.cr-aviso-mas-barato').show();
+        }
+      }
+    }
+  }
+
   // ===== Delegación de eventos =====
   $(document)
     .off('change.provSel', '.proveedores')
@@ -613,6 +646,7 @@ function redondearAlCentenar(valor) {
     .off('change.provRadio', '.proveedor-designado-radio')
     .on('change.provRadio', '.proveedor-designado-radio', function () {
       window.__seleccionManualProveedor__ = true;
+      $('#proveedor_es_manual').val('1');  // persistir en el form
       $('.proveedor-designado-radio').not(this).prop('checked', false);
       $(this).prop('checked', true);
 
@@ -629,6 +663,17 @@ function redondearAlCentenar(valor) {
 
       actualizarPrecioFinal();
       syncIVAProductoConAsignado();
+      actualizarBadgeManual();
+    })
+    // +++ Volver al proveedor más barato (limpiar selección manual) +++
+    .off('click.volverBarato', '#btnVolverMasBarato')
+    .on('click.volverBarato', '#btnVolverMasBarato', function () {
+      window.__seleccionManualProveedor__ = false;
+      $('#proveedor_es_manual').val('0');
+      actualizarProveedorAsignado();
+      actualizarPrecioFinal();
+      syncIVAProductoConAsignado();
+      actualizarBadgeManual();
     })
     // +++ Agregar proveedor +++
     .off('click.addProv', '#addProveedor')
@@ -743,6 +788,7 @@ function redondearAlCentenar(valor) {
       // si era el proveedor seleccionado manualmente, reseteo esa preferencia
       if ($card.find('.proveedor-designado-radio').is(':checked')) {
         window.__seleccionManualProveedor__ = false;
+        $('#proveedor_es_manual').val('0');
         $('#proveedor_designado').val('');
       }
 
@@ -753,6 +799,7 @@ function redondearAlCentenar(valor) {
       if (!window.__seleccionManualProveedor__) actualizarProveedorAsignado();
       actualizarPrecioFinal();
       syncIVAProductoConAsignado();
+      actualizarBadgeManual();
     });
 
   // ===== Cálculos por bloque =====
