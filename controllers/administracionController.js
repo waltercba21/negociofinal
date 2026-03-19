@@ -1343,13 +1343,13 @@ generarResumenComprasPeriodoPDF: (req, res) => {
       return;
     }
 
-    const cFecha = left,       wFecha = 72;
-    const cNum   = left + 72,  wNum   = 110;
-    const cProv  = left + 182, wProv  = 140;
-    const cIvaP  = left + 322, wIvaP  = 44;
-    const cNeto  = left + 366, wNeto  = 80;
-    const cIva   = left + 446, wIva   = 70;
-    const cTotal = right - 80, wTotal = 80;
+    const cFecha = left,       wFecha = 68;
+    const cNum   = left + 68,  wNum   = 95;
+    const cProv  = left + 163, wProv  = 115;
+    const cIvaP  = left + 278, wIvaP  = 38;
+    const cNeto  = left + 316, wNeto  = 90;
+    const cIva   = left + 406, wIva   = 75;
+    const cTotal = left + 481, wTotal = right - (left + 481);
 
     const drawTableHeader = () => {
       const y = doc.y;
