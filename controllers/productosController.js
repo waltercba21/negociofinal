@@ -1636,7 +1636,7 @@ obtenerModelosPorMarca: function(req, res) {
       });
   },
 generarPDF: async function (req, res) {
-  const { doc, fail500 } = crearPDFResponse(res, { filename: 'lista_precios.pdf', margin: 25 });
+  const { doc, fail500 } = crearPDFResponse(res, { filename: 'lista_precios.pdf', margin: 40 });
 
   // Normalización
   const proveedorId = normalizarIdFiltro(req.query.proveedor, ['TODOS', '']);
@@ -1676,34 +1676,43 @@ generarPDF: async function (req, res) {
     const fmtAr = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     const fmt$  = (n) => { const v = Number(n); return (Number.isFinite(v) && v > 0) ? `$ ${fmtAr.format(v)}` : '-'; };
 
-    // ── Layout A4: 595pt ancho, márgenes 28pt → área útil 539pt ──
-    const ML         = 28;
-    const PAGE_RIGHT = 567; // 595 - 28
+    // ── Layout A4: 595pt ancho ──
+    // Márgenes internos generosos para que la impresora no corte nada
+    const ML         = 40;   // margen izquierdo
+    const MR         = 40;   // margen derecho
+    const PAGE_RIGHT = 595 - MR; // 555
 
-    // Anchos: 88 + 220 + 82 + 44 + 88 = 522 + gaps(5×3=15) = 537 ✓
-    const C_COD  = { x: ML,        w: 88  };
-    const C_DESC = { x: ML + 93,   w: 220 };
-    const C_CIVA = { x: ML + 318,  w: 82  };
-    const C_UTIL = { x: ML + 405,  w: 44  };
-    const C_PVEN = { x: ML + 454,  w: 88  };
+    // Área útil: 555 - 40 = 515pt
+    // Columnas: COD=80 | gap=8 | DESC=210 | gap=8 | CIVA=80 | gap=8 | UTIL=38 | gap=8 | PVEN=83 = 515 ✓
+    const C = {
+      cod:  { x: ML,            w: 80  },
+      desc: { x: ML + 88,       w: 210 },
+      civa: { x: ML + 88+218,   w: 80  },
+      util: { x: ML + 88+218+88,w: 38  },
+      pven: { x: ML + 88+218+88+46, w: 83 },
+    };
+
+    const FONT_SIZE  = 7.5;
+    const LINE_H     = doc.currentLineHeight(true) * FONT_SIZE / 12 + 1;
 
     // ── Encabezado ──
     const drawHeader = () => {
       const y = doc.y;
-      doc.fontSize(7.5).fillColor('#555555');
-      doc.text('Código',       C_COD.x,  y, { width: C_COD.w,  align: 'left',  lineBreak: false });
-      doc.text('Descripción',  C_DESC.x, y, { width: C_DESC.w, align: 'left',  lineBreak: false });
-      doc.text('Costo c/IVA',  C_CIVA.x, y, { width: C_CIVA.w, align: 'right', lineBreak: false });
-      doc.text('Utilidad',     C_UTIL.x, y, { width: C_UTIL.w, align: 'right', lineBreak: false });
-      doc.text('Precio venta', C_PVEN.x, y, { width: C_PVEN.w, align: 'right', lineBreak: false });
-      const lineY = y + 12;
-      doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY).strokeColor('#888888').lineWidth(0.6).stroke();
+      doc.fontSize(FONT_SIZE).fillColor('#444444').font('Helvetica-Bold');
+      doc.text('Código',       C.cod.x,  y, { width: C.cod.w,  align: 'left',  lineBreak: false });
+      doc.text('Descripción',  C.desc.x, y, { width: C.desc.w, align: 'left',  lineBreak: false });
+      doc.text('Costo c/IVA',  C.civa.x, y, { width: C.civa.w, align: 'right', lineBreak: false });
+      doc.text('Utilidad',     C.util.x, y, { width: C.util.w, align: 'right', lineBreak: false });
+      doc.text('Precio venta', C.pven.x, y, { width: C.pven.w, align: 'right', lineBreak: false });
+      doc.font('Helvetica');
+      const lineY = y + FONT_SIZE + 4;
+      doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY).strokeColor('#666666').lineWidth(0.7).stroke();
       doc.strokeColor('black').lineWidth(1);
-      doc.y = lineY + 4;
+      doc.y = lineY + 5;
     };
 
     const ensurePage = (rowH) => {
-      if (doc.y + rowH > doc.page.height - 38) {
+      if (doc.y + rowH > doc.page.height - 45) {
         doc.addPage();
         drawHeader();
       }
@@ -1729,36 +1738,35 @@ generarPDF: async function (req, res) {
       const txtUtil  = utilidad > 0 ? `${Math.round(utilidad)}%` : '-';
       const txtVenta = fmt$(precioVenta);
 
-      // Altura de la fila basada en la descripción (única columna multilinea)
-      const rowH = Math.max(13, doc.heightOfString(nombre, { width: C_DESC.w }));
+      // Calcular altura real de la descripción (única columna multilínea)
+      doc.fontSize(FONT_SIZE);
+      const descH = doc.heightOfString(nombre, { width: C.desc.w });
+      const rowH  = Math.max(FONT_SIZE + 4, descH);
 
-      ensurePage(rowH + 4);
+      ensurePage(rowH + 5);
 
       const y = doc.y;
 
       // Fondo alternado
       if (idx % 2 === 0) {
-        doc.rect(ML, y - 1, PAGE_RIGHT - ML, rowH + 3).fill('#f5f5f5');
+        doc.rect(ML - 2, y - 1, PAGE_RIGHT - ML + 4, rowH + 3).fill('#f4f4f4');
       }
 
-      doc.fontSize(7.5).fillColor('#111111');
+      doc.fontSize(FONT_SIZE).fillColor('#111111');
 
-      // Código — posición fija Y
-      doc.text(codigo,   C_COD.x,  y, { width: C_COD.w,  align: 'left',  lineBreak: false });
+      // Cada columna se dibuja con x,y explícitos y lineBreak:false
+      // Esto garantiza que el cursor NO se mueve entre columnas
+      doc.text(codigo,   C.cod.x,  y, { width: C.cod.w,  align: 'left',  lineBreak: false });
+      doc.text(nombre,   C.desc.x, y, { width: C.desc.w, align: 'left',  lineBreak: false });
+      doc.text(txtCosto, C.civa.x, y, { width: C.civa.w, align: 'right', lineBreak: false });
+      doc.text(txtUtil,  C.util.x, y, { width: C.util.w, align: 'right', lineBreak: false });
+      doc.text(txtVenta, C.pven.x, y, { width: C.pven.w, align: 'right', lineBreak: false });
 
-      // Descripción — única columna que puede ser multilinea, resetea Y
-      doc.text(nombre,   C_DESC.x, y, { width: C_DESC.w, align: 'left',  lineBreak: true  });
-
-      // Columnas numéricas — siempre vuelven a Y base para alinearse correctamente
-      doc.text(txtCosto, C_CIVA.x, y, { width: C_CIVA.w, align: 'right', lineBreak: false });
-      doc.text(txtUtil,  C_UTIL.x, y, { width: C_UTIL.w, align: 'right', lineBreak: false });
-      doc.text(txtVenta, C_PVEN.x, y, { width: C_PVEN.w, align: 'right', lineBreak: false });
-
-      // Línea separadora
+      // Avanzar el cursor manualmente según la altura real de la fila
       const afterY = y + rowH + 3;
-      doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY).strokeColor('#e0e0e0').lineWidth(0.3).stroke();
+      doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY).strokeColor('#dddddd').lineWidth(0.3).stroke();
       doc.strokeColor('black').lineWidth(1);
-      doc.y = afterY + 1;
+      doc.y = afterY + 2;
     });
 
     doc.end();
