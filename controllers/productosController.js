@@ -1691,10 +1691,10 @@ generarPDF: async function (req, res) {
 
     const FS = 7.5;
 
-    // Dibuja texto alineado a la derecha restaurando doc.y después
-    const drawRight = (txt, col, y) => {
+    // Dibuja texto centrado en la columna, restaurando doc.y después
+    const drawCenter = (txt, col, y) => {
       const tw   = doc.widthOfString(txt);
-      const xPos = col.x + col.w - tw;
+      const xPos = col.x + (col.w - tw) / 2;
       doc.text(txt, xPos, y, { lineBreak: false });
       doc.y = y;
     };
@@ -1708,11 +1708,11 @@ generarPDF: async function (req, res) {
     const drawHeader = () => {
       const y = doc.y;
       doc.fontSize(FS).font('Helvetica-Bold').fillColor('#333333');
-      doc.text('Código',       C.cod.x,  y, { width: C.cod.w,  align: 'left',  lineBreak: false });
-      doc.text('Descripción',  C.desc.x, y, { width: C.desc.w, align: 'left',  lineBreak: false });
-      doc.text('Costo c/IVA',  C.civa.x, y, { width: C.civa.w, align: 'right', lineBreak: false });
-      doc.text('Utilidad',     C.util.x, y, { width: C.util.w, align: 'right', lineBreak: false });
-      doc.text('Precio venta', C.pven.x, y, { width: C.pven.w, align: 'right', lineBreak: false });
+      doc.text('Código',       C.cod.x,  y, { width: C.cod.w,  align: 'left',   lineBreak: false });
+      doc.text('Descripción',  C.desc.x, y, { width: C.desc.w, align: 'left',   lineBreak: false });
+      doc.text('Costo c/IVA',  C.civa.x, y, { width: C.civa.w, align: 'center', lineBreak: false });
+      doc.text('Utilidad',     C.util.x, y, { width: C.util.w, align: 'center', lineBreak: false });
+      doc.text('Precio venta', C.pven.x, y, { width: C.pven.w, align: 'center', lineBreak: false });
       doc.font('Helvetica');
       const lineY = y + FS + 4;
       doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY)
@@ -1761,15 +1761,14 @@ generarPDF: async function (req, res) {
         doc.fontSize(FS).font('Helvetica').fillColor('#111111');
       }
 
-      // Código y Descripción con doc.text (pueden mover el cursor, no importa)
       doc.fillColor('#111111');
       doc.text(codigo, C.cod.x,  y, { width: C.cod.w,  align: 'left', lineBreak: false });
       doc.text(nombre, C.desc.x, y, { width: C.desc.w, align: 'left', lineBreak: false });
 
-      // Columnas numéricas: usar primitiva de bajo nivel que NO mueve doc.y
-      drawRight(txtCosto, C.civa, y);
-      drawRight(txtUtil,  C.util, y);
-      drawRight(txtVenta, C.pven, y);
+      // Columnas numéricas centradas, cursor restaurado después de cada una
+      drawCenter(txtCosto, C.civa, y);
+      drawCenter(txtUtil,  C.util, y);
+      drawCenter(txtVenta, C.pven, y);
 
       // Avance manual del cursor
       const afterY = y + rowH + 3;
