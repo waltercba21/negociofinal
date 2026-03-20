@@ -1691,15 +1691,17 @@ generarPDF: async function (req, res) {
 
     const FS = 7.5;
 
-    // Dibuja texto alineado a la derecha SIN mover doc.y, usando primitivas de PDFKit
+    // Dibuja texto alineado a la derecha restaurando doc.y después
     const drawRight = (txt, col, y) => {
-      const tw = doc.widthOfString(txt);
+      const tw   = doc.widthOfString(txt);
       const xPos = col.x + col.w - tw;
-      doc._renderText(txt, xPos, y, {});
+      doc.text(txt, xPos, y, { lineBreak: false });
+      doc.y = y;
     };
 
     const drawLeft = (txt, col, y) => {
-      doc._renderText(txt, col.x, y, {});
+      doc.text(txt, col.x, y, { width: col.w, align: 'left', lineBreak: false });
+      doc.y = y;
     };
 
     // ── Encabezado ──
