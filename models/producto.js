@@ -1086,37 +1086,36 @@ obtenerProductosPorCategoria: function(conexion, categoriaId) {
 },
   
 obtenerProductosPorProveedorYCategoria: function (conexion, proveedor, categoria) {
-  // Normalizo parámetros para facilitar las condiciones
   const prov = (!proveedor || proveedor === 'TODOS') ? null : proveedor;
   const cat  = (!categoria || categoria === 'TODAS') ? null : categoria;
 
-  // Usamos LEFT JOIN para no excluir productos sin filas en producto_proveedor
-  // y GROUP BY para tener una sola fila por producto cuando no se filtró proveedor.
-  // MIN(pp.precio_lista) y MIN(pp.codigo) funcionan:
-  //  - Si hay proveedor → solo queda ese proveedor por el WHERE, el MIN no cambia nada.
-  //  - Si NO hay proveedor → trae todos los proveedores y toma el mínimo precio por producto.
-  //    (Si preferís otra estrategia, ej. máximo o “cualquiera”, cambiás la agregación).
   let query = `
     SELECT
       p.id,
       p.nombre,
-      MIN(pp.codigo)         AS codigo_proveedor,
-      MIN(pp.precio_lista)   AS precio_lista,
+      p.utilidad,
       p.precio_venta,
       p.stock_minimo,
-      p.stock_actual
+      p.stock_actual,
+      MIN(pp.codigo)                 AS codigo_proveedor,
+      MIN(pp.precio_lista)           AS precio_lista,
+      COALESCE(MIN(pp.iva), 21)      AS iva,
+      COALESCE(MIN(dp.descuento), 0) AS descuento
     FROM productos p
     LEFT JOIN producto_proveedor pp
       ON pp.producto_id = p.id
-    WHERE 1=1
       AND ( ? IS NULL OR pp.proveedor_id = ? )
-      AND ( ? IS NULL OR p.categoria_id = ? )
+    LEFT JOIN (
+      SELECT proveedor_id, MAX(descuento) AS descuento
+      FROM descuentos_proveedor
+      GROUP BY proveedor_id
+    ) dp ON dp.proveedor_id = pp.proveedor_id
+    WHERE ( ? IS NULL OR p.categoria_id = ? )
     GROUP BY
-      p.id, p.nombre, p.precio_venta, p.stock_minimo, p.stock_actual
+      p.id, p.nombre, p.utilidad, p.precio_venta, p.stock_minimo, p.stock_actual
     ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
   `;
 
-  // Params: proveedor para las dos primeras ?, categoría para las dos siguientes ?
   const params = [prov, prov, cat, cat];
 
   const queryPromise = require('util').promisify(conexion.query).bind(conexion);

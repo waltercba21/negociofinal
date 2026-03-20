@@ -3,86 +3,6 @@
 <html lang="es">
 <%- include('./layouts/head.ejs') %>
 <link rel="stylesheet" href="/css/pages/panelControl.css?v=1" />
-<style>
-/* ── Tabla modo proveedor ── */
-.prov-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  border-radius: 10px;
-  border: 1px solid var(--border, #e2e8f0);
-}
-.prov-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-  min-width: 780px;
-}
-.prov-th {
-  background: var(--bg-panel-hd, #f8fafc);
-  color: var(--text-muted, #64748b);
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  padding: 10px 12px;
-  border-bottom: 2px solid var(--border, #e2e8f0);
-  white-space: nowrap;
-}
-.prov-th--num  { text-align: right; }
-.prov-th--chk  { width: 36px; text-align: center; }
-.prov-th--acc  { text-align: center; width: 90px; }
-.prov-th--highlight { color: var(--color-warning, #d97706); }
-.prov-th--venta     { color: var(--color-success, #16a34a); }
-
-.prov-row {
-  border-bottom: 1px solid var(--border-light, #f1f5f9);
-  transition: background 0.12s;
-}
-.prov-row:last-child { border-bottom: none; }
-.prov-row:hover { background: var(--bg-hover, #f8fafc); }
-
-.prov-td {
-  padding: 9px 12px;
-  vertical-align: middle;
-  color: var(--text-main, #1e293b);
-}
-.prov-td--num    { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.prov-td--chk    { text-align: center; }
-.prov-td--acc    { text-align: center; }
-.prov-td--nombre { font-weight: 500; max-width: 260px; }
-.prov-td--cat    { max-width: 130px; }
-
-.prov-td--highlight {
-  font-weight: 700;
-  color: var(--color-warning, #b45309);
-  background: rgba(251,191,36,0.06);
-}
-.prov-td--venta {
-  font-weight: 700;
-  color: var(--color-success, #15803d);
-  background: rgba(22,163,74,0.06);
-}
-
-.prov-badge-cat {
-  display: inline-block;
-  background: var(--bg-badge, #e0e7ef);
-  color: var(--text-muted, #475569);
-  border-radius: 4px;
-  padding: 2px 7px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: nowrap;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.prov-desc { color: #dc2626; font-weight: 600; }
-.prov-iva  { color: #7c3aed; font-weight: 600; }
-.prov-util { color: #2563eb; font-weight: 600; }
-.prov-nd   { color: #cbd5e1; }
-
-.btn-edit--sm { font-size: 0.78rem; padding: 4px 10px; }
-</style>
 <body>
 <%- include('./layouts/header.ejs') %>
 
@@ -322,79 +242,12 @@
         <!-- Listado -->
         <div class="panel-container">
           <% if (productos && productos.length > 0) { %>
-            <% const modoProveedor = !!(proveedorSeleccionado && String(proveedorSeleccionado) !== 'TODOS'); %>
-
-            <% if (modoProveedor) { %>
-            <!-- ── Tabla modo proveedor ── -->
-            <div class="prov-table-wrap">
-              <table class="prov-table">
-                <thead>
-                  <tr>
-                    <th class="prov-th prov-th--chk"><input type="checkbox" id="check-all" title="Seleccionar todos"/></th>
-                    <th class="prov-th">Categoría</th>
-                    <th class="prov-th">Producto</th>
-                    <th class="prov-th prov-th--num">Precio lista</th>
-                    <th class="prov-th prov-th--num">Desc. %</th>
-                    <th class="prov-th prov-th--num">IVA %</th>
-                    <th class="prov-th prov-th--num prov-th--highlight">Costo c/IVA</th>
-                    <th class="prov-th prov-th--num">Utilidad %</th>
-                    <th class="prov-th prov-th--num prov-th--venta">Precio venta</th>
-                    <th class="prov-th prov-th--acc">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% productos.forEach(producto => {
-                    const lista   = Number(producto.prov_precio_lista || 0);
-                    const desc    = Number(producto.prov_descuento || 0);
-                    const iva     = Number(producto.prov_iva || 21);
-                    const costoIva = Number(producto.prov_costo_iva || 0);
-                    const util    = Number(producto.utilidad || 0);
-                    const pv      = Number(producto.precio_venta || 0);
-                    const editUrl = '/productos/editar/' + producto.id
-                      + '?pagina=' + paginaActual
-                      + (busquedaActual ? '&busqueda=' + encodeURIComponent(String(busquedaActual)) : '')
-                      + (proveedorSeleccionado ? '&proveedor=' + encodeURIComponent(String(proveedorSeleccionado)) : '')
-                      + (categoriaSeleccionada ? '&categoria=' + encodeURIComponent(String(categoriaSeleccionada)) : '');
-                  %>
-                  <tr class="prov-row">
-                    <td class="prov-td prov-td--chk">
-                      <input type="checkbox" class="product-check" value="<%= producto.id %>" />
-                    </td>
-                    <td class="prov-td prov-td--cat"><span class="prov-badge-cat"><%= producto.categoria %></span></td>
-                    <td class="prov-td prov-td--nombre"><%= producto.nombre %></td>
-                    <td class="prov-td prov-td--num">
-                      <% if (lista > 0) { %>$<%= lista.toLocaleString('es-AR') %><% } else { %><span class="prov-nd">—</span><% } %>
-                    </td>
-                    <td class="prov-td prov-td--num">
-                      <% if (desc > 0) { %><span class="prov-desc"><%= desc %>%</span><% } else { %><span class="prov-nd">—</span><% } %>
-                    </td>
-                    <td class="prov-td prov-td--num"><span class="prov-iva"><%= iva %>%</span></td>
-                    <td class="prov-td prov-td--num prov-td--highlight">
-                      <% if (costoIva > 0) { %>$<%= costoIva.toLocaleString('es-AR') %><% } else { %><span class="prov-nd">—</span><% } %>
-                    </td>
-                    <td class="prov-td prov-td--num">
-                      <% if (util > 0) { %><span class="prov-util"><%= util %>%</span><% } else { %><span class="prov-nd">—</span><% } %>
-                    </td>
-                    <td class="prov-td prov-td--num prov-td--venta">
-                      <% if (pv > 0) { %>$<%= Math.round(pv).toLocaleString('es-AR') %><% } else { %><span class="prov-nd">—</span><% } %>
-                    </td>
-                    <td class="prov-td prov-td--acc">
-                      <a class="btn-edit btn-edit--sm" href="<%= editUrl %>"><i class="fas fa-edit"></i> Editar</a>
-                    </td>
-                  </tr>
-                  <% }); %>
-                </tbody>
-              </table>
-            </div>
-
-            <% } else { %>
-            <!-- ── Listado general (sin filtro de proveedor) ── -->
             <div class="panel-header">
               <div class="panel-col panel-col-small">✔</div>
               <div class="panel-col">Categoría</div>
               <div class="panel-col">Nombre</div>
               <div class="panel-col">Imagen</div>
-              <div class="panel-col">Precio venta</div>
+              <div class="panel-col">Precio</div>
               <div class="panel-col">Acciones</div>
             </div>
             <% productos.forEach(producto => { %>
@@ -425,7 +278,6 @@
                 </div>
               </div>
             <% }); %>
-            <% } %>
           <% } else { %>
             <div class="panel-alert">
               <i class="fa-solid fa-circle-info"></i> No hay productos para mostrar.
@@ -445,12 +297,9 @@
 </main>
 
 <%- include('./layouts/footer.ejs') %>
-<script src="/js/pages/panelControl.js?v=2"></script>
+<script src="/js/pages/panelControl.js?v=1"></script>
 <script id="productos-data" type="application/json"><%- JSON.stringify(productos) %></script>
 <script>
-// Modo proveedor: true cuando hay un proveedor seleccionado
-window.PANEL_MODO_PROVEEDOR = <%- JSON.stringify(!!(proveedorSeleccionado && String(proveedorSeleccionado) !== 'TODOS')) %>;
-
 // File input label
 document.getElementById('archivo')?.addEventListener('change', function() {
   const name = this.files[0]?.name || 'Elegir archivo';
