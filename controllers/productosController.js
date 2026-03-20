@@ -1636,7 +1636,7 @@ obtenerModelosPorMarca: function(req, res) {
       });
   },
 generarPDF: async function (req, res) {
-  const { doc, fail500 } = crearPDFResponse(res, { filename: 'lista_precios.pdf', margin: 30 });
+  const { doc, fail500 } = crearPDFResponse(res, { filename: 'lista_precios.pdf', margin: 20 });
 
   // Normalización
   const proveedorId = normalizarIdFiltro(req.query.proveedor, ['TODOS', '']);
@@ -1676,16 +1676,21 @@ generarPDF: async function (req, res) {
     const fmtAr = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     const fmt$  = (n) => { const v = Number(n); return (Number.isFinite(v) && v > 0) ? `$ ${fmtAr.format(v)}` : '-'; };
 
-    // ── Layout de columnas (página carta: 612pt, margen 30 cada lado → útil 552pt) ──
-    // X = posición absoluta desde el borde izquierdo de la página
+    // ── Layout de columnas ──
+    // Página carta: 612pt. Márgenes: 20pt cada lado → área útil: 572pt
+    const ML = 20;  // margen izquierdo
+    const MR = 20;  // margen derecho
+    const PAGE_RIGHT = 612 - MR; // 592
+
+    // Columnas ajustadas para que todo entre sin cortes
+    // Total anchos: 90 + 245 + 85 + 45 + 85 = 550 + gaps = 572 ✓
     const COL = [
-      { x: 30,  w: 80,  label: 'Código',       align: 'left'  },
-      { x: 115, w: 240, label: 'Descripción',   align: 'left'  },
-      { x: 360, w: 80,  label: 'Costo c/IVA',   align: 'right' },
-      { x: 445, w: 50,  label: 'Utilidad',      align: 'right' },
-      { x: 500, w: 82,  label: 'Precio venta',  align: 'right' },
+      { x: ML,       w: 90,  label: 'Código',      align: 'left'  },
+      { x: ML + 95,  w: 240, label: 'Descripción', align: 'left'  },
+      { x: ML + 340, w: 80,  label: 'Costo c/IVA', align: 'right' },
+      { x: ML + 425, w: 42,  label: 'Utilidad',    align: 'right' },
+      { x: ML + 472, w: 100, label: 'Precio venta',align: 'right' },
     ];
-    const PAGE_RIGHT = 582; // 612 - 30
 
     // ── Dibujar encabezado de tabla ──
     const drawHeader = () => {
@@ -1695,7 +1700,7 @@ generarPDF: async function (req, res) {
         doc.text(c.label, c.x, y, { width: c.w, align: c.align, lineBreak: false });
       });
       const lineY = y + 11;
-      doc.moveTo(30, lineY).lineTo(PAGE_RIGHT, lineY).strokeColor('#aaaaaa').lineWidth(0.5).stroke();
+      doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY).strokeColor('#aaaaaa').lineWidth(0.5).stroke();
       doc.strokeColor('black').lineWidth(1);
       doc.y = lineY + 4;
     };
@@ -1729,19 +1734,19 @@ generarPDF: async function (req, res) {
       const txtUtil  = utilidad > 0 ? `${Math.round(utilidad)}%` : '-';
       const txtVenta = fmt$(precioVenta);
 
-      // Altura real de la fila según el texto de descripción (puede ser multilinea)
+      // Altura real de la fila según el texto de descripción
       const rowH = Math.max(14, doc.heightOfString(nombre, { width: COL[1].w }));
 
       ensurePage(rowH + 5);
 
       const y = doc.y;
 
-      // Fondo alternado para facilitar lectura
+      // Fondo alternado
       if (idx % 2 === 0) {
-        doc.rect(30, y - 1, PAGE_RIGHT - 30, rowH + 3).fill('#f7f7f7');
+        doc.rect(ML, y - 1, PAGE_RIGHT - ML, rowH + 3).fill('#f7f7f7');
       }
 
-      doc.fontSize(8).fillColor('#111111');
+      doc.fontSize(7.5).fillColor('#111111');
       doc.text(codigo,   COL[0].x, y, { width: COL[0].w, align: COL[0].align, lineBreak: false });
       doc.text(nombre,   COL[1].x, y, { width: COL[1].w, align: COL[1].align, lineBreak: true  });
       doc.text(txtCosto, COL[2].x, y, { width: COL[2].w, align: COL[2].align, lineBreak: false });
@@ -1750,7 +1755,7 @@ generarPDF: async function (req, res) {
 
       // Línea separadora suave
       const afterY = y + rowH + 3;
-      doc.moveTo(30, afterY).lineTo(PAGE_RIGHT, afterY).strokeColor('#eeeeee').lineWidth(0.3).stroke();
+      doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY).strokeColor('#eeeeee').lineWidth(0.3).stroke();
       doc.strokeColor('black').lineWidth(1);
 
       doc.y = afterY + 2;
