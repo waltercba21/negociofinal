@@ -1676,37 +1676,42 @@ generarPDF: async function (req, res) {
     const fmtAr = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     const fmt$  = (n) => { const v = Number(n); return (Number.isFinite(v) && v > 0) ? `$ ${fmtAr.format(v)}` : '-'; };
 
-    // ── Layout A4: 595pt ancho ──
-    // Márgenes internos generosos para que la impresora no corte nada
-    const ML         = 40;   // margen izquierdo
-    const MR         = 40;   // margen derecho
-    const PAGE_RIGHT = 595 - MR; // 555
+    // ── Layout A4: 595pt ──
+    // Márgenes 40pt → área útil 515pt
+    // COD=80 | DESC=212 | CIVA=82 | UTIL=40 | PVEN=82  (gaps de 9.75 entre cada par)
+    const ML         = 40;
+    const PAGE_RIGHT = 555;
 
-    // Área útil: 555 - 40 = 515pt
-    // Columnas: COD=80 | gap=8 | DESC=210 | gap=8 | CIVA=80 | gap=8 | UTIL=38 | gap=8 | PVEN=83 = 515 ✓
     const C = {
-      cod:  { x: ML,            w: 80  },
-      desc: { x: ML + 88,       w: 210 },
-      civa: { x: ML + 88+218,   w: 80  },
-      util: { x: ML + 88+218+88,w: 38  },
-      pven: { x: ML + 88+218+88+46, w: 83 },
+      cod:  { x: 40,  w: 80  },
+      desc: { x: 129, w: 212 },
+      civa: { x: 350, w: 82  },
+      util: { x: 441, w: 40  },
+      pven: { x: 490, w: 65  },
     };
 
-    const FONT_SIZE  = 7.5;
-    const LINE_H     = doc.currentLineHeight(true) * FONT_SIZE / 12 + 1;
+    const FS = 7.5; // font size
+
+    // helper: dibuja texto en (x,y) sin mover el cursor global
+    const cell = (txt, col, y, align) => {
+      doc.save();
+      doc.text(txt, col.x, y, { width: col.w, align, lineBreak: false });
+      doc.restore();
+    };
 
     // ── Encabezado ──
     const drawHeader = () => {
       const y = doc.y;
-      doc.fontSize(FONT_SIZE).fillColor('#444444').font('Helvetica-Bold');
-      doc.text('Código',       C.cod.x,  y, { width: C.cod.w,  align: 'left',  lineBreak: false });
-      doc.text('Descripción',  C.desc.x, y, { width: C.desc.w, align: 'left',  lineBreak: false });
-      doc.text('Costo c/IVA',  C.civa.x, y, { width: C.civa.w, align: 'right', lineBreak: false });
-      doc.text('Utilidad',     C.util.x, y, { width: C.util.w, align: 'right', lineBreak: false });
-      doc.text('Precio venta', C.pven.x, y, { width: C.pven.w, align: 'right', lineBreak: false });
+      doc.fontSize(FS).font('Helvetica-Bold').fillColor('#333333');
+      cell('Código',       C.cod,  y, 'left');
+      cell('Descripción',  C.desc, y, 'left');
+      cell('Costo c/IVA',  C.civa, y, 'right');
+      cell('Utilidad',     C.util, y, 'right');
+      cell('Precio venta', C.pven, y, 'right');
       doc.font('Helvetica');
-      const lineY = y + FONT_SIZE + 4;
-      doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY).strokeColor('#666666').lineWidth(0.7).stroke();
+      const lineY = y + FS + 3;
+      doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY)
+        .strokeColor('#555555').lineWidth(0.7).stroke();
       doc.strokeColor('black').lineWidth(1);
       doc.y = lineY + 5;
     };
@@ -1738,35 +1743,37 @@ generarPDF: async function (req, res) {
       const txtUtil  = utilidad > 0 ? `${Math.round(utilidad)}%` : '-';
       const txtVenta = fmt$(precioVenta);
 
-      // Calcular altura real de la descripción (única columna multilínea)
-      doc.fontSize(FONT_SIZE);
-      const descH = doc.heightOfString(nombre, { width: C.desc.w });
-      const rowH  = Math.max(FONT_SIZE + 4, descH);
+      doc.fontSize(FS);
+      const rowH = Math.max(FS + 4, doc.heightOfString(nombre, { width: C.desc.w }));
 
-      ensurePage(rowH + 5);
+      ensurePage(rowH + 4);
 
       const y = doc.y;
 
       // Fondo alternado
       if (idx % 2 === 0) {
+        doc.save();
         doc.rect(ML - 2, y - 1, PAGE_RIGHT - ML + 4, rowH + 3).fill('#f4f4f4');
+        doc.restore();
       }
 
-      doc.fontSize(FONT_SIZE).fillColor('#111111');
+      doc.fontSize(FS).font('Helvetica').fillColor('#111111');
 
-      // Cada columna se dibuja con x,y explícitos y lineBreak:false
-      // Esto garantiza que el cursor NO se mueve entre columnas
-      doc.text(codigo,   C.cod.x,  y, { width: C.cod.w,  align: 'left',  lineBreak: false });
-      doc.text(nombre,   C.desc.x, y, { width: C.desc.w, align: 'left',  lineBreak: false });
-      doc.text(txtCosto, C.civa.x, y, { width: C.civa.w, align: 'right', lineBreak: false });
-      doc.text(txtUtil,  C.util.x, y, { width: C.util.w, align: 'right', lineBreak: false });
-      doc.text(txtVenta, C.pven.x, y, { width: C.pven.w, align: 'right', lineBreak: false });
+      // Cada celda usa save/restore → el cursor global NUNCA se mueve
+      cell(codigo,   C.cod,  y, 'left');
+      cell(nombre,   C.desc, y, 'left');
+      cell(txtCosto, C.civa, y, 'right');
+      cell(txtUtil,  C.util, y, 'right');
+      cell(txtVenta, C.pven, y, 'right');
 
-      // Avanzar el cursor manualmente según la altura real de la fila
+      // Línea separadora y avance manual del cursor
       const afterY = y + rowH + 3;
-      doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY).strokeColor('#dddddd').lineWidth(0.3).stroke();
-      doc.strokeColor('black').lineWidth(1);
-      doc.y = afterY + 2;
+      doc.save();
+      doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY)
+        .strokeColor('#dddddd').lineWidth(0.3).stroke();
+      doc.restore();
+
+      doc.y = afterY + 1;
     });
 
     doc.end();
