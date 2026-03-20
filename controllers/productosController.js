@@ -728,6 +728,42 @@ buscar: async (req, res) => {
 
     // ✅ Modo liviano (para panel)
     if (simple) {
+      // Si hay proveedor filtrando, enriquecer con precio_lista + descuento + iva
+      if (provIdNum > 0 && (productos || []).length > 0) {
+        const pids = (productos || []).map(p => Number(p.id)).filter(Boolean);
+        const ph   = pids.map(() => '?').join(',');
+        try {
+          const [ppRows] = await conexion.promise().query(
+            `SELECT pp.producto_id,
+                    pp.precio_lista,
+                    COALESCE(pp.iva, 21) AS iva,
+                    COALESCE(dp.descuento, 0) AS descuento
+             FROM producto_proveedor pp
+             LEFT JOIN (
+               SELECT proveedor_id, MAX(descuento) AS descuento
+               FROM descuentos_proveedor
+               GROUP BY proveedor_id
+             ) dp ON dp.proveedor_id = pp.proveedor_id
+             WHERE pp.proveedor_id = ? AND pp.producto_id IN (${ph})`,
+            [provIdNum, ...pids]
+          );
+          const mapPP = new Map(ppRows.map(r => [Number(r.producto_id), r]));
+          for (const p of productos) {
+            const pp = mapPP.get(Number(p.id));
+            if (!pp) continue;
+            const lista = Number(pp.precio_lista || 0);
+            const desc  = Number(pp.descuento || 0);
+            const iva   = Number(pp.iva || 21);
+            p.prov_precio_lista = lista;
+            p.prov_descuento    = desc;
+            p.prov_iva          = iva;
+            p.prov_costo_iva    = Math.round(lista * (1 - desc / 100) * (1 + iva / 100));
+          }
+        } catch (e) {
+          console.warn('⚠️ No se pudo enriquecer búsqueda con datos de proveedor:', e.message);
+        }
+      }
+
       const out = (productos || []).map(p => {
         const rows = imgsById.get(Number(p.id)) || [];
         const filenames = rows
@@ -738,6 +774,12 @@ buscar: async (req, res) => {
           id: p.id,
           nombre: p.nombre,
           precio_venta: p.precio_venta,
+          utilidad: p.utilidad,
+          costo_iva: p.costo_iva,
+          prov_precio_lista: p.prov_precio_lista,
+          prov_descuento: p.prov_descuento,
+          prov_iva: p.prov_iva,
+          prov_costo_iva: p.prov_costo_iva,
           categoria: p.categoria || p.categoria_nombre || p.nombre_categoria || null,
           imagenes: filenames
         };
@@ -1399,6 +1441,53 @@ panelControl: async (req, res) => {
       categoria: p.categoria || p.categoria_nombre || 'Sin categoría',
       imagenes: Array.isArray(p.imagenes) ? p.imagenes : (p.imagen ? [p.imagen] : [])
     }));
+
+    // ── Si hay proveedor seleccionado, enriquecer con precio_lista, descuento e iva ──
+    if (proveedorSeleccionado) {
+      const provNum = Number(proveedorSeleccionado);
+      if (provNum > 0 && productos.length > 0) {
+        const ids = productos.map(p => p.id).filter(Boolean);
+        const placeholders = ids.map(() => '?').join(',');
+        try {
+          const [ppRows] = await conexion.promise().query(
+            `SELECT
+               pp.producto_id,
+               pp.precio_lista,
+               COALESCE(pp.iva, 21) AS iva,
+               COALESCE(dp.descuento, 0) AS descuento
+             FROM producto_proveedor pp
+             LEFT JOIN (
+               SELECT proveedor_id, MAX(descuento) AS descuento
+               FROM descuentos_proveedor
+               GROUP BY proveedor_id
+             ) dp ON dp.proveedor_id = pp.proveedor_id
+             WHERE pp.proveedor_id = ? AND pp.producto_id IN (${placeholders})`,
+            [provNum, ...ids]
+          );
+          const mapPP = new Map();
+          for (const r of ppRows) mapPP.set(Number(r.producto_id), r);
+
+          productos = productos.map(p => {
+            const pp = mapPP.get(Number(p.id));
+            if (!pp) return p;
+            const lista    = Number(pp.precio_lista || 0);
+            const desc     = Number(pp.descuento || 0);
+            const iva      = Number(pp.iva || 21);
+            const costo_neto_prov = lista * (1 - desc / 100);
+            const costo_iva_prov  = Math.round(costo_neto_prov * (1 + iva / 100));
+            return {
+              ...p,
+              prov_precio_lista : lista,
+              prov_descuento    : desc,
+              prov_iva          : iva,
+              prov_costo_iva    : costo_iva_prov,
+            };
+          });
+        } catch (e) {
+          console.warn('⚠️ No se pudo enriquecer con datos de proveedor:', e.message);
+        }
+      }
+    }
 
     return res.render('panelControl', {
       proveedores,

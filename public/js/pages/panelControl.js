@@ -37,6 +37,14 @@ async function requestDelete(ids) {
   return payload || { success: true };
 }
 
+function bindCheckAll(scope = document) {
+  const chkAll = scope.querySelector('#check-all');
+  if (!chkAll) return;
+  chkAll.addEventListener('change', () => {
+    scope.querySelectorAll('.product-check').forEach(cb => { cb.checked = chkAll.checked; });
+  });
+}
+
 function bindDeleteButton(scope = document) {
   const btn = scope.querySelector('#delete-selected');
   if (!btn || btn.dataset.bound === '1') return;
@@ -109,6 +117,87 @@ function formatPrecio(value) {
   return Math.round(n).toLocaleString('es-AR');
 }
 
+// ────────────────────────────────────────────
+// Render: tabla modo PROVEEDOR
+// ────────────────────────────────────────────
+function renderTablaProveedor(contenedor, lista, paginaActual, busquedaActual) {
+  const arr = Array.isArray(lista) ? lista : [];
+
+  if (arr.length === 0) {
+    contenedor.innerHTML = `<div class="panel-alert">No hay productos para mostrar.</div>`;
+    bindDeleteButton(document);
+    return;
+  }
+
+  const rows = arr.map(p => {
+    const categoria = p.categoria || p.categoria_nombre || 'Sin categoría';
+    const nombre    = p.nombre || '';
+    const lista_   = Number(p.prov_precio_lista || 0);
+    const desc     = Number(p.prov_descuento || 0);
+    const iva      = Number(p.prov_iva || 21);
+    const costoIva = Number(p.prov_costo_iva || 0);
+    const util     = Number(p.utilidad || 0);
+    const pv       = Number(p.precio_venta || 0);
+    const action   = buildEditUrl(p.id, paginaActual, busquedaActual);
+
+    const tdLista   = lista_   > 0 ? `$${formatPrecio(lista_)}`   : `<span class="prov-nd">—</span>`;
+    const tdDesc    = desc     > 0 ? `<span class="prov-desc">${desc}%</span>`  : `<span class="prov-nd">—</span>`;
+    const tdIva     = `<span class="prov-iva">${iva}%</span>`;
+    const tdCosto   = costoIva > 0 ? `$${formatPrecio(costoIva)}` : `<span class="prov-nd">—</span>`;
+    const tdUtil    = util     > 0 ? `<span class="prov-util">${util}%</span>` : `<span class="prov-nd">—</span>`;
+    const tdPV      = pv       > 0 ? `$${formatPrecio(pv)}`       : `<span class="prov-nd">—</span>`;
+
+    return `
+      <tr class="prov-row">
+        <td class="prov-td prov-td--chk"><input type="checkbox" class="product-check" value="${p.id}"/></td>
+        <td class="prov-td prov-td--cat"><span class="prov-badge-cat">${categoria}</span></td>
+        <td class="prov-td prov-td--nombre">${nombre}</td>
+        <td class="prov-td prov-td--num">${tdLista}</td>
+        <td class="prov-td prov-td--num">${tdDesc}</td>
+        <td class="prov-td prov-td--num">${tdIva}</td>
+        <td class="prov-td prov-td--num prov-td--highlight">${tdCosto}</td>
+        <td class="prov-td prov-td--num">${tdUtil}</td>
+        <td class="prov-td prov-td--num prov-td--venta">${tdPV}</td>
+        <td class="prov-td prov-td--acc">
+          <a href="${action}" class="btn-edit btn-edit--sm"><i class="fas fa-edit"></i> Editar</a>
+        </td>
+      </tr>`;
+  }).join('');
+
+  contenedor.innerHTML = `
+    <div class="prov-table-wrap">
+      <table class="prov-table">
+        <thead>
+          <tr>
+            <th class="prov-th prov-th--chk"><input type="checkbox" id="check-all" title="Seleccionar todos"/></th>
+            <th class="prov-th">Categoría</th>
+            <th class="prov-th">Producto</th>
+            <th class="prov-th prov-th--num">Precio lista</th>
+            <th class="prov-th prov-th--num">Desc. %</th>
+            <th class="prov-th prov-th--num">IVA %</th>
+            <th class="prov-th prov-th--num prov-th--highlight">Costo c/IVA</th>
+            <th class="prov-th prov-th--num">Utilidad %</th>
+            <th class="prov-th prov-th--num prov-th--venta">Precio venta</th>
+            <th class="prov-th prov-th--acc">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="panel-actions">
+      <button id="delete-selected" class="pc-btn pc-btn--danger pc-btn--sm" type="button">
+        <i class="fa-solid fa-trash"></i> Eliminar seleccionados
+      </button>
+    </div>`;
+
+  bindDeleteButton(document);
+  bindCheckAll(contenedor);
+}
+
+// ────────────────────────────────────────────
+// Render: listado general (cards/filas)
+// ────────────────────────────────────────────
+
 function buildEditUrl(id, paginaActual, busquedaActual) {
   const current = new URLSearchParams(window.location.search);
   const qs = new URLSearchParams();
@@ -133,20 +222,26 @@ function buildEditUrl(id, paginaActual, busquedaActual) {
   return `/productos/editar/${id}${q ? `?${q}` : ''}`;
 }
 
+// ────────────────────────────────────────────
+// Render: listado general (cards/filas)
+// ────────────────────────────────────────────
 function renderPanelListado(contenedor, lista, paginaOrOpts, busquedaMaybe) {
   if (!contenedor) return;
 
-  // Soporta: renderPanelListado(contenedor, lista, pagina, busqueda)
-  // y también: renderPanelListado(contenedor, lista, { paginaActual, busquedaActual })
   let paginaActual = 1;
   let busquedaActual = '';
 
   if (paginaOrOpts && typeof paginaOrOpts === 'object') {
-    paginaActual = Number(paginaOrOpts.paginaActual || 1) || 1;
+    paginaActual  = Number(paginaOrOpts.paginaActual  || 1) || 1;
     busquedaActual = String(paginaOrOpts.busquedaActual || '');
   } else {
-    paginaActual = Number(paginaOrOpts || 1) || 1;
+    paginaActual   = Number(paginaOrOpts || 1) || 1;
     busquedaActual = String(busquedaMaybe || '');
+  }
+
+  // ── Delegar a tabla proveedor si corresponde ──
+  if (window.PANEL_MODO_PROVEEDOR) {
+    return renderTablaProveedor(contenedor, lista, paginaActual, busquedaActual);
   }
 
   const arr = Array.isArray(lista) ? lista : [];
@@ -159,19 +254,14 @@ function renderPanelListado(contenedor, lista, paginaOrOpts, busquedaMaybe) {
 
   const rows = arr.map(p => {
     const categoria = p.categoria || p.categoria_nombre || 'Sin categoría';
-    const nombre = p.nombre || '';
-
+    const nombre    = p.nombre || '';
     const precioNum = Number(p.precio_venta);
-    const precio = Number.isFinite(precioNum) ? `$${formatPrecio(precioNum)}` : '$0';
-
-    // ✅ soporta imagenes como ["a.jpg"] o como [{producto_id, imagen:"a.jpg"}]
-    const img = firstImageFilename(p);
+    const precio    = Number.isFinite(precioNum) ? `$${formatPrecio(precioNum)}` : '$0';
+    const img       = firstImageFilename(p);
 
     const imagenHtml = img
       ? `<div class="panel-image-container">
-           <img src="/uploads/productos/${img}"
-                alt="Imagen de ${nombre}"
-                class="product-image" />
+           <img src="/uploads/productos/${img}" alt="Imagen de ${nombre}" class="product-image"/>
          </div>`
       : `<div class="panel-image-container">
            <span class="no-image">(Sin imagen)</span>
@@ -184,21 +274,16 @@ function renderPanelListado(contenedor, lista, paginaOrOpts, busquedaMaybe) {
         <div class="panel-col panel-col-small">
           <input type="checkbox" class="product-check" value="${p.id}" />
         </div>
-
         <div class="panel-text-small-bold">${categoria}</div>
         <div class="panel-text-small-bold">${nombre}</div>
-
         <div class="panel-col">${imagenHtml}</div>
-
         <div class="panel-col panel-price">${precio}</div>
-
         <div class="panel-col">
           <a href="${action}" class="btn-edit">
             <i class="fas fa-edit"></i> Editar
           </a>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 
   contenedor.innerHTML = `
@@ -207,18 +292,15 @@ function renderPanelListado(contenedor, lista, paginaOrOpts, busquedaMaybe) {
       <div class="panel-col">Categoría</div>
       <div class="panel-col">Nombre</div>
       <div class="panel-col">Imagen</div>
-      <div class="panel-col">Precio</div>
+      <div class="panel-col">Precio venta</div>
       <div class="panel-col">Acciones</div>
     </div>
-
     ${rows}
-
     <div class="panel-actions">
-      <button id="delete-selected" class="btn-delete" type="button">
-        Eliminar seleccionados
+      <button id="delete-selected" class="pc-btn pc-btn--danger pc-btn--sm" type="button">
+        <i class="fa-solid fa-trash"></i> Eliminar seleccionados
       </button>
-    </div>
-  `;
+    </div>`;
 
   bindDeleteButton(document);
 }
@@ -315,6 +397,7 @@ function renderSearchPagination() {
 
   // Bind delete para el listado inicial server (por si existe botón en HTML)
   bindDeleteButton(document);
+  bindCheckAll(document);
 
 
   // Sincroniza ?busqueda= en la URL sin recargar la página

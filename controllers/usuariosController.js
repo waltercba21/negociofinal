@@ -1,9 +1,9 @@
-const usuario = require('../models/usuario');
+const usuario = require('../../models/usuario');
 const bcryptjs = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
-const conexion = require('../config/conexion')
+const conexion = require('../conexion')
 const crypto = require('crypto');
-const adminEmails = require('../config/admins');
+const adminEmails = require('../admins');
 
 module.exports = {
   register: (req, res) => {
