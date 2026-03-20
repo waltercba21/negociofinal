@@ -346,7 +346,7 @@ function crearPDFResponse(res, { filename = 'productos.pdf', margin = 30 } = {})
     incrementAmount: 1024 * 1024
   });
 
-  const doc = new PDFDocument({ margin });
+  const doc = new PDFDocument({ margin, size: 'A4' });
   doc.pipe(buffer);
 
   let cancelado = false;
@@ -1636,7 +1636,7 @@ obtenerModelosPorMarca: function(req, res) {
       });
   },
 generarPDF: async function (req, res) {
-  const { doc, fail500 } = crearPDFResponse(res, { filename: 'lista_precios.pdf', margin: 20 });
+  const { doc, fail500 } = crearPDFResponse(res, { filename: 'lista_precios.pdf', margin: 25 });
 
   // Normalización
   const proveedorId = normalizarIdFiltro(req.query.proveedor, ['TODOS', '']);
@@ -1676,38 +1676,35 @@ generarPDF: async function (req, res) {
     const fmtAr = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     const fmt$  = (n) => { const v = Number(n); return (Number.isFinite(v) && v > 0) ? `$ ${fmtAr.format(v)}` : '-'; };
 
-    // ── Layout de columnas ──
-    // Página carta: 612pt. Márgenes: 20pt cada lado → área útil: 572pt
-    const ML = 20;  // margen izquierdo
-    const MR = 20;  // margen derecho
-    const PAGE_RIGHT = 612 - MR; // 592
+    // ── Layout A4: 595pt ancho, márgenes 25pt → área útil 545pt ──
+    // Columnas: 85 + 5 + 225 + 5 + 85 + 5 + 45 + 5 + 90 = 550 ✓
+    const ML = 25;
+    const PAGE_RIGHT = 570; // 595 - 25
 
-    // Columnas ajustadas para que todo entre sin cortes
-    // Total anchos: 90 + 245 + 85 + 45 + 85 = 550 + gaps = 572 ✓
     const COL = [
-      { x: ML,       w: 90,  label: 'Código',      align: 'left'  },
-      { x: ML + 95,  w: 240, label: 'Descripción', align: 'left'  },
-      { x: ML + 340, w: 80,  label: 'Costo c/IVA', align: 'right' },
-      { x: ML + 425, w: 42,  label: 'Utilidad',    align: 'right' },
-      { x: ML + 472, w: 100, label: 'Precio venta',align: 'right' },
+      { x: ML,       w: 85,  label: 'Código',       align: 'left'  },
+      { x: ML + 90,  w: 225, label: 'Descripción',  align: 'left'  },
+      { x: ML + 320, w: 85,  label: 'Costo c/IVA',  align: 'right' },
+      { x: ML + 410, w: 45,  label: 'Utilidad',     align: 'right' },
+      { x: ML + 460, w: 90,  label: 'Precio venta', align: 'right' },
     ];
 
-    // ── Dibujar encabezado de tabla ──
+    // ── Encabezado de tabla ──
     const drawHeader = () => {
       const y = doc.y;
-      doc.fontSize(8).fillColor('#555555');
+      doc.fontSize(8).fillColor('#444444');
       COL.forEach(c => {
         doc.text(c.label, c.x, y, { width: c.w, align: c.align, lineBreak: false });
       });
-      const lineY = y + 11;
-      doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY).strokeColor('#aaaaaa').lineWidth(0.5).stroke();
+      const lineY = y + 12;
+      doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY).strokeColor('#999999').lineWidth(0.5).stroke();
       doc.strokeColor('black').lineWidth(1);
       doc.y = lineY + 4;
     };
 
-    // ── Controlar salto de página ──
+    // ── Salto de página ──
     const ensurePage = (rowH) => {
-      if (doc.y + rowH > doc.page.height - doc.page.margins.bottom - 10) {
+      if (doc.y + rowH > doc.page.height - 40) {
         doc.addPage();
         drawHeader();
       }
@@ -1719,7 +1716,6 @@ generarPDF: async function (req, res) {
       const nombre = (p.nombre || '-').trim();
       const codigo = p.codigo_proveedor || '-';
 
-      // Calcular costo c/IVA
       const lista    = Number(p.precio_lista || 0);
       const desc     = Number(p.descuento    || 0);
       const iva      = Number(p.iva          || 21);
@@ -1734,16 +1730,15 @@ generarPDF: async function (req, res) {
       const txtUtil  = utilidad > 0 ? `${Math.round(utilidad)}%` : '-';
       const txtVenta = fmt$(precioVenta);
 
-      // Altura real de la fila según el texto de descripción
-      const rowH = Math.max(14, doc.heightOfString(nombre, { width: COL[1].w }));
+      const rowH = Math.max(13, doc.heightOfString(nombre, { width: COL[1].w }));
 
-      ensurePage(rowH + 5);
+      ensurePage(rowH + 4);
 
       const y = doc.y;
 
       // Fondo alternado
       if (idx % 2 === 0) {
-        doc.rect(ML, y - 1, PAGE_RIGHT - ML, rowH + 3).fill('#f7f7f7');
+        doc.rect(ML, y - 1, PAGE_RIGHT - ML, rowH + 3).fill('#f5f5f5');
       }
 
       doc.fontSize(7.5).fillColor('#111111');
@@ -1753,12 +1748,10 @@ generarPDF: async function (req, res) {
       doc.text(txtUtil,  COL[3].x, y, { width: COL[3].w, align: COL[3].align, lineBreak: false });
       doc.text(txtVenta, COL[4].x, y, { width: COL[4].w, align: COL[4].align, lineBreak: false });
 
-      // Línea separadora suave
       const afterY = y + rowH + 3;
-      doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY).strokeColor('#eeeeee').lineWidth(0.3).stroke();
+      doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY).strokeColor('#e8e8e8').lineWidth(0.3).stroke();
       doc.strokeColor('black').lineWidth(1);
-
-      doc.y = afterY + 2;
+      doc.y = afterY + 1;
     });
 
     doc.end();
