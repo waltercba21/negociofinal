@@ -248,37 +248,61 @@ document.addEventListener('DOMContentLoaded', function () {
     if (esCredito) interesCalculado = totalSinInteres * 0.15;
     const totalConInteres = totalSinInteres + interesCalculado;
 
-    const filasHTML = invoiceItems.map((item, index) => `
+    // ── Resumen: usar los precios YA con recargo aplicado ──────────────────
+    // invoiceItemsConInteres tiene precio_unitario y subtotal finales.
+    // La tabla muestra exactamente lo que se va a guardar y cobrar.
+    const filasHTML = invoiceItemsConInteres.map((item, index) => `
       <tr>
-        <td>${index + 1}</td><td>${item.producto_id}</td><td>${item.descripcion}</td>
-        <td>${formatCurrencyCL(item.precio_unitario)}</td><td>${item.cantidad}</td>
-        <td>${formatCurrencyCL(item.subtotal)}</td>
+        <td style="padding:4px 6px;text-align:center;">${index + 1}</td>
+        <td style="padding:4px 6px;">${item.producto_id}</td>
+        <td style="padding:4px 6px;">${item.descripcion}</td>
+        <td style="padding:4px 6px;text-align:right;">${formatCurrencyCL(item.precio_unitario)}</td>
+        <td style="padding:4px 6px;text-align:center;">${item.cantidad}</td>
+        <td style="padding:4px 6px;text-align:right;font-weight:500;">${formatCurrencyCL(item.subtotal)}</td>
       </tr>`).join('');
+
+    // Bloque de interés: solo se muestra si aplica recargo
+    const bloqueInteres = esCredito ? `
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.9rem;">
+        <span>Subtotal (sin recargo)</span>
+        <span>${formatCurrencyCL(totalSinInteres)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.9rem;color:#c07000;">
+        <span>⚡ Recargo tarjeta crédito (15%)</span>
+        <span>+ ${formatCurrencyCL(interesCalculado)}</span>
+      </div>` : '';
 
     const resumenHTML = `
       <div class="resumen-factura-modal">
-        <p><strong>Vendedor:</strong> ${nombreCliente || '-'}</p>
-        <p><strong>Fecha:</strong> ${fechaFactura || fechaHoyYYYYMMDD()}</p>
-        <p><strong>Método de pago:</strong> ${metodosPagoSeleccionados.value}</p>
-        <hr>
-        <div style="max-height:300px;overflow:auto;">
-          <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
-            <thead><tr>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">#</th>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">Código</th>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">Descripción</th>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">P. Unitario</th>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">Cant.</th>
-              <th style="border-bottom:1px solid #ccc;padding:4px;">Subtotal</th>
-            </tr></thead>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;font-size:0.9rem;">
+          <span><strong>Vendedor:</strong> ${nombreCliente || '-'}</span>
+          <span><strong>Fecha:</strong> ${fechaFactura || fechaHoyYYYYMMDD()}</span>
+          <span><strong>Pago:</strong> ${metodosPagoSeleccionados.value}${esCredito ? ' &nbsp;💳 +15%' : ''}</span>
+        </div>
+        <div style="max-height:260px;overflow:auto;border:1px solid #ddd;border-radius:6px;">
+          <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+            <thead>
+              <tr style="background:#f5f5f5;position:sticky;top:0;">
+                <th style="border-bottom:1px solid #ddd;padding:6px 6px;text-align:center;">#</th>
+                <th style="border-bottom:1px solid #ddd;padding:6px 6px;">Código</th>
+                <th style="border-bottom:1px solid #ddd;padding:6px 6px;">Descripción</th>
+                <th style="border-bottom:1px solid #ddd;padding:6px 6px;text-align:right;">P. Unitario${esCredito ? '*' : ''}</th>
+                <th style="border-bottom:1px solid #ddd;padding:6px 6px;text-align:center;">Cant.</th>
+                <th style="border-bottom:1px solid #ddd;padding:6px 6px;text-align:right;">Subtotal${esCredito ? '*' : ''}</th>
+              </tr>
+            </thead>
             <tbody>${filasHTML}</tbody>
           </table>
         </div>
-        <hr>
-        <p><strong>Total sin interés:</strong> ${formatCurrencyCL(totalSinInteres)}</p>
-        <p><strong>Interés:</strong> ${formatCurrencyCL(interesCalculado)}</p>
-        <p><strong>Total a cobrar:</strong> ${formatCurrencyCL(totalConInteres)}</p>
-        <p style="margin-top:8px;font-size:0.85rem;color:#666;">Revise los datos antes de guardar. Si algo está mal, presione "Revisar".</p>
+        ${esCredito ? `<p style="font-size:0.78rem;color:#888;margin:4px 0 8px;">* Precios ya incluyen el recargo del 15% por tarjeta de crédito.</p>` : ''}
+        <div style="border-top:1px solid #ddd;margin-top:8px;padding-top:8px;">
+          ${bloqueInteres}
+          <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:1.05rem;font-weight:700;border-top:1px solid #ddd;margin-top:4px;">
+            <span>Total a cobrar</span>
+            <span>${formatCurrencyCL(totalConInteres)}</span>
+          </div>
+        </div>
+        <p style="margin-top:8px;font-size:0.82rem;color:#888;">Revisá los datos antes de guardar. Si algo está mal, presioná "Revisar".</p>
       </div>`;
 
     const { isConfirmed } = await Swal.fire({

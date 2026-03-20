@@ -1973,11 +1973,36 @@ procesarFormularioFacturas: async (req, res) => {
       return Number.isFinite(n) ? n.toFixed(2) : "0.00";
     };
 
-    const totalLimpio = parseMoneyToDecimalStr(totalPresupuesto);
-
     const metodosPagoString = Array.isArray(metodosPago)
       ? metodosPago.filter(Boolean).join(", ")
       : (metodosPago || "");
+
+    // ── Recargo tarjeta de crédito: validación SERVER-SIDE ───────────────────
+    // El frontend ya distribuye el 15% en los ítems, pero lo recalculamos acá
+    // para no depender de lo que manda el cliente. Si hay discrepancia, se loguea
+    // y se usan los valores del servidor.
+    const esCredito = metodosPagoString.toUpperCase().includes("CREDITO");
+    const factorRecargo = esCredito ? 1.15 : 1;
+
+    const itemsNormalizados = invoiceItems.map(item => {
+      const pu  = Math.round(parseFloat(item.precio_unitario) * factorRecargo * 100) / 100;
+      const qty = parseInt(item.cantidad) || 1;
+      const sub = Math.round(pu * qty * 100) / 100;
+      return { ...item, precio_unitario: pu, subtotal: sub };
+    });
+
+    // Total recalculado en servidor (fuente de verdad)
+    const totalServidor = itemsNormalizados.reduce((acc, i) => acc + i.subtotal, 0);
+    const totalLimpio   = totalServidor.toFixed(2);
+
+    // Auditoría: loguear si el front mandó un total diferente al calculado
+    const totalFront = parseFloat(String(totalPresupuesto ?? "").replace(/[^\d.,-]/g, "").replace(",", ".")) || 0;
+    if (Math.abs(totalFront - totalServidor) > 1) {
+      console.warn(
+        `[Factura] Discrepancia de total: front=${totalFront.toFixed(2)} | servidor=${totalServidor.toFixed(2)} | método=${metodosPagoString}`
+      );
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     const creadoEn = new Date().toISOString().slice(0, 19).replace("T", " ");
 
@@ -2009,7 +2034,7 @@ const vendedor = vendedorForm
       cliente_nombre: null,          // NO inventar cliente acá
       vendedor: vendedor,            // guardar quién la cargó
       fecha: fechaPresupuesto,
-      total: totalLimpio,
+      total: totalLimpio,            // total verificado en servidor
       metodos_pago: metodosPagoString,
       creado_en: creadoEn
     };
@@ -2017,7 +2042,7 @@ const vendedor = vendedorForm
     const facturaId = await producto.guardarFactura(factura);
 
     const items = await Promise.all(
-      invoiceItems.map(async (item) => {
+      itemsNormalizados.map(async (item) => {
         const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
         if (!producto_id) {
           throw new Error(
@@ -2031,7 +2056,7 @@ const vendedor = vendedorForm
           facturaId,
           producto_id,
           item.cantidad,
-          item.precio_unitario,
+          item.precio_unitario,  // precio ya con recargo aplicado por servidor
           item.subtotal
         ];
       })
