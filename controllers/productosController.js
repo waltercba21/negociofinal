@@ -1676,35 +1676,34 @@ generarPDF: async function (req, res) {
     const fmtAr = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     const fmt$  = (n) => { const v = Number(n); return (Number.isFinite(v) && v > 0) ? `$ ${fmtAr.format(v)}` : '-'; };
 
-    // ── Layout A4: 595pt ancho, márgenes 25pt → área útil 545pt ──
-    // Columnas: 85 + 5 + 225 + 5 + 85 + 5 + 45 + 5 + 90 = 550 ✓
-    const ML = 25;
-    const PAGE_RIGHT = 570; // 595 - 25
+    // ── Layout A4: 595pt ancho, márgenes 28pt → área útil 539pt ──
+    const ML         = 28;
+    const PAGE_RIGHT = 567; // 595 - 28
 
-    const COL = [
-      { x: ML,       w: 85,  label: 'Código',       align: 'left'  },
-      { x: ML + 90,  w: 225, label: 'Descripción',  align: 'left'  },
-      { x: ML + 320, w: 85,  label: 'Costo c/IVA',  align: 'right' },
-      { x: ML + 410, w: 45,  label: 'Utilidad',     align: 'right' },
-      { x: ML + 460, w: 90,  label: 'Precio venta', align: 'right' },
-    ];
+    // Anchos: 88 + 220 + 82 + 44 + 88 = 522 + gaps(5×3=15) = 537 ✓
+    const C_COD  = { x: ML,        w: 88  };
+    const C_DESC = { x: ML + 93,   w: 220 };
+    const C_CIVA = { x: ML + 318,  w: 82  };
+    const C_UTIL = { x: ML + 405,  w: 44  };
+    const C_PVEN = { x: ML + 454,  w: 88  };
 
-    // ── Encabezado de tabla ──
+    // ── Encabezado ──
     const drawHeader = () => {
       const y = doc.y;
-      doc.fontSize(8).fillColor('#444444');
-      COL.forEach(c => {
-        doc.text(c.label, c.x, y, { width: c.w, align: c.align, lineBreak: false });
-      });
+      doc.fontSize(7.5).fillColor('#555555');
+      doc.text('Código',       C_COD.x,  y, { width: C_COD.w,  align: 'left',  lineBreak: false });
+      doc.text('Descripción',  C_DESC.x, y, { width: C_DESC.w, align: 'left',  lineBreak: false });
+      doc.text('Costo c/IVA',  C_CIVA.x, y, { width: C_CIVA.w, align: 'right', lineBreak: false });
+      doc.text('Utilidad',     C_UTIL.x, y, { width: C_UTIL.w, align: 'right', lineBreak: false });
+      doc.text('Precio venta', C_PVEN.x, y, { width: C_PVEN.w, align: 'right', lineBreak: false });
       const lineY = y + 12;
-      doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY).strokeColor('#999999').lineWidth(0.5).stroke();
+      doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY).strokeColor('#888888').lineWidth(0.6).stroke();
       doc.strokeColor('black').lineWidth(1);
       doc.y = lineY + 4;
     };
 
-    // ── Salto de página ──
     const ensurePage = (rowH) => {
-      if (doc.y + rowH > doc.page.height - 40) {
+      if (doc.y + rowH > doc.page.height - 38) {
         doc.addPage();
         drawHeader();
       }
@@ -1730,7 +1729,8 @@ generarPDF: async function (req, res) {
       const txtUtil  = utilidad > 0 ? `${Math.round(utilidad)}%` : '-';
       const txtVenta = fmt$(precioVenta);
 
-      const rowH = Math.max(13, doc.heightOfString(nombre, { width: COL[1].w }));
+      // Altura de la fila basada en la descripción (única columna multilinea)
+      const rowH = Math.max(13, doc.heightOfString(nombre, { width: C_DESC.w }));
 
       ensurePage(rowH + 4);
 
@@ -1742,14 +1742,21 @@ generarPDF: async function (req, res) {
       }
 
       doc.fontSize(7.5).fillColor('#111111');
-      doc.text(codigo,   COL[0].x, y, { width: COL[0].w, align: COL[0].align, lineBreak: false });
-      doc.text(nombre,   COL[1].x, y, { width: COL[1].w, align: COL[1].align, lineBreak: true  });
-      doc.text(txtCosto, COL[2].x, y, { width: COL[2].w, align: COL[2].align, lineBreak: false });
-      doc.text(txtUtil,  COL[3].x, y, { width: COL[3].w, align: COL[3].align, lineBreak: false });
-      doc.text(txtVenta, COL[4].x, y, { width: COL[4].w, align: COL[4].align, lineBreak: false });
 
+      // Código — posición fija Y
+      doc.text(codigo,   C_COD.x,  y, { width: C_COD.w,  align: 'left',  lineBreak: false });
+
+      // Descripción — única columna que puede ser multilinea, resetea Y
+      doc.text(nombre,   C_DESC.x, y, { width: C_DESC.w, align: 'left',  lineBreak: true  });
+
+      // Columnas numéricas — siempre vuelven a Y base para alinearse correctamente
+      doc.text(txtCosto, C_CIVA.x, y, { width: C_CIVA.w, align: 'right', lineBreak: false });
+      doc.text(txtUtil,  C_UTIL.x, y, { width: C_UTIL.w, align: 'right', lineBreak: false });
+      doc.text(txtVenta, C_PVEN.x, y, { width: C_PVEN.w, align: 'right', lineBreak: false });
+
+      // Línea separadora
       const afterY = y + rowH + 3;
-      doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY).strokeColor('#e8e8e8').lineWidth(0.3).stroke();
+      doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY).strokeColor('#e0e0e0').lineWidth(0.3).stroke();
       doc.strokeColor('black').lineWidth(1);
       doc.y = afterY + 1;
     });
