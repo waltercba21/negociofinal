@@ -69,7 +69,7 @@ function calcularTotal() {
   if (totalAmountInput) totalAmountInput.value = formatCurrencyCL(total);
 }
 
-function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
+function agregarProductoATabla(productoId, codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto) {
   const tbody = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
   const filas = tbody.rows;
   let filaDisponible = null;
@@ -87,6 +87,9 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
   }
 
   const stockNum = parseInt(stockActual) || 0;
+
+  // Guardar el id numérico en la fila para usarlo al hacer submit
+  filaDisponible.dataset.productoId = productoId;
 
   // Imagen
   const imgElement = filaDisponible.cells[0].querySelector("img");
@@ -192,6 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const invoiceItems = [];
 
     for (let i = 0; i < filas.length; i++) {
+      const productoId  = filas[i].dataset.productoId || '';
       const codigo      = filas[i].cells[1].textContent.trim();
       const descripcion = filas[i].cells[2].textContent.trim();
       const precioInput = filas[i].cells[3].querySelector('input').value;
@@ -209,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const subtotal = precio_unitario * cantidad;
       if (codigo !== '' && descripcion !== '' && precio_unitario > 0 && cantidad > 0) {
-        invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
+        invoiceItems.push({ producto_id: productoId || codigo, descripcion, precio_unitario, cantidad, subtotal });
       }
     }
 
@@ -265,6 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
     productos.forEach((producto) => {
       const resultado = document.createElement('div');
       resultado.classList.add('resultado-busqueda');
+      resultado.dataset.id           = producto.id;
       resultado.dataset.codigo       = producto.codigo;
       resultado.dataset.nombre       = producto.nombre;
       resultado.dataset.precio_venta = producto.precio_venta;
@@ -298,6 +303,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       resultado.addEventListener('click', function () {
         agregarProductoATabla(
+          this.dataset.id,
           this.dataset.codigo,
           this.dataset.nombre,
           this.dataset.precio_venta,

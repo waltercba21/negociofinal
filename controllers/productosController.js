@@ -1972,7 +1972,18 @@ procesarFormulario: async (req, res) => {
       const presupuestoId = await producto.guardarPresupuesto(presupuesto);
 
       const items = await Promise.all(invoiceItems.map(async item => {
-          const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
+          // Si producto_id es un número entero válido, buscar directo por id (evita ambigüedad de códigos duplicados)
+          const idNumerico = Number(item.producto_id);
+          let producto_id;
+          if (Number.isInteger(idNumerico) && idNumerico > 0) {
+              producto_id = idNumerico;
+          } else {
+              producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
+          }
+
+          if (!producto_id) {
+              throw new Error(`Producto no encontrado: "${item.descripcion}" (código: ${item.producto_id})`);
+          }
 
           await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
 
