@@ -1086,9 +1086,11 @@ obtenerProductosPorCategoria: function(conexion, categoriaId) {
 },
   
 obtenerProductosPorProveedorYCategoria: function (conexion, proveedor, categoria) {
-  const prov = (!proveedor || proveedor === 'TODOS') ? null : proveedor;
-  const cat  = (!categoria || categoria === 'TODAS') ? null : categoria;
+  const prov = (!proveedor || proveedor === 'TODOS') ? null : Number(proveedor);
+  const cat  = (!categoria || categoria === 'TODAS') ? null : Number(categoria);
 
+  // Construir query dinámicamente según filtros presentes
+  const params = [];
   let query = `
     SELECT
       p.id,
@@ -1097,26 +1099,33 @@ obtenerProductosPorProveedorYCategoria: function (conexion, proveedor, categoria
       p.precio_venta,
       p.stock_minimo,
       p.stock_actual,
-      MIN(pp.codigo)                 AS codigo_proveedor,
-      MIN(pp.precio_lista)           AS precio_lista,
-      COALESCE(MIN(pp.iva), 21)      AS iva,
-      COALESCE(MIN(dp.descuento), 0) AS descuento
+      pp.codigo                               AS codigo_proveedor,
+      pp.precio_lista                         AS precio_lista,
+      COALESCE(pp.iva, 21)                    AS iva,
+      COALESCE(dp.descuento, 0)               AS descuento
     FROM productos p
-    LEFT JOIN producto_proveedor pp
-      ON pp.producto_id = p.id
-      AND ( ? IS NULL OR pp.proveedor_id = ? )
+    INNER JOIN producto_proveedor pp ON pp.producto_id = p.id
     LEFT JOIN (
       SELECT proveedor_id, MAX(descuento) AS descuento
       FROM descuentos_proveedor
       GROUP BY proveedor_id
     ) dp ON dp.proveedor_id = pp.proveedor_id
-    WHERE ( ? IS NULL OR p.categoria_id = ? )
-    GROUP BY
-      p.id, p.nombre, p.utilidad, p.precio_venta, p.stock_minimo, p.stock_actual
-    ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC
+    WHERE 1=1
   `;
 
-  const params = [prov, prov, cat, cat];
+  if (prov) {
+    query += ` AND pp.proveedor_id = ?`;
+    params.push(prov);
+  }
+
+  if (cat) {
+    query += ` AND p.categoria_id = ?`;
+    params.push(cat);
+  }
+
+  query += `
+    ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC, p.nombre ASC
+  `;
 
   const queryPromise = require('util').promisify(conexion.query).bind(conexion);
   return queryPromise(query, params);

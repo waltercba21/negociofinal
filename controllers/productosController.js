@@ -1672,37 +1672,37 @@ generarPDF: async function (req, res) {
       return;
     }
 
-    // Layout / formato
-    const fmtAr = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
-    const formatearMoneda = (n) => {
-      const num = Number(n);
-      if (!Number.isFinite(num) || num <= 0) return '-';
-      return fmtAr.format(num);
-    };
+    // ── Helpers de formato ──
+    const fmtAr = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    const fmt$  = (n) => { const v = Number(n); return (Number.isFinite(v) && v > 0) ? `$ ${fmtAr.format(v)}` : '-'; };
 
-    // Columnas: Código | Descripción | Costo c/IVA | Utilidad % | Precio de venta
-    const X_COD   = 40,  W_COD  = 85;
-    const X_DESC  = 130, W_DESC = 230;
-    const X_CIVA  = 365, W_CIVA = 75;
-    const X_UTIL  = 445, W_UTIL = 45;
-    const X_PVENT = 495, W_PVENT = 80;
+    // ── Layout de columnas (página carta: 612pt, margen 30 cada lado → útil 552pt) ──
+    // X = posición absoluta desde el borde izquierdo de la página
+    const COL = [
+      { x: 30,  w: 80,  label: 'Código',       align: 'left'  },
+      { x: 115, w: 240, label: 'Descripción',   align: 'left'  },
+      { x: 360, w: 80,  label: 'Costo c/IVA',   align: 'right' },
+      { x: 445, w: 50,  label: 'Utilidad',      align: 'right' },
+      { x: 500, w: 82,  label: 'Precio venta',  align: 'right' },
+    ];
+    const PAGE_RIGHT = 582; // 612 - 30
 
+    // ── Dibujar encabezado de tabla ──
     const drawHeader = () => {
-      doc.fontSize(9).fillColor('#444444');
       const y = doc.y;
-      doc.text('Código',        X_COD,   y, { width: W_COD });
-      doc.text('Descripción',   X_DESC,  y, { width: W_DESC });
-      doc.text('Costo c/IVA',   X_CIVA,  y, { width: W_CIVA,  align: 'right' });
-      doc.text('Utilidad',      X_UTIL,  y, { width: W_UTIL,  align: 'right' });
-      doc.text('Precio venta',  X_PVENT, y, { width: W_PVENT, align: 'right' });
-      doc.moveDown(0.8);
-      doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke();
-      doc.moveDown(0.4);
+      doc.fontSize(8).fillColor('#555555');
+      COL.forEach(c => {
+        doc.text(c.label, c.x, y, { width: c.w, align: c.align, lineBreak: false });
+      });
+      const lineY = y + 11;
+      doc.moveTo(30, lineY).lineTo(PAGE_RIGHT, lineY).strokeColor('#aaaaaa').lineWidth(0.5).stroke();
+      doc.strokeColor('black').lineWidth(1);
+      doc.y = lineY + 4;
     };
 
-    const ensurePage = (rowH = 18) => {
-      const bottom = doc.page.height - doc.page.margins.bottom;
-      if (doc.y + rowH > bottom) {
+    // ── Controlar salto de página ──
+    const ensurePage = (rowH) => {
+      if (doc.y + rowH > doc.page.height - doc.page.margins.bottom - 10) {
         doc.addPage();
         drawHeader();
       }
@@ -1710,40 +1710,50 @@ generarPDF: async function (req, res) {
 
     drawHeader();
 
-    productos.forEach(p => {
-      const nombre = p.nombre || '-';
+    productos.forEach((p, idx) => {
+      const nombre = (p.nombre || '-').trim();
       const codigo = p.codigo_proveedor || '-';
 
-      // Calcular costo c/IVA desde precio_lista, descuento e iva del proveedor
-      const lista    = Number(p.precio_lista   || 0);
-      const desc     = Number(p.descuento      || 0);
-      const iva      = Number(p.iva            || p.IVA || 21);
+      // Calcular costo c/IVA
+      const lista    = Number(p.precio_lista || 0);
+      const desc     = Number(p.descuento    || 0);
+      const iva      = Number(p.iva          || 21);
       const costoIva = lista > 0
         ? Math.round(lista * (1 - desc / 100) * (1 + iva / 100))
         : Number(p.costo_iva || 0);
 
-      const utilidad   = Number(p.utilidad || 0);
+      const utilidad    = Number(p.utilidad    || 0);
       const precioVenta = Number(p.precio_venta || 0);
 
-      const txtCosto  = formatearMoneda(costoIva);
-      const txtUtil   = utilidad > 0 ? `${utilidad}%` : '-';
-      const txtVenta  = formatearMoneda(precioVenta);
+      const txtCosto = fmt$(costoIva);
+      const txtUtil  = utilidad > 0 ? `${Math.round(utilidad)}%` : '-';
+      const txtVenta = fmt$(precioVenta);
 
-      const descHeight = doc.heightOfString(nombre, { width: W_DESC, align: 'left' });
-      const rowH = Math.max(16, descHeight);
+      // Altura real de la fila según el texto de descripción (puede ser multilinea)
+      const rowH = Math.max(14, doc.heightOfString(nombre, { width: COL[1].w }));
 
-      ensurePage(rowH + 4);
+      ensurePage(rowH + 5);
 
       const y = doc.y;
-      doc.fontSize(8).fillColor('black');
 
-      doc.text(codigo,    X_COD,   y, { width: W_COD });
-      doc.text(nombre,    X_DESC,  y, { width: W_DESC });
-      doc.text(txtCosto,  X_CIVA,  y, { width: W_CIVA,  align: 'right' });
-      doc.text(txtUtil,   X_UTIL,  y, { width: W_UTIL,  align: 'right' });
-      doc.text(txtVenta,  X_PVENT, y, { width: W_PVENT, align: 'right' });
+      // Fondo alternado para facilitar lectura
+      if (idx % 2 === 0) {
+        doc.rect(30, y - 1, PAGE_RIGHT - 30, rowH + 3).fill('#f7f7f7');
+      }
 
-      doc.y = y + rowH + 4;
+      doc.fontSize(8).fillColor('#111111');
+      doc.text(codigo,   COL[0].x, y, { width: COL[0].w, align: COL[0].align, lineBreak: false });
+      doc.text(nombre,   COL[1].x, y, { width: COL[1].w, align: COL[1].align, lineBreak: true  });
+      doc.text(txtCosto, COL[2].x, y, { width: COL[2].w, align: COL[2].align, lineBreak: false });
+      doc.text(txtUtil,  COL[3].x, y, { width: COL[3].w, align: COL[3].align, lineBreak: false });
+      doc.text(txtVenta, COL[4].x, y, { width: COL[4].w, align: COL[4].align, lineBreak: false });
+
+      // Línea separadora suave
+      const afterY = y + rowH + 3;
+      doc.moveTo(30, afterY).lineTo(PAGE_RIGHT, afterY).strokeColor('#eeeeee').lineWidth(0.3).stroke();
+      doc.strokeColor('black').lineWidth(1);
+
+      doc.y = afterY + 2;
     });
 
     doc.end();
