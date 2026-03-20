@@ -1678,7 +1678,6 @@ generarPDF: async function (req, res) {
 
     // ── Layout A4: 595pt ──
     // Márgenes 40pt → área útil 515pt
-    // COD=80 | DESC=212 | CIVA=82 | UTIL=40 | PVEN=82  (gaps de 9.75 entre cada par)
     const ML         = 40;
     const PAGE_RIGHT = 555;
 
@@ -1690,26 +1689,30 @@ generarPDF: async function (req, res) {
       pven: { x: 490, w: 65  },
     };
 
-    const FS = 7.5; // font size
+    const FS = 7.5;
 
-    // helper: dibuja texto en (x,y) sin mover el cursor global
-    const cell = (txt, col, y, align) => {
-      doc.save();
-      doc.text(txt, col.x, y, { width: col.w, align, lineBreak: false });
-      doc.restore();
+    // Dibuja texto alineado a la derecha SIN mover doc.y, usando primitivas de PDFKit
+    const drawRight = (txt, col, y) => {
+      const tw = doc.widthOfString(txt);
+      const xPos = col.x + col.w - tw;
+      doc._renderText(txt, xPos, y, {});
+    };
+
+    const drawLeft = (txt, col, y) => {
+      doc._renderText(txt, col.x, y, {});
     };
 
     // ── Encabezado ──
     const drawHeader = () => {
       const y = doc.y;
       doc.fontSize(FS).font('Helvetica-Bold').fillColor('#333333');
-      cell('Código',       C.cod,  y, 'left');
-      cell('Descripción',  C.desc, y, 'left');
-      cell('Costo c/IVA',  C.civa, y, 'right');
-      cell('Utilidad',     C.util, y, 'right');
-      cell('Precio venta', C.pven, y, 'right');
+      doc.text('Código',       C.cod.x,  y, { width: C.cod.w,  align: 'left',  lineBreak: false });
+      doc.text('Descripción',  C.desc.x, y, { width: C.desc.w, align: 'left',  lineBreak: false });
+      doc.text('Costo c/IVA',  C.civa.x, y, { width: C.civa.w, align: 'right', lineBreak: false });
+      doc.text('Utilidad',     C.util.x, y, { width: C.util.w, align: 'right', lineBreak: false });
+      doc.text('Precio venta', C.pven.x, y, { width: C.pven.w, align: 'right', lineBreak: false });
       doc.font('Helvetica');
-      const lineY = y + FS + 3;
+      const lineY = y + FS + 4;
       doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY)
         .strokeColor('#555555').lineWidth(0.7).stroke();
       doc.strokeColor('black').lineWidth(1);
@@ -1743,7 +1746,7 @@ generarPDF: async function (req, res) {
       const txtUtil  = utilidad > 0 ? `${Math.round(utilidad)}%` : '-';
       const txtVenta = fmt$(precioVenta);
 
-      doc.fontSize(FS);
+      doc.fontSize(FS).font('Helvetica');
       const rowH = Math.max(FS + 4, doc.heightOfString(nombre, { width: C.desc.w }));
 
       ensurePage(rowH + 4);
@@ -1752,27 +1755,25 @@ generarPDF: async function (req, res) {
 
       // Fondo alternado
       if (idx % 2 === 0) {
-        doc.save();
         doc.rect(ML - 2, y - 1, PAGE_RIGHT - ML + 4, rowH + 3).fill('#f4f4f4');
-        doc.restore();
+        doc.fontSize(FS).font('Helvetica').fillColor('#111111');
       }
 
-      doc.fontSize(FS).font('Helvetica').fillColor('#111111');
+      // Código y Descripción con doc.text (pueden mover el cursor, no importa)
+      doc.fillColor('#111111');
+      doc.text(codigo, C.cod.x,  y, { width: C.cod.w,  align: 'left', lineBreak: false });
+      doc.text(nombre, C.desc.x, y, { width: C.desc.w, align: 'left', lineBreak: false });
 
-      // Cada celda usa save/restore → el cursor global NUNCA se mueve
-      cell(codigo,   C.cod,  y, 'left');
-      cell(nombre,   C.desc, y, 'left');
-      cell(txtCosto, C.civa, y, 'right');
-      cell(txtUtil,  C.util, y, 'right');
-      cell(txtVenta, C.pven, y, 'right');
+      // Columnas numéricas: usar primitiva de bajo nivel que NO mueve doc.y
+      drawRight(txtCosto, C.civa, y);
+      drawRight(txtUtil,  C.util, y);
+      drawRight(txtVenta, C.pven, y);
 
-      // Línea separadora y avance manual del cursor
+      // Avance manual del cursor
       const afterY = y + rowH + 3;
-      doc.save();
       doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY)
         .strokeColor('#dddddd').lineWidth(0.3).stroke();
-      doc.restore();
-
+      doc.strokeColor('black').lineWidth(1);
       doc.y = afterY + 1;
     });
 

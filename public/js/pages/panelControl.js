@@ -314,7 +314,7 @@ function renderPanelListado(contenedor, lista, paginaOrOpts, busquedaMaybe) {
 document.addEventListener('DOMContentLoaded', () => {
   const contenedorProductos = document.querySelector('.panel-container');
   const inputBusqueda = document.getElementById('entradaBusqueda');
-  const paginacionEl = document.querySelector('.panel-paginacion');
+  const paginacionEl = document.querySelector('.pc-paginacion');
 
   if (!contenedorProductos) return;
 
@@ -414,6 +414,7 @@ function renderSearchPagination() {
   }
 
   let timer;
+  let abortCtrl = null;
   inputBusqueda?.addEventListener('input', function (e) {
     clearTimeout(timer);
 
@@ -434,29 +435,26 @@ function renderSearchPagination() {
 
       try {
         const current = new URLSearchParams(window.location.search);
-const proveedor = current.get('proveedor');
-const categoria = current.get('categoria');
+        const proveedor = current.get('proveedor');
+        const categoria = current.get('categoria');
 
-let abortCtrl = null;
+        let url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda) + '&limite=300&simple=1';
 
+        if (proveedor && proveedor !== 'TODOS') url += '&proveedor_id=' + encodeURIComponent(proveedor);
+        if (categoria && categoria !== '' && categoria !== 'TODAS') url += '&categoria_id=' + encodeURIComponent(categoria);
 
-let url = '/productos/api/buscar?q=' + encodeURIComponent(busqueda) + '&limite=300&simple=1';
+        abortCtrl?.abort();
+        abortCtrl = new AbortController();
 
-if (proveedor && proveedor !== 'TODOS') url += '&proveedor_id=' + encodeURIComponent(proveedor);
-if (categoria && categoria !== '' && categoria !== 'TODAS') url += '&categoria_id=' + encodeURIComponent(categoria);
+        const respuesta = await fetch(url, {
+          headers: { Accept: 'application/json' },
+          signal: abortCtrl.signal
+        });
 
-abortCtrl?.abort();
-abortCtrl = new AbortController();
+        const data = await respuesta.json().catch(() => null);
+        if (!respuesta.ok) throw new Error(data?.error || 'Error al buscar productos.');
 
-const respuesta = await fetch(url, {
-  headers: { Accept: 'application/json' },
-  signal: abortCtrl.signal
-});
-
-const data = await respuesta.json().catch(() => null);
-if (!respuesta.ok) throw new Error(data?.error || 'Error al buscar productos.');
-
-searchResults = Array.isArray(data) ? data : [];
+        searchResults = Array.isArray(data) ? data : [];
 
 
 

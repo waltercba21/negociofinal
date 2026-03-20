@@ -214,37 +214,61 @@ guardarFactura: (factura) => {
             });
         });
     },    
-    obtenerProductoIdPorCodigo: (codigo, nombre = null) => {
-        return new Promise((resolve, reject) => {
-            let query = `
-                SELECT p.id 
-                FROM productos p
-                INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-                WHERE pp.codigo = ?
-            `;
-            const params = [codigo];
-    
-            // Si se proporciona un nombre, lo incluimos en la consulta
+   obtenerProductoIdPorCodigo: (codigo, nombre = null) => {
+    return new Promise((resolve, reject) => {
+        // 1° intento: buscar por producto_proveedor.codigo (como antes)
+        let query = `
+            SELECT p.id 
+            FROM productos p
+            INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+            WHERE pp.codigo = ?
+        `;
+        const params = [codigo];
+
+        if (nombre) {
+            query += " AND p.nombre LIKE ?";
+            params.push(`%${nombre}%`);
+        }
+
+        conexion.query(query, params, (error, resultados) => {
+            if (error) return reject(error);
+
+            if (resultados.length > 0) return resolve(resultados[0].id);
+
+            // ✅ 2° intento: buscar por productos.codigo directamente
+            let query2 = `SELECT id FROM productos WHERE codigo = ?`;
+            const params2 = [codigo];
+
             if (nombre) {
-                query += " AND p.nombre LIKE ?";
-                params.push(`%${nombre}%`); // Busqueda parcial para evitar errores por espacios u otros caracteres
+                query2 += " AND nombre LIKE ?";
+                params2.push(`%${nombre}%`);
             }
-    
-            conexion.query(query, params, (error, resultados) => {
-                if (error) {
-                    console.error('❌ Error en la consulta SQL:', error);
-                    reject(error);
+
+            conexion.query(query2, params2, (error2, resultados2) => {
+                if (error2) return reject(error2);
+
+                if (resultados2.length > 0) return resolve(resultados2[0].id);
+
+                // ✅ 3° intento: buscar SOLO por nombre si el código no existe en ninguna tabla
+                if (nombre) {
+                    conexion.query(
+                        `SELECT id FROM productos WHERE nombre LIKE ? LIMIT 1`,
+                        [`%${nombre}%`],
+                        (error3, resultados3) => {
+                            if (error3) return reject(error3);
+                            if (resultados3.length > 0) return resolve(resultados3[0].id);
+                            console.warn(`⚠️ Producto no encontrado: código="${codigo}", nombre="${nombre}"`);
+                            reject(new Error(`Producto no encontrado: código="${codigo}", nombre="${nombre}"`));
+                        }
+                    );
                 } else {
-                    if (resultados.length > 0) {
-                        resolve(resultados[0].id);
-                    } else {
-                        console.warn(`⚠️ Producto con código ${codigo} y nombre ${nombre} no encontrado.`);
-                        resolve(null);
-                    }
+                    console.warn(`⚠️ Producto no encontrado: código="${codigo}"`);
+                    reject(new Error(`Producto no encontrado: código="${codigo}"`));
                 }
             });
         });
-    },    
+    });
+},    
      obtenerItemsPresupuesto : (presupuestoId) => {
         return new Promise((resolve, reject) => {
           const query = `
