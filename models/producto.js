@@ -578,9 +578,34 @@ actualizarPreciosPDF: async function (precio_lista, codigo, proveedor_id) {
 
     const conn = await conexion.promise().getConnection();
     try {
-      const [results] = await conn.query(buscarProductos, [codigo, proveedor_id]);
+      // BÚSQUEDA con logging diagnóstico (primeros 5 códigos)
+      if (!actualizarPreciosPDF._logCount) actualizarPreciosPDF._logCount = 0;
+      const _doLog = actualizarPreciosPDF._logCount < 5;
+      actualizarPreciosPDF._logCount++;
 
-      // si no existe, devolvemos null sin spamear logs (así tu controller lo lista como "nuevo")
+      // Intentar con el código tal cual
+      let [results] = await conn.query(buscarProductos, [codigo, proveedor_id]);
+
+      if (_doLog) {
+        // Ver también cómo están los códigos en la BD para ese proveedor
+        const [muestraBD] = await conn.query(
+          'SELECT codigo FROM producto_proveedor WHERE proveedor_id = ? LIMIT 5',
+          [proveedor_id]
+        );
+        console.log(`[actualizarPreciosPDF] codigo="${codigo}" proveedor_id=${proveedor_id} encontrado=${results.length} muestraBD=${JSON.stringify(muestraBD.map(r=>r.codigo))}`);
+      }
+
+      // Si no encuentra → intentar con UPPER
+      if (!results || results.length === 0) {
+        [results] = await conn.query(buscarProductos, [codigo.toUpperCase(), proveedor_id]);
+        if (_doLog && results.length) console.log(`[actualizarPreciosPDF] encontrado con UPPER: "${codigo.toUpperCase()}"`);
+      }
+      // Si tampoco → intentar con LOWER
+      if (!results || results.length === 0) {
+        [results] = await conn.query(buscarProductos, [codigo.toLowerCase(), proveedor_id]);
+        if (_doLog && results.length) console.log(`[actualizarPreciosPDF] encontrado con LOWER: "${codigo.toLowerCase()}"`);
+      }
+
       if (!results || results.length === 0) return null;
 
       const salidas = await Promise.all(results.map(async (row) => {
