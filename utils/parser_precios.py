@@ -301,6 +301,10 @@ def seleccionar_hojas(sheet_names):
     for name, n in nn:
         if 'lista abreviada' in n: return [name]  # distri
 
+    # FAL: priorizar hoja maestra con todos los productos
+    for name, n in nn:
+        if n == _FAL_HOJA_MAESTRA: return [name]
+
     preferidas = [name for name, n in nn if n.startswith('lista de precio')]
     if preferidas: return preferidas  # LAM, SUDIMAR
 
@@ -531,6 +535,109 @@ def parsear_hoja_dm(sheet_name, ws):
     return items
 
 
+# ─── Detección y parser especializado para FAL (F066) ────────────────────────
+# El archivo F066 es .xls con múltiples hojas por marca + una hoja maestra
+# "LISTA PRECIOS GESTION AL DIA" que contiene todos los productos.
+# Estructura hoja maestra: col 0=codigo, col 3=descripcion, col 4=precio
+
+_FAL_HOJA_MAESTRA = 'lista precios gestion al dia'
+
+def _es_hoja_maestra_fal(ws):
+    """True si la hoja es la hoja maestra de FAL con todos los productos."""
+    rows = list(ws.iter_rows(values_only=True, max_row=2))
+    if not rows or not rows[0]: return False
+    vals = [norm(str(v)) for v in rows[0] if v is not None]
+    return 'codigo' in vals and 'precio1' in vals and 'descripcion' in vals
+
+def parsear_hoja_fal(sheet_name, ws):
+    """
+    Parser para la hoja maestra de FAL.
+    col 0=codigo, col 3=descripcion, col 4=precio
+    """
+    rows = list(ws.iter_rows(values_only=True))
+    if len(rows) < 2: return []
+    items = []
+    for row in rows[1:]:
+        if not row or all(c is None or str(c).strip() == '' for c in row):
+            continue
+        def get(idx): return row[idx] if idx < len(row) else None
+        codigo = limpiar_codigo(get(0))
+        if not codigo: continue
+        descripcion = str(get(3) or '').strip()
+        precio = limpiar_precio(get(4))
+        if not precio or precio <= 0: continue
+        items.append({'codigo': codigo, 'precio': precio,
+                      'descripcion': descripcion, 'hoja': sheet_name})
+    return items
+
+
+def _parsear_xls_con_xlrd(file_path):
+    """
+    Parsea archivos .xls directamente con xlrd (sin LibreOffice).
+    Soporta el formato FAL (F066) con hoja maestra 'LISTA PRECIOS GESTION AL DIA'.
+    """
+    import xlrd as _xlrd
+    errores = []
+    todos = []
+
+    try:
+        wb = _xlrd.open_workbook(file_path)
+    except Exception as e:
+        return {'items': [], 'hojas': [], 'errores': [f'No se pudo leer el .xls: {e}']}
+
+    sheet_names = wb.sheet_names()
+    hojas = seleccionar_hojas(sheet_names)
+
+    for sh in hojas:
+        ws = wb.sheet_by_name(sh)
+        try:
+            rows_raw = []
+            for i in range(ws.nrows):
+                row = [ws.cell_value(i, j) for j in range(ws.ncols)]
+                rows_raw.append(row)
+
+            if not rows_raw: continue
+
+            # Detectar hoja maestra FAL
+            header = rows_raw[0]
+            vals_h = [norm(str(v)) for v in header if v is not None and str(v).strip()]
+            if 'codigo' in vals_h and 'precio1' in vals_h and 'descripcion' in vals_h:
+                # Parser FAL: col 0=codigo, col 3=descripcion, col 4=precio
+                for row in rows_raw[1:]:
+                    if not row or all(str(c).strip() == '' for c in row): continue
+                    def get(idx): return row[idx] if idx < len(row) else None
+                    codigo = limpiar_codigo(get(0))
+                    if not codigo: continue
+                    descripcion = str(get(3) or '').strip()
+                    precio = limpiar_precio(get(4))
+                    if not precio or precio <= 0: continue
+                    todos.append({'codigo': codigo, 'precio': precio,
+                                  'descripcion': descripcion, 'hoja': sh})
+            else:
+                # Parser genérico: buscar código en col 0, precio en col 4
+                # (estructura estándar de hojas por marca de FAL)
+                for row in rows_raw[1:]:
+                    if not row or all(str(c).strip() == '' for c in row): continue
+                    def get(idx): return row[idx] if idx < len(row) else None
+                    codigo = limpiar_codigo(get(0))
+                    if not codigo or codigo.startswith('*'): continue
+                    precio = limpiar_precio(get(4)) if len(row) > 4 else None
+                    if not precio or precio <= 0: continue
+                    descripcion = str(get(2) or '').strip()
+                    todos.append({'codigo': codigo, 'precio': precio,
+                                  'descripcion': descripcion, 'hoja': sh})
+        except Exception as e:
+            errores.append(f'Hoja "{sh}": {e}')
+
+    dedup = {}
+    for item in todos:
+        key = item['codigo'].strip().upper()
+        if key not in dedup or item['precio'] > dedup[key]['precio']:
+            dedup[key] = item
+
+    return {'items': list(dedup.values()), 'hojas': hojas, 'errores': errores}
+
+
 def parsear_archivo(file_path):
     """
     Parsea un archivo Excel de lista de precios.
@@ -555,10 +662,20 @@ def parsear_archivo(file_path):
     necesita_conversion = (ext == '.xls') or _es_xls_ole2(file_path)
 
     if necesita_conversion:
+        # Intentar convertir con LibreOffice
         try:
             path_usar, tmp_dir = convertir_xls(file_path)
-        except Exception as e:
-            return {'items': [], 'hojas': [], 'errores': [str(e)]}
+        except Exception as lo_err:
+            # LibreOffice no disponible — intentar con xlrd directamente
+            try:
+                import xlrd as _xlrd
+                return _parsear_xls_con_xlrd(file_path)
+            except ImportError:
+                return {'items': [], 'hojas': [], 'errores': [
+                    f'No se pudo convertir el .xls: {lo_err}. Instalá xlrd: pip install xlrd'
+                ]}
+            except Exception as e:
+                return {'items': [], 'hojas': [], 'errores': [str(e)]}
 
     try:
         wb = openpyxl.load_workbook(path_usar, read_only=True, data_only=True)
@@ -577,11 +694,12 @@ def parsear_archivo(file_path):
             # Detectar si es archivo DM antes de parsear
             if _es_archivo_dm(ws):
                 es_dm = True
-                # Recargar la hoja (iter_rows ya fue consumido por _es_archivo_dm)
                 ws2 = wb[sh]
                 todos.extend(parsear_hoja_dm(sh, ws2))
+            elif _es_hoja_maestra_fal(ws):
+                ws2 = wb[sh]
+                todos.extend(parsear_hoja_fal(sh, ws2))
             elif _es_archivo_faros_ausili(ws):
-                # Recargar la hoja (iter_rows ya fue consumido por _es_archivo_faros_ausili)
                 ws2 = wb[sh]
                 todos.extend(parsear_hoja_faros_ausili(sh, ws2))
             else:
