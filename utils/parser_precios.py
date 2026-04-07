@@ -302,10 +302,6 @@ def seleccionar_hojas(sheet_names):
     for name, n in nn:
         if 'lista abreviada' in n: return [name]  # distri
 
-    # FAL: priorizar hoja maestra con todos los productos
-    for name, n in nn:
-        if n == _FAL_HOJA_MAESTRA: return [name]
-
     preferidas = [name for name, n in nn if n.startswith('lista de precio')]
     if preferidas: return preferidas  # LAM, SUDIMAR
 
@@ -537,36 +533,72 @@ def parsear_hoja_dm(sheet_name, ws):
 
 
 # ─── Detección y parser especializado para FAL (F066) ────────────────────────
-# El archivo F066 es .xls con múltiples hojas por marca + una hoja maestra
-# "LISTA PRECIOS GESTION AL DIA" que contiene todos los productos.
-# Estructura hoja maestra: col 0=codigo, col 3=descripcion, col 4=precio
+# FAL tiene hojas por marca (FORD, RENAULT, etc.) con estructura:
+#   col 0 = código largo (ej: '036801') — NO usado, la BD tiene el corto
+#   col 1 = código corto (ej: '6801')   — ES el que está en la BD
+#   col 2 = descripción
+#   col 3 = I/D (indicador, ignorar)
+#   col 4 = precio
+# La "LISTA PRECIOS GESTION AL DIA" tiene códigos largos — NO coinciden con la BD.
 
-_FAL_HOJA_MAESTRA = 'lista precios gestion al dia'
+_FAL_HOJAS_MARCA = {
+    'ford', 'renault', 'fiat  alfa romeo', 'fiat alfa romeo',
+    'peugeot', 'volkswagen', 'chevrolet', 'citroen',
+    'nissan jeep bmw suzuki chrysler',
+    'honda-toyota-hyundai- audi -mi',
+    'honda toyota hyundai audi',
+    'm-benz -ivecco -scania', 'mercedes benz iveco scania',
+    'universales - rastrojero', 'universales',
+}
+_FAL_HOJA_MAESTRA = 'lista precios gestion al dia'  # ignorar, usa codigos largos
 
-def _es_hoja_maestra_fal(ws):
-    """True si la hoja es la hoja maestra de FAL con todos los productos."""
-    rows = list(ws.iter_rows(values_only=True, max_row=2))
-    if not rows or not rows[0]: return False
-    vals = [norm(str(v)) for v in rows[0] if v is not None]
-    return 'codigo' in vals and 'precio1' in vals and 'descripcion' in vals
+def _es_hoja_marca_fal(sheet_name_norm):
+    """True si la hoja es una hoja de marca de FAL."""
+    # Detectar por nombre: cualquier hoja que no sea encabezado/maestra/hoja vacía
+    ignorar = {'encabezado', _FAL_HOJA_MAESTRA, 'hoja1', 'hoja2', 'hoja3',
+               'page1', 'page2', 'page3'}
+    if sheet_name_norm in ignorar: return False
+    return True
 
-def parsear_hoja_fal(sheet_name, ws):
+def _es_archivo_fal(wb_sheetnames):
+    """True si el workbook tiene la estructura de FAL (hoja maestra + hojas por marca)."""
+    names_norm = {n.strip().lower() for n in wb_sheetnames}
+    return _FAL_HOJA_MAESTRA in names_norm
+
+def parsear_hoja_marca_fal(sheet_name, ws):
     """
-    Parser para la hoja maestra de FAL.
-    col 0=codigo, col 3=descripcion, col 4=precio
+    Parser para hojas por marca de FAL.
+    col 1 = código corto (el que está en la BD)
+    col 2 = descripción
+    col 4 = precio
     """
     rows = list(ws.iter_rows(values_only=True))
-    if len(rows) < 2: return []
+    if not rows: return []
+
     items = []
-    for row in rows[1:]:
+    for row in rows:
         if not row or all(c is None or str(c).strip() == '' for c in row):
             continue
+
         def get(idx): return row[idx] if idx < len(row) else None
-        codigo = limpiar_codigo(get(0))
-        if not codigo: continue
-        descripcion = str(get(3) or '').strip()
+
+        # col 1 = código corto
+        codigo_raw = get(1)
+        if codigo_raw is None: continue
+
+        # Limpiar: convertir float como 6801.0 → '6801'
+        s = str(codigo_raw).strip()
+        if re.match(r'^\d+\.0$', s): s = s[:-2]
+        codigo = s.upper().strip()
+        if not codigo or codigo.startswith('*') or codigo in ('CÓDIGO', 'CODIGO', 'COD.'): continue
+        # Ignorar si tiene solo letras (títulos de sección)
+        if not any(c.isdigit() for c in codigo): continue
+
         precio = limpiar_precio(get(4))
         if not precio or precio <= 0: continue
+
+        descripcion = str(get(2) or '').strip()
+
         items.append({'codigo': codigo, 'precio': precio,
                       'descripcion': descripcion, 'hoja': sheet_name})
     return items
@@ -685,21 +717,29 @@ def parsear_archivo(file_path):
     finally:
         if tmp_dir: shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    hojas = seleccionar_hojas(wb.sheetnames)
+    # Detectar si es archivo FAL a nivel de workbook (tiene hoja maestra)
+    es_fal = _es_archivo_fal(wb.sheetnames)
+
+    if es_fal:
+        # FAL: procesar hojas por marca (no la hoja maestra, que tiene códigos largos)
+        hojas = [n for n in wb.sheetnames
+                 if norm(n.strip()) not in (_FAL_HOJA_MAESTRA, 'encabezado', 'hoja1', 'hoja2', 'hoja3')]
+    else:
+        hojas = seleccionar_hojas(wb.sheetnames)
+
     todos = []
     es_dm = False
 
     for sh in hojas:
         ws = wb[sh]
         try:
-            # Detectar si es archivo DM antes de parsear
-            if _es_archivo_dm(ws):
+            if es_fal:
+                ws2 = wb[sh]
+                todos.extend(parsear_hoja_marca_fal(sh, ws2))
+            elif _es_archivo_dm(ws):
                 es_dm = True
                 ws2 = wb[sh]
                 todos.extend(parsear_hoja_dm(sh, ws2))
-            elif _es_hoja_maestra_fal(ws):
-                ws2 = wb[sh]
-                todos.extend(parsear_hoja_fal(sh, ws2))
             elif _es_archivo_faros_ausili(ws):
                 ws2 = wb[sh]
                 todos.extend(parsear_hoja_faros_ausili(sh, ws2))

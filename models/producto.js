@@ -547,13 +547,6 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
 },
 
 actualizarPreciosPDF: async function (precio_lista, codigo, proveedor_id) {
-  // LOG DIAGNÓSTICO: primeros 3 llamados
-  if (!global._falLogCount) global._falLogCount = 0;
-  const _doLog = global._falLogCount < 3;
-  if (_doLog) {
-    global._falLogCount++;
-    console.log(`[FAL-DEBUG] codigo="${codigo}" proveedor_id=${proveedor_id} tipo=${typeof codigo}`);
-  }
   try {
     if (typeof codigo !== 'string') return null;
 
@@ -592,17 +585,7 @@ actualizarPreciosPDF: async function (precio_lista, codigo, proveedor_id) {
       if (!results || results.length === 0)
         [results] = await conn.query(buscarProductos, [codigo.toLowerCase(), proveedor_id]);
 
-      if (!results || results.length === 0) {
-        if (_doLog) {
-          // Ver qué hay realmente en la BD para este proveedor
-          const [muestra] = await conn.query(
-            'SELECT codigo, LENGTH(codigo) as len FROM producto_proveedor WHERE proveedor_id = ? LIMIT 5',
-            [proveedor_id]
-          );
-          console.log(`[FAL-DEBUG] NO ENCONTRADO. Muestra BD proveedor ${proveedor_id}:`, JSON.stringify(muestra));
-        }
-        return null;
-      }
+      if (!results || results.length === 0) return null;
 
       const salidas = await Promise.all(results.map(async (row) => {
         const producto_id = Number(row.producto_id);
