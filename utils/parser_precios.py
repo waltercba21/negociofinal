@@ -39,6 +39,7 @@ def limpiar_codigo(v):
     if v is None: return None
     s = str(v).strip()
     if re.match(r'^\d+\.0$', s): s = s[:-2]
+    s = s.upper()  # normalizar a mayúsculas: la BD guarda los códigos en mayúsculas
     return s if len(s) >= 1 else None
 
 def es_fila_vacia(row):
