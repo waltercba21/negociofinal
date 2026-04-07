@@ -307,6 +307,10 @@ def seleccionar_hojas(sheet_names):
     preferidas = [name for name, n in nn if n == 'page1']
     if preferidas: return preferidas  # MYL
 
+    # Hojas que empiezan con 'lista' (ej: 'Lista 166' de Faros Ausili)
+    preferidas = [name for name, n in nn if n.startswith('lista')]
+    if preferidas: return preferidas
+
     hoja1 = [name for name, n in nn if n.startswith('hoja1')]
     if hoja1 and len(sheet_names) <= 4: return hoja1  # lider
 
@@ -343,7 +347,76 @@ def convertir_xls(input_path):
         raise RuntimeError(f'No se encontró el archivo en {tmp_dir}')
     return out, tmp_dir
 
-# ─── Función pública ──────────────────────────────────────────────────────────
+# ─── Detección y parser especializado para FAROS AUSILI ──────────────────────
+# Su lista tiene:
+#   col 0 = código, col 1 = descripción
+#   col 2 = precio en PESOS (algunos productos)
+#   col 3 = precio en DÓLARES (mayoría de productos) → convertir × TIPO_CAMBIO_USD
+# La fila 6 (índice) tiene los encabezados "PESOS" y "DÓLARES" en esas columnas.
+
+TIPO_CAMBIO_USD = 1500  # Tipo de cambio dólar oficial → pesos argentinos
+
+def _es_archivo_faros_ausili(ws):
+    """True si la hoja tiene la estructura característica de Faros Ausili."""
+    rows = list(ws.iter_rows(values_only=True, max_row=10))
+    for row in rows:
+        if not row: continue
+        # Normalizar cada celda quitando acentos para comparar
+        vals_norm = set()
+        for v in row:
+            if v is not None and str(v).strip():
+                s = unicodedata.normalize('NFD', str(v).strip())
+                s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+                vals_norm.add(s.upper())
+        if 'PESOS' in vals_norm and 'DOLARES' in vals_norm:
+            return True
+    return False
+
+def parsear_hoja_faros_ausili(sheet_name, ws):
+    """
+    Parser especializado para FAROS AUSILI.
+    - col 0: código
+    - col 1: descripción
+    - col 2: precio en PESOS (directo)
+    - col 3: precio en DÓLARES (× TIPO_CAMBIO_USD para convertir a pesos)
+    Si un producto tiene precio en PESOS usa ese; si tiene en DÓLARES lo convierte.
+    """
+    rows = list(ws.iter_rows(values_only=True))
+    items = []
+
+    for row in rows:
+        if not row or all(c is None or str(c).strip() == '' for c in row):
+            continue
+
+        def get(idx):
+            return row[idx] if idx < len(row) else None
+
+        codigo = limpiar_codigo(get(0))
+        if not codigo:
+            continue
+
+        descripcion = str(get(1) or '').strip()
+
+        # Intentar precio en pesos primero (col 2)
+        precio_pesos = limpiar_precio(get(2))
+        # Intentar precio en dólares (col 3) y convertir
+        precio_usd   = limpiar_precio(get(3))
+
+        if precio_pesos and precio_pesos > 0:
+            precio_final = precio_pesos
+        elif precio_usd and precio_usd > 0:
+            precio_final = round(precio_usd * TIPO_CAMBIO_USD, 2)
+        else:
+            continue  # Sin precio válido
+
+        items.append({
+            'codigo':      codigo,
+            'precio':      precio_final,
+            'descripcion': descripcion,
+            'hoja':        sheet_name,
+        })
+
+    return items
 
 # ─── Detección y mapeo especial para archivos DM ─────────────────────────────
 # DM envía un único archivo con todos sus sub-proveedores mezclados.
@@ -507,6 +580,10 @@ def parsear_archivo(file_path):
                 # Recargar la hoja (iter_rows ya fue consumido por _es_archivo_dm)
                 ws2 = wb[sh]
                 todos.extend(parsear_hoja_dm(sh, ws2))
+            elif _es_archivo_faros_ausili(ws):
+                # Recargar la hoja (iter_rows ya fue consumido por _es_archivo_faros_ausili)
+                ws2 = wb[sh]
+                todos.extend(parsear_hoja_faros_ausili(sh, ws2))
             else:
                 todos.extend(parsear_hoja(sh, ws))
         except Exception as e:
