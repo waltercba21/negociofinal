@@ -183,7 +183,6 @@
 .admin-pill i { font-size: .85rem; }
 .admin-pill:hover { transform: translateY(-1px); }
 
-/* Azul — Panel, Productos */
 .admin-pill--blue {
   background-color: rgba(31,72,126,.18);
   border-color: rgba(31,72,126,.4);
@@ -196,7 +195,6 @@
   box-shadow: 0 4px 14px rgba(31,72,126,.3);
 }
 
-/* Violeta — Presupuesto */
 .admin-pill--violet {
   background-color: rgba(124,58,237,.15);
   border-color: rgba(124,58,237,.35);
@@ -209,7 +207,6 @@
   box-shadow: 0 4px 14px rgba(124,58,237,.3);
 }
 
-/* Amarillo — Facturas */
 .admin-pill--yellow {
   background-color: rgba(217,119,6,.15);
   border-color: rgba(217,119,6,.35);
@@ -222,7 +219,6 @@
   box-shadow: 0 4px 14px rgba(217,119,6,.3);
 }
 
-/* Gris pizarra — ARCA, Admin */
 .admin-pill--slate {
   background-color: rgba(100,116,139,.15);
   border-color: rgba(100,116,139,.3);
@@ -235,7 +231,6 @@
   box-shadow: 0 4px 14px rgba(100,116,139,.25);
 }
 
-/* Rojo — Pedidos */
 .admin-pill--red {
   background-color: rgba(217,4,41,.12);
   border-color: rgba(217,4,41,.35);
@@ -248,7 +243,6 @@
   box-shadow: 0 4px 14px rgba(217,4,41,.3);
 }
 
-/* Badge pedidos */
 .admin-pill--pedidos { padding-right: 8px; }
 
 .badge-pedidos {
@@ -376,7 +370,7 @@
   box-shadow: var(--shadow-glow-accent);
 }
 
-/* ── HAMBURGER ── */
+/* ── HAMBURGER (solo para admin en mobile, o menú secundario usuario) ── */
 .site-header__hamburger {
   display: none;
   grid-area: hamburger;
@@ -407,58 +401,283 @@
 .site-header__hamburger[aria-expanded="true"] .hamburger__bar:nth-child(2) { opacity: 0; width: 0; }
 .site-header__hamburger[aria-expanded="true"] .hamburger__bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
+
 /* ════════════════════════════════════════════════
-   RESPONSIVE
+   RESPONSIVE 1024px
    ════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .site-header { gap: var(--space-3); padding: 0 var(--space-4); }
   .nav-link span { display: none; }
   .nav-link { width: 36px; height: 36px; padding: 0; justify-content: center; }
   .user-greeting__name { display: none; }
-  /* Admin pills: solo icono en 1024 */
   .admin-pill span { display: none; }
   .admin-pill { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: var(--radius-md); }
 }
 
+
+/* ════════════════════════════════════════════════
+   RESPONSIVE MOBILE ≤ 768px
+   Nueva estrategia UX:
+   - Header compacto: logo | buscador | avatar/carrito
+   - Hamburguesa relegado a menú secundario (slide desde derecha)
+   - Bottom navigation bar: reemplaza la nav principal
+   - Padding-bottom en body para no tapar contenido con el bottom nav
+   ════════════════════════════════════════════════ */
+
 @media (max-width: 768px) {
+
+  /* === 1. HEADER COMPACTO === */
+  /* Grid simplificado: logo + buscador + acciones. Sin hamburguesa visible por defecto. */
   .site-header {
     grid-template-columns: auto 1fr auto auto;
     grid-template-areas: "logo search actions hamburger";
-    padding: 0 var(--space-4);
+    padding: 0 var(--space-3);
+    gap: var(--space-2);
+    height: 56px;
   }
+
+  /* Actualizar variable de altura para que main padding-top sea correcto */
+  :root { --header-height: 56px; }
+
+  .site-header__logo img { height: 30px; }
+
+  /* === 2. BUSCADOR — full width en mobile, bien visible === */
+  /* Es el elemento más importante: ocupa todo el espacio disponible */
+  .site-header__search {
+    max-width: none;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .search-wrapper__input {
+    height: 36px;
+    font-size: var(--text-xs);
+  }
+
+  /* === 3. ACCIONES — solo avatar y carrito, sin logout texto === */
+  .site-header__actions {
+    gap: var(--space-1);
+  }
+
+  .user-greeting {
+    padding: var(--space-1);
+    border-radius: var(--radius-full);
+  }
+  /* Ocultar nombre en mobile: solo avatar */
+  .user-greeting__name { display: none; }
+  .user-greeting__avatar { width: 28px; height: 28px; font-size: var(--text-xs); }
+
+  /* Ocultar logout en header mobile (queda en el menú deslizante) */
+  .action-btn--logout { display: none; }
+
+  /* Botones auth en mobile: solo íconos compactos */
+  .auth-buttons { gap: var(--space-1); }
+  .btn-auth span { display: none; }
+  .btn-auth {
+    width: 34px; height: 34px;
+    padding: 0;
+    justify-content: center;
+    border-radius: var(--radius-md);
+  }
+  .btn-auth--login { border-radius: var(--radius-full); }
+
+  /* === 4. HAMBURGUESA — solo visible en ADMIN, o como botón de menú secundario === */
+  /* En usuario común queda oculto; la navegación pasa al bottom nav */
   .site-header__hamburger { display: flex; }
+
+  /* === 5. NAV PRINCIPAL — oculta en mobile normal (reemplazada por bottom nav) === */
+  /* En admin sigue siendo el menú desplegable. En usuario común se oculta
+     porque los links de nav (Inicio, Productos, Ofertas, WhatsApp, Ubicación)
+     están duplicados en el bottom nav. */
   .site-header__nav {
     display: none;
     position: fixed;
-    top: var(--header-height);
-    left: 0; right: 0;
+    top: 56px;
+    right: 0;
+    left: auto;
+    width: 280px;
+    height: calc(100dvh - 56px);
     background-color: var(--color-bg-raised);
-    border-bottom: 1px solid var(--color-border);
+    border-left: 1px solid var(--color-border);
     flex-direction: column;
     align-items: stretch;
     padding: var(--space-4);
     gap: var(--space-2);
-    box-shadow: var(--shadow-lg);
-    animation: slideDown var(--duration-base) var(--ease-out);
+    box-shadow: -8px 0 32px rgba(0,0,0,.6);
+    overflow-y: auto;
+    /* Slide desde la derecha */
+    transform: translateX(100%);
+    transition: transform var(--duration-base) var(--ease-out);
+    /* Sobreescribir el animation anterior que era slideDown */
+    animation: none;
   }
-  @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-8px); }
-    to   { opacity: 1; transform: translateY(0); }
+
+  .site-header__nav.is-open {
+    display: flex;
+    transform: translateX(0);
   }
-  .site-header__nav.is-open { display: flex; }
-  /* Nav links mobile */
-  .nav-link { width: 100%; height: auto; padding: var(--space-3) var(--space-4); justify-content: flex-start; font-size: var(--text-sm); }
+
+  /* Nav links en el menú deslizante: full width con texto e ícono */
+  .nav-link {
+    width: 100%;
+    height: auto;
+    padding: var(--space-3) var(--space-4);
+    justify-content: flex-start;
+    font-size: var(--text-sm);
+    border-radius: var(--radius-md);
+  }
   .nav-link span { display: inline; }
   .nav-link i { width: 20px; text-align: center; }
-  /* Admin pills mobile */
-  .admin-pill { width: 100%; height: auto; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); justify-content: flex-start; font-size: var(--text-sm); }
+
+  /* Admin pills en menú deslizante */
+  .admin-pill {
+    width: 100%;
+    height: auto;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    justify-content: flex-start;
+    font-size: var(--text-sm);
+  }
   .admin-pill span { display: inline; }
+
+  /* Auth links mobile: mostrar en el panel deslizante */
   .nav-auth-mobile { display: flex; }
   .auth-buttons { display: none; }
-  .user-greeting__name { display: flex; }
-}
 
+  /* Overlay oscuro detrás del menú deslizante */
+  .site-header__nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: calc(var(--z-header) - 1);
+    backdrop-filter: blur(2px);
+  }
+  .site-header__nav-overlay.is-open { display: block; }
+
+  /* === 6. BOTTOM NAVIGATION BAR === */
+  /* Reemplaza al hamburguesa como navegación principal.
+     Solo visible en usuarios comunes (no admin).
+     Cubre: Inicio, Productos, Ofertas, WhatsApp, Ubicación */
+  .m-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background-color: var(--color-bg-raised);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -4px 20px rgba(0,0,0,.5);
+    z-index: var(--z-header);
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .m-bottom-nav__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    height: 100%;
+    color: var(--color-text-muted);
+    font-size: .6rem;
+    font-weight: var(--weight-medium);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .m-bottom-nav__item i {
+    font-size: 1.1rem;
+    transition: transform var(--transition-fast);
+  }
+
+  .m-bottom-nav__item:hover,
+  .m-bottom-nav__item:focus-visible {
+    color: var(--color-text-primary);
+    outline: none;
+  }
+
+  .m-bottom-nav__item--active {
+    color: var(--color-brand-light);
+  }
+  .m-bottom-nav__item--active i {
+    transform: translateY(-1px);
+  }
+
+  .m-bottom-nav__item--ofertas {
+    color: var(--color-accent);
+  }
+  .m-bottom-nav__item--ofertas:hover {
+    color: var(--color-accent-light);
+  }
+
+  .m-bottom-nav__item--whatsapp:hover {
+    color: #25d366;
+  }
+
+  /* Badge carrito en bottom nav (si se mueve el carrito acá) */
+  .m-bottom-nav__badge {
+    position: absolute;
+    top: 6px;
+    min-width: 16px; height: 16px;
+    padding: 0 3px;
+    background-color: var(--color-accent);
+    color: #fff;
+    font-size: .55rem;
+    font-weight: var(--weight-bold);
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .m-bottom-nav__item-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  /* === 7. COMPENSAR ESPACIO del bottom nav en body/main === */
+  /* Evitar que el bottom nav tape el último producto o el footer */
+  body { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+
+  /* Admin: NO mostrar bottom nav */
+  .is-admin ~ .m-bottom-nav,
+  body[data-is-admin-user="true"] .m-bottom-nav {
+    display: none;
+  }
+
+  /* Admin: mantener el hamburguesa como menú principal */
+  .site-header.is-admin {
+    grid-template-columns: auto 1fr auto auto;
+    grid-template-areas: "logo . actions hamburger";
+  }
+
+} /* fin @media 768px */
+
+
+/* ════════════════════════════════════════════════
+   RESPONSIVE MOBILE ≤ 480px (ajustes extra pequeños)
+   ════════════════════════════════════════════════ */
 @media (max-width: 480px) {
-  .site-header { gap: var(--space-2); padding: 0 var(--space-3); }
-  .site-header__logo img { height: 32px; }
+
+  .site-header { padding: 0 var(--space-2); gap: var(--space-2); }
+  .site-header__logo img { height: 26px; }
+
+  /* Bottom nav labels: a 480px en adelante se pueden mostrar más cortos */
+  .m-bottom-nav__item { font-size: .55rem; }
+  .m-bottom-nav__item i { font-size: 1rem; }
+
 }

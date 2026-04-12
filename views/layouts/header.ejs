@@ -177,6 +177,11 @@
   </button>
 
 </header>
-
+<%# ─── BOTTOM NAV (mobile) ─────────────────── %>
+<% if (!isAdminUser) { %>
+<nav class="m-bottom-nav" aria-label="Navegación móvil principal" role="navigation">
+  ... (ver bottom-nav-snippet.ejs completo)
+</nav>
+<% } %>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/layout/header.js" defer></script>

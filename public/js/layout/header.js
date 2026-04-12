@@ -4,7 +4,7 @@
  *
  * Responsabilidades:
  *   1. Buscador: input/clear
- *   2. Hamburger: toggle menú mobile
+ *   2. Hamburger: toggle menú mobile (panel deslizante + overlay)
  *   3. Scroll: clase .scrolled en header
  *   4. Socket.io: registro de usuario, notificaciones
  *   5. Badge de pedidos (admin)
@@ -41,39 +41,73 @@
   }
 
   /* ════════════════════════════════════════════
-     2. HAMBURGER — menú mobile
+     2. HAMBURGER — panel deslizante lateral + overlay
+     
+     CAMBIOS respecto a la versión anterior:
+     - El nav ahora es un drawer lateral (desde la derecha) — no un dropdown
+     - Se agregó soporte para el overlay (#navOverlay)
+     - El "cerrar al click fuera" ahora usa el overlay, no document.click
+       (evita falsos cierres al interactuar con el panel)
+     - Se mantiene el cierre con Escape
   ════════════════════════════════════════════ */
   function initHamburger() {
-    const btn = document.getElementById('hamburgerBtn');
-    const nav = document.getElementById('mainNav');
+    const btn     = document.getElementById('hamburgerBtn');
+    const nav     = document.getElementById('mainNav');
+    const overlay = document.getElementById('navOverlay');
     if (!btn || !nav) return;
 
-    const toggle = () => {
-      const isOpen = nav.classList.toggle('is-open');
-      btn.setAttribute('aria-expanded', String(isOpen));
-      btn.setAttribute('aria-label', isOpen ? 'Cerrar menú' : 'Abrir menú de navegación');
-      document.body.style.overflow = isOpen ? 'hidden' : '';
+    /* — Abrir el panel — */
+    const openNav = () => {
+      nav.classList.add('is-open');
+      btn.setAttribute('aria-expanded', 'true');
+      btn.setAttribute('aria-label', 'Cerrar menú');
+      document.body.style.overflow = 'hidden';
+      if (overlay) {
+        overlay.classList.add('is-open');
+        overlay.removeAttribute('aria-hidden');
+      }
     };
 
+    /* — Cerrar el panel — */
+    const closeNav = () => {
+      nav.classList.remove('is-open');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-label', 'Abrir menú de navegación');
+      document.body.style.overflow = '';
+      if (overlay) {
+        overlay.classList.remove('is-open');
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+    };
+
+    /* — Toggle — */
+    const toggle = () => {
+      nav.classList.contains('is-open') ? closeNav() : openNav();
+    };
+
+    /* — Eventos — */
     btn.addEventListener('click', toggle);
 
-    // Cerrar al hacer click fuera
-    document.addEventListener('click', (e) => {
-      if (!btn.contains(e.target) && !nav.contains(e.target)) {
-        nav.classList.remove('is-open');
-        btn.setAttribute('aria-expanded', 'false');
-        btn.setAttribute('aria-label', 'Abrir menú de navegación');
-        document.body.style.overflow = '';
-      }
-    }, { passive: true });
+    /* Cerrar al tocar el overlay (área fuera del panel) */
+    if (overlay) {
+      overlay.addEventListener('click', closeNav, { passive: true });
+    }
 
-    // Cerrar con Escape
+    /* Cerrar con Escape */
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && nav.classList.contains('is-open')) {
-        toggle();
+        closeNav();
         btn.focus();
       }
     });
+
+    /*
+     * NOTA: Se eliminó el document.addEventListener('click', ...) anterior
+     * que cerraba el menú al hacer click fuera.
+     * Razón: con el drawer lateral, ese listener se disparaba al hacer
+     * scroll o tocar dentro del panel, cerrándolo inesperadamente.
+     * El overlay cubre exactamente el área fuera del panel y es más preciso.
+     */
   }
 
   /* ════════════════════════════════════════════
@@ -135,7 +169,6 @@
 
       socket.on('actualizarNotificacion', () => {
         actualizarBadgePedidos();
-        // Compatibilidad con vistas admin que exponen esta función global
         if (typeof actualizarPedidosPendientes === 'function') {
           actualizarPedidosPendientes();
         }
@@ -163,12 +196,7 @@
       const n = Number(data.cantidad || 0);
 
       badge.textContent = n;
-
-      if (n > 0) {
-        badge.removeAttribute('hidden');
-      } else {
-        badge.setAttribute('hidden', '');
-      }
+      n > 0 ? badge.removeAttribute('hidden') : badge.setAttribute('hidden', '');
     } catch (_) {
       // silencioso — no romper la UI por un error de red
     }

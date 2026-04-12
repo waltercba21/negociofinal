@@ -80,6 +80,88 @@
 .ofertas-dot { width: 6px; height: 6px; border-radius: 9999px; background-color: #2a4060; transition: background-color 250ms, width 250ms; cursor: pointer; border: none; padding: 0; }
 .ofertas-dot.active { background-color: #d90429; width: 16px; }
 
-@media (max-width: 1024px) { .cat-card { flex: 0 0 190px; } .cat-card__img-wrap { height: 140px; } }
-@media (max-width: 768px) { .index-main { padding: 1rem 1rem 4rem; gap: 2rem; } .products-grid-layout { grid-template-columns: 1fr; gap: 1rem; } .products-panel { height: 420px; } .cat-card { flex: 0 0 52vw; } .cat-card__img-wrap { height: 130px; } }
-@media (max-width: 480px) { .cat-section__title { font-size: 1.5rem; } .cat-card { flex: 0 0 70vw; } .product-list { grid-template-columns: 1fr 1fr; } .product-list--ofertas { grid-template-columns: 1fr; } }
+/* ════════════════════════════════════════════════
+   RESPONSIVE 1024px
+   ════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .cat-card { flex: 0 0 190px; }
+  .cat-card__img-wrap { height: 140px; }
+}
+
+/* ════════════════════════════════════════════════
+   RESPONSIVE MOBILE ≤ 768px
+   ════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* === LAYOUT GENERAL === */
+  /* Padding-bottom generoso para que el bottom nav no tape nada */
+  .index-main {
+    padding: 1rem 0.75rem 5.5rem;
+    gap: 1.5rem;
+  }
+
+  /* === SECCIONES DE CATEGORÍAS === */
+  /* Tipografía más compacta en mobile */
+  .cat-section__title { font-size: 1.4rem; }
+
+  /* Carrusel de categorías: tarjetas más pequeñas, scroll táctil */
+  .cat-card { flex: 0 0 48vw; }
+  .cat-card__img-wrap { height: 120px; }
+  .cat-card__label { min-height: 40px; padding: .5rem .75rem; }
+  .cat-card__label span { font-size: .8rem; }
+
+  /* === GRID DE PANELES (nuevos / ofertas) === */
+  /* Apilados en columna en mobile */
+  .products-grid-layout {
+    grid-template-columns: 1fr;
+    gap: .75rem;
+  }
+
+  /* Panels más bajos en mobile para que no dominen la pantalla */
+  .products-panel {
+    height: 380px;
+    padding: 1rem;
+    border-radius: 14px;
+  }
+
+  /* === PRODUCT LIST DENTRO DEL PANEL === */
+  /* 2 columnas pequeñas con imágenes proporcionadas */
+  .product-list { gap: .5rem; }
+
+  .product-card__img-wrap { height: 90px; }
+  .product-card__body { padding: .4rem .5rem .5rem; }
+  .product-card__nombre { font-size: .7rem; }
+  .product-card__precio { font-size: 1rem; }
+
+  /* Ofertas: una sola columna en mobile para dar más protagonismo a cada item */
+  .product-list--ofertas { grid-template-columns: 1fr 1fr; }
+
+}
+
+/* ════════════════════════════════════════════════
+   RESPONSIVE MOBILE ≤ 480px (phones pequeños)
+   ════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+
+  /* Tipografía secciones aún más compacta */
+  .cat-section__title { font-size: 1.25rem; }
+
+  /* Carrusel: tarjeta casi full width para que el usuario vea 1.3 cards */
+  .cat-card { flex: 0 0 65vw; }
+  .cat-card__img-wrap { height: 110px; }
+
+  /* Grid de producto: siempre 2 columnas, imágenes más chicas */
+  .product-list { grid-template-columns: 1fr 1fr; gap: .4rem; }
+  .product-card__img-wrap { height: 80px; }
+
+  /* Ofertas: 1 columna en phones muy chicos */
+  .product-list--ofertas { grid-template-columns: 1fr; }
+
+  /* Panels: altura reducida */
+  .products-panel { height: 340px; }
+
+  /* Header de panel: más compacto */
+  .products-panel__head { gap: .5rem; padding-bottom: .5rem; }
+  .products-panel__title { font-size: 1.1rem; }
+
+}
