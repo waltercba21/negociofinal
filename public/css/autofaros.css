@@ -366,7 +366,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 .btn-auth--register:hover { background-color: var(--color-accent-light); box-shadow: var(--shadow-glow-accent); }
 
 /* Hamburger */
-.site-header__hamburger { display: none; grid-area: hamburger; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 38px; height: 38px; border-radius: var(--radius-md); padding: var(--space-2); color: var(--color-text-secondary); transition: background-color var(--transition-fast); }
+.site-header__hamburger { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 38px; height: 38px; border-radius: var(--radius-md); padding: var(--space-2); color: var(--color-text-secondary); transition: background-color var(--transition-fast); }
 .site-header__hamburger:hover { background-color: var(--color-bg-hover); }
 .hamburger__bar { display: block; width: 20px; height: 2px; background-color: currentColor; border-radius: var(--radius-full); transition: transform var(--transition-base), opacity var(--transition-fast), width var(--transition-base); transform-origin: center; }
 .site-header__hamburger[aria-expanded="true"] .hamburger__bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
@@ -858,15 +858,15 @@ body.arca-page .swal2-textarea {
 }
 
 @media (max-width: 768px) {
-  /* En mobile el nav se despliega en columna, restauramos texto */
-  .site-header.is-admin .site-header__nav.is-open .admin-pill {
+  /* Admin pills dentro del drawer lateral */
+  .site-header.is-admin .site-header__nav .admin-pill {
     width: 100%;
     height: auto;
     padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-md);
     justify-content: flex-start;
   }
-  .site-header.is-admin .site-header__nav.is-open .admin-pill span:not(.badge-pedidos) {
+  .site-header.is-admin .site-header__nav .admin-pill span:not(.badge-pedidos) {
     display: inline;
   }
   .badge-pedidos {
