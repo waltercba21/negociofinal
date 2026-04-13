@@ -381,32 +381,172 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   .user-greeting__name { display: none; }
 }
 
+/* =====================================================
+   MOBILE <= 768px — nueva estrategia UX
+   - Header: 3 columnas (logo | search | actions)
+   - Hamburguesa dentro de actions, sin grid-area propio
+   - Nav: drawer lateral desde la derecha con
+     visibility+opacity+transform (sin display:none/flex)
+   - Bottom nav: reemplaza hamburguesa como nav principal
+   ===================================================== */
 @media (max-width: 768px) {
-  .site-header { grid-template-columns: auto 1fr auto auto; grid-template-areas: "logo search actions hamburger"; }
-  .site-header__hamburger { display: flex; }
-  .site-header__nav {
-    display: none; position: fixed;
-    top: var(--header-height); left: 0; right: 0;
-    background-color: var(--color-bg-raised);
-    border-bottom: 1px solid var(--color-border);
-    flex-direction: column; align-items: stretch;
-    padding: var(--space-4); gap: var(--space-2);
-    box-shadow: var(--shadow-lg);
-    animation: slideDown var(--duration-base) var(--ease-out);
+
+  /* 1. HEADER: 3 columnas, hamburguesa vive dentro de actions */
+  :root { --header-height: 56px; }
+  .site-header {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "logo search actions";
+    padding: 0 var(--space-3);
+    gap: var(--space-2);
+    height: 56px;
   }
-  @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
-  .site-header__nav.is-open { display: flex; }
-  .nav-link { width: 100%; height: auto; padding: var(--space-3) var(--space-4); justify-content: flex-start; font-size: var(--text-sm); }
+  .site-header__logo img { height: 30px; }
+
+  /* Hamburguesa: sale de su grid-area, entra al flujo de actions */
+  .site-header__hamburger {
+    display: flex;
+    grid-area: unset;
+    width: 36px;
+    height: 36px;
+  }
+
+  /* 2. BUSCADOR: full width */
+  .site-header__search { max-width: none; width: 100%; min-width: 0; }
+  .search-wrapper__input { height: 36px; font-size: var(--text-xs); }
+
+  /* 3. ACCIONES: compacto */
+  .site-header__actions { gap: var(--space-1); }
+  .user-greeting { padding: var(--space-1); }
+  .user-greeting__name { display: none; }
+  .user-greeting__avatar { width: 28px; height: 28px; font-size: var(--text-xs); }
+  .action-btn--logout { display: none; }
+  .auth-buttons { gap: var(--space-1); }
+  .btn-auth span { display: none; }
+  .btn-auth { width: 34px; height: 34px; padding: 0; justify-content: center; border-radius: var(--radius-md); }
+  .btn-auth--login { border-radius: var(--radius-full); }
+
+  /* 4. DRAWER LATERAL: visibility+opacity+transform
+     FIX: display:none impedia la animacion y causaba fondo transparente
+     por herencia del backdrop-filter del header.
+     isolation:isolate rompe ese stacking context. */
+  .site-header__nav {
+    grid-area: unset;
+    display: flex;
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: auto;
+    width: 280px;
+    height: 100dvh;
+    background-color: #111c30;
+    background-color: var(--color-bg-raised);
+    isolation: isolate;
+    z-index: calc(var(--z-header) + 10);
+    border-left: 1px solid var(--color-border);
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-6) var(--space-4) var(--space-4);
+    gap: var(--space-2);
+    box-shadow: -8px 0 32px rgba(0,0,0,.7);
+    overflow-y: auto;
+    /* Estado cerrado */
+    visibility: hidden;
+    opacity: 0;
+    transform: translateX(100%);
+    transition:
+      transform var(--duration-base) var(--ease-out),
+      opacity   var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+    animation: none;
+  }
+  .site-header__nav.is-open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(0);
+    transition:
+      transform  var(--duration-base) var(--ease-out),
+      opacity    var(--duration-base) var(--ease-out),
+      visibility 0s linear 0s;
+  }
+
+  /* Links dentro del drawer */
+  .nav-link { width: 100%; height: auto; padding: var(--space-3) var(--space-4); justify-content: flex-start; font-size: var(--text-sm); border-radius: var(--radius-md); }
   .nav-link span { display: inline; }
   .nav-link i { width: 20px; text-align: center; }
   .nav-auth-mobile { display: flex; }
   .auth-buttons { display: none; }
-  .user-greeting__name { display: flex; }
+
+  /* 5. OVERLAY */
+  .site-header__nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: calc(var(--z-header) + 5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .site-header__nav-overlay.is-open { display: block; }
+
+  /* 6. BOTTOM NAV */
+  .m-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background-color: #111c30;
+    background-color: var(--color-bg-raised);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -4px 20px rgba(0,0,0,.5);
+    z-index: var(--z-header);
+    justify-content: space-around;
+    align-items: center;
+  }
+  .m-bottom-nav__item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; flex: 1; height: 100%;
+    color: var(--color-text-muted);
+    font-size: .6rem; font-weight: var(--weight-medium);
+    letter-spacing: .04em; text-transform: uppercase;
+    text-decoration: none; background: none; border: none; cursor: pointer; padding: 0;
+    transition: color var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m-bottom-nav__item i { font-size: 1.1rem; transition: transform var(--transition-fast); }
+  .m-bottom-nav__item:hover, .m-bottom-nav__item:focus-visible { color: var(--color-text-primary); outline: none; }
+  .m-bottom-nav__item--active { color: var(--color-brand-light); }
+  .m-bottom-nav__item--active i { transform: translateY(-1px); }
+  .m-bottom-nav__item--ofertas { color: var(--color-accent); }
+  .m-bottom-nav__item--ofertas:hover { color: var(--color-accent-light); }
+  .m-bottom-nav__item--whatsapp:hover { color: #25d366; }
+  .m-bottom-nav__item-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .m-bottom-nav__badge {
+    position: absolute; top: 6px;
+    min-width: 16px; height: 16px; padding: 0 3px;
+    background-color: var(--color-accent); color: #fff;
+    font-size: .55rem; font-weight: var(--weight-bold);
+    border-radius: var(--radius-full);
+    display: inline-flex; align-items: center; justify-content: center; line-height: 1;
+  }
+
+  /* 7. PADDING BODY para el bottom nav */
+  body { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+
+  /* Admin: sin bottom nav, grid simplificado */
+  .is-admin ~ .m-bottom-nav,
+  body[data-is-admin-user="true"] .m-bottom-nav { display: none; }
+  .site-header.is-admin {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "logo . actions";
+  }
 }
 
 @media (max-width: 480px) {
-  .site-header { gap: var(--space-2); padding: 0 var(--space-3); }
-  .site-header__logo img { height: 32px; }
+  .site-header { padding: 0 var(--space-2); gap: var(--space-2); }
+  .site-header__logo img { height: 26px; }
+  .m-bottom-nav__item { font-size: .55rem; }
+  .m-bottom-nav__item i { font-size: 1rem; }
 }
 
 
