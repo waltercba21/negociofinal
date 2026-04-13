@@ -60,8 +60,8 @@
     const openNav = () => {
       nav.classList.add('is-open');
       btn.setAttribute('aria-expanded', 'true');
-      btn.setAttribute('aria-label', 'Cerrar menú');
-      document.body.style.overflow = 'hidden';
+      btn.setAttribute('aria-label', 'Cerrar menu');
+      // NO bloquear body overflow: en iOS Safari hace la pagina ininteractuable
       if (overlay) {
         overlay.classList.add('is-open');
         overlay.removeAttribute('aria-hidden');
@@ -72,8 +72,7 @@
     const closeNav = () => {
       nav.classList.remove('is-open');
       btn.setAttribute('aria-expanded', 'false');
-      btn.setAttribute('aria-label', 'Abrir menú de navegación');
-      document.body.style.overflow = '';
+      btn.setAttribute('aria-label', 'Abrir menu de navegacion');
       if (overlay) {
         overlay.classList.remove('is-open');
         overlay.setAttribute('aria-hidden', 'true');
