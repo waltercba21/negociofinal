@@ -47,6 +47,65 @@
     <div class="site-header__spacer"></div>
   <% } %>
 
+  <!-- ── ACCIONES USUARIO + HAMBURGER (mobile) ──────────────── -->
+  <%#
+    ESTRUCTURA MOBILE:
+    El hamburger vive DENTRO de .site-header__actions como ultimo hijo.
+    Asi el grid de 3 columnas (logo | search | actions) lo contiene
+    correctamente sin necesitar un grid-area propio.
+  %>
+  <div class="site-header__actions">
+    <% if (isLogged) { %>
+      <a href="/users/profile" class="user-greeting" aria-label="Mi perfil">
+        <span class="user-greeting__avatar" aria-hidden="true">
+          <%= userLogged.nombre.charAt(0).toUpperCase() %>
+        </span>
+        <span class="user-greeting__name">Hola, <strong><%= userLogged.nombre.split(' ')[0] %></strong></span>
+      </a>
+
+      <% if (!isAdminUser) { %>
+        <a href="/carrito" class="action-btn action-btn--carrito" aria-label="Ver carrito">
+          <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+          <span id="carrito-notificacion"
+                class="action-btn__badge"
+                aria-live="polite"
+                <% if (!cantidadCarrito || cantidadCarrito <= 0) { %>hidden<% } %>>
+            <%= cantidadCarrito %>
+          </span>
+        </a>
+      <% } %>
+
+      <a href="/users/logout" class="action-btn action-btn--logout" aria-label="Cerrar sesión">
+        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+        <span class="action-btn__label">Salir</span>
+      </a>
+
+    <% } else { %>
+      <div class="auth-buttons">
+        <a href="/users/login" class="btn-auth btn-auth--login">
+          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+          <span>Iniciar Sesión</span>
+        </a>
+        <a href="/users/register" class="btn-auth btn-auth--register">
+          <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+          <span>Registrarme</span>
+        </a>
+      </div>
+    <% } %>
+
+    <!-- Hamburger como ultimo hijo de actions (mobile) -->
+    <button class="site-header__hamburger"
+            id="hamburgerBtn"
+            type="button"
+            aria-label="Abrir menú de navegación"
+            aria-expanded="false"
+            aria-controls="mainNav">
+      <span class="hamburger__bar"></span>
+      <span class="hamburger__bar"></span>
+      <span class="hamburger__bar"></span>
+    </button>
+  </div>
+
   <!-- ── NAVEGACIÓN ───────────────────── -->
   <nav class="site-header__nav" id="mainNav" aria-label="Navegación principal">
 
@@ -123,64 +182,58 @@
 
   </nav>
 
-  <!-- ── ACCIONES USUARIO ──────────────── -->
-  <div class="site-header__actions">
-    <% if (isLogged) { %>
-      <a href="/users/profile" class="user-greeting" aria-label="Mi perfil">
-        <span class="user-greeting__avatar" aria-hidden="true">
-          <%= userLogged.nombre.charAt(0).toUpperCase() %>
-        </span>
-        <span class="user-greeting__name">Hola, <strong><%= userLogged.nombre.split(' ')[0] %></strong></span>
-      </a>
+</header>
 
-      <% if (!isAdminUser) { %>
-        <a href="/carrito" class="action-btn action-btn--carrito" aria-label="Ver carrito">
-          <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-          <span id="carrito-notificacion"
-                class="action-btn__badge"
-                aria-live="polite"
-                <% if (!cantidadCarrito || cantidadCarrito <= 0) { %>hidden<% } %>>
-            <%= cantidadCarrito %>
-          </span>
-        </a>
-      <% } %>
+<!-- Overlay oscuro para el drawer (fuera del header) -->
+<div class="site-header__nav-overlay" id="navOverlay" aria-hidden="true"></div>
 
-      <a href="/users/logout" class="action-btn action-btn--logout" aria-label="Cerrar sesión">
-        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-        <span class="action-btn__label">Salir</span>
-      </a>
+<!-- Bottom Navigation Bar (solo usuarios comunes, mobile) -->
+<% if (!isAdminUser) { %>
+<%
+  const currentPath = (typeof req !== 'undefined' && req.path) ? req.path : '';
+  const isHome     = currentPath === '/';
+  const isProducts = currentPath.startsWith('/productos') && !currentPath.includes('/ofertas');
+  const isOfertas  = currentPath.includes('/ofertas');
+%>
+<nav class="m-bottom-nav" aria-label="Navegación móvil principal" role="navigation">
 
-    <% } else { %>
-      <div class="auth-buttons">
-        <a href="/users/login" class="btn-auth btn-auth--login">
-          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
-          <span>Iniciar Sesión</span>
-        </a>
-        <a href="/users/register" class="btn-auth btn-auth--register">
-          <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
-          <span>Registrarme</span>
-        </a>
-      </div>
-    <% } %>
-  </div>
+  <a href="/"
+     class="m-bottom-nav__item <%= isHome ? 'm-bottom-nav__item--active' : '' %>"
+     aria-label="Inicio">
+    <i class="fa-solid fa-house" aria-hidden="true"></i>
+    <span>Inicio</span>
+  </a>
 
-  <!-- ── HAMBURGER (mobile) ──────────────── -->
-  <button class="site-header__hamburger"
-          id="hamburgerBtn"
-          type="button"
-          aria-label="Abrir menú de navegación"
-          aria-expanded="false"
-          aria-controls="mainNav">
-    <span class="hamburger__bar"></span>
-    <span class="hamburger__bar"></span>
-    <span class="hamburger__bar"></span>
+  <a href="/productos"
+     class="m-bottom-nav__item <%= isProducts ? 'm-bottom-nav__item--active' : '' %>"
+     aria-label="Productos">
+    <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+    <span>Productos</span>
+  </a>
+
+  <a href="/productos/ofertas"
+     class="m-bottom-nav__item m-bottom-nav__item--ofertas <%= isOfertas ? 'm-bottom-nav__item--active' : '' %>"
+     aria-label="Ofertas">
+    <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span>Ofertas</span>
+  </a>
+
+  <a href="https://wa.me/+543513820440/"
+     class="m-bottom-nav__item m-bottom-nav__item--whatsapp"
+     target="_blank" rel="noopener noreferrer"
+     aria-label="WhatsApp">
+    <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+    <span>WhatsApp</span>
+  </a>
+
+  <button type="button"
+          class="m-bottom-nav__item"
+          onclick="abrirMapa()"
+          aria-label="Ver ubicación">
+    <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+    <span>Ubicación</span>
   </button>
 
-</header>
-<%# ─── BOTTOM NAV (mobile) ─────────────────── %>
-<% if (!isAdminUser) { %>
-<nav class="m-bottom-nav" aria-label="Navegación móvil principal" role="navigation">
-  ... (ver bottom-nav-snippet.ejs completo)
 </nav>
 <% } %>
 <script src="/socket.io/socket.io.js"></script>
