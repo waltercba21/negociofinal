@@ -7,32 +7,55 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnConfirmar = document.getElementById('btnConfirmarProductosFactura');
   const btnGuardarFactura = document.getElementById('btnGuardarFactura');
 
+  // ── Selector de proveedor del modal principal ──
+  const selectProveedor = document.getElementById('facturaProveedor');
+
   let productosSeleccionados = [];
 
-  // ── FIX: variables para debounce y cancelación de requests anteriores ──
   let debounceTimer = null;
-  let controladorActual = null; // AbortController del último fetch activo
+  let controladorActual = null;
 
-  // Cerrar resultados con Escape o clic fuera
+  // ── ESTILOS: el dropdown flota sobre el contenido sin desplazar nada ──
+  Object.assign(resultados.style, {
+    position:  'absolute',
+    top:       '100%',
+    left:      '0',
+    right:     '0',
+    zIndex:    '9999',
+    maxHeight: '260px',
+    overflowY: 'auto',
+    display:   'none',
+    margin:    '0',
+    padding:   '0',
+    border:    '1px solid rgba(0,0,0,.15)',
+    borderRadius: '0 0 6px 6px',
+    backgroundColor: '#fff',
+    boxShadow: '0 6px 20px rgba(0,0,0,.18)'
+  });
+
+  // El contenedor del buscador debe ser position:relative para que el absolute funcione
+  const wrapBuscador = buscador.parentElement;
+  if (getComputedStyle(wrapBuscador).position === 'static') {
+    wrapBuscador.style.position = 'relative';
+  }
+
+  // ── Cerrar resultados con Escape o clic fuera ──
   buscador.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      resultados.innerHTML = '';
-      resultados.style.display = 'none';
-    }
+    if (e.key === 'Escape') cerrarResultados();
   });
   document.addEventListener('click', (e) => {
-    const dentroDelBuscador = buscador.contains(e.target);
-    const dentroDeResultados = resultados.contains(e.target);
-    if (!dentroDelBuscador && !dentroDeResultados) {
-      resultados.innerHTML = '';
-      resultados.style.display = 'none';
-    }
+    if (!wrapBuscador.contains(e.target)) cerrarResultados();
   });
+
+  function cerrarResultados() {
+    resultados.innerHTML = '';
+    resultados.style.display = 'none';
+  }
 
   btnAbrirModal.addEventListener('click', () => {
     modal.show();
     buscador.value = '';
-    resultados.innerHTML = '';
+    cerrarResultados();
     tabla.innerHTML = '';
     renderizarTabla();
   });
@@ -40,90 +63,145 @@ document.addEventListener('DOMContentLoaded', () => {
   buscador.addEventListener('input', () => {
     const query = buscador.value.trim();
 
-    // Limpiar resultados visualmente de inmediato
-    resultados.innerHTML = '';
-    resultados.style.display = 'none';
+    cerrarResultados();
 
-    // Cancelar el request anterior si todavía está en vuelo
     if (controladorActual) {
       controladorActual.abort();
       controladorActual = null;
     }
-
-    // Limpiar debounce anterior
     clearTimeout(debounceTimer);
 
     if (query.length < 2) return;
 
-    // Esperar 350ms después del último keystroke antes de buscar
     debounceTimer = setTimeout(async () => {
-      // Crear un nuevo AbortController para este request
       controladorActual = new AbortController();
       const signal = controladorActual.signal;
-
-      // Capturar la query en el momento del fetch para validar al recibir
       const queryAlMomentoDelFetch = buscador.value.trim();
 
+      // Leer el proveedor seleccionado en el modal de factura
+      const proveedorId = selectProveedor ? selectProveedor.value : '';
+
+      let url = `/productos/api/buscar?q=${encodeURIComponent(query)}`;
+      if (proveedorId) url += `&proveedor_id=${encodeURIComponent(proveedorId)}`;
+
       try {
-        const res = await fetch(`/productos/api/buscar?q=${encodeURIComponent(query)}`, { signal });
+        const res = await fetch(url, { signal });
         const productos = await res.json();
 
-        // ── FIX: verificar que la query no cambió mientras esperábamos la respuesta ──
         if (buscador.value.trim() !== queryAlMomentoDelFetch) return;
 
-        // ── FIX: limpiar antes de renderizar (por si acaso) ──
         resultados.innerHTML = '';
 
         if (!productos.length) {
-          resultados.style.display = 'none';
+          // Mostrar mensaje cuando no hay resultados
+          const sinResultados = document.createElement('div');
+          sinResultados.style.cssText = 'padding:10px 14px;color:#666;font-size:13px;';
+          sinResultados.textContent = proveedorId
+            ? 'No se encontraron productos de este proveedor.'
+            : 'No se encontraron productos.';
+          resultados.appendChild(sinResultados);
+          resultados.style.display = 'block';
           return;
         }
 
         productos.forEach(producto => {
-          const resultado = document.createElement('div');
-          resultado.classList.add('resultado-busqueda');
+          const item = document.createElement('div');
+          item.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 8px;
+          `;
+          item.addEventListener('mouseenter', () => item.style.backgroundColor = '#f5f7fa');
+          item.addEventListener('mouseleave', () => item.style.backgroundColor = '');
 
-          const contenedor = document.createElement('div');
-          contenedor.classList.add('resultado-contenedor');
+          // Parte izquierda: imagen + nombre
+          const izquierda = document.createElement('div');
+          izquierda.style.cssText = 'display:flex;align-items:center;gap:8px;flex:1;min-width:0;';
 
           if (producto.imagenes && producto.imagenes.length > 0) {
-            const imagen = document.createElement('img');
-            imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
-            imagen.classList.add('miniatura');
-            contenedor.appendChild(imagen);
+            const img = document.createElement('img');
+            img.src = '/uploads/productos/' + producto.imagenes[0].imagen;
+            img.style.cssText = 'width:36px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0;';
+            izquierda.appendChild(img);
           }
 
-          const nombreProducto = document.createElement('span');
-          nombreProducto.textContent = producto.nombre;
-          contenedor.appendChild(nombreProducto);
+          const nombre = document.createElement('span');
+          nombre.textContent = producto.nombre;
+          nombre.style.cssText = 'font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+          izquierda.appendChild(nombre);
 
-          resultado.appendChild(contenedor);
-          resultado.addEventListener('click', () => agregarProducto(producto));
-          resultados.appendChild(resultado);
+          // Botón "+" (agrega sin cerrar el dropdown)
+          const btnAgregar = document.createElement('button');
+          btnAgregar.type = 'button';
+          btnAgregar.textContent = '+';
+          btnAgregar.style.cssText = `
+            flex-shrink: 0;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: #198754;
+            color: #fff;
+            font-size: 18px;
+            line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: background .15s;
+          `;
+          btnAgregar.addEventListener('mouseenter', () => btnAgregar.style.background = '#146c43');
+          btnAgregar.addEventListener('mouseleave', () => btnAgregar.style.background = '#198754');
+          btnAgregar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            agregarProducto(producto, btnAgregar);
+          });
+
+          item.appendChild(izquierda);
+          item.appendChild(btnAgregar);
+
+          // Click en la fila también agrega (pero cierra)
+          item.addEventListener('click', () => {
+            agregarProducto(producto, btnAgregar);
+          });
+
+          resultados.appendChild(item);
         });
 
         resultados.style.display = 'block';
 
       } catch (err) {
-        // Ignorar errores de abort (son intencionales)
         if (err.name === 'AbortError') return;
         console.error('❌ Error al buscar productos:', err);
       }
     }, 350);
   });
 
-  function agregarProducto(prod) {
-    if (productosSeleccionados.some(p => p.id === prod.id)) return;
+  function agregarProducto(prod, btnRef) {
+    const yaExiste = productosSeleccionados.some(p => p.id === prod.id);
 
-    productosSeleccionados.push({
-      id: prod.id,
-      nombre: prod.nombre,
-      proveedores: prod.proveedores || [],
-      imagenes: prod.imagenes || [],
-      cantidad: 1
-    });
+    if (!yaExiste) {
+      productosSeleccionados.push({
+        id: prod.id,
+        nombre: prod.nombre,
+        proveedores: prod.proveedores || [],
+        imagenes: prod.imagenes || [],
+        cantidad: 1
+      });
+      renderizarTabla();
+    }
 
-    renderizarTabla();
+    // Feedback visual en el botón: check verde momentáneo
+    if (btnRef) {
+      const textoOriginal = btnRef.textContent;
+      btnRef.textContent = '✓';
+      btnRef.style.background = yaExiste ? '#6c757d' : '#146c43';
+      setTimeout(() => {
+        btnRef.textContent = textoOriginal;
+        btnRef.style.background = yaExiste ? '#6c757d' : '#198754';
+      }, 800);
+    }
   }
 
   function renderizarTabla() {
@@ -140,9 +218,9 @@ document.addEventListener('DOMContentLoaded', () => {
       fila.innerHTML = `
         <td>${codigoProveedor}</td>
         <td>${prod.nombre}</td>
-        <td><img src="${imagenSrc}" class="miniatura-tabla"></td>
+        <td><img src="${imagenSrc}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;"></td>
         <td>
-          <input type="number" class="form-control form-control-sm cantidad-input" value="${prod.cantidad}" min="1">
+          <input type="number" class="form-control form-control-sm cantidad-input" value="${prod.cantidad}" min="1" style="width:80px;margin:auto;">
         </td>
         <td>
           <button class="btn btn-sm btn-danger boton-eliminar-factura">
@@ -171,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!productosSeleccionados.length) {
       return Swal.fire('Atención', 'Debes agregar al menos un producto.', 'warning');
     }
-
+    cerrarResultados();
     modal.hide();
     Swal.fire('Confirmado', 'Productos listos para guardar con la factura.', 'success');
   });
@@ -188,7 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const condicion = document.getElementById('facturaCondicion').value;
     const fecha_pago = document.getElementById('facturaFechaPago').value;
 
-    // Validaciones (sin comprobante)
     if (!proveedor || !fecha || !numero || !bruto || !iva || !total || !fecha_pago || !condicion || !administrador) {
       let mensaje = 'Los siguientes campos son obligatorios:\n';
       if (!proveedor) mensaje += '- Proveedor\n';
@@ -200,11 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!fecha_pago) mensaje += '- Fecha de vencimiento\n';
       if (!condicion) mensaje += '- Condición de pago\n';
       if (!administrador) mensaje += '- Administrador\n';
-
       return Swal.fire('Faltan datos', mensaje, 'warning');
     }
 
-    // Advertencia si no hay productos
     if (!productosSeleccionados.length) {
       const confirmacion = await Swal.fire({
         title: 'Factura sin productos',
@@ -214,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmButtonText: 'Sí, guardar de todos modos',
         cancelButtonText: 'Cancelar'
       });
-
       if (!confirmacion.isConfirmed) return;
     }
 
@@ -229,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('fecha_pago', fecha_pago);
       formData.append('condicion', condicion);
       formData.append('administrador', administrador);
-   
+
       const res = await fetch('/administracion/api/facturas', {
         method: 'POST',
         body: formData
@@ -242,11 +316,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const respuesta = await res.json();
-      if (!respuesta.insertId) {
-        throw new Error('No se pudo crear la factura');
-      }
+      if (!respuesta.insertId) throw new Error('No se pudo crear la factura');
 
-      // Enviar los productos asociados
       const productosRes = await fetch('/administracion/api/factura/productos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -266,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       Swal.fire('Éxito', 'Factura y productos guardados correctamente.', 'success');
 
-      // Limpiar formulario
       document.getElementById('facturaProveedor').value = '';
       document.getElementById('facturaFecha').value = '';
       document.getElementById('facturaNumero').value = '';
@@ -291,12 +361,9 @@ document.addEventListener('DOMContentLoaded', () => {
   inputFechaFactura.addEventListener('change', () => {
     const valorFecha = inputFechaFactura.value;
     if (!valorFecha) return;
-
     const fecha = new Date(valorFecha);
     fecha.setDate(fecha.getDate() + 30);
-
-    const fecha30dias = fecha.toISOString().split('T')[0];
-    inputFechaPago.value = fecha30dias;
+    inputFechaPago.value = fecha.toISOString().split('T')[0];
   });
 
   // Verificación de duplicados
@@ -305,20 +372,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const proveedor = document.getElementById('facturaProveedor').value;
     const fecha = document.getElementById('facturaFecha').value;
     const numero = document.getElementById('facturaNumero').value;
-
     if (!proveedor || !fecha || !numero) return;
-
     try {
       const res = await fetch(`/administracion/verificar-duplicado?tipo=${tipo}&proveedor=${proveedor}&fecha=${fecha}&numero=${numero}`);
       const data = await res.json();
-
       if (data.existe) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Documento duplicado',
-          text: `Ya existe una ${tipo} con esos datos.`,
-          confirmButtonText: 'Revisar',
-        });
+        Swal.fire({ icon: 'warning', title: 'Documento duplicado', text: `Ya existe una ${tipo} con esos datos.`, confirmButtonText: 'Revisar' });
       }
     } catch (err) {
       console.error('Error al verificar duplicado:', err);
@@ -334,13 +393,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const total = parseFloat(inputTotal.value);
     const iva = parseFloat(inputIVA.value);
     if (isNaN(total) || isNaN(iva)) return;
-    const bruto = total / (1 + (iva / 100));
-    inputBruto.value = bruto.toFixed(2);
+    inputBruto.value = (total / (1 + (iva / 100))).toFixed(2);
   }
 
   inputTotal.addEventListener('input', recalcularBrutoDesdeTotal);
   inputIVA.addEventListener('change', recalcularBrutoDesdeTotal);
 
-  // (btnGuardarCambios se usa en otro modal; se mantiene)
   const btnGuardarCambios = document.getElementById('btnGuardarCambiosDocumento');
 });
