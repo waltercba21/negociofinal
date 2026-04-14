@@ -6,46 +6,43 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabla = document.getElementById('tablaProductosFactura').querySelector('tbody');
   const btnConfirmar = document.getElementById('btnConfirmarProductosFactura');
   const btnGuardarFactura = document.getElementById('btnGuardarFactura');
-
-  // ── Selector de proveedor del modal principal ──
   const selectProveedor = document.getElementById('facturaProveedor');
 
   let productosSeleccionados = [];
-
   let debounceTimer = null;
   let controladorActual = null;
 
-  // ── ESTILOS: el dropdown flota sobre el contenido sin desplazar nada ──
+  // ── SVG basura inline (no depende de que Bootstrap Icons haya cargado) ──
+  const ICONO_BASURA = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+  </svg>`;
+
+  // ── Dropdown flotante con estética dark ──
   Object.assign(resultados.style, {
-    position:  'absolute',
-    top:       '100%',
-    left:      '0',
-    right:     '0',
-    zIndex:    '9999',
-    maxHeight: '260px',
-    overflowY: 'auto',
-    display:   'none',
-    margin:    '0',
-    padding:   '0',
-    border:    '1px solid rgba(0,0,0,.15)',
-    borderRadius: '0 0 6px 6px',
-    backgroundColor: '#fff',
-    boxShadow: '0 6px 20px rgba(0,0,0,.18)'
+    position:        'absolute',
+    top:             '100%',
+    left:            '0',
+    right:           '0',
+    zIndex:          '9999',
+    maxHeight:       '320px',
+    overflowY:       'auto',
+    display:         'none',
+    margin:          '2px 0 0 0',
+    padding:         '4px 0',
+    border:          '1px solid rgba(31,72,126,0.35)',
+    borderRadius:    '10px',
+    backgroundColor: '#0e1929',
+    boxShadow:       '0 8px 28px rgba(0,0,0,0.55)'
   });
 
-  // El contenedor del buscador debe ser position:relative para que el absolute funcione
   const wrapBuscador = buscador.parentElement;
   if (getComputedStyle(wrapBuscador).position === 'static') {
     wrapBuscador.style.position = 'relative';
   }
 
-  // ── Cerrar resultados con Escape o clic fuera ──
-  buscador.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') cerrarResultados();
-  });
-  document.addEventListener('click', (e) => {
-    if (!wrapBuscador.contains(e.target)) cerrarResultados();
-  });
+  buscador.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarResultados(); });
+  document.addEventListener('click', (e) => { if (!wrapBuscador.contains(e.target)) cerrarResultados(); });
 
   function cerrarResultados() {
     resultados.innerHTML = '';
@@ -56,29 +53,20 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.show();
     buscador.value = '';
     cerrarResultados();
-    tabla.innerHTML = '';
     renderizarTabla();
   });
 
   buscador.addEventListener('input', () => {
     const query = buscador.value.trim();
-
     cerrarResultados();
-
-    if (controladorActual) {
-      controladorActual.abort();
-      controladorActual = null;
-    }
+    if (controladorActual) { controladorActual.abort(); controladorActual = null; }
     clearTimeout(debounceTimer);
-
     if (query.length < 2) return;
 
     debounceTimer = setTimeout(async () => {
       controladorActual = new AbortController();
       const signal = controladorActual.signal;
-      const queryAlMomentoDelFetch = buscador.value.trim();
-
-      // Leer el proveedor seleccionado en el modal de factura
+      const querySnapshot = buscador.value.trim();
       const proveedorId = selectProveedor ? selectProveedor.value : '';
 
       let url = `/productos/api/buscar?q=${encodeURIComponent(query)}`;
@@ -87,88 +75,21 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const res = await fetch(url, { signal });
         const productos = await res.json();
-
-        if (buscador.value.trim() !== queryAlMomentoDelFetch) return;
-
+        if (buscador.value.trim() !== querySnapshot) return;
         resultados.innerHTML = '';
 
-        if (!productos.length) {
-          // Mostrar mensaje cuando no hay resultados
-          const sinResultados = document.createElement('div');
-          sinResultados.style.cssText = 'padding:10px 14px;color:#666;font-size:13px;';
-          sinResultados.textContent = proveedorId
+        if (!Array.isArray(productos) || !productos.length) {
+          const vacio = document.createElement('div');
+          vacio.style.cssText = 'padding:12px 14px;color:rgba(240,244,255,0.35);font-size:13px;font-family:DM Sans,sans-serif;';
+          vacio.textContent = proveedorId
             ? 'No se encontraron productos de este proveedor.'
             : 'No se encontraron productos.';
-          resultados.appendChild(sinResultados);
+          resultados.appendChild(vacio);
           resultados.style.display = 'block';
           return;
         }
 
-        productos.forEach(producto => {
-          const item = document.createElement('div');
-          item.style.cssText = `
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 7px 10px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            gap: 8px;
-          `;
-          item.addEventListener('mouseenter', () => item.style.backgroundColor = '#f5f7fa');
-          item.addEventListener('mouseleave', () => item.style.backgroundColor = '');
-
-          // Parte izquierda: imagen + nombre
-          const izquierda = document.createElement('div');
-          izquierda.style.cssText = 'display:flex;align-items:center;gap:8px;flex:1;min-width:0;';
-
-          if (producto.imagenes && producto.imagenes.length > 0) {
-            const img = document.createElement('img');
-            img.src = '/uploads/productos/' + producto.imagenes[0].imagen;
-            img.style.cssText = 'width:36px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0;';
-            izquierda.appendChild(img);
-          }
-
-          const nombre = document.createElement('span');
-          nombre.textContent = producto.nombre;
-          nombre.style.cssText = 'font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-          izquierda.appendChild(nombre);
-
-          // Botón "+" (agrega sin cerrar el dropdown)
-          const btnAgregar = document.createElement('button');
-          btnAgregar.type = 'button';
-          btnAgregar.textContent = '+';
-          btnAgregar.style.cssText = `
-            flex-shrink: 0;
-            width: 28px; height: 28px;
-            border-radius: 50%;
-            border: none;
-            background: #198754;
-            color: #fff;
-            font-size: 18px;
-            line-height: 1;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            transition: background .15s;
-          `;
-          btnAgregar.addEventListener('mouseenter', () => btnAgregar.style.background = '#146c43');
-          btnAgregar.addEventListener('mouseleave', () => btnAgregar.style.background = '#198754');
-          btnAgregar.addEventListener('click', (e) => {
-            e.stopPropagation();
-            agregarProducto(producto, btnAgregar);
-          });
-
-          item.appendChild(izquierda);
-          item.appendChild(btnAgregar);
-
-          // Click en la fila también agrega (pero cierra)
-          item.addEventListener('click', () => {
-            agregarProducto(producto, btnAgregar);
-          });
-
-          resultados.appendChild(item);
-        });
-
+        productos.forEach(producto => resultados.appendChild(crearItemDropdown(producto)));
         resultados.style.display = 'block';
 
       } catch (err) {
@@ -178,29 +99,131 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 350);
   });
 
-  function agregarProducto(prod, btnRef) {
-    const yaExiste = productosSeleccionados.some(p => p.id === prod.id);
+  // ── Fila del dropdown: imagen + nombre + input cantidad + botón + ──
+  function crearItemDropdown(producto) {
+    const item = document.createElement('div');
+    item.style.cssText = `
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(31,72,126,0.12);
+      transition: background 0.12s;
+    `;
+    // Hover oscuro — nunca blanco
+    item.addEventListener('mouseenter', () => { item.style.background = 'rgba(31,72,126,0.18)'; });
+    item.addEventListener('mouseleave', () => { item.style.background = 'transparent'; });
 
-    if (!yaExiste) {
-      productosSeleccionados.push({
-        id: prod.id,
-        nombre: prod.nombre,
-        proveedores: prod.proveedores || [],
-        imagenes: prod.imagenes || [],
-        cantidad: 1
-      });
-      renderizarTabla();
+    // Imagen miniatura
+    if (producto.imagenes && producto.imagenes.length > 0) {
+      const img = document.createElement('img');
+      img.src = '/uploads/productos/' + producto.imagenes[0].imagen;
+      img.style.cssText = 'width:38px;height:38px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid rgba(31,72,126,0.2);';
+      item.appendChild(img);
     }
 
-    // Feedback visual en el botón: check verde momentáneo
+    // Nombre del producto
+    const nombre = document.createElement('span');
+    nombre.textContent = producto.nombre;
+    nombre.style.cssText = `
+      flex:1; font-size:13px; font-family:'DM Sans',sans-serif;
+      color:rgba(240,244,255,0.88);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    `;
+    item.appendChild(nombre);
+
+    // Input de cantidad (editable antes de agregar)
+    const inputCantidad = document.createElement('input');
+    inputCantidad.type = 'number';
+    inputCantidad.value = '1';
+    inputCantidad.min = '1';
+    inputCantidad.style.cssText = `
+      width:56px; flex-shrink:0;
+      background:rgba(255,255,255,0.07);
+      border:1.5px solid rgba(31,72,126,0.3);
+      border-radius:7px;
+      color:#f0f4ff; font-size:13px; font-family:'DM Sans',sans-serif;
+      text-align:center; padding:4px 6px; outline:none;
+    `;
+    inputCantidad.addEventListener('focus', () => {
+      inputCantidad.style.borderColor = '#1F487E';
+      inputCantidad.style.boxShadow = '0 0 0 3px rgba(31,72,126,0.2)';
+    });
+    inputCantidad.addEventListener('blur', () => {
+      inputCantidad.style.borderColor = 'rgba(31,72,126,0.3)';
+      inputCantidad.style.boxShadow = 'none';
+    });
+    // Evitar que el click en el input propague y cierre el dropdown
+    inputCantidad.addEventListener('click', (e) => e.stopPropagation());
+    item.appendChild(inputCantidad);
+
+    // Botón agregar (+)
+    const btnAdd = document.createElement('button');
+    btnAdd.type = 'button';
+    btnAdd.title = 'Agregar a la lista';
+    btnAdd.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+    </svg>`;
+    btnAdd.style.cssText = `
+      flex-shrink:0; width:30px; height:30px;
+      border-radius:8px;
+      border:1.5px solid rgba(74,222,128,0.35);
+      background:rgba(74,222,128,0.1);
+      color:#4ade80;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; transition:background .12s, border-color .12s;
+    `;
+    btnAdd.addEventListener('mouseenter', () => {
+      if (!btnAdd.dataset.added) {
+        btnAdd.style.background = 'rgba(74,222,128,0.22)';
+        btnAdd.style.borderColor = 'rgba(74,222,128,0.6)';
+      }
+    });
+    btnAdd.addEventListener('mouseleave', () => {
+      if (!btnAdd.dataset.added) {
+        btnAdd.style.background = 'rgba(74,222,128,0.1)';
+        btnAdd.style.borderColor = 'rgba(74,222,128,0.35)';
+      }
+    });
+    btnAdd.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cantidad = Math.max(1, parseInt(inputCantidad.value) || 1);
+      agregarProducto(producto, cantidad, btnAdd, inputCantidad);
+    });
+    item.appendChild(btnAdd);
+
+    return item;
+  }
+
+  function agregarProducto(prod, cantidad, btnRef, inputRef) {
+    const existente = productosSeleccionados.find(p => p.id === prod.id);
+    if (existente) {
+      existente.cantidad += cantidad;
+    } else {
+      productosSeleccionados.push({
+        id:          prod.id,
+        nombre:      prod.nombre,
+        proveedores: prod.proveedores || [],
+        imagenes:    prod.imagenes   || [],
+        cantidad:    cantidad
+      });
+    }
+    renderizarTabla();
+
+    // Feedback: checkmark momentáneo y resetear cantidad a 1
     if (btnRef) {
-      const textoOriginal = btnRef.textContent;
-      btnRef.textContent = '✓';
-      btnRef.style.background = yaExiste ? '#6c757d' : '#146c43';
+      const svgOrig = btnRef.innerHTML;
+      btnRef.dataset.added = '1';
+      btnRef.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+      </svg>`;
+      btnRef.style.background = 'rgba(74,222,128,0.25)';
+      btnRef.style.borderColor = 'rgba(74,222,128,0.7)';
       setTimeout(() => {
-        btnRef.textContent = textoOriginal;
-        btnRef.style.background = yaExiste ? '#6c757d' : '#198754';
-      }, 800);
+        btnRef.innerHTML = svgOrig;
+        btnRef.dataset.added = '';
+        btnRef.style.background = 'rgba(74,222,128,0.1)';
+        btnRef.style.borderColor = 'rgba(74,222,128,0.35)';
+        if (inputRef) inputRef.value = '1'; // resetear cantidad
+      }, 900);
     }
   }
 
@@ -210,29 +233,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const fila = document.createElement('tr');
       fila.dataset.id = prod.id;
 
-      const codigoProveedor = (prod.proveedores && prod.proveedores[0]?.codigo) || '-';
-      const imagenSrc = (prod.imagenes?.[0]?.imagen)
+      const codigoProveedor = prod.proveedores?.[0]?.codigo || '-';
+      const imagenSrc = prod.imagenes?.[0]?.imagen
         ? '/uploads/productos/' + prod.imagenes[0].imagen
         : '/uploads/noimg.jpg';
 
       fila.innerHTML = `
         <td>${codigoProveedor}</td>
-        <td>${prod.nombre}</td>
-        <td><img src="${imagenSrc}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;"></td>
+        <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${prod.nombre}</td>
+        <td><img src="${imagenSrc}" class="miniatura-tabla"></td>
         <td>
-          <input type="number" class="form-control form-control-sm cantidad-input" value="${prod.cantidad}" min="1" style="width:80px;margin:auto;">
+          <input type="number" class="form-control form-control-sm cantidad-input"
+                 value="${prod.cantidad}" min="1"
+                 style="width:72px;margin:auto;text-align:center;">
         </td>
         <td>
-          <button class="btn btn-sm btn-danger boton-eliminar-factura">
-            <i class="bi bi-trash"></i>
+          <button class="btn btn-sm btn-danger boton-eliminar-factura" title="Eliminar"
+                  style="color:#ff4d6d !important; display:inline-flex; align-items:center; justify-content:center;">
+            ${ICONO_BASURA}
           </button>
         </td>
       `;
 
       fila.querySelector('.cantidad-input').addEventListener('input', (e) => {
-        const cantidad = parseInt(e.target.value);
         const item = productosSeleccionados.find(p => p.id === prod.id);
-        item.cantidad = isNaN(cantidad) ? 1 : cantidad;
+        const val = parseInt(e.target.value);
+        item.cantidad = (!val || val < 1) ? 1 : val;
       });
 
       fila.querySelector('.boton-eliminar-factura').addEventListener('click', () => {
@@ -244,7 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Confirmar productos (guardar temporalmente)
   btnConfirmar.addEventListener('click', () => {
     if (!productosSeleccionados.length) {
       return Swal.fire('Atención', 'Debes agregar al menos un producto.', 'warning');
@@ -254,150 +279,107 @@ document.addEventListener('DOMContentLoaded', () => {
     Swal.fire('Confirmado', 'Productos listos para guardar con la factura.', 'success');
   });
 
-  // Guardar factura SIN comprobante de pago
   btnGuardarFactura.addEventListener('click', async () => {
     const administrador = document.getElementById('facturaAdministrador').value;
-    const proveedor = document.getElementById('facturaProveedor').value;
-    const fecha = document.getElementById('facturaFecha').value;
-    const numero = document.getElementById('facturaNumero').value;
-    const bruto = document.getElementById('facturaImporteBruto').value;
-    const iva = document.getElementById('facturaIVA').value;
-    const total = document.getElementById('facturaImporteTotal').value;
-    const condicion = document.getElementById('facturaCondicion').value;
-    const fecha_pago = document.getElementById('facturaFechaPago').value;
+    const proveedor     = document.getElementById('facturaProveedor').value;
+    const fecha         = document.getElementById('facturaFecha').value;
+    const numero        = document.getElementById('facturaNumero').value;
+    const bruto         = document.getElementById('facturaImporteBruto').value;
+    const iva           = document.getElementById('facturaIVA').value;
+    const total         = document.getElementById('facturaImporteTotal').value;
+    const condicion     = document.getElementById('facturaCondicion').value;
+    const fecha_pago    = document.getElementById('facturaFechaPago').value;
 
     if (!proveedor || !fecha || !numero || !bruto || !iva || !total || !fecha_pago || !condicion || !administrador) {
-      let mensaje = 'Los siguientes campos son obligatorios:\n';
-      if (!proveedor) mensaje += '- Proveedor\n';
-      if (!fecha) mensaje += '- Fecha de factura\n';
-      if (!numero) mensaje += '- Número de factura\n';
-      if (!bruto) mensaje += '- Importe bruto\n';
-      if (!iva) mensaje += '- IVA\n';
-      if (!total) mensaje += '- Importe total\n';
-      if (!fecha_pago) mensaje += '- Fecha de vencimiento\n';
-      if (!condicion) mensaje += '- Condición de pago\n';
-      if (!administrador) mensaje += '- Administrador\n';
-      return Swal.fire('Faltan datos', mensaje, 'warning');
+      let msg = 'Los siguientes campos son obligatorios:\n';
+      if (!proveedor)    msg += '- Proveedor\n';
+      if (!fecha)        msg += '- Fecha de factura\n';
+      if (!numero)       msg += '- Número de factura\n';
+      if (!bruto)        msg += '- Importe bruto\n';
+      if (!iva)          msg += '- IVA\n';
+      if (!total)        msg += '- Importe total\n';
+      if (!fecha_pago)   msg += '- Fecha de vencimiento\n';
+      if (!condicion)    msg += '- Condición de pago\n';
+      if (!administrador)msg += '- Administrador\n';
+      return Swal.fire('Faltan datos', msg, 'warning');
     }
 
     if (!productosSeleccionados.length) {
-      const confirmacion = await Swal.fire({
+      const c = await Swal.fire({
         title: 'Factura sin productos',
-        text: 'Estás por guardar una factura sin productos asociados. ¿Deseás continuar?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, guardar de todos modos',
-        cancelButtonText: 'Cancelar'
+        text: 'Estás por guardar una factura sin productos. ¿Deseás continuar?',
+        icon: 'warning', showCancelButton: true,
+        confirmButtonText: 'Sí, guardar de todos modos', cancelButtonText: 'Cancelar'
       });
-      if (!confirmacion.isConfirmed) return;
+      if (!c.isConfirmed) return;
     }
 
     try {
-      const formData = new FormData();
-      formData.append('id_proveedor', proveedor);
-      formData.append('fecha', fecha);
-      formData.append('numero_factura', numero);
-      formData.append('importe_bruto', bruto);
-      formData.append('iva', iva);
-      formData.append('importe_factura', total);
-      formData.append('fecha_pago', fecha_pago);
-      formData.append('condicion', condicion);
-      formData.append('administrador', administrador);
+      const fd = new FormData();
+      fd.append('id_proveedor',   proveedor);
+      fd.append('fecha',          fecha);
+      fd.append('numero_factura', numero);
+      fd.append('importe_bruto',  bruto);
+      fd.append('iva',            iva);
+      fd.append('importe_factura',total);
+      fd.append('fecha_pago',     fecha_pago);
+      fd.append('condicion',      condicion);
+      fd.append('administrador',  administrador);
 
-      const res = await fetch('/administracion/api/facturas', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('❌ Error al guardar factura:', errorText);
-        throw new Error('Error al guardar la factura (backend)');
-      }
-
+      const res = await fetch('/administracion/api/facturas', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error(await res.text());
       const respuesta = await res.json();
       if (!respuesta.insertId) throw new Error('No se pudo crear la factura');
 
-      const productosRes = await fetch('/administracion/api/factura/productos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          facturaId: respuesta.insertId,
-          items: productosSeleccionados
-        })
+      const pRes = await fetch('/administracion/api/factura/productos', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ facturaId: respuesta.insertId, items: productosSeleccionados })
       });
-
-      if (!productosRes.ok) {
-        const errorText = await productosRes.text();
-        console.error('❌ Error al guardar productos:', errorText);
-        throw new Error('Error al guardar productos');
-      }
-
-      await productosRes.json();
+      if (!pRes.ok) throw new Error(await pRes.text());
+      await pRes.json();
 
       Swal.fire('Éxito', 'Factura y productos guardados correctamente.', 'success');
-
-      document.getElementById('facturaProveedor').value = '';
-      document.getElementById('facturaFecha').value = '';
-      document.getElementById('facturaNumero').value = '';
-      document.getElementById('facturaImporteBruto').value = '';
-      document.getElementById('facturaIVA').value = '';
-      document.getElementById('facturaImporteTotal').value = '';
-      document.getElementById('facturaFechaPago').value = '';
+      ['facturaProveedor','facturaFecha','facturaNumero','facturaImporteBruto',
+       'facturaIVA','facturaImporteTotal','facturaFechaPago'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
       document.getElementById('facturaCondicion').value = 'pendiente';
       productosSeleccionados = [];
       tabla.innerHTML = '';
 
     } catch (err) {
-      console.error('❌ Error general al guardar factura o productos:', err);
+      console.error('❌ Error:', err);
       Swal.fire('Error', err.message || 'Ocurrió un error al guardar.', 'error');
     }
   });
 
-  // Fecha de pago = fecha + 30 días
-  const inputFechaFactura = document.getElementById('facturaFecha');
-  const inputFechaPago = document.getElementById('facturaFechaPago');
-
-  inputFechaFactura.addEventListener('change', () => {
-    const valorFecha = inputFechaFactura.value;
-    if (!valorFecha) return;
-    const fecha = new Date(valorFecha);
-    fecha.setDate(fecha.getDate() + 30);
-    inputFechaPago.value = fecha.toISOString().split('T')[0];
+  document.getElementById('facturaFecha').addEventListener('change', function () {
+    if (!this.value) return;
+    const d = new Date(this.value);
+    d.setDate(d.getDate() + 30);
+    document.getElementById('facturaFechaPago').value = d.toISOString().split('T')[0];
   });
 
-  // Verificación de duplicados
   document.getElementById('facturaNumero').addEventListener('blur', async () => {
-    const tipo = 'factura';
     const proveedor = document.getElementById('facturaProveedor').value;
-    const fecha = document.getElementById('facturaFecha').value;
-    const numero = document.getElementById('facturaNumero').value;
+    const fecha     = document.getElementById('facturaFecha').value;
+    const numero    = document.getElementById('facturaNumero').value;
     if (!proveedor || !fecha || !numero) return;
     try {
-      const res = await fetch(`/administracion/verificar-duplicado?tipo=${tipo}&proveedor=${proveedor}&fecha=${fecha}&numero=${numero}`);
+      const res  = await fetch(`/administracion/verificar-duplicado?tipo=factura&proveedor=${proveedor}&fecha=${fecha}&numero=${numero}`);
       const data = await res.json();
-      if (data.existe) {
-        Swal.fire({ icon: 'warning', title: 'Documento duplicado', text: `Ya existe una ${tipo} con esos datos.`, confirmButtonText: 'Revisar' });
-      }
-    } catch (err) {
-      console.error('Error al verificar duplicado:', err);
-    }
+      if (data.existe) Swal.fire({ icon:'warning', title:'Documento duplicado', text:'Ya existe una factura con esos datos.', confirmButtonText:'Revisar' });
+    } catch (err) { console.error('Error al verificar duplicado:', err); }
   });
 
-  // Recalcular Importe Bruto desde Total + IVA
-  const inputTotal = document.getElementById('facturaImporteTotal');
-  const inputIVA = document.getElementById('facturaIVA');
-  const inputBruto = document.getElementById('facturaImporteBruto');
-
-  function recalcularBrutoDesdeTotal() {
-    const total = parseFloat(inputTotal.value);
-    const iva = parseFloat(inputIVA.value);
-    if (isNaN(total) || isNaN(iva)) return;
-    inputBruto.value = (total / (1 + (iva / 100))).toFixed(2);
+  function recalcularBruto() {
+    const total = parseFloat(document.getElementById('facturaImporteTotal').value);
+    const iva   = parseFloat(document.getElementById('facturaIVA').value);
+    if (!isNaN(total) && !isNaN(iva))
+      document.getElementById('facturaImporteBruto').value = (total / (1 + iva / 100)).toFixed(2);
   }
-
-  inputTotal.addEventListener('input', recalcularBrutoDesdeTotal);
-  inputIVA.addEventListener('change', recalcularBrutoDesdeTotal);
+  document.getElementById('facturaImporteTotal').addEventListener('input',  recalcularBruto);
+  document.getElementById('facturaIVA').addEventListener('change', recalcularBruto);
 
   const btnGuardarCambios = document.getElementById('btnGuardarCambiosDocumento');
 });
