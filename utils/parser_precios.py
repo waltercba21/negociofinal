@@ -604,6 +604,79 @@ def parsear_hoja_marca_fal(sheet_name, ws):
     return items
 
 
+# ─── Detección y parser especializado para MYL ───────────────────────────────
+# MYL envía un archivo con hoja 'Page1' y estructura fija:
+#   fila 0: título 'ListaPreciosMYL'
+#   fila 1: CODART | NOMMAR | NOMRUB | NOMSUB | DESCRI | PRELIS | OFERTA | FECCAD | IVA
+#   col 0 = código de artículo (CODART)
+#   col 4 = descripción (DESCRI)
+#   col 5 = precio de lista en pesos (PRELIS)
+
+def _es_archivo_myl(ws):
+    """True si la hoja tiene la estructura característica de MYL."""
+    for i, row in enumerate(ws.iter_rows(values_only=True, max_row=3)):
+        if not row: continue
+        for cell in row:
+            if cell is not None and str(cell).strip().upper() == 'LISTAPRECIOSMYL':
+                return True
+        vals = [norm(str(c)) for c in row if c is not None and str(c).strip()]
+        if 'codart' in vals and 'prelis' in vals:
+            return True
+    return False
+
+def parsear_hoja_myl(sheet_name, ws):
+    """
+    Parser especializado para MYL.
+    col 0 = CODART (código)
+    col 4 = DESCRI (descripción)
+    col 5 = PRELIS (precio de lista pesos)
+    """
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows: return []
+
+    # Encontrar fila de encabezado con CODART/PRELIS
+    header_idx = -1
+    col_cod = col_desc = col_precio = None
+    for i, row in enumerate(rows[:5]):
+        if not row: continue
+        vals = [norm(str(c)) if c is not None else '' for c in row]
+        if 'codart' in vals and 'prelis' in vals:
+            header_idx = i
+            col_cod    = vals.index('codart')
+            col_precio = vals.index('prelis')
+            col_desc   = vals.index('descri') if 'descri' in vals else None
+            break
+
+    if header_idx < 0 or col_precio is None:
+        return []
+
+    items = []
+    for row in rows[header_idx + 1:]:
+        if not row or all(c is None or str(c).strip() == '' for c in row):
+            continue
+
+        def get(idx):
+            return row[idx] if idx is not None and idx < len(row) else None
+
+        precio = limpiar_precio(get(col_precio))
+        if not precio or precio <= 0:
+            continue
+
+        codigo = limpiar_codigo(get(col_cod))
+        if not codigo:
+            continue
+
+        descripcion = str(get(col_desc) or '').strip()
+
+        items.append({
+            'codigo':      codigo,
+            'precio':      precio,
+            'descripcion': descripcion,
+            'hoja':        sheet_name,
+        })
+    return items
+
+
 def _parsear_xls_con_xlrd(file_path):
     """
     Parsea archivos .xls directamente con xlrd (sin LibreOffice).
@@ -743,6 +816,9 @@ def parsear_archivo(file_path):
             elif _es_archivo_faros_ausili(ws):
                 ws2 = wb[sh]
                 todos.extend(parsear_hoja_faros_ausili(sh, ws2))
+            elif _es_archivo_myl(ws):
+                ws2 = wb[sh]
+                todos.extend(parsear_hoja_myl(sh, ws2))
             else:
                 todos.extend(parsear_hoja(sh, ws))
         except Exception as e:
