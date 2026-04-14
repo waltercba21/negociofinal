@@ -226,11 +226,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderizarTabla() {
     tabla.innerHTML = '';
+    // ID del proveedor actualmente seleccionado en el formulario de presupuesto
+    const provIdSeleccionado = selectProveedor ? Number(selectProveedor.value) : null;
+
     productosSeleccionados.forEach(prod => {
       const fila = document.createElement('tr');
       fila.dataset.id = prod.id;
 
-      const codigoProveedor = prod.proveedores?.[0]?.codigo || '-';
+      // Buscar el código del proveedor con el que estamos trabajando;
+      // si el producto no tiene ese proveedor, mostrar '-'
+      const provMatch = provIdSeleccionado
+        ? (prod.proveedores || []).find(p => Number(p.id) === provIdSeleccionado)
+        : null;
+      const codigoProveedor = provMatch?.codigo || prod.proveedores?.[0]?.codigo || '-';
       const imagenSrc = prod.imagenes?.[0]?.imagen
         ? '/uploads/productos/' + prod.imagenes[0].imagen
         : '/uploads/noimg.jpg';
