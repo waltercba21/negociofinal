@@ -366,23 +366,22 @@ document.addEventListener('DOMContentLoaded', function () {
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
   let timeoutId;
 
-  entradaBusqueda.addEventListener('keyup', async (e) => {
-    const busqueda = e.target.value;
-    resultadosBusqueda.innerHTML = '';
+  // ── FIX: debounce + AbortController — evita duplicados y race conditions ──
+  let _searchTimer = null;
+  let _searchController = null;
 
-    if (!busqueda.trim()) {
+  function renderResultadosMostrador(productos) {
+    resultadosBusqueda.innerHTML = '';
+    if (!productos.length) {
       resultadosBusqueda.style.display = 'none';
       return;
     }
 
-    const respuesta = await fetch('/productos/api/buscar?q=' + encodeURIComponent(busqueda));
-    const productos = await respuesta.json();
-
     productos.forEach((producto) => {
       const resultado = document.createElement('div');
       resultado.classList.add('resultado-busqueda');
-      resultado.dataset.codigo = producto.codigo;
-      resultado.dataset.nombre = producto.nombre;
+      resultado.dataset.codigo       = producto.codigo;
+      resultado.dataset.nombre       = producto.nombre;
       resultado.dataset.precio_venta = producto.precio_venta;
       resultado.dataset.stock_actual = producto.stock_actual;
 
@@ -397,6 +396,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const imagen = document.createElement('img');
         imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
         imagen.classList.add('miniatura');
+        imagen.loading = 'lazy';
+        imagen.decoding = 'async';
         contenedor.appendChild(imagen);
       }
 
@@ -427,8 +428,46 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       resultadosBusqueda.appendChild(resultado);
-      resultadosBusqueda.style.display = 'block';
     });
+
+    resultadosBusqueda.style.display = 'block';
+  }
+
+  // ── FIX: cambiar keyup → input, agregar debounce 350ms + AbortController ──
+  entradaBusqueda.addEventListener('input', (e) => {
+    const busqueda = e.target.value.trim();
+
+    // Limpiar visualmente de inmediato
+    resultadosBusqueda.innerHTML = '';
+    resultadosBusqueda.style.display = 'none';
+
+    // Cancelar request anterior si aún no respondió
+    if (_searchController) { _searchController.abort(); _searchController = null; }
+    clearTimeout(_searchTimer);
+
+    if (!busqueda) return;
+
+    // Capturar query para stale-check
+    const queryCapturada = busqueda;
+
+    _searchTimer = setTimeout(async () => {
+      _searchController = new AbortController();
+      try {
+        const respuesta = await fetch(
+          '/productos/api/buscar?q=' + encodeURIComponent(busqueda),
+          { signal: _searchController.signal }
+        );
+        const productos = await respuesta.json();
+
+        // ── FIX stale-check: descartar si la query cambió mientras viajaba ──
+        if (entradaBusqueda.value.trim() !== queryCapturada) return;
+
+        renderResultadosMostrador(productos);
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.error('[BuscadorFacturas] Error al buscar:', err);
+      }
+    }, 350);
   });
 
   resultadosBusqueda.addEventListener('mouseleave', () => {

@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let productosSeleccionados = [];
 
+  // ── FIX: variables para debounce y cancelación de requests anteriores ──
+  let debounceTimer = null;
+  let controladorActual = null; // AbortController del último fetch activo
+
   // Cerrar resultados con Escape o clic fuera
   buscador.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -33,44 +37,79 @@ document.addEventListener('DOMContentLoaded', () => {
     renderizarTabla();
   });
 
-  buscador.addEventListener('input', async () => {
+  buscador.addEventListener('input', () => {
     const query = buscador.value.trim();
+
+    // Limpiar resultados visualmente de inmediato
     resultados.innerHTML = '';
+    resultados.style.display = 'none';
+
+    // Cancelar el request anterior si todavía está en vuelo
+    if (controladorActual) {
+      controladorActual.abort();
+      controladorActual = null;
+    }
+
+    // Limpiar debounce anterior
+    clearTimeout(debounceTimer);
 
     if (query.length < 2) return;
 
-    try {
-      const res = await fetch(`/productos/api/buscar?q=${encodeURIComponent(query)}`);
-      const productos = await res.json();
+    // Esperar 350ms después del último keystroke antes de buscar
+    debounceTimer = setTimeout(async () => {
+      // Crear un nuevo AbortController para este request
+      controladorActual = new AbortController();
+      const signal = controladorActual.signal;
 
-      productos.forEach(producto => {
-        const resultado = document.createElement('div');
-        resultado.classList.add('resultado-busqueda');
+      // Capturar la query en el momento del fetch para validar al recibir
+      const queryAlMomentoDelFetch = buscador.value.trim();
 
-        const contenedor = document.createElement('div');
-        contenedor.classList.add('resultado-contenedor');
+      try {
+        const res = await fetch(`/productos/api/buscar?q=${encodeURIComponent(query)}`, { signal });
+        const productos = await res.json();
 
-        if (producto.imagenes && producto.imagenes.length > 0) {
-          const imagen = document.createElement('img');
-          imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
-          imagen.classList.add('miniatura');
-          contenedor.appendChild(imagen);
+        // ── FIX: verificar que la query no cambió mientras esperábamos la respuesta ──
+        if (buscador.value.trim() !== queryAlMomentoDelFetch) return;
+
+        // ── FIX: limpiar antes de renderizar (por si acaso) ──
+        resultados.innerHTML = '';
+
+        if (!productos.length) {
+          resultados.style.display = 'none';
+          return;
         }
 
-        const nombreProducto = document.createElement('span');
-        nombreProducto.textContent = producto.nombre;
-        contenedor.appendChild(nombreProducto);
+        productos.forEach(producto => {
+          const resultado = document.createElement('div');
+          resultado.classList.add('resultado-busqueda');
 
-        resultado.appendChild(contenedor);
+          const contenedor = document.createElement('div');
+          contenedor.classList.add('resultado-contenedor');
 
-        resultado.addEventListener('click', () => agregarProducto(producto));
+          if (producto.imagenes && producto.imagenes.length > 0) {
+            const imagen = document.createElement('img');
+            imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
+            imagen.classList.add('miniatura');
+            contenedor.appendChild(imagen);
+          }
 
-        resultados.appendChild(resultado);
+          const nombreProducto = document.createElement('span');
+          nombreProducto.textContent = producto.nombre;
+          contenedor.appendChild(nombreProducto);
+
+          resultado.appendChild(contenedor);
+          resultado.addEventListener('click', () => agregarProducto(producto));
+          resultados.appendChild(resultado);
+        });
+
         resultados.style.display = 'block';
-      });
-    } catch (err) {
-      console.error('❌ Error al buscar productos:', err);
-    }
+
+      } catch (err) {
+        // Ignorar errores de abort (son intencionales)
+        if (err.name === 'AbortError') return;
+        console.error('❌ Error al buscar productos:', err);
+      }
+    }, 350);
   });
 
   function agregarProducto(prod) {
@@ -180,7 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // Enviamos con FormData igualmente (back soporta multipart)
       const formData = new FormData();
       formData.append('id_proveedor', proveedor);
       formData.append('fecha', fecha);
@@ -237,7 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('facturaImporteTotal').value = '';
       document.getElementById('facturaFechaPago').value = '';
       document.getElementById('facturaCondicion').value = 'pendiente';
-      // ❌ Eliminado: document.getElementById('facturaComprobante').value = '';
       productosSeleccionados = [];
       tabla.innerHTML = '';
 

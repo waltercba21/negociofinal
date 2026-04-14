@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let productosSeleccionados = [];
 
+  // ── FIX: variables para debounce y cancelación de requests anteriores ──
+  let debounceTimer = null;
+  let controladorActual = null; // AbortController del último fetch activo
+
   // Ocultar resultados al salir
   buscador.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -32,42 +36,79 @@ document.addEventListener('DOMContentLoaded', () => {
     renderizarTabla();
   });
 
-  buscador.addEventListener('input', async () => {
+  buscador.addEventListener('input', () => {
     const query = buscador.value.trim();
+
+    // Limpiar resultados visualmente de inmediato
     resultados.innerHTML = '';
+    resultados.style.display = 'none';
+
+    // Cancelar el request anterior si todavía está en vuelo
+    if (controladorActual) {
+      controladorActual.abort();
+      controladorActual = null;
+    }
+
+    // Limpiar debounce anterior
+    clearTimeout(debounceTimer);
 
     if (query.length < 2) return;
 
-    try {
-      const res = await fetch(`/productos/api/buscar?q=${encodeURIComponent(query)}`);
-      const productos = await res.json();
+    // Esperar 350ms después del último keystroke antes de buscar
+    debounceTimer = setTimeout(async () => {
+      // Crear un nuevo AbortController para este request
+      controladorActual = new AbortController();
+      const signal = controladorActual.signal;
 
-      productos.forEach(producto => {
-        const resultado = document.createElement('div');
-        resultado.classList.add('resultado-busqueda');
+      // Capturar la query en el momento del fetch para validar al recibir
+      const queryAlMomentoDelFetch = buscador.value.trim();
 
-        const contenedor = document.createElement('div');
-        contenedor.classList.add('resultado-contenedor');
+      try {
+        const res = await fetch(`/productos/api/buscar?q=${encodeURIComponent(query)}`, { signal });
+        const productos = await res.json();
 
-        if (producto.imagenes && producto.imagenes.length > 0) {
-          const imagen = document.createElement('img');
-          imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
-          imagen.classList.add('miniatura');
-          contenedor.appendChild(imagen);
+        // ── FIX: verificar que la query no cambió mientras esperábamos la respuesta ──
+        if (buscador.value.trim() !== queryAlMomentoDelFetch) return;
+
+        // ── FIX: limpiar antes de renderizar (por si acaso) ──
+        resultados.innerHTML = '';
+
+        if (!productos.length) {
+          resultados.style.display = 'none';
+          return;
         }
 
-        const nombreProducto = document.createElement('span');
-        nombreProducto.textContent = producto.nombre;
-        contenedor.appendChild(nombreProducto);
+        productos.forEach(producto => {
+          const resultado = document.createElement('div');
+          resultado.classList.add('resultado-busqueda');
 
-        resultado.appendChild(contenedor);
-        resultado.addEventListener('click', () => agregarProducto(producto));
-        resultados.appendChild(resultado);
+          const contenedor = document.createElement('div');
+          contenedor.classList.add('resultado-contenedor');
+
+          if (producto.imagenes && producto.imagenes.length > 0) {
+            const imagen = document.createElement('img');
+            imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
+            imagen.classList.add('miniatura');
+            contenedor.appendChild(imagen);
+          }
+
+          const nombreProducto = document.createElement('span');
+          nombreProducto.textContent = producto.nombre;
+          contenedor.appendChild(nombreProducto);
+
+          resultado.appendChild(contenedor);
+          resultado.addEventListener('click', () => agregarProducto(producto));
+          resultados.appendChild(resultado);
+        });
+
         resultados.style.display = 'block';
-      });
-    } catch (err) {
-      console.error('❌ Error al buscar productos:', err);
-    }
+
+      } catch (err) {
+        // Ignorar errores de abort (son intencionales)
+        if (err.name === 'AbortError') return;
+        console.error('❌ Error al buscar productos:', err);
+      }
+    }, 350);
   });
 
   function agregarProducto(prod) {
@@ -142,32 +183,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const fecha_pago = document.getElementById('presupuestoFechaPago').value;
     const administrador = document.getElementById('presupuestoAdministrador').value;
 
-
     if (!proveedor || !fecha || !numero || !importe || !condicion || !fecha_pago || !administrador) {
-  let mensaje = 'Los siguientes campos son obligatorios:\n';
-  if (!proveedor) mensaje += '- Proveedor\n';
-  if (!fecha) mensaje += '- Fecha del presupuesto\n';
-  if (!numero) mensaje += '- Número\n';
-  if (!importe) mensaje += '- Importe\n';
-  if (!fecha_pago) mensaje += '- Fecha de vencimiento\n';
-  if (!condicion) mensaje += '- Condición de pago\n';
-  if (!administrador) mensaje += '- Administrador\n';
+      let mensaje = 'Los siguientes campos son obligatorios:\n';
+      if (!proveedor) mensaje += '- Proveedor\n';
+      if (!fecha) mensaje += '- Fecha del presupuesto\n';
+      if (!numero) mensaje += '- Número\n';
+      if (!importe) mensaje += '- Importe\n';
+      if (!fecha_pago) mensaje += '- Fecha de vencimiento\n';
+      if (!condicion) mensaje += '- Condición de pago\n';
+      if (!administrador) mensaje += '- Administrador\n';
 
-  return Swal.fire('Faltan datos', mensaje, 'warning');
-}
+      return Swal.fire('Faltan datos', mensaje, 'warning');
+    }
+
     if (!productosSeleccionados.length) {
-  const confirmacion = await Swal.fire({
-    title: 'Presupuesto sin productos',
-    text: 'Estás por guardar un presupuesto sin productos asociados. ¿Deseás continuar?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sí, guardar de todos modos',
-    cancelButtonText: 'Cancelar'
-  });
+      const confirmacion = await Swal.fire({
+        title: 'Presupuesto sin productos',
+        text: 'Estás por guardar un presupuesto sin productos asociados. ¿Deseás continuar?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar de todos modos',
+        cancelButtonText: 'Cancelar'
+      });
 
-  if (!confirmacion.isConfirmed) return;
-}
-
+      if (!confirmacion.isConfirmed) return;
+    }
 
     try {
       const res = await fetch('/administracion/api/presupuestos', {
@@ -229,31 +269,29 @@ document.addEventListener('DOMContentLoaded', () => {
     fecha.setDate(fecha.getDate() + 30);
     inputFechaPago.value = fecha.toISOString().split('T')[0];
   });
+
   document.getElementById('presupuestoNumero').addEventListener('blur', async () => {
-  const tipo = 'presupuesto';
-  const proveedor = document.getElementById('presupuestoProveedor').value;
-  const fecha = document.getElementById('presupuestoFecha').value;
-  const numero = document.getElementById('presupuestoNumero').value;
+    const tipo = 'presupuesto';
+    const proveedor = document.getElementById('presupuestoProveedor').value;
+    const fecha = document.getElementById('presupuestoFecha').value;
+    const numero = document.getElementById('presupuestoNumero').value;
 
+    if (!proveedor || !fecha || !numero) return;
 
-  if (!proveedor || !fecha || !numero) return;
+    try {
+      const res = await fetch(`/administracion/verificar-duplicado?tipo=${tipo}&proveedor=${proveedor}&fecha=${fecha}&numero=${encodeURIComponent(numero)}`);
+      const data = await res.json();
 
-  try {
-  const res = await fetch(`/administracion/verificar-duplicado?tipo=${tipo}&proveedor=${proveedor}&fecha=${fecha}&numero=${encodeURIComponent(numero)}`);
-
-    const data = await res.json();
-
-    if (data.existe) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Documento duplicado',
-        text: `Ya existe una ${tipo} con esos datos.`,
-        confirmButtonText: 'Revisar',
-      });
+      if (data.existe) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Documento duplicado',
+          text: `Ya existe una ${tipo} con esos datos.`,
+          confirmButtonText: 'Revisar',
+        });
+      }
+    } catch (err) {
+      console.error('Error al verificar duplicado:', err);
     }
-  } catch (err) {
-    console.error('Error al verificar duplicado:', err);
-  }
+  });
 });
-});
-

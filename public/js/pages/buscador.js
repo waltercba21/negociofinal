@@ -377,11 +377,17 @@ if (!CAN_INIT) {
     }
   });
 
+  // ── FIX: AbortController para cancelar requests anteriores en vuelo ──
+  let _buscadorCtrl = null;
+
   entradaBusqueda.addEventListener('input', (e) => {
     const raw = (e.target?.value ?? '').toString();
     if (botonLimpiar) botonLimpiar.style.display = raw.trim() ? 'block' : 'none';
 
+    // Cancelar el request anterior si todavía no terminó
+    if (_buscadorCtrl) { _buscadorCtrl.abort(); _buscadorCtrl = null; }
     clearTimeout(timer);
+
     timer = setTimeout(async () => {
       const busqueda = raw.trim();
 
@@ -396,11 +402,24 @@ if (!CAN_INIT) {
         return;
       }
 
-      const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
-      const respuesta = await fetch(url);
-      const productos = await respuesta.json();
-      dbg('🔎 /productos/api/buscar =>', productos?.length, 'items');
-      mostrarProductos(productos);
+      // Capturar query al momento del fetch para validar al recibir respuesta
+      const queryCapturada = entradaBusqueda.value.trim();
+
+      _buscadorCtrl = new AbortController();
+      try {
+        const url = `/productos/api/buscar?q=${encodeURIComponent(busqueda)}`;
+        const respuesta = await fetch(url, { signal: _buscadorCtrl.signal });
+        const productos = await respuesta.json();
+
+        // ── FIX stale-check: descartar si la query cambió mientras viajaba la respuesta ──
+        if (entradaBusqueda.value.trim() !== queryCapturada) return;
+
+        dbg('🔎 /productos/api/buscar =>', productos?.length, 'items');
+        mostrarProductos(productos);
+      } catch (err) {
+        if (err.name === 'AbortError') return; // cancelado intencionalmente
+        console.error('[buscador] Error al buscar productos:', err);
+      }
     }, 300);
   });
 
@@ -417,6 +436,7 @@ if (!CAN_INIT) {
 
 function mostrarProductos(productos) {
   // AF v2026-03-09-fix4 — clases .pcard
+  // ── FIX: limpiar inmediatamente para no acumular resultados viejos ──
   contenedorProductos.innerHTML = '';
 
   if (!Array.isArray(productos) || productos.length === 0) {
@@ -428,6 +448,9 @@ function mostrarProductos(productos) {
       </div>`;
     return;
   }
+
+  // ── FIX: usar DocumentFragment para insertar todas las tarjetas de una sola vez ──
+  const fragment = document.createDocumentFragment();
 
   productos.forEach((producto, index) => {
     const esOferta  = producto.oferta == 1;
@@ -461,7 +484,8 @@ function mostrarProductos(productos) {
 
     const imagenesHTML = files.map((file, i) => {
       const src = file ? `/uploads/productos/${file}` : '/images/noEncontrado.png';
-      return `<img class="pcard__img${i !== 0 ? ' hidden' : ''}" src="${src}" alt="${producto.nombre}" onerror="this.src='/images/noEncontrado.png'" loading="lazy">`;
+      // ── FIX: decoding async + lazy loading para no bloquear el hilo principal al cargar imágenes ──
+      return `<img class="pcard__img${i !== 0 ? ' hidden' : ''}" src="${src}" alt="${producto.nombre}" onerror="this.src='/images/noEncontrado.png'" loading="lazy" decoding="async">`;
     }).join('');
 
     const botonesCarousel = files.length > 1 ? `
@@ -574,9 +598,14 @@ function mostrarProductos(productos) {
         </div>
       </div>`;
 
-    contenedorProductos.appendChild(card);
-    _initProveedorButton(producto.id);
+    fragment.appendChild(card);
   });
+
+  // ── FIX: insertar todas las tarjetas de una sola vez (1 reflow en vez de N) ──
+  contenedorProductos.appendChild(fragment);
+
+  // Inicializar botones proveedor después de insertar (el DOM ya existe)
+  productos.forEach(producto => _initProveedorButton(producto.id));
 }
 
 
