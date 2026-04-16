@@ -1973,14 +1973,13 @@ procesarFormulario: async (req, res) => {
       const presupuestoId = await producto.guardarPresupuesto(presupuesto);
 
       const items = await Promise.all(invoiceItems.map(async item => {
-          // Si producto_id es un número entero válido, buscar directo por id (evita ambigüedad de códigos duplicados)
+          // Si producto_id es un número entero válido, buscar directo por id
           const idNumerico = Number(item.producto_id);
           let producto_id;
           if (Number.isInteger(idNumerico) && idNumerico > 0) {
               producto_id = idNumerico;
           } else {
-              // Para PRODUCTO PRUEBA la descripción es el nombre editado por el vendedor,
-              // NO debe usarse como filtro de nombre en la DB (el producto se busca solo por código).
+              // Para PRODUCTO PRUEBA no usar descripcion como filtro de nombre en la DB
               const nombreParaBusqueda = item.es_producto_prueba ? null : item.descripcion;
               producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, nombreParaBusqueda);
           }
@@ -2039,15 +2038,13 @@ procesarFormularioFacturas: async (req, res) => {
       ? metodosPago.filter(Boolean).join(", ")
       : (metodosPago || "");
 
-    // ── Recargo tarjeta de crédito: validación SERVER-SIDE ───────────────────
-    // El frontend ya distribuye el 15% en los ítems, pero lo recalculamos acá
-    // para no depender de lo que manda el cliente. Si hay discrepancia, se loguea
-    // y se usan los valores del servidor.
+    // ── Recargo tarjeta de crédito ────────────────────────────────────────────
+    // El frontend ya distribuyó el 15% en cada ítem antes de enviarlos.
+    // NO se vuelve a aplicar el factor acá para evitar duplicarlo.
     const esCredito = metodosPagoString.toUpperCase().includes("CREDITO");
-    const factorRecargo = esCredito ? 1.15 : 1;
 
     const itemsNormalizados = invoiceItems.map(item => {
-      const pu  = Math.round(parseFloat(item.precio_unitario) * factorRecargo * 100) / 100;
+      const pu  = Math.round(parseFloat(item.precio_unitario) * 100) / 100;
       const qty = parseInt(item.cantidad) || 1;
       const sub = Math.round(pu * qty * 100) / 100;
       return { ...item, precio_unitario: pu, subtotal: sub };
@@ -2117,12 +2114,16 @@ const vendedor = vendedorForm
 
         await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
 
+        // descripcion: guardar el nombre editado (o el nombre del producto si no es prueba)
+        const descripcionGuardar = item.descripcion || null;
+
         return [
           facturaId,
           producto_id,
           item.cantidad,
-          item.precio_unitario,  // precio ya con recargo aplicado por servidor
-          item.subtotal
+          item.precio_unitario,
+          item.subtotal,
+          descripcionGuardar   // ← se guarda en factura_items.descripcion
         ];
       })
     );

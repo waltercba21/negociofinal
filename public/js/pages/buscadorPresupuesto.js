@@ -101,7 +101,7 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
   // Código y descripción
   filaDisponible.cells[1].textContent = codigoProducto;
 
-  // Si es PRODUCTO PRUEBA → mostrar input editable para escribir el nombre real
+  // Si es PRODUCTO PRUEBA → celda de descripción con input editable
   const esPrueba = nombreProducto.trim().toUpperCase() === 'PRODUCTO PRUEBA';
   if (esPrueba) {
     filaDisponible.cells[2].innerHTML =
@@ -211,7 +211,6 @@ document.addEventListener('DOMContentLoaded', function () {
     for (let i = 0; i < filas.length; i++) {
       const productoId  = filas[i].dataset.productoId || '';
       const codigo      = filas[i].cells[1].textContent.trim();
-      // Si hay input editable (PRODUCTO PRUEBA), leer de ahí
       const descInput   = filas[i].cells[2].querySelector('input.presupuesto-tabla__desc-input');
       const descripcion = descInput
         ? (descInput.value.trim() || 'PRODUCTO PRUEBA')

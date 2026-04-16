@@ -142,7 +142,7 @@ guardarFactura: (factura) => {
     },
     guardarItemsFactura: (items) => {
         return new Promise((resolve, reject) => {
-            const query = 'INSERT INTO factura_items (factura_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
+            const query = 'INSERT INTO factura_items (factura_id, producto_id, cantidad, precio_unitario, subtotal, descripcion) VALUES ?';
             
             conexion.query(query, [items], (error, resultado) => {
                 if (error) {
@@ -1310,7 +1310,8 @@ obtenerDetallePresupuesto : (id) => {
     return new Promise((resolve, reject) => {
         const query = `
             SELECT fm.id AS factura_id, fm.nombre_cliente, fm.fecha, fm.total, fm.creado_en,
-                   p.nombre AS nombre_producto, fi.cantidad, fi.precio_unitario, fi.subtotal
+                   COALESCE(fi.descripcion, p.nombre) AS nombre_producto,
+                   fi.cantidad, fi.precio_unitario, fi.subtotal
             FROM facturas_mostrador fm
             LEFT JOIN factura_items fi ON fm.id = fi.factura_id
             LEFT JOIN productos p ON fi.producto_id = p.id

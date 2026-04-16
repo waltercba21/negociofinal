@@ -104,7 +104,7 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
 
   filaDisponible.cells[1].textContent = codigoProducto;
 
-  // Si es PRODUCTO PRUEBA → mostrar input editable para escribir el nombre real
+  // Si es PRODUCTO PRUEBA → celda de descripción con input editable
   const esPrueba = nombreProducto.trim().toUpperCase() === 'PRODUCTO PRUEBA';
   if (esPrueba) {
     filaDisponible.cells[2].innerHTML =
@@ -215,7 +215,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     for (let i = 0; i < filasFactura.length; i++) {
       const codigo = filasFactura[i].cells[1].textContent.trim();
-      // Leer descripción: si hay input editable (PRODUCTO PRUEBA) usar ese valor, si no el textContent
       const descInput = filasFactura[i].cells[2].querySelector('input.facturas-tabla__desc-input');
       const descripcion = descInput
         ? (descInput.value.trim() || 'PRODUCTO PRUEBA')
@@ -238,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function () {
         invoiceItems.push({
           producto_id: codigo,
           descripcion,
-          // Marcar si es PRODUCTO PRUEBA para que el servidor no use la descripción como filtro de nombre
           es_producto_prueba: !!descInput,
           precio_unitario,
           cantidad,
