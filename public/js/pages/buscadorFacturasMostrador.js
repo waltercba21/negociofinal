@@ -104,7 +104,7 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
 
   filaDisponible.cells[1].textContent = codigoProducto;
 
-  // Si es PRODUCTO PRUEBA → mostrar input editable para que el vendedor escriba el nombre real
+  // Si es PRODUCTO PRUEBA → mostrar input editable para escribir el nombre real
   const esPrueba = nombreProducto.trim().toUpperCase() === 'PRODUCTO PRUEBA';
   if (esPrueba) {
     filaDisponible.cells[2].innerHTML =
@@ -113,9 +113,8 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
               placeholder="Escribir nombre del producto…"
               value=""
               autocomplete="off" />`;
-    const inputDesc = filaDisponible.cells[2].querySelector('input');
-    // Evitar que Enter cierre el formulario
-    inputDesc.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+    filaDisponible.cells[2].querySelector('input')
+      .addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
   } else {
     filaDisponible.cells[2].textContent = nombreProducto;
   }
@@ -170,7 +169,7 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
     botonEliminar.addEventListener("click", function () {
       filaDisponible.cells[1].textContent = "";
-      filaDisponible.cells[2].innerHTML = "";   // limpia tanto texto como input editable
+      filaDisponible.cells[2].innerHTML = "";
       if (inputPrecio) { inputPrecio.value = ""; inputPrecio.disabled = true; }
       filaDisponible.cells[4].innerHTML = `<input type="number" min="1" value="0" class="facturas-tabla__input facturas-tabla__input--qty" disabled />`;
       filaDisponible.cells[5].textContent = "";
@@ -216,10 +215,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     for (let i = 0; i < filasFactura.length; i++) {
       const codigo = filasFactura[i].cells[1].textContent.trim();
-      // Si hay un input editable en la celda de descripción (PRODUCTO PRUEBA), leerlo de ahí
+      // Leer descripción: si hay input editable (PRODUCTO PRUEBA) usar ese valor, si no el textContent
       const descInput = filasFactura[i].cells[2].querySelector('input.facturas-tabla__desc-input');
       const descripcion = descInput
-        ? descInput.value.trim()
+        ? (descInput.value.trim() || 'PRODUCTO PRUEBA')
         : filasFactura[i].cells[2].textContent.trim();
       const precioInput = filasFactura[i].cells[3].querySelector('input').value;
       let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
@@ -236,7 +235,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const subtotal = precio_unitario * cantidad;
       if (codigo !== '' && descripcion !== '' && precio_unitario > 0 && cantidad > 0) {
-        invoiceItems.push({ producto_id: codigo, descripcion, precio_unitario, cantidad, subtotal });
+        invoiceItems.push({
+          producto_id: codigo,
+          descripcion,
+          // Marcar si es PRODUCTO PRUEBA para que el servidor no use la descripción como filtro de nombre
+          es_producto_prueba: !!descInput,
+          precio_unitario,
+          cantidad,
+          subtotal
+        });
         totalSinInteres += subtotal;
       }
     }

@@ -1979,7 +1979,10 @@ procesarFormulario: async (req, res) => {
           if (Number.isInteger(idNumerico) && idNumerico > 0) {
               producto_id = idNumerico;
           } else {
-              producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
+              // Para PRODUCTO PRUEBA la descripción es el nombre editado por el vendedor,
+              // NO debe usarse como filtro de nombre en la DB (el producto se busca solo por código).
+              const nombreParaBusqueda = item.es_producto_prueba ? null : item.descripcion;
+              producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, nombreParaBusqueda);
           }
 
           if (!producto_id) {
@@ -2036,14 +2039,15 @@ procesarFormularioFacturas: async (req, res) => {
       ? metodosPago.filter(Boolean).join(", ")
       : (metodosPago || "");
 
-    // ── Recargo tarjeta de crédito ────────────────────────────────────────────
-    // El frontend ya distribuyó el 15% en cada ítem antes de enviarlos.
-    // NO se vuelve a aplicar el factor acá para evitar duplicarlo.
-    // Solo se recalcula el subtotal en servidor para garantizar consistencia.
+    // ── Recargo tarjeta de crédito: validación SERVER-SIDE ───────────────────
+    // El frontend ya distribuye el 15% en los ítems, pero lo recalculamos acá
+    // para no depender de lo que manda el cliente. Si hay discrepancia, se loguea
+    // y se usan los valores del servidor.
     const esCredito = metodosPagoString.toUpperCase().includes("CREDITO");
+    const factorRecargo = esCredito ? 1.15 : 1;
 
     const itemsNormalizados = invoiceItems.map(item => {
-      const pu  = Math.round(parseFloat(item.precio_unitario) * 100) / 100;
+      const pu  = Math.round(parseFloat(item.precio_unitario) * factorRecargo * 100) / 100;
       const qty = parseInt(item.cantidad) || 1;
       const sub = Math.round(pu * qty * 100) / 100;
       return { ...item, precio_unitario: pu, subtotal: sub };
@@ -2101,7 +2105,10 @@ const vendedor = vendedorForm
 
     const items = await Promise.all(
       itemsNormalizados.map(async (item) => {
-        const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, item.descripcion);
+        // Para PRODUCTO PRUEBA la descripción es el nombre editado por el vendedor,
+        // NO debe usarse como filtro de nombre en la DB (el producto se busca solo por código).
+        const nombreParaBusqueda = item.es_producto_prueba ? null : item.descripcion;
+        const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, nombreParaBusqueda);
         if (!producto_id) {
           throw new Error(
             `Producto con ID ${item.producto_id} y descripción ${item.descripcion} no encontrado.`

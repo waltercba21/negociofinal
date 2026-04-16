@@ -110,8 +110,8 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
               placeholder="Escribir nombre del producto…"
               value=""
               autocomplete="off" />`;
-    const inputDesc = filaDisponible.cells[2].querySelector('input');
-    inputDesc.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+    filaDisponible.cells[2].querySelector('input')
+      .addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
   } else {
     filaDisponible.cells[2].textContent = nombreProducto;
   }
@@ -166,7 +166,7 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
     botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
     botonEliminar.addEventListener("click", function () {
       filaDisponible.cells[1].textContent = "";
-      filaDisponible.cells[2].innerHTML = "";   // limpia texto o input editable
+      filaDisponible.cells[2].innerHTML = "";
       if (inputPrecio) { inputPrecio.value = ""; inputPrecio.disabled = true; }
       filaDisponible.cells[4].innerHTML = `<input type="number" min="1" value="0" class="presupuesto-tabla__input presupuesto-tabla__input--qty" disabled />`;
       filaDisponible.cells[5].textContent = "0";
@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // Si hay input editable (PRODUCTO PRUEBA), leer de ahí
       const descInput   = filas[i].cells[2].querySelector('input.presupuesto-tabla__desc-input');
       const descripcion = descInput
-        ? descInput.value.trim()
+        ? (descInput.value.trim() || 'PRODUCTO PRUEBA')
         : filas[i].cells[2].textContent.trim();
       const precioInput = filas[i].cells[3].querySelector('input').value;
       let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
@@ -231,7 +231,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const subtotal = precio_unitario * cantidad;
       if (codigo !== '' && descripcion !== '' && precio_unitario > 0 && cantidad > 0) {
-        invoiceItems.push({ producto_id: productoId || codigo, descripcion, precio_unitario, cantidad, subtotal });
+        invoiceItems.push({
+          producto_id: productoId || codigo,
+          descripcion,
+          es_producto_prueba: !!descInput,
+          precio_unitario,
+          cantidad,
+          subtotal
+        });
       }
     }
 

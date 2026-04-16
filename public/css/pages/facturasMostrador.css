@@ -433,10 +433,11 @@
 }
 
 .facturas-tabla td {
-  padding: 10px 16px;
+  padding: 12px 16px;
   color: rgba(240, 244, 255, 0.85);
   vertical-align: middle;
   text-align: center;
+  line-height: 1.5;
 }
 /* Imagen miniatura en tabla */
 .miniatura-tabla {
@@ -450,9 +451,10 @@
 
 /* Código */
 .facturas-tabla__codigo {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 17px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
   font-weight: 700;
+  letter-spacing: 0.02em;
   color: #4e80c0;
   white-space: nowrap;
 }
@@ -460,28 +462,39 @@
 /* Descripción */
 .facturas-tabla__desc {
   min-width: 200px;
+  font-family: 'DM Sans', sans-serif;
   font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
 }
 
 /* Input editable de descripción (PRODUCTO PRUEBA) */
 .facturas-tabla__desc-input {
-  background: rgba(31, 72, 126, 0.15);
-  border: 1.5px solid rgba(31, 72, 126, 0.5);
+  display: block;
+  width: 100%;
+  min-width: 190px;
+  padding: 7px 12px;
+  background: rgba(78, 128, 192, 0.12);
+  border: 1.5px dashed rgba(78, 128, 192, 0.7);
   border-radius: 8px;
   color: #f0f4ff;
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   font-weight: 600;
-  padding: 5px 10px;
-  width: 100%;
-  min-width: 180px;
+  letter-spacing: 0.01em;
+  box-sizing: border-box;
   transition: border-color 0.15s, background 0.15s;
+}
+.facturas-tabla__desc-input::placeholder {
+  color: rgba(240, 244, 255, 0.35);
+  font-weight: 400;
 }
 .facturas-tabla__desc-input:focus {
   outline: none;
   border-color: #4e80c0;
-  background: rgba(31, 72, 126, 0.25);
+  border-style: solid;
+  background: rgba(78, 128, 192, 0.2);
 }
 
 /* Inputs dentro de la tabla */
@@ -494,6 +507,7 @@
   font-family: 'DM Sans', sans-serif;
   font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.02em;
   width: 110px;
   transition: border-color 0.15s, background 0.15s;
 }
@@ -516,18 +530,20 @@
 
 /* Stock */
 .facturas-tabla__stock {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 17px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
   font-weight: 700;
+  letter-spacing: 0.02em;
   color: #4ade80;
   text-align: center;
 }
 
 /* Subtotal */
 .facturas-tabla__subtotal {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
   font-weight: 800;
+  letter-spacing: 0.02em;
   color: #f0f4ff;
   white-space: nowrap;
 }
