@@ -2036,15 +2036,14 @@ procesarFormularioFacturas: async (req, res) => {
       ? metodosPago.filter(Boolean).join(", ")
       : (metodosPago || "");
 
-    // ── Recargo tarjeta de crédito: validación SERVER-SIDE ───────────────────
-    // El frontend ya distribuye el 15% en los ítems, pero lo recalculamos acá
-    // para no depender de lo que manda el cliente. Si hay discrepancia, se loguea
-    // y se usan los valores del servidor.
+    // ── Recargo tarjeta de crédito ────────────────────────────────────────────
+    // El frontend ya distribuyó el 15% en cada ítem antes de enviarlos.
+    // NO se vuelve a aplicar el factor acá para evitar duplicarlo.
+    // Solo se recalcula el subtotal en servidor para garantizar consistencia.
     const esCredito = metodosPagoString.toUpperCase().includes("CREDITO");
-    const factorRecargo = esCredito ? 1.15 : 1;
 
     const itemsNormalizados = invoiceItems.map(item => {
-      const pu  = Math.round(parseFloat(item.precio_unitario) * factorRecargo * 100) / 100;
+      const pu  = Math.round(parseFloat(item.precio_unitario) * 100) / 100;
       const qty = parseInt(item.cantidad) || 1;
       const sub = Math.round(pu * qty * 100) / 100;
       return { ...item, precio_unitario: pu, subtotal: sub };
