@@ -431,7 +431,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
       `
       SELECT
         fm.id AS factura_id, fm.nombre_cliente, fm.fecha, fm.total, fm.creado_en,
-        fi.producto_id, COALESCE(p.nombre,'(sin nombre)') AS descripcion,
+        fi.producto_id, COALESCE(fi.descripcion, p.nombre, '(sin nombre)') AS descripcion,
         fi.cantidad, fi.precio_unitario, fi.subtotal,
         p.IVA AS iva_porcentaje
       FROM facturas_mostrador fm
