@@ -451,7 +451,7 @@
 /* Código */
 .facturas-tabla__codigo {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: #4e80c0;
   white-space: nowrap;
@@ -460,7 +460,28 @@
 /* Descripción */
 .facturas-tabla__desc {
   min-width: 200px;
+  font-size: 15px;
   font-weight: 600;
+}
+
+/* Input editable de descripción (PRODUCTO PRUEBA) */
+.facturas-tabla__desc-input {
+  background: rgba(31, 72, 126, 0.15);
+  border: 1.5px solid rgba(31, 72, 126, 0.5);
+  border-radius: 8px;
+  color: #f0f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 5px 10px;
+  width: 100%;
+  min-width: 180px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.facturas-tabla__desc-input:focus {
+  outline: none;
+  border-color: #4e80c0;
+  background: rgba(31, 72, 126, 0.25);
 }
 
 /* Inputs dentro de la tabla */
@@ -471,7 +492,7 @@
   border-radius: 8px;
   color: #f0f4ff;
   font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   width: 110px;
   transition: border-color 0.15s, background 0.15s;
@@ -496,7 +517,7 @@
 /* Stock */
 .facturas-tabla__stock {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: #4ade80;
   text-align: center;
@@ -505,7 +526,7 @@
 /* Subtotal */
 .facturas-tabla__subtotal {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   color: #f0f4ff;
   white-space: nowrap;

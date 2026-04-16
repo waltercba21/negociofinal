@@ -100,7 +100,21 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
 
   // Código y descripción
   filaDisponible.cells[1].textContent = codigoProducto;
-  filaDisponible.cells[2].textContent = nombreProducto;
+
+  // Si es PRODUCTO PRUEBA → mostrar input editable para escribir el nombre real
+  const esPrueba = nombreProducto.trim().toUpperCase() === 'PRODUCTO PRUEBA';
+  if (esPrueba) {
+    filaDisponible.cells[2].innerHTML =
+      `<input type="text"
+              class="presupuesto-tabla__desc-input"
+              placeholder="Escribir nombre del producto…"
+              value=""
+              autocomplete="off" />`;
+    const inputDesc = filaDisponible.cells[2].querySelector('input');
+    inputDesc.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+  } else {
+    filaDisponible.cells[2].textContent = nombreProducto;
+  }
 
   // Precio
   const inputPrecio = filaDisponible.cells[3].querySelector("input");
@@ -152,7 +166,7 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
     botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
     botonEliminar.addEventListener("click", function () {
       filaDisponible.cells[1].textContent = "";
-      filaDisponible.cells[2].textContent = "";
+      filaDisponible.cells[2].innerHTML = "";   // limpia texto o input editable
       if (inputPrecio) { inputPrecio.value = ""; inputPrecio.disabled = true; }
       filaDisponible.cells[4].innerHTML = `<input type="number" min="1" value="0" class="presupuesto-tabla__input presupuesto-tabla__input--qty" disabled />`;
       filaDisponible.cells[5].textContent = "0";
@@ -197,7 +211,11 @@ document.addEventListener('DOMContentLoaded', function () {
     for (let i = 0; i < filas.length; i++) {
       const productoId  = filas[i].dataset.productoId || '';
       const codigo      = filas[i].cells[1].textContent.trim();
-      const descripcion = filas[i].cells[2].textContent.trim();
+      // Si hay input editable (PRODUCTO PRUEBA), leer de ahí
+      const descInput   = filas[i].cells[2].querySelector('input.presupuesto-tabla__desc-input');
+      const descripcion = descInput
+        ? descInput.value.trim()
+        : filas[i].cells[2].textContent.trim();
       const precioInput = filas[i].cells[3].querySelector('input').value;
       let precio_unitario = parseFloat(precioInput.replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
       let cantidad = parseInt(filas[i].cells[4].querySelector('input').value);
