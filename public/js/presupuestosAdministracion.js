@@ -69,12 +69,49 @@ document.addEventListener('DOMContentLoaded', () => {
       const querySnapshot = buscador.value.trim();
       const proveedorId = selectProveedor ? selectProveedor.value : '';
 
-      let url = `/productos/api/buscar?q=${encodeURIComponent(query)}`;
-      if (proveedorId) url += `&proveedor_id=${encodeURIComponent(proveedorId)}`;
+      // Detectar si el proveedor seleccionado empieza con "DM".
+      // Si es así, buscar en todos los proveedores cuyo nombre empiece con "DM"
+      // y unificar los resultados (evitando duplicados por id de producto).
+      let proveedorIds = [];
+      if (proveedorId && selectProveedor) {
+        const optSeleccionada = selectProveedor.options[selectProveedor.selectedIndex];
+        const nombreProv = optSeleccionada ? optSeleccionada.text.trim().toUpperCase() : '';
+
+        if (nombreProv.startsWith('DM')) {
+          proveedorIds = Array.from(selectProveedor.options)
+            .filter(opt => opt.value && opt.text.trim().toUpperCase().startsWith('DM'))
+            .map(opt => opt.value);
+        } else {
+          proveedorIds = [proveedorId];
+        }
+      }
 
       try {
-        const res = await fetch(url, { signal });
-        const productos = await res.json();
+        let productos = [];
+
+        if (proveedorIds.length > 1) {
+          // Caso DM: múltiples proveedores. Búsquedas en paralelo + unificación.
+          const promesas = proveedorIds.map(id =>
+            fetch(`/productos/api/buscar?q=${encodeURIComponent(query)}&proveedor_id=${encodeURIComponent(id)}`, { signal })
+              .then(r => r.json())
+              .catch(() => [])
+          );
+          const resultadosArr = await Promise.all(promesas);
+
+          // Deduplicar por id de producto
+          const mapa = new Map();
+          resultadosArr.flat().forEach(p => {
+            if (p && p.id != null && !mapa.has(p.id)) mapa.set(p.id, p);
+          });
+          productos = Array.from(mapa.values());
+        } else {
+          // Caso normal: un solo proveedor o ninguno (búsqueda general).
+          let url = `/productos/api/buscar?q=${encodeURIComponent(query)}`;
+          if (proveedorIds.length === 1) url += `&proveedor_id=${encodeURIComponent(proveedorIds[0])}`;
+          const res = await fetch(url, { signal });
+          productos = await res.json();
+        }
+
         if (buscador.value.trim() !== querySnapshot) return;
         resultados.innerHTML = '';
 
