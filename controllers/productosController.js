@@ -26,14 +26,16 @@ function normalizarClave(texto) {
 // ("Escort"), por categoría desde el dropdown, o cuando los resultados
 // mezclan productos de ambos grupos.
 //
-// Grupo TRASERO  (se ve desde atrás del auto → DERECHO primero, IZQUIERDO después)
+// Grupo TRASERO   (se ve desde atrás del auto → DERECHO primero, IZQUIERDO después)
 // Grupo DELANTERO (se ve desde adelante → IZQUIERDO primero, DERECHO después)
 // Categorías no listadas acá → se mantiene el orden original.
+//
+// NOTA: detecta "DERECHO/DERECHA/DER" y "IZQUIERDO/IZQUIERDA/IZQ" (masc/fem/abrev)
 // ─────────────────────────────────────────────────────────────────────────────
 function reordenarPorLado(productos, _busqueda) {
   if (!Array.isArray(productos) || productos.length < 2) return productos;
 
-  // Normaliza: mayúsculas, sin acentos, sin espacios extra
+  // Normaliza: mayúsculas, sin acentos, sin espacios/puntuación extra
   const norm = (s) => (s || '')
     .toString()
     .normalize('NFD')
@@ -43,10 +45,9 @@ function reordenarPorLado(productos, _busqueda) {
     .trim();
 
   // Categorías del grupo TRASERO (derecho primero)
-  // Nombres EXACTOS de la tabla `categorias`
   const CATS_TRASERAS = new Set([
     'FAROS TRASEROS',
-    'FAROS TRASERO LED',     // [sic] así está en la BD (singular)
+    'FAROS TRASERO LED',
     'OJOS DE GATO',
     'CIRCUITOS IMPRESOS',
     'LENTES DE FAROS',
@@ -73,6 +74,12 @@ function reordenarPorLado(productos, _busqueda) {
     'FAROS LATERALES LED'
   ].map(norm));
 
+  // Regex de lado: acepta masculino, femenino y abreviaturas
+  // IMPORTANTE: \b en JS funciona con letras ASCII, y ya normalizamos sin acentos
+  const RE_DERECHO   = /\b(DERECHO|DERECHA|DER)\b/;
+  const RE_IZQUIERDO = /\b(IZQUIERDO|IZQUIERDA|IZQ)\b/;
+  const RE_LADO_ANY  = /\b(DERECHO|DERECHA|DER|IZQUIERDO|IZQUIERDA|IZQ)\b/g;
+
   // Devuelve 'trasero' | 'delantero' | null para un producto
   function grupoDelProducto(p) {
     const cat = norm(p.categoria_nombre || p.categoria || '');
@@ -85,15 +92,15 @@ function reordenarPorLado(productos, _busqueda) {
   // Detecta lado del producto por nombre: 'D' | 'I' | null
   function ladoDelProducto(p) {
     const n = norm(p.nombre || '');
-    if (/\bDERECHO\b|\bDER\b/.test(n)) return 'D';
-    if (/\bIZQUIERDO\b|\bIZQ\b/.test(n)) return 'I';
+    if (RE_DERECHO.test(n))   return 'D';
+    if (RE_IZQUIERDO.test(n)) return 'I';
     return null;
   }
 
-  // Clave "base" del nombre sin la palabra de lado (para agrupar pares)
+  // Clave "base" del nombre sin las palabras de lado (para agrupar pares)
   function claveBase(p) {
     return norm(p.nombre || '')
-      .replace(/\bDERECHO\b|\bDER\b|\bIZQUIERDO\b|\bIZQ\b/g, '')
+      .replace(RE_LADO_ANY, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -101,7 +108,7 @@ function reordenarPorLado(productos, _busqueda) {
   // Peso de orden dentro de un mismo par
   //   Trasero   → D (0) antes que I (2)
   //   Delantero → I (0) antes que D (2)
-  //   Sin lado  → 1 (queda al medio, no molesta)
+  //   Sin lado  → 1 (queda al medio)
   function pesoLado(p, grupo) {
     const lado = ladoDelProducto(p);
     if (!lado) return 1;
@@ -121,13 +128,13 @@ function reordenarPorLado(productos, _busqueda) {
   // Si ningún producto pertenece a los grupos reordenables → no tocamos nada
   if (!conMeta.some(x => x.grupo !== null)) return productos;
 
-  // Debe haber al menos un item con lado (D/I) para que el reorden tenga sentido
+  // Debe haber al menos un item con lado detectable
   if (!conMeta.some(x => x.grupo && ladoDelProducto(x.p) !== null)) {
     return productos;
   }
 
   conMeta.sort((a, b) => {
-    // (1) Items con grupo van antes; los que no tienen grupo, al final
+    // (1) Items con grupo van antes; sin grupo, al final
     const aSinGrupo = a.grupo === null ? 1 : 0;
     const bSinGrupo = b.grupo === null ? 1 : 0;
     if (aSinGrupo !== bSinGrupo) return aSinGrupo - bSinGrupo;
@@ -145,7 +152,7 @@ function reordenarPorLado(productos, _busqueda) {
     const pb = pesoLado(b.p, grupoRef);
     if (pa !== pb) return pa - pb;
 
-    // (4) Estabilidad: respetar orden original
+    // (4) Estabilidad
     return a.i - b.i;
   });
 
