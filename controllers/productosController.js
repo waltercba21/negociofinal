@@ -18,53 +18,138 @@ function normalizarClave(texto) {
     .replace(/\s+/g, '')                     
     .toLowerCase();                          
 }
-
-
 // ─────────────────────────────────────────────────────────────────────────────
-// Reordenamiento visual por lado (derecho/izquierdo)
-// Faros TRASEROS  → derecho primero (visión desde atrás del auto)
-// Faros DELANTEROS / OPTICAS → izquierdo primero (visión desde adelante)
+// Reordenamiento visual por lado (derecho/izquierdo) — POR CATEGORÍA
+//
+// La decisión se toma mirando la CATEGORÍA de cada producto, no el texto
+// buscado. Esto permite que funcione también cuando se busca por modelo
+// ("Escort"), por categoría desde el dropdown, o cuando los resultados
+// mezclan productos de ambos grupos.
+//
+// Grupo TRASERO  (se ve desde atrás del auto → DERECHO primero, IZQUIERDO después)
+// Grupo DELANTERO (se ve desde adelante → IZQUIERDO primero, DERECHO después)
+// Categorías no listadas acá → se mantiene el orden original.
 // ─────────────────────────────────────────────────────────────────────────────
-function reordenarPorLado(productos, busqueda) {
-  const q = (busqueda || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function reordenarPorLado(productos, _busqueda) {
+  if (!Array.isArray(productos) || productos.length < 2) return productos;
 
-  // Productos que se ven desde ATRÁS del auto → derecho primero
-  const esTrasero = /trase(ro|ra|ros|ras)|stop|posterior|rear/.test(q);
+  // Normaliza: mayúsculas, sin acentos, sin espacios extra
+  const norm = (s) => (s || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  // Productos que se ven desde ADELANTE del auto → izquierdo primero
-  // Incluye: ópticas, vidrios/policarbonatos de óptica, faros auxiliares, faros delanteros
-  const esDelantero = /optic(a|as)|vidrio|policarbonat|auxiliar|delanter(o|a|os|as)|front/.test(q);
+  // Categorías del grupo TRASERO (derecho primero)
+  // Nombres EXACTOS de la tabla `categorias`
+  const CATS_TRASERAS = new Set([
+    'FAROS TRASEROS',
+    'FAROS TRASERO LED',     // [sic] así está en la BD (singular)
+    'OJOS DE GATO',
+    'CIRCUITOS IMPRESOS',
+    'LENTES DE FAROS',
+    'FAROS PATENTE',
+    'FAROS PATENTE LED'
+  ].map(norm));
 
-  // Si no se detecta ninguno de los dos lados, no reordenamos
-  if (!esTrasero && !esDelantero) return productos;
+  // Categorías del grupo DELANTERO (izquierdo primero)
+  const CATS_DELANTERAS = new Set([
+    'OPTICAS',
+    'OPTICAS LED',
+    'VIDRIOS DE OPTICAS',
+    'FAROS DELANTEROS',
+    'FAROS DELANTEROS LED',
+    'FAROS AUXILIARES',
+    'FAROS AUXILIARES LED',
+    'AROS',
+    'FAROS GIROS ESPEJOS',
+    'LENTES DE OPTICAS',
+    'ESPEJOS',
+    'VIDRIOS DE ESPEJOS',
+    'FAROS LATERALES',
+    'FAROS LATERALES FLEXIBLES',
+    'FAROS LATERALES LED'
+  ].map(norm));
 
-  const tienePareja = (productos || []).some(p =>
-    /\bderecho\b|\bizquierdo\b|\bder\b|\bizq\b/.test((p.nombre || '').toLowerCase())
-  );
-  if (!tienePareja) return productos;
-
-  function claveBase(nombre) {
-    return nombre.toLowerCase()
-      .replace(/\bderecho\b|\bder\b|\bizquierdo\b|\bizq\b/g, '')
-      .replace(/\s+/g, ' ').trim();
+  // Devuelve 'trasero' | 'delantero' | null para un producto
+  function grupoDelProducto(p) {
+    const cat = norm(p.categoria_nombre || p.categoria || '');
+    if (!cat) return null;
+    if (CATS_TRASERAS.has(cat))   return 'trasero';
+    if (CATS_DELANTERAS.has(cat)) return 'delantero';
+    return null;
   }
 
-  function pesoLado(nombre) {
-    const n = nombre.toLowerCase();
-    const esDer = /\bderecho\b|\bder\b/.test(n);
-    const esIzq = /\bizquierdo\b|\bizq\b/.test(n);
-    if (!esDer && !esIzq) return 1;
-    if (esTrasero) return esDer ? 0 : 2; // trasero: derecho primero
-    return esIzq ? 0 : 2;               // delantero: izquierdo primero
+  // Detecta lado del producto por nombre: 'D' | 'I' | null
+  function ladoDelProducto(p) {
+    const n = norm(p.nombre || '');
+    if (/\bDERECHO\b|\bDER\b/.test(n)) return 'D';
+    if (/\bIZQUIERDO\b|\bIZQ\b/.test(n)) return 'I';
+    return null;
   }
 
-  return [...productos].sort((a, b) => {
-    const baseA = claveBase(a.nombre || '');
-    const baseB = claveBase(b.nombre || '');
-    if (baseA < baseB) return -1;
-    if (baseA > baseB) return 1;
-    return pesoLado(a.nombre || '') - pesoLado(b.nombre || '');
+  // Clave "base" del nombre sin la palabra de lado (para agrupar pares)
+  function claveBase(p) {
+    return norm(p.nombre || '')
+      .replace(/\bDERECHO\b|\bDER\b|\bIZQUIERDO\b|\bIZQ\b/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Peso de orden dentro de un mismo par
+  //   Trasero   → D (0) antes que I (2)
+  //   Delantero → I (0) antes que D (2)
+  //   Sin lado  → 1 (queda al medio, no molesta)
+  function pesoLado(p, grupo) {
+    const lado = ladoDelProducto(p);
+    if (!lado) return 1;
+    if (grupo === 'trasero')   return lado === 'D' ? 0 : 2;
+    if (grupo === 'delantero') return lado === 'I' ? 0 : 2;
+    return 1;
+  }
+
+  // Enriquecemos cada producto con meta-info y su índice original
+  const conMeta = productos.map((p, i) => ({
+    p,
+    i,
+    grupo: grupoDelProducto(p),
+    base:  claveBase(p)
+  }));
+
+  // Si ningún producto pertenece a los grupos reordenables → no tocamos nada
+  if (!conMeta.some(x => x.grupo !== null)) return productos;
+
+  // Debe haber al menos un item con lado (D/I) para que el reorden tenga sentido
+  if (!conMeta.some(x => x.grupo && ladoDelProducto(x.p) !== null)) {
+    return productos;
+  }
+
+  conMeta.sort((a, b) => {
+    // (1) Items con grupo van antes; los que no tienen grupo, al final
+    const aSinGrupo = a.grupo === null ? 1 : 0;
+    const bSinGrupo = b.grupo === null ? 1 : 0;
+    if (aSinGrupo !== bSinGrupo) return aSinGrupo - bSinGrupo;
+
+    // Ambos sin grupo → orden original
+    if (a.grupo === null && b.grupo === null) return a.i - b.i;
+
+    // (2) Agrupar pares por nombre base (junta D e I del mismo producto)
+    if (a.base < b.base) return -1;
+    if (a.base > b.base) return 1;
+
+    // (3) Mismo par → orden por lado según el grupo
+    const grupoRef = a.grupo || b.grupo;
+    const pa = pesoLado(a.p, grupoRef);
+    const pb = pesoLado(b.p, grupoRef);
+    if (pa !== pb) return pa - pb;
+
+    // (4) Estabilidad: respetar orden original
+    return a.i - b.i;
   });
+
+  return conMeta.map(x => x.p);
 }
 
 const productosPorPagina = 20;
