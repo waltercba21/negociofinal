@@ -26,16 +26,18 @@ function normalizarClave(texto) {
 // ("Escort"), por categoría desde el dropdown, o cuando los resultados
 // mezclan productos de ambos grupos.
 //
-// Grupo TRASERO   (se ve desde atrás del auto → DERECHO primero, IZQUIERDO después)
-// Grupo DELANTERO (se ve desde adelante → IZQUIERDO primero, DERECHO después)
+// Grupo DELANTERO (ópticas, faros delanteros, aros, etc.)
+//   → DERECHO primero, IZQUIERDO después
+// Grupo TRASERO  (faros traseros, ojos de gato, circuitos impresos, etc.)
+//   → IZQUIERDO primero, DERECHO después
 // Categorías no listadas acá → se mantiene el orden original.
 //
-// NOTA: detecta "DERECHO/DERECHA/DER" y "IZQUIERDO/IZQUIERDA/IZQ" (masc/fem/abrev)
+// Detecta: DERECHO/DERECHA/DER  e  IZQUIERDO/IZQUIERDA/IZQ
 // ─────────────────────────────────────────────────────────────────────────────
 function reordenarPorLado(productos, _busqueda) {
   if (!Array.isArray(productos) || productos.length < 2) return productos;
 
-  // Normaliza: mayúsculas, sin acentos, sin espacios/puntuación extra
+  // Normaliza: mayúsculas, sin acentos, sin espacios extra
   const norm = (s) => (s || '')
     .toString()
     .normalize('NFD')
@@ -44,7 +46,7 @@ function reordenarPorLado(productos, _busqueda) {
     .replace(/\s+/g, ' ')
     .trim();
 
-  // Categorías del grupo TRASERO (derecho primero)
+  // Categorías del grupo TRASERO (izquierdo primero)
   const CATS_TRASERAS = new Set([
     'FAROS TRASEROS',
     'FAROS TRASERO LED',
@@ -55,7 +57,7 @@ function reordenarPorLado(productos, _busqueda) {
     'FAROS PATENTE LED'
   ].map(norm));
 
-  // Categorías del grupo DELANTERO (izquierdo primero)
+  // Categorías del grupo DELANTERO (derecho primero)
   const CATS_DELANTERAS = new Set([
     'OPTICAS',
     'OPTICAS LED',
@@ -74,13 +76,12 @@ function reordenarPorLado(productos, _busqueda) {
     'FAROS LATERALES LED'
   ].map(norm));
 
-  // Regex de lado: acepta masculino, femenino y abreviaturas
-  // IMPORTANTE: \b en JS funciona con letras ASCII, y ya normalizamos sin acentos
+  // Regex de lado (masculino, femenino y abreviaturas)
   const RE_DERECHO   = /\b(DERECHO|DERECHA|DER)\b/;
   const RE_IZQUIERDO = /\b(IZQUIERDO|IZQUIERDA|IZQ)\b/;
   const RE_LADO_ANY  = /\b(DERECHO|DERECHA|DER|IZQUIERDO|IZQUIERDA|IZQ)\b/g;
 
-  // Devuelve 'trasero' | 'delantero' | null para un producto
+  // Devuelve 'trasero' | 'delantero' | null
   function grupoDelProducto(p) {
     const cat = norm(p.categoria_nombre || p.categoria || '');
     if (!cat) return null;
@@ -89,7 +90,7 @@ function reordenarPorLado(productos, _busqueda) {
     return null;
   }
 
-  // Detecta lado del producto por nombre: 'D' | 'I' | null
+  // Devuelve 'D' | 'I' | null
   function ladoDelProducto(p) {
     const n = norm(p.nombre || '');
     if (RE_DERECHO.test(n))   return 'D';
@@ -97,7 +98,7 @@ function reordenarPorLado(productos, _busqueda) {
     return null;
   }
 
-  // Clave "base" del nombre sin las palabras de lado (para agrupar pares)
+  // Clave "base" del nombre sin palabras de lado (para agrupar pares)
   function claveBase(p) {
     return norm(p.nombre || '')
       .replace(RE_LADO_ANY, '')
@@ -105,19 +106,18 @@ function reordenarPorLado(productos, _busqueda) {
       .trim();
   }
 
-  // Peso de orden dentro de un mismo par
-  //   Trasero   → D (0) antes que I (2)
-  //   Delantero → I (0) antes que D (2)
-  //   Sin lado  → 1 (queda al medio)
+  // Peso dentro del mismo par — ⚠️ INVERTIDO respecto a versión anterior
+  //   Delantero → D (0) antes que I (2)   ← derecho primero
+  //   Trasero   → I (0) antes que D (2)   ← izquierdo primero
+  //   Sin lado  → 1 (al medio)
   function pesoLado(p, grupo) {
     const lado = ladoDelProducto(p);
     if (!lado) return 1;
-    if (grupo === 'trasero')   return lado === 'D' ? 0 : 2;
-    if (grupo === 'delantero') return lado === 'I' ? 0 : 2;
+    if (grupo === 'delantero') return lado === 'D' ? 0 : 2;
+    if (grupo === 'trasero')   return lado === 'I' ? 0 : 2;
     return 1;
   }
 
-  // Enriquecemos cada producto con meta-info y su índice original
   const conMeta = productos.map((p, i) => ({
     p,
     i,
@@ -134,7 +134,7 @@ function reordenarPorLado(productos, _busqueda) {
   }
 
   conMeta.sort((a, b) => {
-    // (1) Items con grupo van antes; sin grupo, al final
+    // (1) Con grupo va antes; sin grupo, al final
     const aSinGrupo = a.grupo === null ? 1 : 0;
     const bSinGrupo = b.grupo === null ? 1 : 0;
     if (aSinGrupo !== bSinGrupo) return aSinGrupo - bSinGrupo;
@@ -142,17 +142,17 @@ function reordenarPorLado(productos, _busqueda) {
     // Ambos sin grupo → orden original
     if (a.grupo === null && b.grupo === null) return a.i - b.i;
 
-    // (2) Agrupar pares por nombre base (junta D e I del mismo producto)
+    // (2) Agrupar pares por nombre base
     if (a.base < b.base) return -1;
     if (a.base > b.base) return 1;
 
-    // (3) Mismo par → orden por lado según el grupo
+    // (3) Dentro del mismo par, orden por lado según grupo
     const grupoRef = a.grupo || b.grupo;
     const pa = pesoLado(a.p, grupoRef);
     const pb = pesoLado(b.p, grupoRef);
     if (pa !== pb) return pa - pb;
 
-    // (4) Estabilidad
+    // (4) Estabilidad: orden original
     return a.i - b.i;
   });
 
