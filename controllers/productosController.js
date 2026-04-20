@@ -2591,67 +2591,102 @@ actualizarPreciosExcel: async (req, res) => {
 
     const itemsParser = parserResult.items || [];
 
-    for (const item of itemsParser) {
-      const codigoRaw   = str(item.codigo);
-      const precioBruto = limpiarPrecio(item.precio);
-      const descRaw     = str(item.descripcion);
-      const sheetName   = str(item.hoja);
+    // ── Separar items DM (tienen proveedor_id_override) del resto ────────────
+    // DM necesita procesarse por sub-proveedor separado; el resto va por bulk.
+    const itemsDM    = itemsParser.filter(it => it.proveedor_id_override != null);
+    const itemsBulk  = itemsParser.filter(it => it.proveedor_id_override == null);
 
-      // Archivos DM: el parser asigna el sub-proveedor correcto por cada fila.
-      // Para el resto de proveedores, usar el proveedor_id seleccionado en el form.
-      const provIdEfectivo = (item.proveedor_id_override != null)
-        ? Number(item.proveedor_id_override)
-        : proveedor_id;
+    // ── Procesar items NO-DM con bulk update (una query para todo el lote) ───
+    if (itemsBulk.length > 0) {
+      // Filtrar y limpiar
+      const itemsValidos = [];
+      for (const item of itemsBulk) {
+        const codigoRaw   = str(item.codigo);
+        const precioBruto = limpiarPrecio(item.precio);
+        if (!codigoRaw || !Number.isFinite(precioBruto) || precioBruto <= 0) continue;
+        const key = norm(codigoRaw) + '|' + proveedor_id;
+        if (codigosProcesados.has(key)) continue;
+        codigosProcesados.add(key);
+        itemsValidos.push({ codigo: codigoRaw, precio: precioBruto });
+      }
 
-      // Clave de deduplicación: incluye proveedor para DM (mismo código en varios sub-proveedores)
+      if (itemsValidos.length > 0) {
+        const bulkResult = await producto.actualizarPreciosBulk(itemsValidos, proveedor_id);
+
+        (bulkResult.actualizados || []).forEach(p => {
+          const infoBD = ppInfoMap.get(norm(p.codigo));
+          productosActualizados.push({
+            producto_id:          p.producto_id,
+            codigo:               p.codigo,
+            nombre:               p.nombre,
+            precio_lista_antiguo: infoBD?.precio_lista || 0,
+            precio_lista_nuevo:   p.precio_lista_nuevo,
+            precio_venta:         p.precio_venta || 0,
+            presentacion_usada:   'unidad',
+            sin_cambio:           Math.abs((infoBD?.precio_lista || 0) - p.precio_lista_nuevo) < 0.01
+          });
+          productosTocados.add(Number(p.producto_id));
+        });
+
+        (bulkResult.nuevos || []).forEach(n => {
+          const key = norm(n.codigo) + '|' + proveedor_id;
+          if (!codigosNuevosSet.has(key)) {
+            codigosNuevosSet.add(key);
+            nuevosProductos.push({
+              codigo:               n.codigo,
+              descripcion:          '(sin descripción)',
+              precio:               n.precio,
+              presentacion_sugerida: 'unidad'
+            });
+          }
+        });
+      }
+    }
+
+    // ── Procesar items DM con el método original (uno por uno, son pocos) ────
+    for (const item of itemsDM) {
+      const codigoRaw      = str(item.codigo);
+      const precioBruto    = limpiarPrecio(item.precio);
+      const descRaw        = str(item.descripcion);
+      const sheetName      = str(item.hoja);
+      const provIdEfectivo = Number(item.proveedor_id_override);
+
       const codigoKey = norm(codigoRaw) + '|' + provIdEfectivo;
-
       if (!codigoRaw || !Number.isFinite(precioBruto) || precioBruto <= 0) continue;
       if (codigosProcesados.has(codigoKey)) continue;
       codigosProcesados.add(codigoKey);
 
-      // ppInfoMap usa solo el codigo (sin proveedor) — buscar por codigo puro
       const infoBD = ppInfoMap.get(norm(codigoRaw));
-
       let presentacionUsada = infoBD?.presentacion;
       if (!presentacionUsada) {
-        const det = detectarPresentacionFila({
-          proveedorNombre,
-          sheetName,
-          codigo: codigoRaw,
-          descripcion: descRaw
-        });
+        const det = detectarPresentacionFila({ proveedorNombre, sheetName, codigo: codigoRaw, descripcion: descRaw });
         presentacionUsada = det.presentacion;
       }
 
-      const precioAnterior   = infoBD?.precio_lista || 0;
-      const precioListaNuevo = precioBruto;
-
-      const resultado = await producto.actualizarPreciosPDF(precioListaNuevo, codigoRaw, provIdEfectivo);
+      const resultado = await producto.actualizarPreciosPDF(precioBruto, codigoRaw, provIdEfectivo);
 
       if (Array.isArray(resultado) && resultado.length) {
         resultado.forEach(p => {
           productosActualizados.push({
-            producto_id: p.producto_id,
-            codigo: p.codigo,
-            nombre: p.nombre,
-            precio_lista_antiguo: precioAnterior,
-            precio_lista_nuevo: precioListaNuevo,
-            precio_venta: p.precio_venta || 0,
-            presentacion_usada: presentacionUsada,
-            sin_cambio: Math.abs((precioAnterior || 0) - precioListaNuevo) < 0.01
+            producto_id:          p.producto_id,
+            codigo:               p.codigo,
+            nombre:               p.nombre,
+            precio_lista_antiguo: infoBD?.precio_lista || 0,
+            precio_lista_nuevo:   precioBruto,
+            precio_venta:         p.precio_venta || 0,
+            presentacion_usada:   presentacionUsada,
+            sin_cambio:           Math.abs((infoBD?.precio_lista || 0) - precioBruto) < 0.01
           });
           productosTocados.add(Number(p.producto_id));
         });
       } else {
-        // No existe en DB → listado de nuevos (solo para el proveedor efectivo)
         const nuevoKey = norm(codigoRaw) + '|' + provIdEfectivo;
         if (!codigosNuevosSet.has(nuevoKey)) {
           codigosNuevosSet.add(nuevoKey);
           nuevosProductos.push({
-            codigo: codigoRaw,
-            descripcion: descRaw || '(sin descripción)',
-            precio: precioListaNuevo,
+            codigo:                codigoRaw,
+            descripcion:           descRaw || '(sin descripción)',
+            precio:                precioBruto,
             presentacion_sugerida: presentacionUsada
           });
         }
