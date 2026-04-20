@@ -10,10 +10,10 @@
   <div class="pa-wrap">
 
     <%
-      const prods       = productos || [];
-      const stats       = typeof stats !== 'undefined' ? stats : { total: prods.length, conAumento: 0, conBaja: 0, cambiaProv: 0, nuevos: 0 };
-      const provNombre  = typeof proveedorNombre !== 'undefined' ? proveedorNombre : '';
-      const cnuevos     = typeof cantidadNuevos !== 'undefined' ? Number(cantidadNuevos) : 0;
+      const _prods      = productos || [];
+      const _stats      = (typeof stats !== 'undefined' && stats) ? stats : { total: _prods.length, conAumento: 0, conBaja: 0, cambiaProv: 0, nuevos: 0 };
+      const _provNombre = (typeof proveedorNombre !== 'undefined') ? proveedorNombre : '';
+      const _cnuevos    = (typeof cantidadNuevos !== 'undefined') ? Number(cantidadNuevos) : 0;
     %>
 
     <!-- ════════════════════════════════
@@ -24,7 +24,7 @@
         <span class="pa-eyebrow">
           <i class="fa-solid fa-arrows-rotate"></i>
           Actualización de precios
-          <% if (provNombre) { %> · <strong><%= provNombre %></strong><% } %>
+          <% if (_provNombre) { %> · <strong><%= _provNombre %></strong><% } %>
         </span>
         <h1 class="pa-title">
           Informe de Cambios
@@ -37,9 +37,9 @@
         <a href="/productos/panelControl" class="pa-btn pa-btn--outline">
           <i class="fa-solid fa-arrow-left"></i> Panel de Control
         </a>
-        <% if (cnuevos > 0) { %>
+        <% if (_cnuevos > 0) { %>
           <a href="/productos/actualizados/nuevos.pdf" class="pa-btn pa-btn--primary">
-            <i class="fa-solid fa-file-pdf"></i> Nuevos (<%= cnuevos %>)
+            <i class="fa-solid fa-file-pdf"></i> Nuevos (<%= _cnuevos %>)
           </a>
         <% } else { %>
           <button class="pa-btn pa-btn--primary" disabled>
@@ -57,7 +57,7 @@
       <div class="pa-stat-card pa-stat-card--total">
         <div class="pa-stat-card__icon"><i class="fa-solid fa-list-check"></i></div>
         <div class="pa-stat-card__body">
-          <span class="pa-stat-card__num"><%= stats.total %></span>
+          <span class="pa-stat-card__num"><%= _stats.total %></span>
           <span class="pa-stat-card__label">Con cambio de precio</span>
         </div>
       </div>
@@ -65,7 +65,7 @@
       <div class="pa-stat-card pa-stat-card--sube">
         <div class="pa-stat-card__icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
         <div class="pa-stat-card__body">
-          <span class="pa-stat-card__num"><%= stats.conAumento %></span>
+          <span class="pa-stat-card__num"><%= _stats.conAumento %></span>
           <span class="pa-stat-card__label">Suben de precio</span>
         </div>
       </div>
@@ -73,7 +73,7 @@
       <div class="pa-stat-card pa-stat-card--baja">
         <div class="pa-stat-card__icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
         <div class="pa-stat-card__body">
-          <span class="pa-stat-card__num"><%= stats.conBaja %></span>
+          <span class="pa-stat-card__num"><%= _stats.conBaja %></span>
           <span class="pa-stat-card__label">Bajan de precio</span>
         </div>
       </div>
@@ -81,7 +81,7 @@
       <div class="pa-stat-card pa-stat-card--prov">
         <div class="pa-stat-card__icon"><i class="fa-solid fa-truck-fast"></i></div>
         <div class="pa-stat-card__body">
-          <span class="pa-stat-card__num"><%= stats.cambiaProv %></span>
+          <span class="pa-stat-card__num"><%= _stats.cambiaProv %></span>
           <span class="pa-stat-card__label">Cambian de proveedor asignado</span>
         </div>
       </div>
@@ -89,7 +89,7 @@
       <div class="pa-stat-card pa-stat-card--nuevo">
         <div class="pa-stat-card__icon"><i class="fa-solid fa-plus"></i></div>
         <div class="pa-stat-card__body">
-          <span class="pa-stat-card__num"><%= cnuevos %></span>
+          <span class="pa-stat-card__num"><%= _cnuevos %></span>
           <span class="pa-stat-card__label">Códigos nuevos</span>
         </div>
       </div>
@@ -99,12 +99,12 @@
     <!-- ════════════════════════════════
          TABLA PRINCIPAL
     ════════════════════════════════ -->
-    <% if (prods.length > 0) { %>
+    <% if (_prods.length > 0) { %>
     <div class="pa-panel">
       <div class="pa-panel__hd">
         <i class="fa-solid fa-table-list"></i>
         <span>Productos con variación de precio</span>
-        <span class="pa-badge"><%= prods.length %></span>
+        <span class="pa-badge"><%= _prods.length %></span>
 
         <!-- Filtro rápido -->
         <div class="pa-filter-tabs" style="margin-left:auto;">
@@ -129,7 +129,7 @@
             </tr>
           </thead>
           <tbody>
-            <% prods.forEach(p => {
+            <% _prods.forEach(p => {
               const viejo     = parseFloat(p.precio_lista_antiguo || 0);
               const nuevo     = parseFloat(p.precio_lista_nuevo   || 0);
               const pv        = parseFloat(p.precio_venta         || 0);
