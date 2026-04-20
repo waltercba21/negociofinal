@@ -849,6 +849,94 @@ def _parsear_cromosol_xlsx(file_path):
     return items
 
 
+# ─── Detección y parser especializado para MYL ───────────────────────────────
+# MYL tiene 34k+ filas. Col A=CODART (código), Col F=PRELIS (precio numérico).
+# Fila 1 = título 'ListaPreciosMYL', fila 2 = header, datos desde fila 3.
+# Los precios son numéricos directos (no shared strings) → aún más rápido.
+
+def _detectar_myl(file_path):
+    """Detecta MYL leyendo los primeros 1KB de sharedStrings."""
+    try:
+        with zipfile.ZipFile(file_path) as zf:
+            if 'xl/sharedStrings.xml' not in zf.namelist():
+                return False
+            with zf.open('xl/sharedStrings.xml') as f:
+                chunk = f.read(1024).decode('utf-8', errors='replace')
+            return 'CODART' in chunk and 'PRELIS' in chunk
+    except Exception:
+        return False
+
+def _parsear_myl_xlsx(file_path):
+    """
+    Lee solo col A (CODART) y col F (PRELIS) con zipfile+regex.
+    Los precios son numéricos → no requiere lookup en shared strings para ellos.
+    """
+    _cell_a = re.compile(r'<c r="A(\d+)"([^>]*)><v>([^<]+)</v>')
+    _cell_f = re.compile(r'<c r="F(\d+)"([^>]*)><v>([^<]+)</v>')
+    _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
+    items = []
+
+    try:
+        with zipfile.ZipFile(file_path) as zf:
+            # Shared strings (para los códigos — col A es string)
+            shared = []
+            if 'xl/sharedStrings.xml' in zf.namelist():
+                with zf.open('xl/sharedStrings.xml') as f:
+                    ss = f.read().decode('utf-8', errors='replace')
+                for block in ss.split('<si>')[1:]:
+                    texts = re.findall(r'<t[^>]*>([^<]*)</t>', block)
+                    shared.append(''.join(texts))
+
+            sheets = [n for n in zf.namelist()
+                      if n.startswith('xl/worksheets/sheet') and n.endswith('.xml')]
+            if not sheets:
+                return items
+            with zf.open(sheets[0]) as f:
+                sheet = f.read().decode('utf-8', errors='replace')
+
+        for m in _row_re.finditer(sheet):
+            if int(m.group(1)) <= 2:
+                continue  # saltar título (fila 1) y header (fila 2)
+            row_xml = m.group(2)
+
+            ma = _cell_a.search(row_xml)
+            mf = _cell_f.search(row_xml)
+            if not ma or not mf:
+                continue
+
+            # Código (string compartido)
+            attrs_a, val_a = ma.group(2), ma.group(3)
+            if 't="s"' in attrs_a or "t='s'" in attrs_a:
+                try:
+                    codigo = shared[int(val_a)].strip()
+                except Exception:
+                    continue
+            else:
+                s = val_a.strip()
+                codigo = s[:-2] if re.match(r'^\d+\.0$', s) else s
+
+            # Precio (número directo en el XML)
+            try:
+                precio = float(mf.group(3))
+            except Exception:
+                continue
+
+            codigo_clean = limpiar_codigo(codigo)
+            if not codigo_clean or precio <= 0:
+                continue
+
+            items.append({
+                'codigo':      codigo_clean,
+                'precio':      precio,
+                'descripcion': '',
+                'hoja':        'Page1',
+            })
+    except Exception:
+        pass
+
+    return items
+
+
 def parsear_archivo(file_path):
     """
     Parsea un archivo Excel de lista de precios.
@@ -888,17 +976,28 @@ def parsear_archivo(file_path):
             except Exception as e:
                 return {'items': [], 'hojas': [], 'errores': [str(e)]}
 
-    # ── Detección CROMOSOL sin openpyxl (usando zipfile+regex) ─────────────
-    # CROMOSOL tiene 60k+ filas — detección y parseo directo sobre XML interno.
-    if not necesita_conversion and _detectar_cromosol(path_usar):
-        items_crom = _parsear_cromosol_xlsx(path_usar)
-        if tmp_dir: shutil.rmtree(tmp_dir, ignore_errors=True)
-        dedup = {}
-        for it in items_crom:
-            k = it['codigo'].strip().upper()
-            if k not in dedup or it['precio'] > dedup[k]['precio']:
-                dedup[k] = it
-        return {'items': list(dedup.values()), 'hojas': ['lista precios'], 'errores': []}
+    # ── Detección rápida para listas grandes (CROMOSOL, MYL) ───────────────
+    # Estos proveedores tienen 30k-60k filas. Usamos zipfile+regex para leer
+    # solo las columnas necesarias, sin cargar openpyxl (5x-8x más rápido).
+    if not necesita_conversion:
+        if _detectar_cromosol(path_usar):
+            items_raw = _parsear_cromosol_xlsx(path_usar)
+            hoja_nombre = 'lista precios'
+        elif _detectar_myl(path_usar):
+            items_raw = _parsear_myl_xlsx(path_usar)
+            hoja_nombre = 'Page1'
+        else:
+            items_raw = None
+            hoja_nombre = None
+
+        if items_raw is not None:
+            if tmp_dir: shutil.rmtree(tmp_dir, ignore_errors=True)
+            dedup = {}
+            for it in items_raw:
+                k = it['codigo'].strip().upper()
+                if k not in dedup or it['precio'] > dedup[k]['precio']:
+                    dedup[k] = it
+            return {'items': list(dedup.values()), 'hojas': [hoja_nombre], 'errores': []}
 
     try:
         import openpyxl as _openpyxl
