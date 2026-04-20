@@ -2615,16 +2615,25 @@ actualizarPreciosExcel: async (req, res) => {
 
         (bulkResult.actualizados || []).forEach(p => {
           const infoBD = ppInfoMap.get(norm(p.codigo));
-          productosActualizados.push({
-            producto_id:          p.producto_id,
-            codigo:               p.codigo,
-            nombre:               p.nombre,
-            precio_lista_antiguo: infoBD?.precio_lista || 0,
-            precio_lista_nuevo:   p.precio_lista_nuevo,
-            precio_venta:         p.precio_venta || 0,
-            presentacion_usada:   'unidad',
-            sin_cambio:           Math.abs((infoBD?.precio_lista || 0) - p.precio_lista_nuevo) < 0.01
-          });
+          const precioAnterior = infoBD?.precio_lista || 0;
+          const sinCambio = Math.abs(precioAnterior - p.precio_lista_nuevo) < 0.01;
+          // Solo incluir en la vista los que tuvieron cambio de precio
+          if (!sinCambio) {
+            productosActualizados.push({
+              producto_id:               p.producto_id,
+              codigo:                    p.codigo,
+              nombre:                    p.nombre,
+              precio_lista_antiguo:      precioAnterior,
+              precio_lista_nuevo:        p.precio_lista_nuevo,
+              precio_venta:              p.precio_venta || 0,
+              sin_cambio:                false,
+              es_proveedor_mas_barato:   p.es_proveedor_mas_barato,
+              sera_proveedor_asignado:   p.sera_proveedor_asignado,
+              proveedor_id_manual:       p.proveedor_id_manual,
+              es_proveedor_manual_asignado: p.es_proveedor_manual_asignado,
+              proveedor_asignado_id:     p.proveedor_asignado_id,
+            });
+          }
           productosTocados.add(Number(p.producto_id));
         });
 
@@ -2667,16 +2676,24 @@ actualizarPreciosExcel: async (req, res) => {
 
       if (Array.isArray(resultado) && resultado.length) {
         resultado.forEach(p => {
-          productosActualizados.push({
-            producto_id:          p.producto_id,
-            codigo:               p.codigo,
-            nombre:               p.nombre,
-            precio_lista_antiguo: infoBD?.precio_lista || 0,
-            precio_lista_nuevo:   precioBruto,
-            precio_venta:         p.precio_venta || 0,
-            presentacion_usada:   presentacionUsada,
-            sin_cambio:           Math.abs((infoBD?.precio_lista || 0) - precioBruto) < 0.01
-          });
+          const precioAnt = infoBD?.precio_lista || 0;
+          const sinCambio = Math.abs(precioAnt - precioBruto) < 0.01;
+          if (!sinCambio) {
+            productosActualizados.push({
+              producto_id:               p.producto_id,
+              codigo:                    p.codigo,
+              nombre:                    p.nombre,
+              precio_lista_antiguo:      precioAnt,
+              precio_lista_nuevo:        precioBruto,
+              precio_venta:              p.precio_venta || 0,
+              sin_cambio:                false,
+              es_proveedor_mas_barato:   !p.sin_cambio,
+              sera_proveedor_asignado:   !p.seleccion_manual && !p.sin_cambio,
+              proveedor_id_manual:       p.seleccion_manual ? 1 : 0,
+              es_proveedor_manual_asignado: !!p.seleccion_manual,
+              proveedor_asignado_id:     provIdEfectivo,
+            });
+          }
           productosTocados.add(Number(p.producto_id));
         });
       } else {
@@ -2805,10 +2822,25 @@ actualizarPreciosExcel: async (req, res) => {
       items: nuevosProductos
     };
 
+    // Resumen estadístico para la vista
+    const conAumento  = productosActualizados.filter(p => p.precio_lista_nuevo > p.precio_lista_antiguo).length;
+    const conBaja     = productosActualizados.filter(p => p.precio_lista_nuevo < p.precio_lista_antiguo).length;
+    const cambiaProv  = productosActualizados.filter(p => p.sera_proveedor_asignado).length;
+
     res.render('productosActualizados', {
-      productos: productosActualizados,
+      productos:        productosActualizados,
       ofertasFaltantes,
-      cantidadNuevos: nuevosProductos.length
+      cantidadNuevos:   nuevosProductos.length,
+      proveedorNombre,
+      proveedor_id,
+      stats: {
+        total:      productosActualizados.length,
+        conAumento,
+        conBaja,
+        sinCambio:  0,   // ya no enviamos los sin cambio
+        cambiaProv,
+        nuevos:     nuevosProductos.length,
+      }
     });
 
   } catch (error) {

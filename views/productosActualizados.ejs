@@ -2,88 +2,191 @@
 <!DOCTYPE html>
 <html lang="es">
 <%- include('./layouts/head.ejs') %>
-<link rel="stylesheet" href="/css/pages/productosActualizados.css?v=1" />
+<link rel="stylesheet" href="/css/pages/productosActualizados.css?v=2026" />
 <body>
 <%- include('./layouts/header.ejs') %>
 
 <main class="pa-main">
   <div class="pa-wrap">
 
-    <!-- ══════════════════════════════════════
+    <%
+      const prods       = productos || [];
+      const stats       = typeof stats !== 'undefined' ? stats : { total: prods.length, conAumento: 0, conBaja: 0, cambiaProv: 0, nuevos: 0 };
+      const provNombre  = typeof proveedorNombre !== 'undefined' ? proveedorNombre : '';
+      const cnuevos     = typeof cantidadNuevos !== 'undefined' ? Number(cantidadNuevos) : 0;
+    %>
+
+    <!-- ════════════════════════════════
          HEADER
-    ══════════════════════════════════════ -->
+    ════════════════════════════════ -->
     <div class="pa-page-header">
-      <div>
-        <span class="pa-eyebrow"><i class="fa-solid fa-arrows-rotate"></i> Lista de precios</span>
-        <h1 class="pa-title">Productos Actualizados</h1>
+      <div class="pa-header-left">
+        <span class="pa-eyebrow">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          Actualización de precios
+          <% if (provNombre) { %> · <strong><%= provNombre %></strong><% } %>
+        </span>
+        <h1 class="pa-title">
+          Informe de Cambios
+        </h1>
         <p class="pa-subtitle">
-          <span class="pa-count-badge"><%= (productos || []).length %> productos procesados</span>
+          Solo se muestran los productos cuyo precio de lista cambió
         </p>
       </div>
       <div class="pa-header-actions">
         <a href="/productos/panelControl" class="pa-btn pa-btn--outline">
           <i class="fa-solid fa-arrow-left"></i> Panel de Control
         </a>
-        <% if (typeof cantidadNuevos !== 'undefined' && Number(cantidadNuevos) > 0) { %>
+        <% if (cnuevos > 0) { %>
           <a href="/productos/actualizados/nuevos.pdf" class="pa-btn pa-btn--primary">
-            <i class="fa-solid fa-file-pdf"></i> Productos Nuevos (<%= cantidadNuevos %>)
+            <i class="fa-solid fa-file-pdf"></i> Nuevos (<%= cnuevos %>)
           </a>
         <% } else { %>
           <button class="pa-btn pa-btn--primary" disabled>
-            <i class="fa-solid fa-file-pdf"></i> Productos Nuevos (0)
+            <i class="fa-solid fa-file-pdf"></i> Nuevos (0)
           </button>
         <% } %>
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════
+    <!-- ════════════════════════════════
+         STAT CARDS
+    ════════════════════════════════ -->
+    <div class="pa-stats-row">
+
+      <div class="pa-stat-card pa-stat-card--total">
+        <div class="pa-stat-card__icon"><i class="fa-solid fa-list-check"></i></div>
+        <div class="pa-stat-card__body">
+          <span class="pa-stat-card__num"><%= stats.total %></span>
+          <span class="pa-stat-card__label">Con cambio de precio</span>
+        </div>
+      </div>
+
+      <div class="pa-stat-card pa-stat-card--sube">
+        <div class="pa-stat-card__icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+        <div class="pa-stat-card__body">
+          <span class="pa-stat-card__num"><%= stats.conAumento %></span>
+          <span class="pa-stat-card__label">Suben de precio</span>
+        </div>
+      </div>
+
+      <div class="pa-stat-card pa-stat-card--baja">
+        <div class="pa-stat-card__icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+        <div class="pa-stat-card__body">
+          <span class="pa-stat-card__num"><%= stats.conBaja %></span>
+          <span class="pa-stat-card__label">Bajan de precio</span>
+        </div>
+      </div>
+
+      <div class="pa-stat-card pa-stat-card--prov">
+        <div class="pa-stat-card__icon"><i class="fa-solid fa-truck-fast"></i></div>
+        <div class="pa-stat-card__body">
+          <span class="pa-stat-card__num"><%= stats.cambiaProv %></span>
+          <span class="pa-stat-card__label">Cambian de proveedor asignado</span>
+        </div>
+      </div>
+
+      <div class="pa-stat-card pa-stat-card--nuevo">
+        <div class="pa-stat-card__icon"><i class="fa-solid fa-plus"></i></div>
+        <div class="pa-stat-card__body">
+          <span class="pa-stat-card__num"><%= cnuevos %></span>
+          <span class="pa-stat-card__label">Códigos nuevos</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════════════════════════════════
          TABLA PRINCIPAL
-    ══════════════════════════════════════ -->
+    ════════════════════════════════ -->
+    <% if (prods.length > 0) { %>
     <div class="pa-panel">
       <div class="pa-panel__hd">
         <i class="fa-solid fa-table-list"></i>
-        <span>Detalle de actualización</span>
+        <span>Productos con variación de precio</span>
+        <span class="pa-badge"><%= prods.length %></span>
+
+        <!-- Filtro rápido -->
+        <div class="pa-filter-tabs" style="margin-left:auto;">
+          <button class="pa-filter-tab pa-filter-tab--active" data-filter="all">Todos</button>
+          <button class="pa-filter-tab" data-filter="sube">↑ Sube</button>
+          <button class="pa-filter-tab" data-filter="baja">↓ Baja</button>
+          <button class="pa-filter-tab" data-filter="prov">Cambia proveedor</button>
+        </div>
       </div>
+
       <div class="pa-table-wrap">
-        <table class="pa-table">
+        <table class="pa-table" id="pa-main-table">
           <thead>
             <tr>
               <th>Código</th>
-              <th>Nombre</th>
-              <th>Precio Lista Viejo</th>
-              <th>Precio Lista Nuevo</th>
-              <th>Precio de Venta</th>
-              <th>Diferencia</th>
-              <th>Estado</th>
+              <th>Nombre del Producto</th>
+              <th>P. Lista Anterior</th>
+              <th>P. Lista Nuevo</th>
+              <th>Variación</th>
+              <th>Precio Venta</th>
+              <th>Proveedor Asignado</th>
             </tr>
           </thead>
           <tbody>
-            <% (productos || []).forEach(producto => {
-              let viejo = parseFloat(producto.precio_lista_antiguo || 0);
-              let nuevo = parseFloat(producto.precio_lista_nuevo || 0);
-              let diferencia = viejo > 0 ? ((nuevo - viejo) / viejo) * 100 : 0;
-              let diferenciaRedondeada = diferencia.toFixed(2);
-              let diferenciaClass = diferencia > 0 ? 'positivo' : (diferencia < 0 ? 'negativo' : 'neutro');
-              let modificacion = producto.sin_cambio ? 'NO MODIFICA' : 'MODIFICA';
+            <% prods.forEach(p => {
+              const viejo     = parseFloat(p.precio_lista_antiguo || 0);
+              const nuevo     = parseFloat(p.precio_lista_nuevo   || 0);
+              const pv        = parseFloat(p.precio_venta         || 0);
+              const diff      = viejo > 0 ? ((nuevo - viejo) / viejo) * 100 : 0;
+              const diffStr   = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+              const diffClass = diff > 0 ? 'sube' : (diff < 0 ? 'baja' : 'igual');
+
+              // Determinar estado de proveedor
+              let provTag = '';
+              let provClass = '';
+              let rowAttr = `data-diff="${diffClass}"`;
+
+              if (p.sera_proveedor_asignado) {
+                // Este proveedor SE CONVIERTE en el asignado tras la actualización
+                provTag   = `<span class="pa-prov-tag pa-prov-tag--nuevo"><i class="fa-solid fa-circle-check"></i> Ahora proveedor asignado</span>`;
+                provClass = 'pa-row--prov-nuevo';
+                rowAttr  += ' data-prov="prov"';
+              } else if (p.es_proveedor_manual_asignado) {
+                // Proveedor fijado manualmente por el admin, y es el que se actualizó
+                provTag   = `<span class="pa-prov-tag pa-prov-tag--manual"><i class="fa-solid fa-lock"></i> Asignado manual (PV recalculado)</span>`;
+                provClass = '';
+              } else if (p.es_proveedor_mas_barato === false) {
+                // Hay otro proveedor más barato — indicar cuál sigue siendo el asignado
+                provTag   = `<span class="pa-prov-tag pa-prov-tag--otro"><i class="fa-solid fa-store"></i> Otro sigue asignado</span>`;
+                provClass = '';
+              } else {
+                provTag   = `<span class="pa-prov-tag pa-prov-tag--mismo"><i class="fa-solid fa-circle-check"></i> Proveedor asignado</span>`;
+                provClass = '';
+                rowAttr  += ' data-prov="prov"';
+              }
             %>
-            <tr class="pa-table__row <%= producto.sin_cambio ? 'pa-row--neutro' : '' %>">
-              <td class="pa-td pa-td--code"><code><%= producto.codigo %></code></td>
-              <td class="pa-td pa-td--nombre"><%= producto.nombre %></td>
-              <td class="pa-td pa-td--precio pa-td--old">$<%= viejo.toLocaleString('es-AR') %></td>
-              <td class="pa-td pa-td--precio pa-td--new">$<%= nuevo.toLocaleString('es-AR') %></td>
-              <td class="pa-td pa-td--precio">$<%= parseFloat(producto.precio_venta || 0).toLocaleString('es-AR') %></td>
-              <td class="pa-td">
-                <span class="pa-diff pa-diff--<%= diferenciaClass %>">
-                  <% if (diferencia > 0) { %><i class="fa-solid fa-arrow-trend-up"></i><% } %>
-                  <% if (diferencia < 0) { %><i class="fa-solid fa-arrow-trend-down"></i><% } %>
-                  <% if (diferencia === 0) { %><i class="fa-solid fa-minus"></i><% } %>
-                  <%= diferenciaRedondeada %>%
-                </span>
+            <tr class="pa-table__row <%= provClass %>" <%= rowAttr %>>
+              <td class="pa-td pa-td--code">
+                <code><%= p.codigo %></code>
+              </td>
+              <td class="pa-td pa-td--nombre" title="<%= p.nombre %>">
+                <%= p.nombre %>
+              </td>
+              <td class="pa-td pa-td--precio pa-td--old">
+                $<%= viejo.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
+              </td>
+              <td class="pa-td pa-td--precio pa-td--new">
+                $<%= nuevo.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
               </td>
               <td class="pa-td">
-                <span class="pa-estado pa-estado--<%= producto.sin_cambio ? 'no-modifica' : 'modifica' %>">
-                  <%= modificacion %>
+                <span class="pa-diff pa-diff--<%= diffClass %>">
+                  <% if (diff > 0) { %><i class="fa-solid fa-arrow-up"></i>
+                  <% } else if (diff < 0) { %><i class="fa-solid fa-arrow-down"></i>
+                  <% } else { %><i class="fa-solid fa-minus"></i><% } %>
+                  <%= diffStr %>
                 </span>
+              </td>
+              <td class="pa-td pa-td--precio">
+                $<%= pv.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0}) %>
+              </td>
+              <td class="pa-td">
+                <%- provTag %>
               </td>
             </tr>
             <% }); %>
@@ -91,19 +194,29 @@
         </table>
       </div>
     </div>
+    <% } else { %>
+    <div class="pa-panel pa-panel--empty">
+      <div class="pa-empty">
+        <i class="fa-solid fa-circle-check pa-empty__icon"></i>
+        <p class="pa-empty__title">Sin variaciones de precio</p>
+        <p class="pa-empty__desc">Todos los precios del proveedor siguen igual que en la lista anterior.</p>
+      </div>
+    </div>
+    <% } %>
 
-    <!-- ══════════════════════════════════════
-         OFERTAS FALTANTES (condicional)
-    ══════════════════════════════════════ -->
+    <!-- ════════════════════════════════
+         OFERTAS FALTANTES
+    ════════════════════════════════ -->
     <% if (ofertasFaltantes && ofertasFaltantes.length) { %>
     <div class="pa-panel pa-panel--warning">
       <div class="pa-panel__hd pa-panel__hd--warning">
         <i class="fa-solid fa-triangle-exclamation"></i>
         <span>Productos fuera del Excel de DISTRIMAR OFERTAS</span>
-        <span class="pa-count-badge pa-count-badge--warning"><%= ofertasFaltantes.length %></span>
+        <span class="pa-badge pa-badge--warning"><%= ofertasFaltantes.length %></span>
       </div>
       <p class="pa-warning-desc">
-        Estos productos <strong>no vinieron en el último Excel de ofertas</strong>. Revisalos: probablemente debas quitarles la bandera de oferta y volver al precio de lista habitual.
+        Estos productos <strong>no vinieron en el último Excel de ofertas</strong>.
+        Revisalos: probablemente debas quitarles la bandera de oferta y volver al precio de lista habitual.
       </p>
       <div class="pa-table-wrap">
         <table class="pa-table">
@@ -113,25 +226,27 @@
               <th>Nombre</th>
               <th>Precio Lista (OFERTA) en DB</th>
               <th>Precio de Venta Actual</th>
-              <th>Marcado como Oferta</th>
+              <th>En Oferta</th>
             </tr>
           </thead>
           <tbody>
-            <% ofertasFaltantes.forEach(p => { %>
+            <% ofertasFaltantes.forEach(o => { %>
             <tr class="pa-table__row">
-              <td class="pa-td pa-td--code"><code><%= p.codigo %></code></td>
-              <td class="pa-td pa-td--nombre"><%= p.nombre %></td>
-              <td class="pa-td pa-td--precio">$<%= Number(p.precio_lista_oferta || 0).toLocaleString('es-AR') %></td>
-              <td class="pa-td pa-td--precio">$<%= Number(p.precio_venta || 0).toLocaleString('es-AR') %></td>
+              <td class="pa-td pa-td--code"><code><%= o.codigo %></code></td>
+              <td class="pa-td pa-td--nombre"><%= o.nombre %></td>
+              <td class="pa-td pa-td--precio">$<%= Number(o.precio_lista_oferta || 0).toLocaleString('es-AR') %></td>
+              <td class="pa-td pa-td--precio">$<%= Number(o.precio_venta || 0).toLocaleString('es-AR') %></td>
               <td class="pa-td">
-                <span class="pa-estado pa-estado--oferta"><%= p.oferta_flag %></span>
+                <span class="pa-prov-tag pa-prov-tag--oferta"><%= o.oferta_flag %></span>
               </td>
             </tr>
             <% }); %>
           </tbody>
         </table>
       </div>
-      <p class="pa-warning-total">Total fuera de la nueva lista: <strong><%= ofertasFaltantes.length %></strong> productos</p>
+      <p class="pa-warning-total">
+        Total fuera de la nueva lista: <strong><%= ofertasFaltantes.length %></strong> productos
+      </p>
     </div>
     <% } %>
 
@@ -144,6 +259,26 @@
 
   </div>
 </main>
+
+<script>
+  // Filtro de tabs
+  document.querySelectorAll('.pa-filter-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pa-filter-tab').forEach(b => b.classList.remove('pa-filter-tab--active'));
+      btn.classList.add('pa-filter-tab--active');
+      const filter = btn.dataset.filter;
+      document.querySelectorAll('#pa-main-table tbody tr').forEach(row => {
+        if (filter === 'all') {
+          row.style.display = '';
+        } else if (filter === 'prov') {
+          row.style.display = row.dataset.prov === 'prov' ? '' : 'none';
+        } else {
+          row.style.display = row.dataset.diff === filter ? '' : 'none';
+        }
+      });
+    });
+  });
+</script>
 
 <%- include('./layouts/footer.ejs') %>
 </body>

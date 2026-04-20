@@ -1,6 +1,5 @@
 /* ============================================================
-   productosActualizados.css — Autofaros
-   v2026-03-10
+   productosActualizados.css — Autofaros v2026-04
    ============================================================ */
 
 /* ── 1. BASE ───────────────────────────────────────────────── */
@@ -11,11 +10,11 @@
 }
 
 .pa-wrap {
-  max-width: 1400px;
+  max-width: 1440px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 /* ── 2. PAGE HEADER ────────────────────────────────────────── */
@@ -34,42 +33,27 @@
   font-weight: 700;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: #1F487E;
-  margin-bottom: 4px;
+  color: #4e80c0;
+  margin-bottom: 6px;
 }
-
-.pa-eyebrow i { color: #d90429; margin-right: 4px; }
+.pa-eyebrow i { color: #d90429; margin-right: 5px; }
+.pa-eyebrow strong { color: #f0f4ff; }
 
 .pa-title {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: clamp(30px, 4vw, 46px);
+  font-size: clamp(28px, 4vw, 44px);
   font-weight: 800;
   color: #f0f4ff;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   letter-spacing: -0.5px;
   line-height: 1;
 }
 
-.pa-subtitle { margin: 0; }
-
-.pa-count-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: 6px;
-  background: rgba(31,72,126,0.15);
-  border: 1px solid rgba(31,72,126,0.25);
+.pa-subtitle {
+  margin: 0;
   font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  color: #4e80c0;
-  letter-spacing: 0.3px;
-}
-
-.pa-count-badge--warning {
-  background: rgba(217,119,6,0.12);
-  border-color: rgba(217,119,6,0.25);
-  color: #fbbf24;
+  font-size: 13px;
+  color: rgba(240,244,255,0.4);
 }
 
 .pa-header-actions {
@@ -99,7 +83,7 @@
 
 .pa-btn--outline {
   background: transparent;
-  color: rgba(240,244,255,0.7);
+  color: rgba(240,244,255,0.6);
   border: 1.5px solid rgba(31,72,126,0.3);
 }
 .pa-btn--outline:hover {
@@ -111,12 +95,70 @@
 .pa-btn--primary {
   background: #1F487E;
   color: #fff;
-  border: none;
 }
 .pa-btn--primary:hover { background: #2a5da0; box-shadow: 0 4px 14px rgba(31,72,126,0.4); }
 .pa-btn--primary:disabled { opacity: 0.35; cursor: not-allowed; }
 
-/* ── 4. PANEL ──────────────────────────────────────────────── */
+/* ── 4. STAT CARDS ─────────────────────────────────────────── */
+.pa-stats-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.pa-stat-card {
+  background: rgba(17,28,48,0.8);
+  border: 1px solid rgba(31,72,126,0.18);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: border-color 0.15s;
+}
+
+.pa-stat-card:hover { border-color: rgba(31,72,126,0.4); }
+
+.pa-stat-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.pa-stat-card--total .pa-stat-card__icon  { background: rgba(31,72,126,0.15); color: #4e80c0; }
+.pa-stat-card--sube  .pa-stat-card__icon  { background: rgba(217,4,41,0.12);  color: #ff4d6d; }
+.pa-stat-card--baja  .pa-stat-card__icon  { background: rgba(74,222,128,0.1); color: #4ade80; }
+.pa-stat-card--prov  .pa-stat-card__icon  { background: rgba(251,191,36,0.1); color: #fbbf24; }
+.pa-stat-card--nuevo .pa-stat-card__icon  { background: rgba(129,140,248,0.1); color: #818cf8; }
+
+.pa-stat-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pa-stat-card__num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #f0f4ff;
+  line-height: 1;
+}
+
+.pa-stat-card__label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: rgba(240,244,255,0.4);
+  line-height: 1.3;
+}
+
+/* ── 5. PANEL ──────────────────────────────────────────────── */
 .pa-panel {
   background: rgba(17,28,48,0.8);
   border: 1px solid rgba(31,72,126,0.18);
@@ -124,55 +166,78 @@
   overflow: hidden;
 }
 
-.pa-panel--warning {
-  border-color: rgba(217,119,6,0.25);
-}
+.pa-panel--warning { border-color: rgba(217,119,6,0.25); }
+.pa-panel--empty   { border-style: dashed; border-color: rgba(31,72,126,0.2); }
 
 .pa-panel__hd {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 20px;
+  padding: 13px 20px;
   border-bottom: 1px solid rgba(31,72,126,0.15);
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: rgba(240,244,255,0.5);
+  color: rgba(240,244,255,0.45);
 }
 
 .pa-panel__hd i { color: #1F487E; }
-
-.pa-panel__hd--warning {
-  border-bottom-color: rgba(217,119,6,0.15);
-  color: rgba(240,244,255,0.5);
-}
+.pa-panel__hd--warning { border-bottom-color: rgba(217,119,6,0.15); }
 .pa-panel__hd--warning i { color: #fbbf24; }
 
-.pa-warning-desc {
-  padding: 14px 20px 0;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  color: rgba(240,244,255,0.5);
-  line-height: 1.5;
-  margin: 0;
+/* Badge en el header del panel */
+.pa-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 5px;
+  background: rgba(31,72,126,0.15);
+  border: 1px solid rgba(31,72,126,0.25);
+  font-size: 11px;
+  font-weight: 700;
+  color: #4e80c0;
 }
 
-.pa-warning-desc strong { color: #fbbf24; }
+.pa-badge--warning {
+  background: rgba(217,119,6,0.12);
+  border-color: rgba(217,119,6,0.25);
+  color: #fbbf24;
+}
 
-.pa-warning-total {
-  padding: 12px 20px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+/* ── 6. FILTER TABS ────────────────────────────────────────── */
+.pa-filter-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.pa-filter-tab {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(31,72,126,0.2);
+  background: transparent;
   color: rgba(240,244,255,0.4);
-  margin: 0;
-  border-top: 1px solid rgba(31,72,126,0.12);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
 }
 
-.pa-warning-total strong { color: rgba(240,244,255,0.8); }
+.pa-filter-tab:hover {
+  background: rgba(31,72,126,0.1);
+  color: rgba(240,244,255,0.8);
+}
 
-/* ── 5. TABLA ──────────────────────────────────────────────── */
+.pa-filter-tab--active {
+  background: rgba(31,72,126,0.2);
+  border-color: rgba(31,72,126,0.4);
+  color: #f0f4ff;
+}
+
+/* ── 7. TABLA ──────────────────────────────────────────────── */
 .pa-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -190,30 +255,35 @@
 }
 
 .pa-table thead th {
-  padding: 12px 16px;
+  padding: 11px 16px;
   text-align: left;
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(240,244,255,0.35);
+  color: rgba(240,244,255,0.3);
   white-space: nowrap;
-  background: rgba(31,72,126,0.06);
+  background: rgba(31,72,126,0.05);
 }
 
 .pa-table__row {
-  border-bottom: 1px solid rgba(31,72,126,0.08);
-  transition: background 0.12s;
+  border-bottom: 1px solid rgba(31,72,126,0.07);
+  transition: background 0.1s;
 }
 
-.pa-table__row:hover { background: rgba(31,72,126,0.08); }
+.pa-table__row:hover { background: rgba(31,72,126,0.07); }
 .pa-table__row:last-child { border-bottom: none; }
-.pa-row--neutro { opacity: 0.55; }
-.pa-row--neutro:hover { opacity: 0.75; }
+
+/* Highlight fila que cambia de proveedor */
+.pa-row--prov-nuevo {
+  background: rgba(251,191,36,0.03);
+  border-left: 2px solid rgba(251,191,36,0.3);
+}
+.pa-row--prov-nuevo:hover { background: rgba(251,191,36,0.06); }
 
 .pa-td {
-  padding: 11px 16px;
+  padding: 10px 16px;
   color: rgba(240,244,255,0.8);
   vertical-align: middle;
 }
@@ -230,7 +300,7 @@
 }
 
 .pa-td--nombre {
-  max-width: 280px;
+  max-width: 260px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -243,20 +313,17 @@
   font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
-  color: rgba(240,244,255,0.7);
 }
 
 .pa-td--old {
   color: rgba(240,244,255,0.35);
   text-decoration: line-through;
-  text-decoration-color: rgba(240,244,255,0.2);
+  text-decoration-color: rgba(240,244,255,0.15);
 }
 
-.pa-td--new {
-  color: #f0f4ff;
-}
+.pa-td--new { color: #f0f4ff; }
 
-/* ── 6. BADGES DIFERENCIA ──────────────────────────────────── */
+/* ── 8. BADGE VARIACIÓN ────────────────────────────────────── */
 .pa-diff {
   display: inline-flex;
   align-items: center;
@@ -269,67 +336,146 @@
   white-space: nowrap;
 }
 
-.pa-diff--positivo {
+.pa-diff--sube {
   background: rgba(217,4,41,0.12);
   border: 1px solid rgba(217,4,41,0.25);
   color: #ff4d6d;
 }
 
-.pa-diff--negativo {
+.pa-diff--baja {
   background: rgba(74,222,128,0.1);
   border: 1px solid rgba(74,222,128,0.2);
   color: #4ade80;
 }
 
-.pa-diff--neutro {
+.pa-diff--igual {
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.07);
   color: rgba(240,244,255,0.3);
 }
 
-/* ── 7. BADGES ESTADO ──────────────────────────────────────── */
-.pa-estado {
+/* ── 9. TAGS DE PROVEEDOR ──────────────────────────────────── */
+.pa-prov-tag {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  gap: 5px;
+  padding: 3px 9px;
   border-radius: 6px;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  font-weight: 600;
   white-space: nowrap;
 }
 
-.pa-estado--modifica {
-  background: rgba(31,72,126,0.15);
-  border: 1px solid rgba(31,72,126,0.3);
+/* Este proveedor PASA a ser el asignado */
+.pa-prov-tag--nuevo {
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.3);
+  color: #fbbf24;
+}
+
+/* Ya era el proveedor asignado y sigue siéndolo */
+.pa-prov-tag--mismo {
+  background: rgba(31,72,126,0.12);
+  border: 1px solid rgba(31,72,126,0.25);
   color: #4e80c0;
 }
 
-.pa-estado--no-modifica {
+/* Hay otro proveedor más barato, sigue asignado el otro */
+.pa-prov-tag--otro {
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07);
-  color: rgba(240,244,255,0.25);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(240,244,255,0.35);
 }
 
-.pa-estado--oferta {
+/* Asignación manual por el admin */
+.pa-prov-tag--manual {
+  background: rgba(129,140,248,0.1);
+  border: 1px solid rgba(129,140,248,0.25);
+  color: #818cf8;
+}
+
+/* Oferta */
+.pa-prov-tag--oferta {
   background: rgba(217,4,41,0.1);
   border: 1px solid rgba(217,4,41,0.25);
   color: #ff4d6d;
 }
 
-/* ── 8. FOOTER ─────────────────────────────────────────────── */
+/* ── 10. ESTADO VACÍO ──────────────────────────────────────── */
+.pa-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 52px 24px;
+  gap: 10px;
+  text-align: center;
+}
+
+.pa-empty__icon {
+  font-size: 42px;
+  color: #4ade80;
+  margin-bottom: 4px;
+}
+
+.pa-empty__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0f4ff;
+  margin: 0;
+}
+
+.pa-empty__desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240,244,255,0.4);
+  margin: 0;
+}
+
+/* ── 11. PANEL WARNING ─────────────────────────────────────── */
+.pa-warning-desc {
+  padding: 14px 20px 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240,244,255,0.5);
+  line-height: 1.5;
+  margin: 0;
+}
+.pa-warning-desc strong { color: #fbbf24; }
+
+.pa-warning-total {
+  padding: 12px 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(240,244,255,0.4);
+  margin: 0;
+  border-top: 1px solid rgba(31,72,126,0.12);
+}
+.pa-warning-total strong { color: rgba(240,244,255,0.8); }
+
+/* ── 12. FOOTER ────────────────────────────────────────────── */
 .pa-footer-actions {
   display: flex;
   justify-content: flex-start;
   padding-bottom: 8px;
 }
 
-/* ── 9. RESPONSIVE ─────────────────────────────────────────── */
+/* ── 13. RESPONSIVE ────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .pa-stats-row { grid-template-columns: repeat(3, 1fr); }
+}
+
 @media (max-width: 768px) {
   .pa-main { padding: 88px 12px 48px; }
   .pa-page-header { flex-direction: column; gap: 14px; }
   .pa-header-actions { width: 100%; }
+  .pa-stats-row { grid-template-columns: repeat(2, 1fr); }
   .pa-td--nombre { max-width: 140px; }
+  .pa-filter-tabs { flex-wrap: wrap; }
+  .pa-panel__hd { flex-wrap: wrap; }
+}
+
+@media (max-width: 480px) {
+  .pa-stats-row { grid-template-columns: 1fr 1fr; }
 }

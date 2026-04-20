@@ -779,13 +779,25 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
     }
 
     // ── Armar respuesta ───────────────────────────────────────────────────────
-    const actualizados = resultados.map(r => ({
-      producto_id:       r.producto_id,
-      codigo:            r.codigo,
-      nombre:            r.nombre,
-      precio_lista_nuevo: r.precio_lista_nuevo,
-      precio_venta:      r.precio_venta,
-    }));
+    const actualizados = resultados.map(r => {
+      const provBarato  = masBaratoMap.get(r.producto_id);
+      const esMasBarato = provBarato === proveedor_id;
+      const esManual    = r.proveedor_id_manual === 1;
+      return {
+        producto_id:         r.producto_id,
+        codigo:              r.codigo,
+        nombre:              r.nombre,
+        precio_lista_nuevo:  r.precio_lista_nuevo,
+        precio_venta:        r.precio_venta,
+        // Para la vista: estado del proveedor tras la actualización
+        es_proveedor_mas_barato: esMasBarato,
+        proveedor_asignado_id:   r.proveedor_asignado,  // el que estaba antes
+        proveedor_id_manual:     r.proveedor_id_manual,
+        sera_proveedor_asignado: !esManual && esMasBarato,
+        // si era manual y es el mismo proveedor que se actualiza → PV recalculado
+        es_proveedor_manual_asignado: esManual && r.proveedor_asignado === proveedor_id,
+      };
+    });
 
     return { actualizados, nuevos };
 
