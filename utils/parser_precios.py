@@ -13,8 +13,13 @@ Estrategia de detección (por orden):
 """
 
 import sys, os, re, json, subprocess, tempfile, shutil, unicodedata, zipfile
+import html as _html_mod
 
 # ─── Utilidades ───────────────────────────────────────────────────────────────
+
+def _clean_desc(s):
+    if not s: return ''
+    return _html_mod.unescape(str(s)).strip()
 
 def norm(v):
     if v is None: return ''
@@ -283,7 +288,7 @@ def parsear_hoja(sheet_name, ws):
 
         for codigo in codigos:
             items.append({'codigo': codigo, 'precio': precio,
-                          'descripcion': descripcion, 'hoja': sheet_name})
+                          'descripcion': _clean_desc(descripcion), 'hoja': sheet_name})
     return items
 
 # ─── Selección de hojas ───────────────────────────────────────────────────────
@@ -412,7 +417,7 @@ def parsear_hoja_faros_ausili(sheet_name, ws):
         items.append({
             'codigo':      codigo,
             'precio':      precio_final,
-            'descripcion': descripcion,
+            'descripcion': _clean_desc(descripcion),
             'hoja':        sheet_name,
         })
 
@@ -599,7 +604,7 @@ def parsear_hoja_marca_fal(sheet_name, ws):
         descripcion = str(get(2) or '').strip()
 
         items.append({'codigo': codigo, 'precio': precio,
-                      'descripcion': descripcion, 'hoja': sheet_name})
+                      'descripcion': _clean_desc(descripcion), 'hoja': sheet_name})
     return items
 
 
@@ -670,7 +675,7 @@ def parsear_hoja_myl(sheet_name, ws):
         items.append({
             'codigo':      codigo,
             'precio':      precio,
-            'descripcion': descripcion,
+            'descripcion': _clean_desc(descripcion),
             'hoja':        sheet_name,
         })
     return items
@@ -717,7 +722,7 @@ def _parsear_xls_con_xlrd(file_path):
                     precio = limpiar_precio(get(4))
                     if not precio or precio <= 0: continue
                     todos.append({'codigo': codigo, 'precio': precio,
-                                  'descripcion': descripcion, 'hoja': sh})
+                                  'descripcion': _clean_desc(descripcion), 'hoja': sh})
             else:
                 # Parser genérico: buscar código en col 0, precio en col 4
                 # (estructura estándar de hojas por marca de FAL)
@@ -730,7 +735,7 @@ def _parsear_xls_con_xlrd(file_path):
                     if not precio or precio <= 0: continue
                     descripcion = str(get(2) or '').strip()
                     todos.append({'codigo': codigo, 'precio': precio,
-                                  'descripcion': descripcion, 'hoja': sh})
+                                  'descripcion': _clean_desc(descripcion), 'hoja': sh})
         except Exception as e:
             errores.append(f'Hoja "{sh}": {e}')
 
@@ -774,6 +779,7 @@ def _parsear_cromosol_xlsx(file_path):
     """
     items = []
     _cell_b = re.compile(r'<c r="B\d+"([^>]*)><v>([^<]+)</v>')
+    _cell_c = re.compile(r'<c r="C\d+"([^>]*)><v[^>]*>([^<]+)</v>')
     _cell_d = re.compile(r'<c r="D\d+"([^>]*)><v>([^<]+)</v>')
     _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
 
@@ -837,10 +843,22 @@ def _parsear_cromosol_xlsx(file_path):
             if not codigo_clean:
                 continue
 
+            # Descripción col C
+            mc = _cell_c.search(row_xml)
+            if mc:
+                attrs_c, val_c = mc.group(1), mc.group(2)
+                if 't="s"' in attrs_c or "t='s'" in attrs_c:
+                    try: desc = shared[int(val_c)].strip()
+                    except: desc = ''
+                else:
+                    desc = val_c.strip()
+            else:
+                desc = ''
+
             items.append({
                 'codigo':      codigo_clean,
                 'precio':      precio,
-                'descripcion': '',
+                'descripcion': _clean_desc(desc),
                 'hoja':        'lista precios',
             })
     except Exception:
@@ -872,6 +890,7 @@ def _parsear_myl_xlsx(file_path):
     Los precios son numéricos → no requiere lookup en shared strings para ellos.
     """
     _cell_a = re.compile(r'<c r="A(\d+)"([^>]*)><v>([^<]+)</v>')
+    _cell_e = re.compile(r'<c r="E(\d+)"([^>]*)><v[^>]*>([^<]+)</v>')
     _cell_f = re.compile(r'<c r="F(\d+)"([^>]*)><v>([^<]+)</v>')
     _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
     items = []
@@ -925,10 +944,22 @@ def _parsear_myl_xlsx(file_path):
             if not codigo_clean or precio <= 0:
                 continue
 
+            # Descripción col E (DESCRI)
+            me_desc = _cell_e.search(row_xml)
+            if me_desc:
+                attrs_e3, val_e3 = me_desc.group(2), me_desc.group(3)
+                if 't="s"' in attrs_e3 or "t='s'" in attrs_e3:
+                    try: desc = shared[int(val_e3)].strip()
+                    except: desc = ''
+                else:
+                    desc = val_e3.strip()
+            else:
+                desc = ''
+
             items.append({
                 'codigo':      codigo_clean,
                 'precio':      precio,
-                'descripcion': '',
+                'descripcion': _clean_desc(desc),
                 'hoja':        'Page1',
             })
     except Exception:
@@ -961,6 +992,7 @@ def _parsear_lidercar_xlsx(file_path):
     """
     _cell_a = re.compile(r'<c r="A(\d+)"([^>]*)><v>([^<]+)</v>')
     _cell_b = re.compile(r'<c r="B(\d+)"([^>]*)><v>([^<]+)</v>')
+    _cell_d = re.compile(r'<c r="D(\d+)"([^>]*)><v[^>]*>([^<]+)</v>')
     _cell_i = re.compile(r'<c r="I(\d+)"([^>]*)><v>([^<]+)</v>')
     _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
     items = []
@@ -1016,13 +1048,24 @@ def _parsear_lidercar_xlsx(file_path):
                     if s:
                         codigos.append(s)
 
+            md_desc = _cell_d.search(row_xml)
+            if md_desc:
+                attrs_d2, val_d2 = md_desc.group(2), md_desc.group(3)
+                if 't="s"' in attrs_d2 or "t='s'" in attrs_d2:
+                    try: desc = shared[int(val_d2)].strip()
+                    except: desc = ''
+                else:
+                    desc = val_d2.strip()
+            else:
+                desc = ''
+
             for cod in codigos:
                 codigo_clean = limpiar_codigo(cod)
                 if codigo_clean:
                     items.append({
                         'codigo':      codigo_clean,
                         'precio':      precio,
-                        'descripcion': '',
+                        'descripcion': _clean_desc(desc),
                         'hoja':        'Hoja1',
                     })
     except Exception:
@@ -1077,6 +1120,7 @@ def _parsear_fal_xlsx(file_path):
         r'(?:<f>[^<]*</f>)?'
         r'<v[^>]*>([^<]+)</v>'
     )
+    _cell_c = re.compile(r'<c r="C\d+"[^>]*><v[^>]*>([^<]*)</v>')
     _cell_e = re.compile(r'<c r="E\d+"[^>]*>(?:<f>[^<]*</f>)?<v[^>]*>([^<]+)</v>')
     _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
     items = []
@@ -1132,10 +1176,13 @@ def _parsear_fal_xlsx(file_path):
                     if not codigo_clean:
                         continue
 
+                    mc = _cell_c.search(row_xml)
+                    descripcion = mc.group(1).strip() if mc else ''
+
                     items.append({
                         'codigo':      codigo_clean,
                         'precio':      precio,
-                        'descripcion': '',
+                        'descripcion': _clean_desc(descripcion),
                         'hoja':        sheet_name,
                     })
     except Exception:
