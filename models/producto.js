@@ -687,13 +687,13 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
     // ── PASO 5: Actualizar precio_venta en productos ──────────────────────────
     // Solo para productos donde este proveedor ES el más barato
     // Calculamos cuál es el más barato con una sola query JOIN
+    const masBaratoMap = new Map();  // declarado aquí para que esté en scope en el return
 
     if (resultados.length > 0) {
       const prodIds = [...new Set(resultados.map(r => r.producto_id))];
 
       // Traer el proveedor más barato por cada producto de una sola vez
       const BATCH2 = 500;
-      const masBaratoMap = new Map();
       for (let i = 0; i < prodIds.length; i += BATCH2) {
         const chunk = prodIds.slice(i, i + BATCH2);
         const [cheapRows] = await conn.query(
