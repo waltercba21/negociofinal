@@ -937,6 +937,213 @@ def _parsear_myl_xlsx(file_path):
     return items
 
 
+# ─── Detección y parser especializado para LIDERCAR ──────────────────────────
+# LIDERCAR tiene ~10k filas. Header en fila 6, datos desde fila 7.
+# Col A=Cód.Izq, Col B=Cód.der (ambos pueden tener código), Col I=Precio lista.
+# Los códigos son numéricos en el XML (no shared strings) → carga mínima.
+
+def _detectar_lidercar(file_path):
+    """Detecta LIDERCAR buscando sus encabezados en sharedStrings."""
+    try:
+        with zipfile.ZipFile(file_path) as zf:
+            if 'xl/sharedStrings.xml' not in zf.namelist():
+                return False
+            with zf.open('xl/sharedStrings.xml') as f:
+                ss = f.read().decode('utf-8', errors='replace')
+            return ('Cód. Izq' in ss or 'C\u00f3d. Izq' in ss) and 'Precio lista' in ss
+    except Exception:
+        return False
+
+def _parsear_lidercar_xlsx(file_path):
+    """
+    Lee col A (Cód.Izq), col B (Cód.der) y col I (Precio lista) con zipfile+regex.
+    Ambas columnas de código pueden tener valor para el mismo producto.
+    """
+    _cell_a = re.compile(r'<c r="A(\d+)"([^>]*)><v>([^<]+)</v>')
+    _cell_b = re.compile(r'<c r="B(\d+)"([^>]*)><v>([^<]+)</v>')
+    _cell_i = re.compile(r'<c r="I(\d+)"([^>]*)><v>([^<]+)</v>')
+    _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
+    items = []
+
+    try:
+        with zipfile.ZipFile(file_path) as zf:
+            shared = []
+            if 'xl/sharedStrings.xml' in zf.namelist():
+                with zf.open('xl/sharedStrings.xml') as f:
+                    ss = f.read().decode('utf-8', errors='replace')
+                for block in ss.split('<si>')[1:]:
+                    texts = re.findall(r'<t[^>]*>([^<]*)</t>', block)
+                    shared.append(''.join(texts).strip())
+
+            sheets = [n for n in zf.namelist()
+                      if n.startswith('xl/worksheets/sheet') and n.endswith('.xml')]
+            if not sheets:
+                return items
+            with zf.open(sheets[0]) as f:
+                sheet = f.read().decode('utf-8', errors='replace')
+
+        for m in _row_re.finditer(sheet):
+            if int(m.group(1)) <= 6:
+                continue  # saltar cabeceras (filas 1-6)
+            row_xml = m.group(2)
+
+            # Precio en col I (siempre numérico)
+            mi = _cell_i.search(row_xml)
+            if not mi:
+                continue
+            try:
+                precio = float(mi.group(3))
+            except Exception:
+                continue
+            if precio <= 0:
+                continue
+
+            # Códigos en col A y/o col B
+            codigos = []
+            for mc in [_cell_a.search(row_xml), _cell_b.search(row_xml)]:
+                if not mc:
+                    continue
+                attrs, val = mc.group(2), mc.group(3)
+                if 't="s"' in attrs or "t='s'" in attrs:
+                    try:
+                        codigos.append(shared[int(val)].strip())
+                    except Exception:
+                        pass
+                else:
+                    s = val.strip()
+                    if re.match(r'^\d+\.0$', s):
+                        s = s[:-2]
+                    if s:
+                        codigos.append(s)
+
+            for cod in codigos:
+                codigo_clean = limpiar_codigo(cod)
+                if codigo_clean:
+                    items.append({
+                        'codigo':      codigo_clean,
+                        'precio':      precio,
+                        'descripcion': '',
+                        'hoja':        'Hoja1',
+                    })
+    except Exception:
+        pass
+
+    return items
+
+
+# ─── Detección y parser especializado para FAL (xlsx convertido por Node) ─────
+# El .xls de FAL (5MB) es convertido a .xlsx por Node antes de llegar al parser.
+# El xlsx resultante tiene strings INLINE (no shared strings) y los precios
+# son resultados de fórmulas VLOOKUP pre-calculados.
+# Estructura: col B = código corto (el que está en BD), col E = precio.
+# El parser lee solo las hojas de marca, ignorando la hoja maestra y ENCABEZADO.
+
+_FAL_HOJAS_MARCA_SET = {
+    'ford', 'renault', 'fiat  alfa romeo', 'peugeot', 'volkswagen',
+    'chevrolet', 'citroen ', 'nissan jeep bmw suzuki chrysler',
+    'honda-toyota-hyundai- audi -mi ', 'm-benz -ivecco -scania',
+    ' universales - rastrojero'
+}
+
+def _detectar_fal_xlsx(file_path):
+    """
+    Detecta el xlsx convertido de FAL por la presencia de hojas de marca
+    y la ausencia de sharedStrings (Node genera strings inline).
+    """
+    try:
+        with zipfile.ZipFile(file_path) as zf:
+            # FAL convertido NO tiene sharedStrings.xml
+            if 'xl/sharedStrings.xml' in zf.namelist():
+                return False
+            # Debe tener el workbook con hojas de marca
+            if 'xl/workbook.xml' not in zf.namelist():
+                return False
+            with zf.open('xl/workbook.xml') as f:
+                wb_xml = f.read().decode('utf-8', errors='replace')
+            sheet_names_lower = {n.lower() for n in re.findall(r'<sheet[^>]+name="([^"]+)"', wb_xml)}
+            # Verificar que tiene al menos 3 hojas de marca conocidas
+            matches = sheet_names_lower & _FAL_HOJAS_MARCA_SET
+            return len(matches) >= 3
+    except Exception:
+        return False
+
+def _parsear_fal_xlsx(file_path):
+    """
+    Lee solo col B (código corto) y col E (precio) de cada hoja de marca.
+    Los strings son inline (t="str") sin shared strings.
+    """
+    _cell_b = re.compile(
+        r'<c r="B\d+"[^>]*>'
+        r'(?:<f>[^<]*</f>)?'
+        r'<v[^>]*>([^<]+)</v>'
+    )
+    _cell_e = re.compile(r'<c r="E\d+"[^>]*>(?:<f>[^<]*</f>)?<v[^>]*>([^<]+)</v>')
+    _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
+    items = []
+
+    try:
+        with zipfile.ZipFile(file_path) as zf:
+            with zf.open('xl/workbook.xml') as f:
+                wb_xml = f.read().decode('utf-8', errors='replace')
+            sheet_entries = re.findall(r'<sheet[^>]+name="([^"]+)"[^>]+r:id="([^"]+)"', wb_xml)
+
+            with zf.open('xl/_rels/workbook.xml.rels') as f:
+                rels_xml = f.read().decode('utf-8', errors='replace')
+            rels = dict(re.findall(r'Id="([^"]+)"[^>]+Target="([^"]+)"', rels_xml))
+
+            for sheet_name, rid in sheet_entries:
+                if sheet_name.lower() not in _FAL_HOJAS_MARCA_SET:
+                    continue
+                target = rels.get(rid, '')
+                sheet_path = f"xl/{target}" if not target.startswith('xl/') else target
+                if sheet_path not in zf.namelist():
+                    continue
+
+                with zf.open(sheet_path) as f:
+                    sheet_xml = f.read().decode('utf-8', errors='replace')
+
+                for m in _row_re.finditer(sheet_xml):
+                    if int(m.group(1)) <= 1:
+                        continue  # skip header
+                    row_xml = m.group(2)
+
+                    mb = _cell_b.search(row_xml)
+                    me = _cell_e.search(row_xml)
+                    if not mb or not me:
+                        continue
+
+                    # Limpiar código: quitar espacios y sufijo .0
+                    cod_raw = re.sub(r'\s+', '', mb.group(1).strip())
+                    if re.match(r'^\d+\.0$', cod_raw):
+                        cod_raw = cod_raw[:-2]
+                    if not cod_raw or cod_raw.startswith('*'):
+                        continue
+                    if not any(c.isdigit() for c in cod_raw):
+                        continue
+
+                    try:
+                        precio = float(me.group(1))
+                    except Exception:
+                        continue
+                    if precio <= 0:
+                        continue
+
+                    codigo_clean = limpiar_codigo(cod_raw)
+                    if not codigo_clean:
+                        continue
+
+                    items.append({
+                        'codigo':      codigo_clean,
+                        'precio':      precio,
+                        'descripcion': '',
+                        'hoja':        sheet_name,
+                    })
+    except Exception:
+        pass
+
+    return items
+
+
 def parsear_archivo(file_path):
     """
     Parsea un archivo Excel de lista de precios.
@@ -986,6 +1193,12 @@ def parsear_archivo(file_path):
         elif _detectar_myl(path_usar):
             items_raw = _parsear_myl_xlsx(path_usar)
             hoja_nombre = 'Page1'
+        elif _detectar_lidercar(path_usar):
+            items_raw = _parsear_lidercar_xlsx(path_usar)
+            hoja_nombre = 'Hoja1'
+        elif _detectar_fal_xlsx(path_usar):
+            items_raw = _parsear_fal_xlsx(path_usar)
+            hoja_nombre = 'FAL'
         else:
             items_raw = None
             hoja_nombre = None
