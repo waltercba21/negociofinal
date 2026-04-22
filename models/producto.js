@@ -586,27 +586,29 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
       [proveedor_id]
     );
 
-    // Indexar por codigo (upper) para lookup O(1)
+    // Indexar por codigo (upper) → array de rows (puede haber izq+der con mismo código)
     const bdMap = new Map();
     for (const row of ppRows) {
       const key = String(row.codigo || '').trim().toUpperCase();
-      if (key) bdMap.set(key, row);
+      if (!key) continue;
+      if (!bdMap.has(key)) bdMap.set(key, []);
+      bdMap.get(key).push(row);
     }
 
     // ── PASO 2: Clasificar items del Excel en "encontrados" y "nuevos" ───────
-    const encontrados = [];  // { item, row }
+    const encontrados = [];  // { item, rows[] }  — rows puede tener 1 o 2 (izq/der)
     const nuevos      = [];  // { codigo, precio }
 
     for (const item of items) {
       const key = String(item.codigo || '').trim().toUpperCase();
       if (!key) continue;
 
-      const row = bdMap.get(key)
+      const rows = bdMap.get(key)
                 || bdMap.get(key.toLowerCase())
                 || bdMap.get(key.toUpperCase());
 
-      if (row) {
-        encontrados.push({ item, row });
+      if (rows && rows.length > 0) {
+        encontrados.push({ item, rows });
       } else {
         nuevos.push({ codigo: item.codigo, precio: item.precio });
       }
@@ -617,39 +619,42 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
     const prodUpdates  = [];  // para bulk UPDATE productos (precio_venta)
     const resultados   = [];
 
-    for (const { item, row } of encontrados) {
+    for (const { item, rows } of encontrados) {
       const precioListaNum = Number(item.precio);
-      const utilidad  = Number(row.utilidad || 0);
-      const descuento = Number(row.descuento || 0);
-      const iva       = Number(row.iva_aplicado || 21);
-      const pres      = row.presentacion === 'juego' ? 'juego' : 'unidad';
-      const factor    = pres === 'juego' ? 0.5 : 1;
 
-      const costo_neto_raw   = precioListaNum - (precioListaNum * descuento / 100);
-      const costo_neto_unidad = costo_neto_raw * factor;
-      const costo_iva_unidad  = Math.ceil(costo_neto_unidad * (1 + iva / 100));
-      const precio_venta      = redondearAlCentenar(costo_iva_unidad * (1 + utilidad / 100));
+      for (const row of rows) {
+        const utilidad  = Number(row.utilidad || 0);
+        const descuento = Number(row.descuento || 0);
+        const iva       = Number(row.iva_aplicado || 21);
+        const pres      = row.presentacion === 'juego' ? 'juego' : 'unidad';
+        const factor    = pres === 'juego' ? 0.5 : 1;
 
-      ppUpdates.push([
-        precioListaNum,
-        Math.ceil(costo_neto_raw),
-        costo_iva_unidad,
-        Number(row.producto_id),
-        proveedor_id,
-        row.codigo          // usar el codigo TAL COMO ESTÁ EN BD
-      ]);
+        const costo_neto_raw   = precioListaNum - (precioListaNum * descuento / 100);
+        const costo_neto_unidad = costo_neto_raw * factor;
+        const costo_iva_unidad  = Math.ceil(costo_neto_unidad * (1 + iva / 100));
+        const precio_venta      = redondearAlCentenar(costo_iva_unidad * (1 + utilidad / 100));
 
-      resultados.push({
-        producto_id:       Number(row.producto_id),
-        codigo:            row.codigo,
-        nombre:            row.nombre,
-        precio_lista_nuevo: precioListaNum,
-        precio_venta,
-        proveedor_asignado: Number(row.proveedor_asignado || 0),
-        proveedor_id_manual: Number(row.proveedor_id_manual || 0),
-        costo_neto_raw:    Math.ceil(costo_neto_raw),
-        costo_iva_unidad,
-      });
+        ppUpdates.push([
+          precioListaNum,
+          Math.ceil(costo_neto_raw),
+          costo_iva_unidad,
+          Number(row.producto_id),
+          proveedor_id,
+          row.codigo          // usar el codigo TAL COMO ESTÁ EN BD
+        ]);
+
+        resultados.push({
+          producto_id:       Number(row.producto_id),
+          codigo:            row.codigo,
+          nombre:            row.nombre,
+          precio_lista_nuevo: precioListaNum,
+          precio_venta,
+          proveedor_asignado: Number(row.proveedor_asignado || 0),
+          proveedor_id_manual: Number(row.proveedor_id_manual || 0),
+          costo_neto_raw:    Math.ceil(costo_neto_raw),
+          costo_iva_unidad,
+        });
+      }
     }
 
     // ── PASO 4: Bulk UPDATE producto_proveedor (una query para todos) ─────────

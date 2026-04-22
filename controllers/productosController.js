@@ -2548,16 +2548,29 @@ actualizarPreciosExcel: async (req, res) => {
     })() || path_mod.extname(file.originalname || '').toLowerCase() === '.xls';
 
     if (_isXls) {
-      // Convertir .xls → .xlsx usando el módulo xlsx (ya en node_modules)
-      tmpXlsxPath = path_mod.join(os_mod.tmpdir(), `dm_conv_${Date.now()}.xlsx`);
+      // Para FAL: si el XLS tiene hojas de marca, pasarlo DIRECTO al parser Python
+      // (xlrd accede a la hoja maestra con descripciones largas, que se pierden al convertir)
+      // Para el resto (DM, etc.): convertir a .xlsx normalmente
+      let _esFal = false;
       try {
-        const wb = xlsx.readFile(file.path, { type: 'file' });
-        xlsx.writeFile(wb, tmpXlsxPath);
-        fileParaParser = tmpXlsxPath;
-      } catch (convErr) {
-        if (tmpXlsxPath) try { fs_sync.unlinkSync(tmpXlsxPath); } catch {}
-        throw new Error('No se pudo convertir el archivo .xls: ' + convErr.message);
+        const _wbCheck = xlsx.readFile(file.path, { type: 'file', bookSheets: true });
+        const _falMarcas = new Set(['ford','renault','volkswagen','peugeot','chevrolet','fiat  alfa romeo']);
+        _esFal = (_wbCheck.SheetNames || []).some(n => _falMarcas.has(n.trim().toLowerCase()));
+      } catch {}
+
+      if (!_esFal) {
+        // Convertir normalmente (DM y otros XLS)
+        tmpXlsxPath = path_mod.join(os_mod.tmpdir(), `dm_conv_${Date.now()}.xlsx`);
+        try {
+          const wb = xlsx.readFile(file.path, { type: 'file' });
+          xlsx.writeFile(wb, tmpXlsxPath);
+          fileParaParser = tmpXlsxPath;
+        } catch (convErr) {
+          if (tmpXlsxPath) try { fs_sync.unlinkSync(tmpXlsxPath); } catch {};
+          throw new Error('No se pudo convertir el archivo .xls: ' + convErr.message);
+        }
       }
+      // Si es FAL: fileParaParser ya apunta al .xls original — el parser usa xlrd
     }
 
     const parserResult = await new Promise((resolve, reject) => {

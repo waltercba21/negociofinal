@@ -683,69 +683,107 @@ def parsear_hoja_myl(sheet_name, ws):
 
 def _parsear_xls_con_xlrd(file_path):
     """
-    Parsea archivos .xls directamente con xlrd (sin LibreOffice).
-    Soporta el formato FAL (F066) con hoja maestra 'LISTA PRECIOS GESTION AL DIA'.
+    Parsea el XLS de FAL directamente con xlrd.
+    - Lee la hoja maestra 'LISTA PRECIOS GESTION AL DIA' para obtener
+      el precio real (col 4) y la descripcion larga (col 3).
+    - Lee las hojas de marca para obtener cod_largo (col 0) y cod_corto (col 1).
+    - El cod_corto es el que existe en la BD (sin el prefijo de hoja).
+    - No deduplica: si el mismo codigo corto aparece en varias hojas de marca,
+      emite el precio mas alto (criterio habitual). El bulk en Node actualiza
+      todos los registros de la BD con ese codigo, sean izquierdo o derecho.
     """
     import xlrd as _xlrd
-    errores = []
-    todos = []
+    import re as _re
+
+    _HOJA_MAESTRA_FAL = 'lista precios gestion al dia'
+    _HOJAS_MARCA_FAL  = {
+        'ford', 'renault', 'fiat  alfa romeo', 'peugeot', 'volkswagen',
+        'chevrolet', 'citroen ', 'nissan jeep bmw suzuki chrysler',
+        'honda-toyota-hyundai- audi -mi ', 'm-benz -ivecco -scania',
+        ' universales - rastrojero'
+    }
 
     try:
         wb = _xlrd.open_workbook(file_path)
     except Exception as e:
         return {'items': [], 'hojas': [], 'errores': [f'No se pudo leer el .xls: {e}']}
 
-    sheet_names = wb.sheet_names()
-    hojas = seleccionar_hojas(sheet_names)
+    # ── 1. Cargar mapa de la hoja maestra: cod_largo → (precio, descripcion) ──
+    desc_map   = {}
+    precio_map = {}
+    for sh_name in wb.sheet_names():
+        if norm(sh_name) == _HOJA_MAESTRA_FAL:
+            ws_m = wb.sheet_by_name(sh_name)
+            for i in range(1, ws_m.nrows):
+                cod = str(ws_m.cell_value(i, 0)).strip()
+                # Normalizar codigo largo (quitar espacios y .0 final)
+                cod = _re.sub(r'\s+', '', cod).upper()
+                if cod.endswith('.0'): cod = cod[:-2]
+                desc  = str(ws_m.cell_value(i, 3)).strip() if ws_m.ncols > 3 else ''
+                precio = ws_m.cell_value(i, 4)              if ws_m.ncols > 4 else 0
+                if cod:
+                    desc_map[cod]   = desc
+                    precio_map[cod] = precio
+            break
 
-    for sh in hojas:
-        ws = wb.sheet_by_name(sh)
-        try:
-            rows_raw = []
-            for i in range(ws.nrows):
-                row = [ws.cell_value(i, j) for j in range(ws.ncols)]
-                rows_raw.append(row)
+    # ── 2. Parsear hojas de marca ──────────────────────────────────────────────
+    dedup  = {}  # cod_corto_upper → item  (precio mayor gana)
+    hojas_usadas = []
 
-            if not rows_raw: continue
+    for sh_name in wb.sheet_names():
+        if norm(sh_name) not in _HOJAS_MARCA_FAL:
+            continue
+        hojas_usadas.append(sh_name)
+        ws = wb.sheet_by_name(sh_name)
 
-            # Detectar hoja maestra FAL
-            header = rows_raw[0]
-            vals_h = [norm(str(v)) for v in header if v is not None and str(v).strip()]
-            if 'codigo' in vals_h and 'precio1' in vals_h and 'descripcion' in vals_h:
-                # Parser FAL: col 0=codigo, col 3=descripcion, col 4=precio
-                for row in rows_raw[1:]:
-                    if not row or all(str(c).strip() == '' for c in row): continue
-                    def get(idx): return row[idx] if idx < len(row) else None
-                    codigo = limpiar_codigo(get(0))
-                    if not codigo: continue
-                    descripcion = str(get(3) or '').strip()
-                    precio = limpiar_precio(get(4))
-                    if not precio or precio <= 0: continue
-                    todos.append({'codigo': codigo, 'precio': precio,
-                                  'descripcion': _clean_desc(descripcion), 'hoja': sh})
-            else:
-                # Parser genérico: buscar código en col 0, precio en col 4
-                # (estructura estándar de hojas por marca de FAL)
-                for row in rows_raw[1:]:
-                    if not row or all(str(c).strip() == '' for c in row): continue
-                    def get(idx): return row[idx] if idx < len(row) else None
-                    codigo = limpiar_codigo(get(0))
-                    if not codigo or codigo.startswith('*'): continue
-                    precio = limpiar_precio(get(4)) if len(row) > 4 else None
-                    if not precio or precio <= 0: continue
-                    descripcion = str(get(2) or '').strip()
-                    todos.append({'codigo': codigo, 'precio': precio,
-                                  'descripcion': _clean_desc(descripcion), 'hoja': sh})
-        except Exception as e:
-            errores.append(f'Hoja "{sh}": {e}')
+        for i in range(1, ws.nrows):
+            row = [ws.cell_value(i, j) for j in range(ws.ncols)]
 
-    dedup = {}
-    for item in todos:
-        key = item['codigo'].strip().upper()
-        if key not in dedup or item['precio'] > dedup[key]['precio']:
-            dedup[key] = item
+            # col 0 = codigo largo, col 1 = codigo corto, col 4 = precio (VLOOKUP)
+            cod_largo_raw = str(row[0]).strip() if row[0] else ''
+            cod_corto_raw = str(row[1]).strip() if len(row) > 1 and row[1] else ''
 
-    return {'items': list(dedup.values()), 'hojas': hojas, 'errores': errores}
+            # Limpiar codigo corto
+            if cod_corto_raw.endswith('.0') and cod_corto_raw[:-2].isdigit():
+                cod_corto_raw = cod_corto_raw[:-2]
+            cod_corto = _re.sub(r'\s+', '', cod_corto_raw).upper()
+
+            if not cod_corto or not any(c.isdigit() for c in cod_corto):
+                continue
+            if cod_corto.startswith('*'):
+                continue
+
+            # Normalizar codigo largo para el mapa
+            cod_largo_key = _re.sub(r'\s+', '', cod_largo_raw).upper()
+            if cod_largo_key.endswith('.0'): cod_largo_key = cod_largo_key[:-2]
+
+            # Precio: preferir hoja maestra (VLOOKUP de xlrd no siempre resuelve)
+            precio = precio_map.get(cod_largo_key, 0)
+            if not precio or precio <= 0:
+                precio = limpiar_precio(row[4]) if len(row) > 4 else 0
+            if not precio or precio <= 0:
+                continue
+
+            # Descripcion: preferir hoja maestra, fallback col 2
+            desc = desc_map.get(cod_largo_key, '')
+            if not desc and len(row) > 2:
+                desc = str(row[2]).strip()
+
+            # Deduplicar por cod_corto, precio mayor gana
+            existing = dedup.get(cod_corto)
+            if existing is None or precio > existing['precio']:
+                dedup[cod_corto] = {
+                    'codigo':      cod_corto,
+                    'precio':      float(precio),
+                    'descripcion': _clean_desc(desc),
+                    'hoja':        sh_name,
+                }
+
+    return {
+        'items':  list(dedup.values()),
+        'hojas':  hojas_usadas,
+        'errores': []
+    }
 
 
 # ─── Detección y parser especializado para CROMOSOL ──────────────────────────
@@ -1112,18 +1150,23 @@ def _detectar_fal_xlsx(file_path):
 
 def _parsear_fal_xlsx(file_path):
     """
-    Lee solo col B (código corto) y col E (precio) de cada hoja de marca.
+    Lee el xlsx convertido por Node del XLS de FAL.
+    - Primero carga la hoja maestra 'LISTA PRECIOS GESTION AL DIA' para obtener
+      descripcion larga (col D) indexada por codigo largo (col A).
+    - Luego lee cada hoja de marca:
+        col A = codigo largo (para join con hoja maestra)
+        col B = codigo corto (el que está en BD)
+        col E = precio (resultado del VLOOKUP pre-calculado)
     Los strings son inline (t="str") sin shared strings.
     """
-    _cell_b = re.compile(
-        r'<c r="B\d+"[^>]*>'
-        r'(?:<f>[^<]*</f>)?'
-        r'<v[^>]*>([^<]+)</v>'
-    )
-    _cell_c = re.compile(r'<c r="C\d+"[^>]*><v[^>]*>([^<]*)</v>')
-    _cell_e = re.compile(r'<c r="E\d+"[^>]*>(?:<f>[^<]*</f>)?<v[^>]*>([^<]+)</v>')
+    _cell_a  = re.compile(r'<c r="A\d+"[^>]*><v[^>]*>([^<]*)</v>')
+    _cell_b  = re.compile(r'<c r="B\d+"[^>]*>(?:<f>[^<]*</f>)?<v[^>]*>([^<]+)</v>')
+    _cell_c  = re.compile(r'<c r="C\d+"[^>]*><v[^>]*>([^<]*)</v>')
+    _cell_d  = re.compile(r'<c r="D\d+"[^>]*><v[^>]*>([^<]*)</v>')
+    _cell_e  = re.compile(r'<c r="E\d+"[^>]*>(?:<f>[^<]*</f>)?<v[^>]*>([^<]+)</v>')
     _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
-    items = []
+    _HOJA_MAESTRA = 'lista precios gestion al dia'
+    dedup = {}
 
     try:
         with zipfile.ZipFile(file_path) as zf:
@@ -1135,6 +1178,30 @@ def _parsear_fal_xlsx(file_path):
                 rels_xml = f.read().decode('utf-8', errors='replace')
             rels = dict(re.findall(r'Id="([^"]+)"[^>]+Target="([^"]+)"', rels_xml))
 
+            def _get_sheet_xml(name_lower):
+                for sh_name, rid in sheet_entries:
+                    if sh_name.lower() == name_lower:
+                        target = rels.get(rid, '')
+                        sheet_path = f"xl/{target}" if not target.startswith('xl/') else target
+                        if sheet_path in zf.namelist():
+                            with zf.open(sheet_path) as f:
+                                return f.read().decode('utf-8', errors='replace')
+                return None
+
+            # ── 1. Cargar hoja maestra: cod_largo → descripcion larga ──────────
+            desc_map = {}
+            maestra_xml = _get_sheet_xml(_HOJA_MAESTRA)
+            if maestra_xml:
+                for m in _row_re.finditer(maestra_xml):
+                    if int(m.group(1)) <= 1: continue  # skip header
+                    row_xml = m.group(2)
+                    ma = _cell_a.search(row_xml)
+                    md = _cell_d.search(row_xml)
+                    if ma and md:
+                        cod_largo = re.sub(r'\s+', '', ma.group(1)).upper()
+                        desc_map[cod_largo] = md.group(1).strip()
+
+            # ── 2. Parsear hojas de marca ──────────────────────────────────────
             for sheet_name, rid in sheet_entries:
                 if sheet_name.lower() not in _FAL_HOJAS_MARCA_SET:
                     continue
@@ -1148,7 +1215,7 @@ def _parsear_fal_xlsx(file_path):
 
                 for m in _row_re.finditer(sheet_xml):
                     if int(m.group(1)) <= 1:
-                        continue  # skip header
+                        continue
                     row_xml = m.group(2)
 
                     mb = _cell_b.search(row_xml)
@@ -1156,7 +1223,7 @@ def _parsear_fal_xlsx(file_path):
                     if not mb or not me:
                         continue
 
-                    # Limpiar código: quitar espacios y sufijo .0
+                    # Código corto (col B) — el que está en BD
                     cod_raw = re.sub(r'\s+', '', mb.group(1).strip())
                     if re.match(r'^\d+\.0$', cod_raw):
                         cod_raw = cod_raw[:-2]
@@ -1176,19 +1243,29 @@ def _parsear_fal_xlsx(file_path):
                     if not codigo_clean:
                         continue
 
-                    mc = _cell_c.search(row_xml)
-                    descripcion = mc.group(1).strip() if mc else ''
+                    # Descripcion: hoja maestra via cod_largo (col A), fallback col C
+                    ma = _cell_a.search(row_xml)
+                    desc = ''
+                    if ma:
+                        cod_largo = re.sub(r'\s+', '', ma.group(1)).upper()
+                        desc = desc_map.get(cod_largo, '')
+                    if not desc:
+                        mc = _cell_c.search(row_xml)
+                        desc = mc.group(1).strip() if mc else ''
 
-                    items.append({
-                        'codigo':      codigo_clean,
-                        'precio':      precio,
-                        'descripcion': _clean_desc(descripcion),
-                        'hoja':        sheet_name,
-                    })
+                    # Deduplicar por codigo_clean, precio mayor gana
+                    existing = dedup.get(codigo_clean)
+                    if existing is None or precio > existing['precio']:
+                        dedup[codigo_clean] = {
+                            'codigo':      codigo_clean,
+                            'precio':      precio,
+                            'descripcion': _clean_desc(desc),
+                            'hoja':        sheet_name,
+                        }
     except Exception:
         pass
 
-    return items
+    return list(dedup.values())
 
 
 def parsear_archivo(file_path):
