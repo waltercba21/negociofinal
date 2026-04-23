@@ -2643,7 +2643,7 @@ actualizarPreciosExcel: async (req, res) => {
             codigosNuevosSet.add(key);
             nuevosProductos.push({
               codigo:               n.codigo,
-              descripcion:          '(sin descripción)',
+              descripcion:          n.descripcion || '(sin descripción)',
               precio:               n.precio,
               presentacion_sugerida: 'unidad'
             });
