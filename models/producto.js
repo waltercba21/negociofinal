@@ -2962,4 +2962,17 @@ registrarConsultasBusqueda: function (conexion, { productoIds = [], termino = nu
 
 
 
+
+    // ── Funciones presentes en el servidor pero no en el archivo recibido ──
+    // Estas son stubs de emergencia para evitar el crash al cargar el módulo.
+    // El servidor debe tener las implementaciones reales de estas funciones.
+    actualizarPrecio: async function() { throw new Error('actualizarPrecio: stub'); },
+    actualizarPrecios: async function() { throw new Error('actualizarPrecios: stub'); },
+    editarFacturas: async function() { throw new Error('editarFacturas: stub'); },
+    getAllPresupuestos: async function() { throw new Error('getAllPresupuestos: stub'); },
+    insertarImagenProducto: async function() { throw new Error('insertarImagenProducto: stub'); },
+    obtenerPorFiltrosPaginado: async function() { throw new Error('obtenerPorFiltrosPaginado: stub'); },
+    obtenerProductosPorCategoriaPaginado: async function() { throw new Error('obtenerProductosPorCategoriaPaginado: stub'); },
+    obtenerSiguienteIDFactura: async function() { throw new Error('obtenerSiguienteIDFactura: stub'); },
+
 }
