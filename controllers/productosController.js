@@ -2607,7 +2607,7 @@ actualizarPreciosExcel: async (req, res) => {
         const key = norm(codigoRaw) + '|' + proveedor_id;
         if (codigosProcesados.has(key)) continue;
         codigosProcesados.add(key);
-        itemsValidos.push({ codigo: codigoRaw, precio: precioBruto });
+        itemsValidos.push({ codigo: codigoRaw, precio: precioBruto, descripcion: str(item.descripcion || '') });
       }
 
       if (itemsValidos.length > 0) {
@@ -2643,7 +2643,7 @@ actualizarPreciosExcel: async (req, res) => {
             codigosNuevosSet.add(key);
             nuevosProductos.push({
               codigo:               n.codigo,
-              descripcion:          n.descripcion || '(sin descripción)',
+              descripcion:          '(sin descripción)',
               precio:               n.precio,
               presentacion_sugerida: 'unidad'
             });

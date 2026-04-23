@@ -661,30 +661,18 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
     // Esto evita las limitaciones de CASE WHEN (tamaño de query) y multi-statement.
     if (ppUpdates.length > 0) {
       const BATCH = 500;
-
-      // Deduplicar por código antes del UPDATE.
-      // FAL tiene el mismo código para izquierdo Y derecho (ej: 6801 para ambos lados),
-      // por lo que en ppUpdates pueden aparecer dos entradas con el mismo código pero
-      // diferente producto_id. El JOIN se hace SOLO por (proveedor_id, codigo) —
-      // sin filtrar por producto_id — para que una sola entrada actualice AMBAS filas.
-      const dedupedByCode = new Map();
-      for (const upd of ppUpdates) {
-        const codKey = String(upd[5]).trim().toUpperCase();
-        if (!dedupedByCode.has(codKey)) {
-          dedupedByCode.set(codKey, upd);
-        }
-      }
-      const ppUpdatesCod = Array.from(dedupedByCode.values());
-
-      for (let i = 0; i < ppUpdatesCod.length; i += BATCH) {
-        const batch = ppUpdatesCod.slice(i, i + BATCH);
-        // JOIN solo por (proveedor_id, codigo): actualiza izquierdo Y derecho
-        // cuando tienen el mismo código (caso FAL I/D).
-        const unionRows = batch.map(() => 'SELECT ? AS pl, ? AS cn, ? AS ci, ? AS cod').join(' UNION ALL ');
-        const params    = batch.flatMap(r => [r[0], r[1], r[2], r[5]]);
+      for (let i = 0; i < ppUpdates.length; i += BATCH) {
+        const batch = ppUpdates.slice(i, i + BATCH);
+        // Construir: UPDATE producto_proveedor pp
+        //   JOIN (SELECT ? AS pl, ? AS cn, ? AS ci, ? AS pid, ? AS prov, ? AS cod
+        //         UNION ALL SELECT ... ) v
+        //   ON pp.producto_id=v.pid AND pp.proveedor_id=v.prov AND pp.codigo=v.cod
+        //   SET pp.precio_lista=v.pl, ...
+        const unionRows = batch.map(() => 'SELECT ? AS pl, ? AS cn, ? AS ci, ? AS pid, ? AS cod').join(' UNION ALL ');
+        const params    = batch.flatMap(r => [r[0], r[1], r[2], r[3], r[5]]);
         await conn.query(
           `UPDATE producto_proveedor pp
-             JOIN (${unionRows}) v ON pp.proveedor_id = ? AND pp.codigo = v.cod
+             JOIN (${unionRows}) v ON pp.producto_id = v.pid AND pp.proveedor_id = ? AND pp.codigo = v.cod
               SET pp.precio_lista   = v.pl,
                   pp.costo_neto     = v.cn,
                   pp.costo_iva      = v.ci,
@@ -2983,8 +2971,49 @@ registrarConsultasBusqueda: function (conexion, { productoIds = [], termino = nu
     editarFacturas: async function() { throw new Error('editarFacturas: stub'); },
     getAllPresupuestos: async function() { throw new Error('getAllPresupuestos: stub'); },
     insertarImagenProducto: async function() { throw new Error('insertarImagenProducto: stub'); },
-    obtenerPorFiltrosPaginado: async function() { throw new Error('obtenerPorFiltrosPaginado: stub'); },
-    obtenerProductosPorCategoriaPaginado: async function() { throw new Error('obtenerProductosPorCategoriaPaginado: stub'); },
+    obtenerPorFiltrosPaginado: async function(conexion, { categoria, marca, modelo }, offset, limit) {
+      const params = [];
+      let where = 'WHERE 1=1';
+      if (categoria) { where += ' AND p.categoria_id = ?'; params.push(Number(categoria)); }
+      if (marca)     { where += ' AND p.marca_id = ?';     params.push(Number(marca)); }
+      if (modelo)    { where += ' AND p.modelo_id = ?';    params.push(Number(modelo)); }
+
+      const countSql = `SELECT COUNT(DISTINCT p.id) AS total FROM productos p ${where}`;
+      const [countRows] = await conexion.promise().query(countSql, params);
+      const total = countRows[0]?.total || 0;
+
+      const dataSql = `
+        SELECT p.id, p.nombre, p.precio_venta, p.stock_actual,
+               c.nombre AS categoria_nombre
+        FROM productos p
+        LEFT JOIN categorias c ON c.id = p.categoria_id
+        ${where}
+        GROUP BY p.id
+        ORDER BY p.nombre ASC
+        LIMIT ? OFFSET ?`;
+      const [rows] = await conexion.promise().query(dataSql, [...params, limit, offset]);
+      return { productos: rows, total };
+    },
+
+    obtenerProductosPorCategoriaPaginado: async function(conexion, categoriaId, offset, limit) {
+      const [countRows] = await conexion.promise().query(
+        'SELECT COUNT(DISTINCT id) AS total FROM productos WHERE categoria_id = ?',
+        [Number(categoriaId)]
+      );
+      const total = countRows[0]?.total || 0;
+
+      const [rows] = await conexion.promise().query(`
+        SELECT p.id, p.nombre, p.precio_venta, p.stock_actual,
+               c.nombre AS categoria_nombre
+        FROM productos p
+        LEFT JOIN categorias c ON c.id = p.categoria_id
+        WHERE p.categoria_id = ?
+        ORDER BY p.nombre ASC
+        LIMIT ? OFFSET ?`,
+        [Number(categoriaId), limit, offset]
+      );
+      return { productos: rows, total };
+    },
     obtenerSiguienteIDFactura: async function() { throw new Error('obtenerSiguienteIDFactura: stub'); },
 
 }
