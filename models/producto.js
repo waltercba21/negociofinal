@@ -2963,14 +2963,40 @@ registrarConsultasBusqueda: function (conexion, { productoIds = [], termino = nu
 
 
 
-    // ── Funciones presentes en el servidor pero no en el archivo recibido ──
-    // Estas son stubs de emergencia para evitar el crash al cargar el módulo.
-    // El servidor debe tener las implementaciones reales de estas funciones.
-    actualizarPrecio: async function() { throw new Error('actualizarPrecio: stub'); },
-    actualizarPrecios: async function() { throw new Error('actualizarPrecios: stub'); },
-    editarFacturas: async function() { throw new Error('editarFacturas: stub'); },
-    getAllPresupuestos: async function() { throw new Error('getAllPresupuestos: stub'); },
-    insertarImagenProducto: async function() { throw new Error('insertarImagenProducto: stub'); },
+    // ── Alias: el controller llama editarFacturas (plural) → delega a editarFactura ──
+    editarFacturas: function(id, nombre_cliente, fecha, total, items) {
+        return this.editarFactura(id, nombre_cliente, fecha, total, items);
+    },
+
+    // ── actualizarPrecio: actualiza precio_venta de un producto por id ──
+    actualizarPrecio: function(id, precio_venta, callback) {
+        conexion.query(
+            'UPDATE productos SET precio_venta = ? WHERE id = ?',
+            [parseDecimal(precio_venta, 0), id],
+            function(err, results) {
+                if (callback) callback(err, results);
+            }
+        );
+    },
+
+    // ── actualizarPrecios: actualiza precio_lista, costo_neto y utilidad ──
+    actualizarPrecios: function(con, datos) {
+        return new Promise((resolve, reject) => {
+            const { id, precio_lista, costo_neto, utilidad } = datos;
+            if (!id) return reject(new Error('ID de producto requerido'));
+            const fields = [];
+            const params = [];
+            if (precio_lista != null) { fields.push('precio_lista = ?'); params.push(parseDecimal(precio_lista, 0)); }
+            if (costo_neto   != null) { fields.push('costo_neto = ?');   params.push(parseDecimal(costo_neto, 0)); }
+            if (utilidad     != null) { fields.push('utilidad = ?');     params.push(parseDecimal(utilidad, 0)); }
+            if (!fields.length) return resolve({ affectedRows: 0 });
+            params.push(id);
+            con.query(`UPDATE productos SET ${fields.join(', ')} WHERE id = ?`, params, (err, results) => {
+                if (err) return reject(err);
+                resolve(results);
+            });
+        });
+    },
     obtenerPorFiltrosPaginado: async function(conexion, { categoria, marca, modelo }, offset, limit) {
       const params = [];
       let where = 'WHERE 1=1';
