@@ -551,10 +551,11 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
 // Reducción: 120.000 queries → ~10 queries para 24.000 items.
 actualizarPreciosBulk: async function (items, proveedor_id) {
   /**
-   * items: Array de { codigo: string, precio: float }
-   * Retorna: { actualizados: [...], nuevos: [...] }
-   *   actualizados: items que existían en BD y se actualizaron
-   *   nuevos:       items que NO existen en BD para este proveedor
+   * Actualización bulk de precios para listas grandes.
+   * Usa INSERT ... ON DUPLICATE KEY UPDATE para evitar queries CASE WHEN masivas.
+   * Requiere que producto_proveedor tenga índice único en (proveedor_id, codigo).
+   * Si hay dos registros con el mismo codigo (izq/der), ambos se actualizan
+   * porque iteramos sobre todos los rows del bdMap para ese codigo.
    */
   if (!items || items.length === 0) return { actualizados: [], nuevos: [] };
 
@@ -586,7 +587,7 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
       [proveedor_id]
     );
 
-    // Indexar por codigo (upper) → array de rows (puede haber izq+der con mismo código)
+    // Indexar por codigo upper → ARRAY de rows (mismo código puede tener izq y der)
     const bdMap = new Map();
     for (const row of ppRows) {
       const key = String(row.codigo || '').trim().toUpperCase();
@@ -595,29 +596,27 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
       bdMap.get(key).push(row);
     }
 
-    // ── PASO 2: Clasificar items del Excel en "encontrados" y "nuevos" ───────
-    const encontrados = [];  // { item, rows[] }  — rows puede tener 1 o 2 (izq/der)
-    const nuevos      = [];  // { codigo, precio }
+    // ── PASO 2: Clasificar en encontrados y nuevos ────────────────────────────
+    const encontrados = [];  // { item, rows[] }
+    const nuevos      = [];  // { codigo, precio, descripcion }
 
     for (const item of items) {
       const key = String(item.codigo || '').trim().toUpperCase();
       if (!key) continue;
-
-      const rows = bdMap.get(key)
-                || bdMap.get(key.toLowerCase())
-                || bdMap.get(key.toUpperCase());
-
+      const rows = bdMap.get(key);
       if (rows && rows.length > 0) {
         encontrados.push({ item, rows });
       } else {
-        nuevos.push({ codigo: item.codigo, precio: item.precio });
+        nuevos.push({ codigo: item.codigo, precio: item.precio,
+                      descripcion: item.descripcion || '' });
       }
     }
 
-    // ── PASO 3: Calcular nuevos valores en memoria ────────────────────────────
-    const ppUpdates    = [];  // para bulk UPDATE producto_proveedor
-    const prodUpdates  = [];  // para bulk UPDATE productos (precio_venta)
-    const resultados   = [];
+    // ── PASO 3: Calcular nuevos valores y preparar updates ────────────────────
+    // ppUpdates: [precio_lista, costo_neto, costo_iva, producto_id, proveedor_id, codigo]
+    const ppUpdates = [];
+    const resultados = [];
+    const masBaratoMap = new Map();  // para el return final
 
     for (const { item, rows } of encontrados) {
       const precioListaNum = Number(item.precio);
@@ -629,7 +628,7 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
         const pres      = row.presentacion === 'juego' ? 'juego' : 'unidad';
         const factor    = pres === 'juego' ? 0.5 : 1;
 
-        const costo_neto_raw   = precioListaNum - (precioListaNum * descuento / 100);
+        const costo_neto_raw    = precioListaNum - (precioListaNum * descuento / 100);
         const costo_neto_unidad = costo_neto_raw * factor;
         const costo_iva_unidad  = Math.ceil(costo_neto_unidad * (1 + iva / 100));
         const precio_venta      = redondearAlCentenar(costo_iva_unidad * (1 + utilidad / 100));
@@ -640,65 +639,54 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
           costo_iva_unidad,
           Number(row.producto_id),
           proveedor_id,
-          row.codigo          // usar el codigo TAL COMO ESTÁ EN BD
+          row.codigo,
         ]);
 
         resultados.push({
-          producto_id:       Number(row.producto_id),
-          codigo:            row.codigo,
-          nombre:            row.nombre,
-          precio_lista_nuevo: precioListaNum,
+          producto_id:         Number(row.producto_id),
+          codigo:              row.codigo,
+          nombre:              row.nombre,
+          precio_lista_nuevo:  precioListaNum,
           precio_venta,
-          proveedor_asignado: Number(row.proveedor_asignado || 0),
+          proveedor_asignado:  Number(row.proveedor_asignado || 0),
           proveedor_id_manual: Number(row.proveedor_id_manual || 0),
-          costo_neto_raw:    Math.ceil(costo_neto_raw),
+          costo_neto_raw:      Math.ceil(costo_neto_raw),
           costo_iva_unidad,
         });
       }
     }
 
-    // ── PASO 4: Bulk UPDATE producto_proveedor (una query para todos) ─────────
+    // ── PASO 4: UPDATE producto_proveedor con JOIN a tabla temporal ─────────
+    // Usamos una tabla VALUES temporal para hacer un UPDATE masivo en una sola query.
+    // Esto evita las limitaciones de CASE WHEN (tamaño de query) y multi-statement.
     if (ppUpdates.length > 0) {
-      // Construir VALUES múltiples: UPDATE ... CASE WHEN ... END
-      // Más eficiente: usar INSERT ... ON DUPLICATE KEY UPDATE
-      // pero producto_proveedor puede no tener PK compuesta — usamos loop
-      // batched en grupos de 500 para no sobrecargar el buffer
       const BATCH = 500;
       for (let i = 0; i < ppUpdates.length; i += BATCH) {
         const batch = ppUpdates.slice(i, i + BATCH);
-        if (batch.length === 0) continue;
-        // Un UPDATE con CASE WHEN para cada producto_id+proveedor_id+codigo
-        const cases_pl   = batch.map(() => 'WHEN (producto_id=? AND proveedor_id=? AND codigo=?) THEN ?').join(' ');
-        const cases_cn   = batch.map(() => 'WHEN (producto_id=? AND proveedor_id=? AND codigo=?) THEN ?').join(' ');
-        const cases_ci   = batch.map(() => 'WHEN (producto_id=? AND proveedor_id=? AND codigo=?) THEN ?').join(' ');
-        const whereIds   = batch.map(r => r[3]);
-        const params_pl  = batch.flatMap(r => [r[3], r[4], r[5], r[0]]);
-        const params_cn  = batch.flatMap(r => [r[3], r[4], r[5], r[1]]);
-        const params_ci  = batch.flatMap(r => [r[3], r[4], r[5], r[2]]);
-
+        // Construir: UPDATE producto_proveedor pp
+        //   JOIN (SELECT ? AS pl, ? AS cn, ? AS ci, ? AS pid, ? AS prov, ? AS cod
+        //         UNION ALL SELECT ... ) v
+        //   ON pp.producto_id=v.pid AND pp.proveedor_id=v.prov AND pp.codigo=v.cod
+        //   SET pp.precio_lista=v.pl, ...
+        const unionRows = batch.map(() => 'SELECT ? AS pl, ? AS cn, ? AS ci, ? AS pid, ? AS cod').join(' UNION ALL ');
+        const params    = batch.flatMap(r => [r[0], r[1], r[2], r[3], r[5]]);
         await conn.query(
-          `UPDATE producto_proveedor
-              SET precio_lista   = CASE ${cases_pl} ELSE precio_lista END,
-                  costo_neto     = CASE ${cases_cn} ELSE costo_neto END,
-                  costo_iva      = CASE ${cases_ci} ELSE costo_iva END,
-                  actualizado_en = NOW()
-            WHERE proveedor_id = ?
-              AND producto_id IN (${whereIds.map(() => '?').join(',')})`,
-          [...params_pl, ...params_cn, ...params_ci, proveedor_id, ...whereIds]
+          `UPDATE producto_proveedor pp
+             JOIN (${unionRows}) v ON pp.producto_id = v.pid AND pp.proveedor_id = ? AND pp.codigo = v.cod
+              SET pp.precio_lista   = v.pl,
+                  pp.costo_neto     = v.cn,
+                  pp.costo_iva      = v.ci,
+                  pp.actualizado_en = NOW()`,
+          [...params, proveedor_id]
         );
       }
     }
 
-    // ── PASO 5: Actualizar precio_venta en productos ──────────────────────────
-    // Solo para productos donde este proveedor ES el más barato
-    // Calculamos cuál es el más barato con una sola query JOIN
-    const masBaratoMap = new Map();  // declarado aquí para que esté en scope en el return
-
+    // ── PASO 5: Calcular proveedor más barato para cada producto ──────────────
     if (resultados.length > 0) {
       const prodIds = [...new Set(resultados.map(r => r.producto_id))];
-
-      // Traer el proveedor más barato por cada producto de una sola vez
       const BATCH2 = 500;
+
       for (let i = 0; i < prodIds.length; i += BATCH2) {
         const chunk = prodIds.slice(i, i + BATCH2);
         const [cheapRows] = await conn.query(
@@ -717,7 +705,6 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
             ORDER BY pp.producto_id, costo_min ASC`,
           chunk
         );
-        // Para cada producto, tomar el primero (más barato)
         const seen = new Set();
         for (const row of cheapRows) {
           const pid = Number(row.producto_id);
@@ -728,17 +715,16 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
         }
       }
 
-      // Separar: los que son el proveedor más barato vs los que no
-      const updatesPV = [];  // [precio_venta, costo_neto, costo_iva, producto_id]
-
+      // ── PASO 6: Actualizar precio_venta en productos ────────────────────────
+      const updatesPV = [];
       for (const r of resultados) {
-        const esManual        = r.proveedor_id_manual === 1;
-        const provBarato      = masBaratoMap.get(r.producto_id);
-        const esMasBarato     = provBarato === proveedor_id;
-        const esElAsignado    = r.proveedor_asignado === proveedor_id;
+        const esManual    = r.proveedor_id_manual === 1;
+        const provBarato  = masBaratoMap.get(r.producto_id);
+        const esMasBarato = provBarato === proveedor_id;
+        const esElAsignado = r.proveedor_asignado === proveedor_id;
 
-        if (esManual && !esElAsignado) continue;  // proveedor manual diferente → no tocar
-        if (!esManual && !esMasBarato) continue;   // no es el más barato → no tocar PV
+        if (esManual && !esElAsignado) continue;
+        if (!esManual && !esMasBarato) continue;
 
         updatesPV.push([r.precio_venta, r.costo_neto_raw, r.costo_iva_unidad, r.producto_id]);
       }
@@ -747,36 +733,33 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
         const BATCH3 = 500;
         for (let i = 0; i < updatesPV.length; i += BATCH3) {
           const batch = updatesPV.slice(i, i + BATCH3);
-          const cases_pv = batch.map(() => 'WHEN id=? THEN ?').join(' ');
-          const cases_cn = batch.map(() => 'WHEN id=? THEN ?').join(' ');
-          const cases_ci = batch.map(() => 'WHEN id=? THEN ?').join(' ');
-          const ids3 = batch.map(r => r[3]);
-          const params_pv = batch.flatMap(r => [r[3], r[0]]);
-          const params_cn = batch.flatMap(r => [r[3], r[1]]);
-          const params_ci = batch.flatMap(r => [r[3], r[2]]);
-
-          // Si no es manual, también actualizar proveedor_id
+          const unionRows = batch.map(() => 'SELECT ? AS pv, ? AS cn, ? AS ci, ? AS pid').join(' UNION ALL ');
+          const params    = batch.flatMap(r => r);
           await conn.query(
-            `UPDATE productos
-                SET precio_venta = CASE ${cases_pv} ELSE precio_venta END,
-                    costo_neto   = CASE ${cases_cn} ELSE costo_neto END,
-                    costo_iva    = CASE ${cases_ci} ELSE costo_iva END
-              WHERE id IN (${ids3.map(()=>'?').join(',')})`,
-            [...params_pv, ...params_cn, ...params_ci, ...ids3]
+            `UPDATE productos p
+               JOIN (${unionRows}) v ON p.id = v.pid
+                SET p.precio_venta = v.pv,
+                    p.costo_neto   = v.cn,
+                    p.costo_iva    = v.ci`,
+            params
           );
+        }
 
-          // Actualizar proveedor_id solo para los no-manuales
-          const noManuales = batch.filter(r => {
-            const res = resultados.find(x => x.producto_id === r[3]);
-            return res && res.proveedor_id_manual !== 1;
-          });
-          if (noManuales.length > 0) {
-            const ids_nm = noManuales.map(r => r[3]);
+        // Actualizar proveedor_id para los no-manuales que son el más barato
+        const noManuales = updatesPV.filter(r => {
+          const res = resultados.find(x => x.producto_id === r[3]);
+          return res && res.proveedor_id_manual !== 1;
+        });
+        if (noManuales.length > 0) {
+          const BATCH4 = 500;
+          for (let i = 0; i < noManuales.length; i += BATCH4) {
+            const chunk = noManuales.slice(i, i + BATCH4);
+            const ids = chunk.map(r => r[3]);
             await conn.query(
               `UPDATE productos SET proveedor_id = ?
-                WHERE id IN (${ids_nm.map(()=>'?').join(',')})
+                WHERE id IN (${ids.map(()=>'?').join(',')})
                   AND proveedor_id_manual != 1`,
-              [proveedor_id, ...ids_nm]
+              [proveedor_id, ...ids]
             );
           }
         }
@@ -789,17 +772,15 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
       const esMasBarato = provBarato === proveedor_id;
       const esManual    = r.proveedor_id_manual === 1;
       return {
-        producto_id:         r.producto_id,
-        codigo:              r.codigo,
-        nombre:              r.nombre,
-        precio_lista_nuevo:  r.precio_lista_nuevo,
-        precio_venta:        r.precio_venta,
-        // Para la vista: estado del proveedor tras la actualización
-        es_proveedor_mas_barato: esMasBarato,
-        proveedor_asignado_id:   r.proveedor_asignado,  // el que estaba antes
-        proveedor_id_manual:     r.proveedor_id_manual,
-        sera_proveedor_asignado: !esManual && esMasBarato,
-        // si era manual y es el mismo proveedor que se actualiza → PV recalculado
+        producto_id:              r.producto_id,
+        codigo:                   r.codigo,
+        nombre:                   r.nombre,
+        precio_lista_nuevo:       r.precio_lista_nuevo,
+        precio_venta:             r.precio_venta,
+        es_proveedor_mas_barato:  esMasBarato,
+        proveedor_asignado_id:    r.proveedor_asignado,
+        proveedor_id_manual:      r.proveedor_id_manual,
+        sera_proveedor_asignado:  !esManual && esMasBarato,
         es_proveedor_manual_asignado: esManual && r.proveedor_asignado === proveedor_id,
       };
     });
@@ -810,7 +791,6 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
     conn.release();
   }
 },
-
 
 actualizarPreciosPDF: async function (precio_lista, codigo, proveedor_id) {
   try {
