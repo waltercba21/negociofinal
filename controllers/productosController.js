@@ -1,438 +1,2486 @@
-const conexion = require('../config/conexion')
-const util = require('util');
-const path = require('path');
+const conexion = require('../config/conexion');
+const producto = require('../models/producto');
+const carrito = require('../models/carrito');
+const escobillasCompat = require('../models/escobillasCompat');
 
-function isSet(v) {
-  return typeof v !== 'undefined' && v !== null;
+const fs = require('fs');
+const PDFDocument = require('pdfkit');
+const streamBuffers = require('stream-buffers');
+const xlsx = require('xlsx');
+
+
+const adminEmails = require('../config/admins');
+
+function normalizarClave(texto) {
+  return texto
+    .normalize("NFD")                        
+    .replace(/[\u0300-\u036f]/g, "")         
+    .replace(/\s+/g, '')                     
+    .toLowerCase();                          
 }
-function parseDecimal(v, def = null) {
-  if (!isSet(v)) return def;
-  const n = Number(String(v).replace(',', '.'));
-  return Number.isFinite(n) ? n : def;
+// ─────────────────────────────────────────────────────────────────────────────
+// Reordenamiento visual por lado (derecho/izquierdo) — POR CATEGORÍA
+//
+// La decisión se toma mirando la CATEGORÍA de cada producto, no el texto
+// buscado. Esto permite que funcione también cuando se busca por modelo
+// ("Escort"), por categoría desde el dropdown, o cuando los resultados
+// mezclan productos de ambos grupos.
+//
+// Grupo DELANTERO (ópticas, faros delanteros, aros, etc.)
+//   → DERECHO primero, IZQUIERDO después
+// Grupo TRASERO  (faros traseros, ojos de gato, circuitos impresos, etc.)
+//   → IZQUIERDO primero, DERECHO después
+// Categorías no listadas acá → se mantiene el orden original.
+//
+// Detecta: DERECHO/DERECHA/DER  e  IZQUIERDO/IZQUIERDA/IZQ
+// ─────────────────────────────────────────────────────────────────────────────
+function reordenarPorLado(productos, _busqueda) {
+  if (!Array.isArray(productos) || productos.length < 2) return productos;
+
+  // Normaliza: mayúsculas, sin acentos, sin espacios extra
+  const norm = (s) => (s || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Categorías del grupo TRASERO (izquierdo primero)
+  const CATS_TRASERAS = new Set([
+    'FAROS TRASEROS',
+    'FAROS TRASERO LED',
+    'OJOS DE GATO',
+    'CIRCUITOS IMPRESOS',
+    'LENTES DE FAROS',
+    'FAROS PATENTE',
+    'FAROS PATENTE LED'
+  ].map(norm));
+
+  // Categorías del grupo DELANTERO (derecho primero)
+  const CATS_DELANTERAS = new Set([
+    'OPTICAS',
+    'OPTICAS LED',
+    'VIDRIOS DE OPTICAS',
+    'FAROS DELANTEROS',
+    'FAROS DELANTEROS LED',
+    'FAROS AUXILIARES',
+    'FAROS AUXILIARES LED',
+    'AROS',
+    'FAROS GIROS ESPEJOS',
+    'LENTES DE OPTICAS',
+    'ESPEJOS',
+    'VIDRIOS DE ESPEJOS',
+    'FAROS LATERALES',
+    'FAROS LATERALES FLEXIBLES',
+    'FAROS LATERALES LED'
+  ].map(norm));
+
+  // Regex de lado (masculino, femenino y abreviaturas)
+  const RE_DERECHO   = /\b(DERECHO|DERECHA|DER)\b/;
+  const RE_IZQUIERDO = /\b(IZQUIERDO|IZQUIERDA|IZQ)\b/;
+  const RE_LADO_ANY  = /\b(DERECHO|DERECHA|DER|IZQUIERDO|IZQUIERDA|IZQ)\b/g;
+
+  // Devuelve 'trasero' | 'delantero' | null
+  function grupoDelProducto(p) {
+    const cat = norm(p.categoria_nombre || p.categoria || '');
+    if (!cat) return null;
+    if (CATS_TRASERAS.has(cat))   return 'trasero';
+    if (CATS_DELANTERAS.has(cat)) return 'delantero';
+    return null;
+  }
+
+  // Devuelve 'D' | 'I' | null
+  function ladoDelProducto(p) {
+    const n = norm(p.nombre || '');
+    if (RE_DERECHO.test(n))   return 'D';
+    if (RE_IZQUIERDO.test(n)) return 'I';
+    return null;
+  }
+
+  // Clave "base" del nombre sin palabras de lado (para agrupar pares)
+  function claveBase(p) {
+    return norm(p.nombre || '')
+      .replace(RE_LADO_ANY, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Peso dentro del mismo par — ⚠️ INVERTIDO respecto a versión anterior
+  //   Delantero → D (0) antes que I (2)   ← derecho primero
+  //   Trasero   → I (0) antes que D (2)   ← izquierdo primero
+  //   Sin lado  → 1 (al medio)
+  function pesoLado(p, grupo) {
+    const lado = ladoDelProducto(p);
+    if (!lado) return 1;
+    if (grupo === 'delantero') return lado === 'D' ? 0 : 2;
+    if (grupo === 'trasero')   return lado === 'I' ? 0 : 2;
+    return 1;
+  }
+
+  const conMeta = productos.map((p, i) => ({
+    p,
+    i,
+    grupo: grupoDelProducto(p),
+    base:  claveBase(p)
+  }));
+
+  // Si ningún producto pertenece a los grupos reordenables → no tocamos nada
+  if (!conMeta.some(x => x.grupo !== null)) return productos;
+
+  // Debe haber al menos un item con lado detectable
+  if (!conMeta.some(x => x.grupo && ladoDelProducto(x.p) !== null)) {
+    return productos;
+  }
+
+  conMeta.sort((a, b) => {
+    // (1) Con grupo va antes; sin grupo, al final
+    const aSinGrupo = a.grupo === null ? 1 : 0;
+    const bSinGrupo = b.grupo === null ? 1 : 0;
+    if (aSinGrupo !== bSinGrupo) return aSinGrupo - bSinGrupo;
+
+    // Ambos sin grupo → orden original
+    if (a.grupo === null && b.grupo === null) return a.i - b.i;
+
+    // (2) Agrupar pares por nombre base
+    if (a.base < b.base) return -1;
+    if (a.base > b.base) return 1;
+
+    // (3) Dentro del mismo par, orden por lado según grupo
+    const grupoRef = a.grupo || b.grupo;
+    const pa = pesoLado(a.p, grupoRef);
+    const pb = pesoLado(b.p, grupoRef);
+    if (pa !== pb) return pa - pb;
+
+    // (4) Estabilidad: orden original
+    return a.i - b.i;
+  });
+
+  return conMeta.map(x => x.p);
 }
 
-module.exports ={
-    
-    obtener: function (conexion, pagina, callback) {
-        const offset = (pagina - 1) * 20;
-        const consulta = `
-          SELECT productos.*, GROUP_CONCAT(imagenes_producto.imagen) AS imagenes
-          FROM productos
-          LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
-          GROUP BY productos.id
-          ORDER BY productos.id DESC
-          LIMIT 20 OFFSET ?`;
+const productosPorPagina = 20;
+// ==============================
+// Helpers genéricos (compatibles)
+// ==============================
+function toArray(v) {
+  if (Array.isArray(v)) return v;
+  if (v === undefined || v === null) return [];
+  return [v];
+}
+function encontrarColumna(claves, candidatos /* array de strings */) {
+  const normKeys = claves.map(k => ({ raw: k, norm: normalizarClave(k) }));
+  const targets = candidatos.map(c => normalizarClave(c));
+
+  // 1) match exacto con cualquier candidato
+  for (const t of targets) {
+    const hit = normKeys.find(k => k.norm === t);
+    if (hit) return hit.raw;
+  }
+  // 2) fallback: includes (por ej. "precio" dentro de "preciolista")
+  for (const t of targets) {
+    const hit = normKeys.find(k => k.norm.includes(t));
+    if (hit) return hit.raw;
+  }
+  return null;
+}
+
+function limpiarPrecio(valor) {
+  if (valor === null || valor === undefined || valor === '') return 0;
+  if (typeof valor === 'number') return Math.round(valor * 100) / 100;
+
+  let original = valor.toString().trim();
+  original = original.replace(/\$/g, '').replace(/\s+/g, '');
+
+  if (original.includes('.') && original.includes(',')) {
+    original = original.replace(/\./g, '').replace(',', '.');
+  } else if (original.includes(',') && !original.includes('.')) {
+    original = original.replace(',', '.');
+  }
+
+  // Limitar decimales a 2
+  if (original.includes('.')) {
+    const [entero, decimal] = original.split('.');
+    if (decimal.length > 2) original = `${entero}.${decimal.substring(0, 2)}`;
+  }
+
+  const numero = parseFloat(original);
+  return Number.isFinite(numero) ? numero : 0;
+}
+
+// 👉 redondeo final como en front: a la centena más cercana (>=50 hacia arriba)
+function redondearAlCentenar(n) {
+  const resto = n % 100;
+  return resto < 50 ? (n - resto) : (n + (100 - resto));
+}
+function numOr0(v) {
+  // Soporta "10,5" y "10.5"
+  if (v === undefined || v === null || v === '') return 0;
+  const n = parseFloat(String(v).replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+
+function strOrNull(v) {
+  if (v == null) return null;
+  const s = String(v).trim();
+  return s === '' ? null : s;
+}
+
+// ✅ Siempre trata el valor como proveedor_id (no índice)
+const mapearProveedorDesignado = (proveedorDesignado) => {
+  return (proveedorDesignado == null || proveedorDesignado === '') ? '' : String(proveedorDesignado);
+};
+
+// ==============================
+// Utilidades numéricas específicas
+// ==============================
+function numInt(v) {
+  const n = parseInt(v, 10);
+  return isNaN(n) ? 0 : n;
+}
+function numF(v) { // float con coma o punto
+  return numOr0(v);
+}
+
+// ==============================
+// (Opcional) Dedupe por si llega repetido el mismo proveedor
+// ==============================
+function dedupeProveedorRows(productoId, proveedoresArr, codigosArr, preciosListaArr) {
+  const seen = new Set();
+  const filas = [];
+
+  for (let i = 0; i < proveedoresArr.length; i++) {
+    const proveedor_id = proveedoresArr[i] ? Number(proveedoresArr[i]) : null;
+    if (!proveedor_id) continue;
+
+    const key = `${productoId}-${proveedor_id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    filas.push({
+      producto_id: Number(productoId),
+      proveedor_id,
+      codigo: (codigosArr[i] ?? null) || null,
+      precio_lista: Number(preciosListaArr[i]) || 0
+    });
+  }
+  return filas;
+}
+async function upsertProductoProveedorRaw(con, row) {
+  const sql = `
+    INSERT INTO producto_proveedor
+      (producto_id, proveedor_id, precio_lista, codigo, presentacion, factor_unidad)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      precio_lista  = VALUES(precio_lista),
+      codigo        = VALUES(codigo),
+      presentacion  = VALUES(presentacion),
+      factor_unidad = VALUES(factor_unidad)
+  `;
+  const params = [
+    Number(row.producto_id),
+    Number(row.proveedor_id),
+    Number(row.precio_lista) || 0,
+    row.codigo || null,
+    normalizarPresentacion(row.presentacion),
+    Number(row.factor_unidad) || 1
+  ];
+
+  if (con.promise && typeof con.promise === 'function') {
+    await con.promise().query(sql, params);
+  } else {
+    await new Promise((resolve, reject) => {
+      con.query(sql, params, (err) => (err ? reject(err) : resolve()));
+    });
+  }
+}
+
+// ==============================
+// Elegir proveedor más barato (por costo_iva del form)
+// ==============================
+function pickCheapestProveedorId(body) {
+  const provIds = toArray(body.proveedores);
+  const civas   = toArray(body.costo_iva);
+
+  let ganador = 0;
+  let min = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < Math.max(provIds.length, civas.length); i++) {
+    const pid = numInt(provIds[i]);
+    const ci  = numF(civas[i]);
+    if (pid && ci > 0 && ci < min) {
+      min = ci; ganador = pid;
+    }
+  }
+  return ganador || 0;
+}
+
+function buildProveedorRows(productoId, body) {
+  const provIds     = toArray(body.proveedores);              // proveedor_id[]
+  const codigos     = toArray(body.codigo);                   // codigo[]
+  const plistas     = toArray(body.precio_lista);             // precio_lista[]
+  const descs       = toArray(body.descuentos_proveedor_id);  // descuento[] (%)
+  const cnnetos     = toArray(body.costo_neto);               // costo_neto[]
+  const ivas        = toArray(body.IVA);                      // IVA[] (21 / 10.5)
+  const civas       = toArray(body.costo_iva);                // costo_iva[]
+  const presentacs  = toArray(body.presentacion);             // presentacion[]: unidad/juego
+  const factores    = toArray(body.factor_unidad);            // factor_unidad[] (hidden)
+
+  const filas = [];
+  const len = Math.max(
+    provIds.length, codigos.length, plistas.length,
+    descs.length, cnnetos.length, ivas.length, civas.length,
+    presentacs.length, factores.length
+  );
+
+  for (let i = 0; i < len; i++) {
+    const proveedor_id = numInt(provIds[i]);
+    if (!proveedor_id) continue;
+
+    const presentacion = normalizarPresentacion(presentacs[i]);
+    const factor_unidad = factorDesdePresentacion(presentacion, factores[i]);
+
+    filas.push({
+      producto_id : Number(productoId),
+      proveedor_id,
+      codigo      : strOrNull(codigos[i]) || '',
+      precio_lista: numF(plistas[i]),
+      descuento   : numF(descs[i]),     // %
+      costo_neto  : numF(cnnetos[i]),
+      iva         : numF(ivas[i]),      // 21 o 10.5
+      costo_iva   : numF(civas[i]),     // ya viene normalizado por el front
+      presentacion,
+      factor_unidad
+    });
+  }
+  return filas;
+}
+
+// Presentación normalizada
+function normalizarPresentacion(v) {
+  const s = (v ?? 'unidad').toString().trim().toLowerCase();
+  return s === 'juego' ? 'juego' : 'unidad';
+}
+
+// Si viene factor en el form lo usamos; si no, derivamos por presentación
+function factorDesdePresentacion(presentacion, factorFormulario) {
+  const f = parseFloat(factorFormulario);
+  if (!isNaN(f) && f > 0) return f;      // respeta el hidden que envía el front
+  return presentacion === 'juego' ? 0.5   // juego/par → mitad
+                                  : 1.0;  // unidad
+}
+// --- calcula en servidor el costo c/IVA por UNIDAD para el índice i ---
+function costoConIVAPorUnidadFila(idx, body) {
+  // reutilizamos tus helpers existentes
+  const arr = (v) => Array.isArray(v) ? v : (v == null ? [] : [v]);
+
+  const costo_neto   = numF(arr(body.costo_neto)[idx] ?? body.costo_neto ?? 0);
+  const ivaSel       = numF(arr(body.IVA)[idx]        ?? body.IVA        ?? 21);
+  const presentacion = normalizarPresentacion(arr(body.presentacion)[idx] ?? body.presentacion);
+  const factor       = factorDesdePresentacion(presentacion, arr(body.factor_unidad)[idx] ?? body.factor_unidad);
+
+  const cnUnidad = costo_neto * (factor || 1);
+  const iva      = ivaSel || 21;
+
+  return Math.ceil(cnUnidad + (cnUnidad * iva / 100));
+}
+
+// --- elige el proveedor más barato normalizando a UNIDAD (robusto en backend) ---
+function pickCheapestProveedorIdServer(body) {
+  const provIds = Array.isArray(body.proveedores) ? body.proveedores
+                  : (body.proveedores ? [body.proveedores] : []);
+  let ganador = 0, min = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < provIds.length; i++) {
+    const pid = numInt(provIds[i]);
+    if (!pid) continue;
+
+    const costo = costoConIVAPorUnidadFila(i, body);
+    if (costo > 0 && costo < min) { min = costo; ganador = pid; }
+  }
+  return ganador || 0;
+}
+function normalizarIdFiltro(raw, tokensNull = ['TODOS', 'TODAS', '']) {
+  if (raw === undefined || raw === null) return null;
+  const v = String(raw).trim();
+  if (!v) return null;
+  if (tokensNull.includes(v)) return null;
+  return v;
+}
+
+async function obtenerNombresFiltros({ proveedorId, categoriaId }) {
+  const [proveedores, categorias] = await Promise.all([
+    producto.obtenerProveedores(conexion),
+    producto.obtenerCategorias(conexion),
+  ]);
+
+  const proveedorSel = proveedorId
+    ? proveedores.find(p => String(p.id) === String(proveedorId))
+    : null;
+
+  const categoriaSel = categoriaId
+    ? categorias.find(c => String(c.id) === String(categoriaId))
+    : null;
+
+  return {
+    proveedores,
+    categorias,
+    proveedorSel,
+    categoriaSel,
+    nombreProveedor: proveedorSel ? proveedorSel.nombre : 'Todos los proveedores',
+    nombreCategoria: categoriaSel ? categoriaSel.nombre : 'Todas las categorías',
+  };
+}
+
+function crearPDFResponse(res, { filename = 'productos.pdf', margin = 30 } = {}) {
+  const buffer = new streamBuffers.WritableStreamBuffer({
+    initialSize: 1024 * 1024,
+    incrementAmount: 1024 * 1024
+  });
+
+  const doc = new PDFDocument({ margin, size: 'A4' });
+  doc.pipe(buffer);
+
+  let cancelado = false;
+
+  buffer.on('finish', () => {
+    if (cancelado || res.headersSent) return;
+
+    const pdfData = buffer.getContents();
+    if (!pdfData) {
+      return res.status(500).send('No se pudo generar el PDF');
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.send(pdfData);
+  });
+
+  const fail500 = (error, msg = 'Error al generar el PDF') => {
+    cancelado = true;
+    console.error('❌', msg, error);
+    try { doc.end(); } catch {}
+    if (!res.headersSent) return res.status(500).send(msg);
+  };
+
+  return { doc, fail500, cancelar: () => (cancelado = true) };
+}
+
+module.exports = {
+    index: async (req, res) => {
+        try {
+          // Obtener últimos 3 productos y últimas 12 ofertas en paralelo
+          const [productos, productosOfertaRaw] = await Promise.all([
+            new Promise((resolve, reject) => {
+              producto.obtenerUltimos(conexion, 3, (error, resultado) => {
+                if (error) reject(error);
+                else resolve(resultado);
+              });
+            }),
+            new Promise((resolve, reject) => {
+              producto.obtenerUltimasOfertas(conexion, 12, (error, resultado) => {
+                if (error) reject(error);
+                else resolve(resultado);
+              });
+            })
+          ]);
       
-        conexion.query(consulta, [offset], (error, resultados) => {
-          if (error) {
-            callback(error);
-            return;
-          }
-          const productos = resultados.map(resultado => {
+          // Obtener imágenes de productos en oferta
+          const productoIds = productosOfertaRaw.map(p => p.id);
+          const imagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
+      
+          // Asociar imágenes a cada producto de oferta
+          const productosOferta = productosOfertaRaw.map(producto => {
+            const imgs = imagenes
+              .filter(img => img.producto_id === producto.id)
+              .map(img => img.imagen);
             return {
-              ...resultado,
-              imagenes: resultado.imagenes ? resultado.imagenes.split(',') : []
+              ...producto,
+              imagenes: imgs
             };
           });
-          callback(null, productos);
-        });
-      },
-    obtenerSiguienteID: function() {
-        return new Promise((resolve, reject) => {
-          conexion.query('SELECT MAX(id) AS max_id FROM presupuestos_mostrador', (error, resultado) => {
-            if (error) {
-              reject(error);
-              return;
-            }
-            let siguienteID = resultado[0].max_id || 0;
-            siguienteID++;
-            resolve(siguienteID);
-          });
-        });
-      },
-      obtenerSiguienteIDFactura: function() {
-        return new Promise((resolve, reject) => {
-            conexion.query('SELECT MAX(id) AS max_id FROM facturas_mostrador', (error, resultado) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                let siguienteID = resultado[0].max_id || 0;
-                siguienteID++;
-                resolve(siguienteID);
-            });
-        });
-    },
-    obtenerUltimasOfertas: function(conexion, limite, callback) {
-        const sql = `
-          SELECT p.*, c.nombre AS categoria_nombre
-          FROM productos p
-          LEFT JOIN categorias c ON p.categoria_id = c.id
-          WHERE p.oferta = 1
-          ORDER BY p.id DESC
-          LIMIT ?
-        `;
-        conexion.query(sql, [limite], callback);
-      },      
-    eliminarPresupuesto : (conexion, id) => {
-        return new Promise((resolve, reject) => {
-            // Primero, eliminamos los ítems asociados al presupuesto
-            conexion.query('DELETE FROM presupuesto_items WHERE presupuesto_id = ?', [id], (error, results) => {
-                if (error) {
-                    return reject(error);
-                }
-                // Luego, eliminamos el presupuesto en sí
-                conexion.query('DELETE FROM presupuestos_mostrador WHERE id = ?', [id], (error, results) => {
-                    if (error) {
-                        return reject(error);
-                    }
-                    resolve(results.affectedRows);
+      
+          let cantidadCarrito = 0;
+      
+          // Si el usuario está logueado, obtener cantidad de productos en el carrito
+          if (req.session?.usuario) {
+            const id_usuario = req.session.usuario.id;
+      
+            try {
+              const carritoActivo = await new Promise((resolve, reject) => {
+                carrito.obtenerCarritoActivo(id_usuario, (error, resultado) => {
+                  if (error) reject(error);
+                  else resolve(resultado);
                 });
-            });
-        });
-    },
-guardarPresupuesto : (presupuesto) => {
-        return new Promise((resolve, reject) => {
-          conexion.query('INSERT INTO presupuestos_mostrador SET ?', presupuesto, (error, resultado) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(resultado.insertId);
-            }
-          });
-        });
-    },
-guardarFactura: (factura) => {
-  return new Promise((resolve, reject) => {
-    // Normalizar mínimo (no inventar cliente)
-    if (factura && typeof factura === "object") {
-      // Si por algún motivo viene vendedor vacío, lo limpiamos
-      if (factura.vendedor != null && String(factura.vendedor).trim() === "") {
-        factura.vendedor = null;
-      }
-
-      // Importante: NO autocompletar cliente_nombre acá
-      // cliente_nombre debe ser NULL en "factura interna" y venir de ARCA luego
-      if (factura.cliente_nombre != null && String(factura.cliente_nombre).trim() === "") {
-        factura.cliente_nombre = null;
-      }
-    }
-
-    conexion.query("INSERT INTO facturas_mostrador SET ?", factura, (error, resultado) => {
-      if (error) return reject(error);
-      resolve(resultado.insertId);
-    });
-  });
-},
-
-
-
-    guardarItemsPresupuesto : (items) => {
-        return new Promise((resolve, reject) => {
-            const query = 'INSERT INTO presupuesto_items (presupuesto_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?';
-            conexion.query(query, [items], (error, resultado) => {
-                if (error) {
-                    console.error('Error al insertar items del presupuesto:', error);
-                    reject(error);
-                } else {
-                    resolve(resultado);
-                }
-            });
-        });
-    },
-    guardarItemsFactura: (items) => {
-        return new Promise((resolve, reject) => {
-            const query = 'INSERT INTO factura_items (factura_id, producto_id, cantidad, precio_unitario, subtotal, descripcion) VALUES ?';
-            
-            conexion.query(query, [items], (error, resultado) => {
-                if (error) {
-                    console.error('Error al insertar items de la factura:', error);
-                    reject(error);
-                } else {
-                    resolve(resultado);
-                }
-            });
-        });
-    },    
+              });
       
-      getAllPresupuestos: (fechaInicio, fechaFin) => {
-        return new Promise((resolve, reject) => {
-            conexion.query(`
-                SELECT p.id, p.nombre_cliente, p.fecha, p.total, p.creado_en
-                FROM presupuestos_mostrador p
-                WHERE DATE(p.fecha) BETWEEN ? AND ?
-            `, [fechaInicio, fechaFin], (error, resultados) => {
-                if (error) {
-                    reject(new Error('Error al obtener presupuestos: ' + error.message));
-                } else {
-                    const presupuestosFormateados = resultados.map(presupuesto => {
-
-                        return {
-    ...presupuesto,
-    fecha: new Date(presupuesto.fecha).toLocaleDateString('es-ES'),
-    hora: new Date(presupuesto.creado_en).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
-                        };
-                    });
-                    
-                    resolve(presupuestosFormateados);
-                }
-            });
-        });
-    },
-    getAllFacturas: (fechaInicio, fechaFin) => {
-        return new Promise((resolve, reject) => {
-            const sqlQuery = `
-                SELECT 
-                    p.id, 
-                    p.nombre_cliente, 
-                    p.fecha, 
-                    p.total, 
-                    p.metodos_pago,
-                    p.creado_en
-                FROM facturas_mostrador p
-                WHERE DATE(p.fecha) BETWEEN ? AND ?
-                ORDER BY p.fecha DESC, p.creado_en DESC;
-            `;
-    
-            conexion.query(sqlQuery, [fechaInicio, fechaFin], (error, resultados) => {
-                if (error) {
-                    reject(new Error('Error al obtener facturas: ' + error.message));
-                } else {
-                    const facturasFormateadas = resultados.map(factura => {
-    
-                        return {
-                            id: factura.id,
-                            nombre_cliente: factura.nombre_cliente,
-                            fecha: new Date(factura.fecha).toLocaleDateString('es-AR'),
-                            hora: new Date(factura.creado_en).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
-                            total: new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(factura.total),
-                            metodos_pago: factura.metodos_pago
-                        };
-                    });
-                    resolve(facturasFormateadas);
-                }
-            });
-        });
-    },    
-   obtenerProductoIdPorCodigo: (codigo, nombre = null) => {
-    return new Promise((resolve, reject) => {
-        // 1° intento: buscar por producto_proveedor.codigo (como antes)
-        let query = `
-            SELECT p.id 
-            FROM productos p
-            INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-            WHERE pp.codigo = ?
-        `;
-        const params = [codigo];
-
-        if (nombre) {
-            query += " AND p.nombre LIKE ?";
-            params.push(`%${nombre}%`);
+              if (carritoActivo && carritoActivo.length > 0) {
+                const id_carrito = carritoActivo[0].id;
+      
+                const productosCarrito = await new Promise((resolve, reject) => {
+                  carrito.obtenerProductosCarrito(id_carrito, (error, resultado) => {
+                    if (error) reject(error);
+                    else resolve(resultado);
+                  });
+                });
+      
+                cantidadCarrito = productosCarrito.length;
+              }
+            } catch (error) {
+              console.error("❌ Error al obtener el carrito:", error);
+            }
+          }
+      
+          // Renderizar vista con todos los datos
+          res.render('index', {
+            productos,
+            productosOferta,
+            cantidadCarrito,
+            producto: null // para evitar error en head.ejs
+          });
+      
+        } catch (error) {
+          console.error("❌ Error en index:", error);
+          return res.status(500).send("Error interno del servidor");
         }
-
-        conexion.query(query, params, (error, resultados) => {
-            if (error) return reject(error);
-
-            if (resultados.length > 0) return resolve(resultados[0].id);
-
-            // ✅ 2° intento: buscar por productos.codigo directamente
-            let query2 = `SELECT id FROM productos WHERE codigo = ?`;
-            const params2 = [codigo];
-
-            if (nombre) {
-                query2 += " AND nombre LIKE ?";
-                params2.push(`%${nombre}%`);
-            }
-
-            conexion.query(query2, params2, (error2, resultados2) => {
-                if (error2) return reject(error2);
-
-                if (resultados2.length > 0) return resolve(resultados2[0].id);
-
-                // ✅ 3° intento: buscar SOLO por nombre si el código no existe en ninguna tabla
-                if (nombre) {
-                    conexion.query(
-                        `SELECT id FROM productos WHERE nombre LIKE ? LIMIT 1`,
-                        [`%${nombre}%`],
-                        (error3, resultados3) => {
-                            if (error3) return reject(error3);
-                            if (resultados3.length > 0) return resolve(resultados3[0].id);
-                            console.warn(`⚠️ Producto no encontrado: código="${codigo}", nombre="${nombre}"`);
-                            reject(new Error(`Producto no encontrado: código="${codigo}", nombre="${nombre}"`));
-                        }
-                    );
-                } else {
-                    console.warn(`⚠️ Producto no encontrado: código="${codigo}"`);
-                    reject(new Error(`Producto no encontrado: código="${codigo}"`));
-                }
-            });
-        });
-    });
-},    
-     obtenerItemsPresupuesto : (presupuestoId) => {
-        return new Promise((resolve, reject) => {
-          const query = `
-            SELECT pi.cantidad, pi.precio_unitario, pi.subtotal, p.nombre as producto_nombre
-            FROM presupuesto_items pi
-            JOIN productos p ON pi.producto_id = p.id
-            WHERE pi.presupuesto_id = ?
-          `;
-      
-          conexion.query(query, [presupuestoId], (error, resultados) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(resultados);
-            }
-          });
-        });
       },      
-obtenerPorId: function (conexion, id, funcion) {
-    conexion.query('SELECT productos.*, categorias.nombre AS categoria_nombre, imagenes_producto.imagen FROM productos LEFT JOIN categorias ON productos.categoria_id = categorias.id LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id WHERE productos.id = ?', [id], function(error, resultados) {
-        if (error) {
-            return funcion(error);
-        } else if (resultados.length === 0) {
-            return funcion(null, []);
+lista: async function (req, res) {
+    try {
+      const pagina    = req.query.pagina    ? Number(req.query.pagina)    : 1;
+      const categoria = req.query.categoria ? Number(req.query.categoria) : undefined;
+      const marca     = req.query.marca     ? Number(req.query.marca)     : undefined;
+      const modelo    = req.query.modelo    ? Number(req.query.modelo)    : undefined;
+
+      if (
+        (categoria && isNaN(categoria)) ||
+        (marca     && isNaN(marca))     ||
+        (modelo    && isNaN(modelo))
+      ) {
+        return res.status(400).send("Parámetros inválidos.");
+      }
+
+      const seHizoBusqueda  = !!(categoria || marca || modelo);
+      let   productos       = [];
+      let   numeroDePaginas = 1;  
+
+      if (seHizoBusqueda) {
+        if (categoria && !marca && !modelo) {
+          const offset = (pagina - 1) * productosPorPagina;
+
+          // Nueva función paginada que creaste en el modelo
+          const { productos: listaCategoria, total } =
+                await producto.obtenerProductosPorCategoriaPaginado(
+                       conexion, categoria, offset, productosPorPagina);
+
+          productos       = listaCategoria;
+          numeroDePaginas = Math.max(1, Math.ceil(total / productosPorPagina));
+
+        /* ========= B) Filtros combinados (marca / modelo) ========= */
         } else {
-            const producto = resultados.reduce((producto, resultado) => {
-                if (!producto) {
-                    producto = {
-                        ...resultado,
-                        imagenes: []
-                    };
-                }
-                if (resultado.imagen) {
-                    producto.imagenes.push(resultado.imagen);
-                }
-                return producto;
-            }, null);
-            return funcion(null, [producto]);
+
+          const offset = (pagina - 1) * productosPorPagina;
+          const { productos: listaFiltros, total } =
+                await producto.obtenerPorFiltrosPaginado(
+                       conexion, { categoria, marca, modelo }, offset, productosPorPagina);
+
+          productos       = listaFiltros;
+          numeroDePaginas = Math.max(1, Math.ceil(total / productosPorPagina));
         }
-    });
-},
-  insertarProducto: function(conexion, producto) {
-    return new Promise((resolve, reject) => {
-        conexion.query('INSERT INTO productos SET ?', producto, function(error, result) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(result);
-            }
-        });
-    });
-}, 
- eliminar: async (idOrIds) => {
-    const ids = (Array.isArray(idOrIds) ? idOrIds : [idOrIds])
-      .map(id => parseInt(id, 10))
-      .filter(id => Number.isFinite(id) && id > 0);
+        const productoIds = productos.map(p => p.id);
+        if (productoIds.length) {
+          const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
 
-    if (!ids.length) throw new Error('No se proporcionaron IDs válidos para eliminar');
+          for (const prod of productos) {
+            prod.imagenes     = todasLasImagenes.filter(img => img.producto_id === prod.id);
+            prod.precio_venta = prod.precio_venta ? parseFloat(prod.precio_venta) : "No disponible";
 
-    const placeholders = ids.map(() => '?').join(',');
-    const pp = conexion.promise();
+            const proveedor = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
+            prod.proveedor_nombre  = proveedor ? proveedor.proveedor_nombre  : "Sin proveedor";
+            prod.codigo_proveedor  = proveedor ? proveedor.codigo_proveedor  : "";
+          }
+        }
+      } else {
+      }
 
-    // Borrar en orden para respetar foreign keys
-    await pp.query(`DELETE FROM pedido_items        WHERE producto_id IN (${placeholders})`, ids);
-    await pp.query(`DELETE FROM estadisticas         WHERE producto_id IN (${placeholders})`, ids);
-    await pp.query(`DELETE FROM factura_items        WHERE producto_id IN (${placeholders})`, ids);
-    await pp.query(`DELETE FROM imagenes_producto    WHERE producto_id IN (${placeholders})`, ids);
-    await pp.query(`DELETE FROM presupuesto_items    WHERE producto_id IN (${placeholders})`, ids);
-    await pp.query(`DELETE FROM producto_proveedor   WHERE producto_id IN (${placeholders})`, ids);
+      const [categorias, marcas] = await Promise.all([
+        producto.obtenerCategorias(conexion),
+        producto.obtenerMarcas(conexion),
+      ]);
 
-    const [result] = await pp.query(`DELETE FROM productos WHERE id IN (${placeholders})`, ids);
-    return result;
+      let modelosPorMarca = marca
+        ? await producto.obtenerModelosPorMarca(conexion, marca)
+        : [];
+
+      const normalizarModelo = (nombre) => {
+        const partes = nombre.split("/");
+        if (partes.length === 2 && !isNaN(partes[0]) && !isNaN(partes[1])) {
+          return parseInt(partes[0]) + parseInt(partes[1]) / 100;
+        }
+        const match = nombre.match(/\d+/g);
+        return match ? parseInt(match.join("")) : Number.MAX_SAFE_INTEGER;
+      };
+
+      categorias.sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+      marcas.sort    ((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+      modelosPorMarca.sort((a, b) => normalizarModelo(a.nombre) - normalizarModelo(b.nombre));
+
+      const modeloSeleccionado = modelo ? modelosPorMarca.find(m => m.id === modelo) : null;
+
+      res.render("productos", {
+        productos,
+        categorias,
+        marcas,
+        modelosPorMarca,
+        categoriaSeleccionada : categoria
+          ? categorias.find(cat => cat.id === categoria)?.nombre
+          : "Todos",
+        numeroDePaginas,
+        pagina,
+        modelo                : modeloSeleccionado,
+        req,
+        seHizoBusqueda,
+        isUserLoggedIn        : !!req.session.usuario,
+        isAdminUser           : req.session.usuario &&
+                                 adminEmails.includes(req.session.usuario?.email),
+      });
+
+    } catch (error) {
+      console.error("❌ Error en productosController.lista:", error);
+
+      res.status(500).render("productos", {
+        productos       : [],
+        categorias      : [],
+        marcas          : [],
+        modelosPorMarca : [],
+        categoriaSeleccionada : "Todos",
+        numeroDePaginas : 1,
+        pagina          : 1,
+        modelo          : null,
+        seHizoBusqueda  : false,
+        req,
+        isUserLoggedIn  : !!req.session.usuario,
+        isAdminUser     : req.session.usuario &&
+                          adminEmails.includes(req.session.usuario?.email),
+      });
+    }
   },
-actualizar: function (conexion, datos, archivo) {
-  return new Promise((resolve, reject) => {
-    if (!isSet(datos.id)) {
-      return reject(new Error('Los datos del producto deben incluir un ID'));
+      ofertas: async function (req, res) {
+        try {
+          const isUserLoggedIn = !!req.session.usuario;
+          const isAdminUser = isUserLoggedIn && adminEmails.includes(req.session.usuario?.email);
+      
+          const paginaSolicitada = parseInt(req.query.pagina) || 1;
+          const productosPorPagina = 20;
+      
+          const categoriaSeleccionada = req.query.categoria_id || '';
+          const marcaSeleccionada = req.query.marca_id || '';
+      
+          // 🔍 Obtener categorías y marcas para los filtros
+          const categorias = await producto.obtenerCategorias(conexion);
+          const marcas = await producto.obtenerMarcas(conexion);
+      
+          // 🔍 Obtener productos en oferta aplicando filtros
+          const todosLosProductos = await new Promise((resolve, reject) => {
+            producto.obtenerProductosOfertaFiltrados(conexion, {
+              categoria_id: categoriaSeleccionada,
+              marca_id: marcaSeleccionada
+            }, (error, resultados) => {
+              if (error) {
+                console.error("❌ Error al obtener productos en oferta filtrados:", error);
+                return reject(error);
+              }
+              resolve(resultados);
+            });
+          });
+      
+          const totalProductos = todosLosProductos.length;
+          const numeroDePaginas = Math.ceil(totalProductos / productosPorPagina);
+          const pagina = Math.min(Math.max(paginaSolicitada, 1), numeroDePaginas || 1);
+      
+          const inicio = (pagina - 1) * productosPorPagina;
+          const productosPagina = todosLosProductos.slice(inicio, inicio + productosPorPagina);
+      
+          // 🔄 Cargar imágenes para los productos de esta página
+          const productoIds = productosPagina.map(p => p.id);
+          if (productoIds.length > 0) {
+            const todasLasImagenes = await producto.obtenerImagenesProducto(conexion, productoIds);
+            productosPagina.forEach(producto => {
+              producto.imagenes = todasLasImagenes.filter(img => img.producto_id === producto.id);
+              producto.precio_venta = producto.precio_venta
+                ? Math.round(parseFloat(producto.precio_venta))
+                : "No disponible";
+            });
+          }
+      
+      
+          res.render("ofertas", {
+            productos: productosPagina,
+            categorias,
+            marcas,
+            categoriaSeleccionada,
+            marcaSeleccionada,
+            isUserLoggedIn,
+            isAdminUser,
+            pagina,
+            numeroDePaginas
+          });
+      
+        } catch (error) {
+          console.error("❌ Error en el controlador ofertas:", error);
+          res.status(500).render("ofertas", {
+            productos: [],
+            categorias: [],
+            marcas: [],
+            categoriaSeleccionada: '',
+            marcaSeleccionada: '',
+            isUserLoggedIn: !!req.session.usuario,
+            isAdminUser: req.session.usuario && adminEmails.includes(req.session.usuario?.email),
+            pagina: 1,
+            numeroDePaginas: 1
+          });
+        }
+      },      
+buscar: async (req, res) => {
+  try {
+    const { q, categoria_id, marca_id, modelo_id, proveedor_id } = req.query;
+
+    const busqueda_nombre = (q ?? '').toString().trim();
+    const simple =
+      String(req.query.simple || '').toLowerCase() === '1' ||
+      String(req.query.simple || '').toLowerCase() === 'true';
+
+    // Guardar params si existe sesión (no rompe nada)
+    if (req.session) {
+      req.session.busquedaParams = { busqueda_nombre, categoria_id, marca_id, modelo_id, proveedor_id };
     }
 
-    let query = "UPDATE productos SET ";
-    const params = [];
-    let first = true;
+    const limiteRaw = parseInt(req.query.limite, 10);
+    const maxLimit = simple ? 300 : 500;
+    const limite = Number.isFinite(limiteRaw)
+      ? Math.max(1, Math.min(limiteRaw, maxLimit))
+      : (simple ? 300 : 100);
 
-    const add = (sqlFrag, val) => {
-      query += first ? sqlFrag : ", " + sqlFrag;
-      params.push(val);
-      first = false;
+    // ✅ si viene proveedor_id => filtra por producto_proveedor
+    let productos;
+    const provIdNum = Number(proveedor_id);
+
+    if (proveedor_id != null && proveedor_id !== '' && Number.isFinite(provIdNum) && provIdNum > 0) {
+      productos = await producto.obtenerPorFiltrosYProveedor(
+        conexion,
+        categoria_id,
+        marca_id,
+        modelo_id,
+        busqueda_nombre,
+        limite,
+        provIdNum
+      );
+    } else {
+      productos = await producto.obtenerPorFiltros(
+        conexion,
+        categoria_id,
+        marca_id,
+        modelo_id,
+        busqueda_nombre,
+        limite
+      );
+    }
+
+    const productoIds = (productos || []).map(p => Number(p.id)).filter(Boolean);
+
+    const todasLasImagenes = productoIds.length
+      ? await producto.obtenerImagenesProducto(conexion, productoIds)
+      : [];
+
+    // ✅ index imágenes por producto_id (evita O(n²))
+    const imgsById = new Map();
+    for (const row of (todasLasImagenes || [])) {
+      const pid = Number(row.producto_id);
+      if (!pid) continue;
+      if (!imgsById.has(pid)) imgsById.set(pid, []);
+      imgsById.get(pid).push(row);
+    }
+
+    const registrarLogBusqueda = () => {
+      try {
+        const termino = busqueda_nombre;
+        const usuario_id = req.session?.usuario?.id || null;
+
+        if (termino.length >= 2 && Array.isArray(productos) && productos.length) {
+          const ids = productos.slice(0, 20).map(p => Number(p.id)).filter(Boolean);
+          if (ids.length) {
+            producto
+              .registrarConsultasBusqueda(conexion, { productoIds: ids, termino, usuario_id })
+              .catch(e => console.warn('⚠️ No se pudo registrar búsqueda:', e.code || e.message));
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ No se pudo registrar búsqueda:', e.code || e.message);
+      }
     };
 
-    if (isSet(datos.nombre)) add("nombre=?", datos.nombre);
+    // ✅ Modo liviano (para panel)
+    if (simple) {
+      const out = (productos || []).map(p => {
+        const rows = imgsById.get(Number(p.id)) || [];
+        const filenames = rows
+          .map(r => r.imagen || r.filename || r.nombre || r.path)
+          .filter(Boolean);
 
-    // ✅ FIX: faltaba actualizar descripcion, por eso en EDITAR no se guardaba
-    if (isSet(datos.descripcion)) add("descripcion=?", datos.descripcion);
+        return {
+          id: p.id,
+          nombre: p.nombre,
+          precio_venta: p.precio_venta,
+          categoria: p.categoria || p.categoria_nombre || p.nombre_categoria || null,
+          imagenes: filenames
+        };
+      });
 
-    if (isSet(datos.codigo)) add("codigo=?", datos.codigo);
-    if (isSet(datos.categoria_id)) add("categoria_id=?", datos.categoria_id);
-    if (isSet(datos.marca_id)) add("marca_id=?", datos.marca_id);
-    if (isSet(datos.modelo_id)) add("modelo_id=?", datos.modelo_id);
-
-    if (isSet(datos.precio_venta)) add("precio_venta=?", parseDecimal(datos.precio_venta, 0));
-    if (isSet(datos.utilidad)) add("utilidad=?", parseDecimal(datos.utilidad, 0));
-    if (isSet(datos.descuentos_proveedor_id)) add("descuentos_proveedor_id=?", datos.descuentos_proveedor_id);
-    if (isSet(datos.costo_neto)) add("costo_neto=?", parseDecimal(datos.costo_neto, 0));
-
-    // IVA de referencia del producto (no confundir con iva por proveedor)
-    if (isSet(datos.IVA)) add("IVA=?", parseDecimal(datos.IVA, 21));
-
-    if (isSet(datos.costo_iva)) add("costo_iva=?", parseDecimal(datos.costo_iva, 0));
-    if (isSet(datos.estado)) add("estado=?", datos.estado);
-    if (isSet(datos.stock_minimo)) add("stock_minimo=?", parseInt(datos.stock_minimo, 10) || 0);
-    if (isSet(datos.stock_actual)) add("stock_actual=?", parseInt(datos.stock_actual, 10) || 0);
-
-    if (archivo && isSet(archivo.filename)) add("imagen=?", archivo.filename);
-
-    if (isSet(datos.calidad_original))         add("calidad_original=?",         Number(datos.calidad_original)         === 1 ? 1 : 0);
-    if (isSet(datos.calidad_vic))              add("calidad_vic=?",              Number(datos.calidad_vic)              === 1 ? 1 : 0);
-    if (isSet(datos.calidad_mm))               add("calidad_mm=?",               Number(datos.calidad_mm)               === 1 ? 1 : 0);
-    if (isSet(datos.calidad_original_premium)) add("calidad_original_premium=?", Number(datos.calidad_original_premium) === 1 ? 1 : 0);
-
-    if (isSet(datos.proveedor_id)) add("proveedor_id=?", datos.proveedor_id);
-
-    // Persistir si el proveedor fue elegido manualmente por el admin
-    if (isSet(datos.proveedor_id_manual)) add("proveedor_id_manual=?", datos.proveedor_id_manual ? 1 : 0);
-
-    if (isSet(datos.oferta)) add("oferta=?", datos.oferta ? 1 : 0);
-
-    query += " WHERE id=?";
-    params.push(datos.id);
-
-    if (first) {
-      return resolve({ affectedRows: 0, warning: 'Sin campos para actualizar' });
+      registrarLogBusqueda();
+      return res.json(out);
     }
 
-    conexion.query(query, params, (error, results) => {
-      if (error) return reject(error);
-      resolve(results);
+    // ✅ Modo completo (mantiene comportamiento previo)
+    for (const prod of (productos || [])) {
+      prod.imagenes = imgsById.get(Number(prod.id)) || [];
+
+      const proveedores = (await producto.obtenerProveedoresPorProducto(conexion, prod.id)) || [];
+      prod.proveedores = proveedores;
+
+      let provAsignado = null;
+      if (prod.proveedor_id != null) {
+        provAsignado =
+          proveedores.find(p => Number(p.id ?? p.proveedor_id) === Number(prod.proveedor_id)) || null;
+      }
+
+      let provMasBarato = null;
+      try {
+        provMasBarato = await producto.obtenerProveedorMasBaratoPorProducto(conexion, prod.id);
+      } catch (_) {
+        provMasBarato = null;
+      }
+
+      const provParaCard = provAsignado || provMasBarato || null;
+
+      prod.proveedor_nombre =
+        provParaCard?.proveedor_nombre ??
+        provParaCard?.nombre_proveedor ??
+        provParaCard?.nombre ??
+        'Sin proveedor';
+
+      prod.codigo_proveedor = provParaCard?.codigo ?? provParaCard?.codigo_proveedor ?? '-';
+      prod.proveedor_asignado_id = prod.proveedor_id ?? null;
+      prod.utilidad = Number(prod.utilidad) || 0;
+    }
+
+    // Reordenar derecho/izquierdo según tipo de producto buscado
+    productos = reordenarPorLado(productos || [], busqueda_nombre);
+
+    registrarLogBusqueda();
+    return res.json(productos);
+  } catch (error) {
+    console.error("❌ Error en /productos/api/buscar:", error);
+    return res.status(500).json({ error: 'Ocurrió un error al buscar productos.' });
+  }
+},
+
+    detalle: async function (req, res) {
+        const id = req.params.id;
+      
+        try {
+          const productoData = await new Promise((resolve, reject) => {
+            producto.obtenerPorId(conexion, id, (error, resultado) => {
+              if (error) return reject(error);
+              resolve(resultado);
+            });
+          });
+      
+          if (!productoData || productoData.length === 0) {
+            return res.status(404).send('Producto no encontrado');
+          }
+      
+          productoData[0].precio_venta = parseFloat(productoData[0].precio_venta);
+
+      
+          const imagenes = await producto.obtenerImagenesProducto(conexion, [productoData[0].id]);
+          productoData[0].imagenes = imagenes || [];
+      
+          const isUserLoggedIn = !!req.session.usuario;
+          const isAdminUser = isUserLoggedIn && adminEmails.includes(req.session.usuario?.email);
+      
+          let cantidadCarrito = 0;
+      
+          if (isUserLoggedIn) {
+            const id_usuario = req.session.usuario.id;
+            const carritoActivo = await new Promise((resolve, reject) => {
+              carrito.obtenerCarritoActivo(id_usuario, (error, resultado) => {
+                if (error) return reject(error);
+                resolve(resultado);
+              });
+            });
+      
+            if (carritoActivo && carritoActivo.length > 0) {
+              const id_carrito = carritoActivo[0].id;
+              const productosCarrito = await new Promise((resolve, reject) => {
+                carrito.obtenerProductosCarrito(id_carrito, (error, resultado) => {
+                  if (error) return reject(error);
+                  resolve(resultado);
+                });
+              });
+      
+              cantidadCarrito = productosCarrito.length;
+            }
+          }
+      
+          res.render('detalle', {
+            producto: productoData[0],
+            cantidadCarrito,
+            isUserLoggedIn,
+            isAdminUser
+          });
+      
+        } catch (error) {
+          return res.status(500).send('Error interno del servidor');
+        }
+      },      
+    crear: async function (req, res) {
+  try {
+    let categorias, marcas, modelos;
+
+    // Catálogos
+    categorias = await producto.obtenerCategorias(conexion);
+    marcas     = await producto.obtenerMarcas(conexion);
+    modelos    = await producto.obtenerModelosPorMarca(conexion); // si tu fn devuelve todos, OK
+
+    // Proveedores + descuentos
+    const [proveedoresRaw, descuentos] = await Promise.all([
+      producto.obtenerProveedores(conexion),
+      producto.obtenerDescuentosProveedor(conexion)
+    ]);
+
+    const proveedores = (proveedoresRaw || []).map(p => {
+      const d = (descuentos || []).find(x => x.proveedor_id === p.id);
+      return { ...p, descuento: d ? Number(d.descuento) || 0 : 0 };
     });
+
+    // Defaults para que la vista no explote si no viene body
+    const utilidadDefault = Number(req.body?.utilidad) || 0;
+    const basePrecio      = Number(req.body?.precio_venta) || 0;
+
+    const preciosConDescuento = proveedores.map(p =>
+      Math.ceil(basePrecio - (basePrecio * (Number(p.descuento) || 0) / 100))
+    );
+    const descuentoProveedor = proveedores.map(p => Number(p.descuento) || 0);
+
+    return res.render('crear', {
+      categorias,
+      marcas,
+      modelos,
+      proveedores,
+      preciosConDescuento,
+      utilidad: utilidadDefault,
+      descuentoProveedor,
+      producto: { oferta: 0 } // para el checkbox
+    });
+  } catch (error) {
+    console.error('Error en crear:', error);
+    return res.status(500).send('Error: ' + error.message);
+  }
+},
+guardar: async function (req, res) {
+  try {
+    // 1) Insertar PRODUCTO (escalares)
+    const datosProducto = {
+      nombre: strOrNull(req.body.nombre),
+      descripcion: strOrNull(req.body.descripcion),
+      categoria_id: numOr0(req.body.categoria) || null,
+      marca_id: numOr0(req.body.marca) || null,
+      modelo_id: numOr0(req.body.modelo_id) || null,
+      utilidad: numOr0(req.body.utilidad),
+      precio_venta: numOr0(req.body.precio_venta),
+      estado: strOrNull(req.body.estado) || 'activo',
+      stock_minimo: numOr0(req.body.stock_minimo),
+      stock_actual: numOr0(req.body.stock_actual),
+      oferta: Number(req.body.oferta) === 1 ? 1 : 0,
+      calidad_original:         Number(req.body.calidad_original)         === 1 ? 1 : 0,
+      calidad_vic:              Number(req.body.calidad_vic)              === 1 ? 1 : 0,
+      calidad_mm:               Number(req.body.calidad_mm)               === 1 ? 1 : 0,
+      calidad_original_premium: Number(req.body.calidad_original_premium) === 1 ? 1 : 0
+    };
+    const ins = await producto.insertarProducto(conexion, datosProducto);
+    const productoId = ins && ins.insertId;
+    if (!productoId) throw new Error('No se obtuvo insertId al crear el producto');
+
+    // 2) Proveedores → UPSERT (incluye presentacion + factor_unidad)
+    const filas = buildProveedorRows(productoId, req.body);
+
+    for (let i = 0; i < filas.length; i++) {
+      const row = filas[i];
+      const sql = `
+        INSERT INTO producto_proveedor
+          (producto_id, proveedor_id, precio_lista, codigo, presentacion, factor_unidad)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          precio_lista  = VALUES(precio_lista),
+          codigo        = VALUES(codigo),
+          presentacion  = VALUES(presentacion),
+          factor_unidad = VALUES(factor_unidad)
+      `;
+      const params = [
+        row.producto_id,
+        row.proveedor_id,
+        row.precio_lista,
+        row.codigo,
+        row.presentacion,
+        row.factor_unidad
+      ];
+      await conexion.promise().query(sql, params);
+    }
+
+    // 3) Proveedor asignado: prioridad manual; si no hay, más barato (normalizado a unidad)
+    let proveedorAsignado = numOr0(req.body.proveedor_designado) || null;
+    if (!proveedorAsignado) {
+      proveedorAsignado = pickCheapestProveedorIdServer(req.body);
+    }
+
+    if (proveedorAsignado) {
+      await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado });
+    }
+
+    // 4) Imágenes (igual que ya tenías)
+    if (req.files && req.files.length > 0) {
+      await Promise.all(
+        req.files.map(f =>
+          producto.insertarImagenProducto(conexion, {
+            producto_id: productoId,
+            imagen: f.filename
+            // posicion: si querés, podés enviar i+1
+          })
+        )
+      );
+    }
+
+    return res.redirect("/productos/panelControl");
+  } catch (error) {
+    console.error('[CREAR][GUARDAR] Error:', error);
+    return res.status(500).send("Error: " + error.message);
+  }
+},
+    eliminarSeleccionados : async (req, res) => { 
+        const { ids } = req.body;
+        try {
+            await producto.eliminar(ids);
+            res.json({ success: true });
+        } catch (error) { 
+            res.status(500).json({ success: false, error: error.message });
+        }
+    },
+editar: async function (req, res) {
+  try {
+    const id = Number(req.params.id);
+    const result = await producto.retornarDatosId(conexion, id);
+
+    if (!result) return res.status(404).send("No se encontró el producto");
+
+    // Copia + normalización suave (no tocamos IVA acá)
+    const productoResult = { ...result };
+    productoResult.precio_lista = Math.round(Number(productoResult.precio_lista || 0));
+    productoResult.costo_neto   = Math.round(Number(productoResult.costo_neto   || 0));
+    productoResult.costo_iva    = Math.round(Number(productoResult.costo_iva    || 0));
+    productoResult.utilidad     = Math.round(Number(productoResult.utilidad     || 0));
+    productoResult.precio_venta = Math.round(Number(productoResult.precio_venta || 0));
+    productoResult.calidad_original_fitam    = result.calidad_original_fitam;
+    productoResult.calidad_vic               = result.calidad_vic;
+    productoResult.calidad_mm                = result.calidad_mm;
+    productoResult.calidad_original_premium  = result.calidad_original_premium;
+
+    // params navegación (evitar undefined)
+    productoResult.paginaActual = req.query.pagina   || '';
+    productoResult.busqueda     = req.query.busqueda || '';
+
+    // proveedores del producto
+    const productoProveedoresResult = await producto.retornarDatosProveedores(conexion, id);
+    const productoProveedores = Array.isArray(productoProveedoresResult) ? productoProveedoresResult : [];
+
+    productoProveedores.forEach(pp => {
+      pp.precio_lista = Math.floor(Number(pp.precio_lista || 0));
+      if (isFinite(pp.descuento))  pp.descuento  = Math.floor(Number(pp.descuento));
+      if (isFinite(pp.costo_neto)) pp.costo_neto = Math.floor(Number(pp.costo_neto));
+
+      const ivaRaw = (pp.iva !== undefined && pp.iva !== null)
+        ? pp.iva
+        : (productoResult.IVA ?? 21);
+
+      pp.iva = Number(String(ivaRaw).replace(',', '.'));
+      if (!Number.isFinite(pp.iva) || pp.iva <= 0) pp.iva = 21;
+    });
+
+    const marcaId = productoResult.marca_id ?? productoResult.marca ?? null;
+
+    // escobillas: si falla (tablas inexistentes) NO romper la vista
+    const escCodPromise = escobillasCompat
+      .getCodigosProducto(conexion, id)
+      .catch(err => {
+        console.error('❌ getCodigosProducto:', err.message);
+        return [];
+      });
+
+    const escKitPromise = escobillasCompat
+      .getKitProducto(conexion, id)
+      .catch(err => {
+        console.error('❌ getKitProducto:', err.message);
+        return null;
+      });
+
+    const [
+      categoriasResult,
+      marcasResult,
+      proveedoresResult,
+      modelosResult,
+      descuentosProveedoresResult,
+      stockResult,
+      escobillasCodigosRaw,
+      escobillasKitRaw
+    ] = await Promise.all([
+      producto.obtenerCategorias(conexion),
+      producto.obtenerMarcas(conexion),
+      producto.obtenerProveedores(conexion),
+      producto.obtenerModelosPorMarca(conexion, marcaId),
+      producto.obtenerDescuentosProveedor(conexion),
+      producto.obtenerStock(conexion, id),
+      escCodPromise,
+      escKitPromise
+    ]);
+
+    res.render('editar', {
+      producto: productoResult,
+      productoProveedores,
+
+      categorias: categoriasResult,
+      marcas: marcasResult,
+      proveedores: proveedoresResult,
+      modelos: modelosResult,
+      descuentosProveedor: descuentosProveedoresResult,
+      stock: stockResult,
+
+      // ✅ SIEMPRE definidas (evita "escobillasCodigos is not defined")
+      escobillasCodigos: Array.isArray(escobillasCodigosRaw) ? escobillasCodigosRaw : [],
+      escobillasKit: (escobillasKitRaw && typeof escobillasKitRaw === 'object') ? escobillasKitRaw : null
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error al obtener los datos: " + error.message);
+  }
+},
+
+actualizar: async function (req, res) {
+  try {
+    const productoId = numInt(req.params.id || req.body.id);
+    if (!productoId) throw new Error('Los datos del producto deben incluir un ID');
+
+    // ---------- LOG de entrada ----------
+    const provIds   = toArray(req.body.proveedores);            // definido arriba y reutilizado en toda la fn
+    const codigos   = toArray(req.body.codigo);
+    const plist     = toArray(req.body.precio_lista);
+    const arrIVA    = toArray(req.body.IVA);
+    const arrPres   = toArray(req.body.presentacion);
+    const arrFactor = toArray(req.body.factor_unidad);
+    const arrCNeto  = toArray(req.body.costo_neto);             // neto SIN IVA (front)
+    const arrCIva   = toArray(req.body.costo_iva);              // CON IVA por UNIDAD (front)
+
+    const datosProducto = {
+      id               : productoId,
+      nombre           : req.body.nombre ?? null,
+      descripcion      : (req.body.descripcion ?? '').trim() || null,
+      categoria_id     : numInt(req.body.categoria) || null,
+      marca_id         : numInt(req.body.marca) || null,
+      modelo_id        : numInt(req.body.modelo_id) || null,
+      utilidad         : numOr0(req.body.utilidad),
+      precio_venta     : numOr0(req.body.precio_venta),
+      estado           : (req.body.estado ?? 'activo'),
+      stock_minimo     : numInt(req.body.stock_minimo),
+      stock_actual     : numInt(req.body.stock_actual),
+      oferta                   : Number(req.body.oferta) === 1 ? 1 : 0,
+      calidad_original         : Number(req.body.calidad_original)         === 1 ? 1 : 0,
+      calidad_vic              : Number(req.body.calidad_vic)              === 1 ? 1 : 0,
+      calidad_mm               : Number(req.body.calidad_mm)               === 1 ? 1 : 0,
+      calidad_original_premium : Number(req.body.calidad_original_premium) === 1 ? 1 : 0
+      // IVA del producto lo seteamos más abajo
+    };
+    await producto.actualizar(conexion, datosProducto);
+
+    // ---------- 2) Eliminar proveedores marcados ----------
+    const aEliminarProv = toArray(req.body.eliminar_proveedores).map(numInt).filter(Boolean);
+    if (aEliminarProv.length){
+      const sqlDel = `
+        DELETE FROM producto_proveedor
+        WHERE producto_id = ? AND proveedor_id IN (${aEliminarProv.map(()=>'?').join(',')})
+      `;
+      await conexion.promise().query(sqlDel, [productoId, ...aEliminarProv]);
+    }
+
+    // ---------- 3) UPSERT producto_proveedor (sin descuento ni costos) ----------
+    const normalizarPres = (v) => {
+      const s = (v ?? 'unidad').toString().trim().toLowerCase();
+      return s === 'juego' ? 'juego' : 'unidad';
+    };
+    const normalizarIVA = (v) => {
+      const n = Number(String(v ?? '').replace(',', '.'));
+      return Number.isFinite(n) && n > 0 ? n : 21;
+    };
+    const normalizarFactor = (pres, f) => {
+      const nf = Number(f);
+      if (Number.isFinite(nf) && nf > 0) return nf;
+      return pres === 'juego' ? 0.5 : 1;
+    };
+
+    const sqlUpsert = `
+      INSERT INTO producto_proveedor
+        (producto_id, proveedor_id, precio_lista, codigo, iva, presentacion, factor_unidad)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        precio_lista  = VALUES(precio_lista),
+        codigo        = VALUES(codigo),
+        iva           = VALUES(iva),
+        presentacion  = VALUES(presentacion),
+        factor_unidad = VALUES(factor_unidad)
+    `;
+
+    const filas = Math.max(provIds.length, codigos.length, plist.length, arrIVA.length, arrPres.length, arrFactor.length);
+    for (let i = 0; i < filas; i++){
+      const proveedor_id = numInt(provIds[i]);
+      if (!proveedor_id) continue;
+
+      const precio_lista = numOr0(plist[i]);
+      const codigo       = (codigos[i] == null || String(codigos[i]).trim()==='') ? null : String(codigos[i]).trim();
+      const iva          = normalizarIVA(arrIVA[i]);
+      const presentacion = normalizarPres(arrPres[i]);
+      const factor       = normalizarFactor(presentacion, arrFactor[i]);
+
+      const params = [ productoId, proveedor_id, precio_lista, codigo, iva, presentacion, factor ];
+      await conexion.promise().query(sqlUpsert, params);
+    }
+
+    // ---------- 4) Proveedor asignado + IVA del producto ----------
+    let proveedorAsignado = numInt(req.body.proveedor_designado) || 0;
+    // Leer si el admin eligió el proveedor manualmente (flag persistido desde el front)
+    const esManual = req.body.proveedor_es_manual === '1' ? 1 : 0;
+
+    // si no hay manual, elegir por menor costo_iva (ya normalizado a UNIDAD por el front)
+    if (!proveedorAsignado) {
+      let bestIdx = -1, best = Number.POSITIVE_INFINITY;
+      for (let i=0;i<Math.max(provIds.length, arrCIva.length);i++){
+        const pid = numInt(provIds[i]);
+        const ci  = numOr0(arrCIva[i]);
+        if (pid && ci>0 && ci<best){ best=ci; bestIdx=i; proveedorAsignado=pid; }
+      }
+      if (!proveedorAsignado) {
+        // fallback: primer proveedor válido
+        for (let i=0;i<provIds.length;i++){
+          const pid = numInt(provIds[i]);
+          if (pid){ proveedorAsignado = pid; break; }
+        }
+      }
+    }
+
+    // IVA del producto (hidden seteado por el front al proveedor ganador)
+    const ivaProductoHidden = numOr0(req.body.IVA_producto);
+
+    let ivaProducto = 21;
+    if (ivaProductoHidden > 0) {
+      ivaProducto = ivaProductoHidden;
+    } else if (proveedorAsignado) {
+      let idx = provIds.findIndex(v => numInt(v) === proveedorAsignado);
+      if (idx < 0) idx = 0;
+      const ivaIdxRaw = arrIVA[idx] ?? 21;
+      ivaProducto = Number(String(ivaIdxRaw).replace(',', '.')) || 21;
+    } else {
+      const iva0 = arrIVA[0] ?? 21;
+      ivaProducto = Number(String(iva0).replace(',', '.')) || 21;
+    }
+
+    await producto.actualizar(conexion, { id: productoId, proveedor_id: proveedorAsignado || null, IVA: ivaProducto, proveedor_id_manual: esManual });
+    let idxAsignado = provIds.findIndex(v => numInt(v) === (proveedorAsignado || 0));
+    if (idxAsignado < 0) {
+      idxAsignado = Math.max(0, provIds.findIndex(v => numInt(v))); // primer válido
+    }
+
+    const presAsig   = (idxAsignado >= 0) ? String(arrPres[idxAsignado] || 'unidad').toLowerCase() : 'unidad';
+    const factorAsig = (idxAsignado >= 0)
+      ? (Number(arrFactor[idxAsignado]) || (presAsig === 'juego' ? 0.5 : 1))
+      : 1;
+
+    const cnRaw      = (idxAsignado >= 0) ? numOr0(arrCNeto[idxAsignado]) : 0; 
+    const cnUnidad   = Math.ceil(cnRaw * factorAsig);                          
+    const civaUnidad = (idxAsignado >= 0) ? Math.ceil(numOr0(arrCIva[idxAsignado])) : 0; 
+
+    await producto.actualizar(conexion, {
+      id: productoId,
+      costo_neto: cnUnidad,
+      costo_iva : civaUnidad
+    });
+    {
+      const path = require('path');
+      const fs   = require('fs');
+      const IMG_TABLE = 'imagenes_producto';
+
+      const aEliminarImgs = toArray(req.body.eliminar_imagenes).map(numInt).filter(Boolean);
+      const delSet = new Set(aEliminarImgs);
+      if (aEliminarImgs.length) {
+        try {
+          const [rows] = await conexion.promise().query(
+            `SELECT imagen FROM ${IMG_TABLE} WHERE id IN (${aEliminarImgs.map(()=>'?').join(',')}) AND producto_id=?`,
+            [...aEliminarImgs, productoId]
+          );
+          (rows || []).forEach(r => {
+  try {
+    const p = (r.imagen || '').toString();
+    if (!p) return; 
+    const fileName = p
+      .replace(/^\/+/, '')
+      .replace(/^uploads\/productos\//, '')
+      .replace(/^\/?uploads\/productos\//, '');
+                  const abs = path.join(process.cwd(), 'uploads', 'productos', fileName);
+    if (fs.existsSync(abs)) fs.unlinkSync(abs);
+  } catch (_) {}
+});
+        } catch (e) {
+          console.warn('[ACTUALIZAR] No se pudo recuperar nombres de archivo para borrar:', e.message);
+        }
+
+        await conexion.promise().query(
+          `DELETE FROM ${IMG_TABLE} WHERE id IN (${aEliminarImgs.map(()=>'?').join(',')}) AND producto_id=?`,
+          [...aEliminarImgs, productoId]
+        );
+      }
+
+      let ordenExistentes = toArray(req.body.orden_imagenes_existentes).map(numInt).filter(Boolean).filter(id => !delSet.has(id));
+
+      let nuevasIds = [];
+      if (req.files && req.files.length > 0) {
+        for (const f of req.files) {
+          const r = await producto.insertarImagenProducto(conexion, {
+            producto_id: productoId,
+            imagen: f.filename
+          });
+          const insertId = r?.insertId || (Array.isArray(r) && r[0]?.insertId) || null;
+          if (insertId) nuevasIds.push(insertId);
+        }
+      }
+
+      const portadaTipo        = (req.body.portada_tipo || 'existente').trim();
+      const portadaExistenteId = numInt(req.body.portada_existente_id);
+      const portadaNuevaIndex  = numInt(req.body.portada_nueva_index);
+
+      let finalOrder = [];
+      if (portadaTipo === 'existente' && portadaExistenteId) {
+        const resto = ordenExistentes.filter(id => id !== portadaExistenteId);
+        finalOrder = [portadaExistenteId, ...resto, ...nuevasIds];
+      } else if (portadaTipo === 'nueva' && nuevasIds.length > 0) {
+        const portadaNuevaId = nuevasIds[Math.max(0, Math.min(portadaNuevaIndex, nuevasIds.length - 1))] || nuevasIds[0];
+        const otrasNuevas = nuevasIds.filter(id => id !== portadaNuevaId);
+        finalOrder = [portadaNuevaId, ...ordenExistentes, ...otrasNuevas];
+      } else {
+        finalOrder = [...ordenExistentes, ...nuevasIds];
+      }
+
+      if (finalOrder.length > 0) {
+        let pos = 1;
+        for (const imgId of finalOrder) {
+          await conexion.promise().query(
+            `UPDATE ${IMG_TABLE} SET posicion=? WHERE id=? AND producto_id=?`,
+            [pos++, imgId, productoId]
+          );
+        }
+      } else {
+      }
+    }
+    // ---------- 6) ESCOBILLAS (códigos / kit) ----------
+// ✅ FIX: en EDITAR se estaban enviando los hidden (escobillas_*),
+// pero nunca se persistían en BD porque faltaba llamar a saveFromRequest.
+try {
+  await escobillasCompat.saveFromRequest(conexion, productoId, req.body);
+} catch (e) {
+  // No frenamos el guardado del producto si las tablas de escobillas no están
+  console.error('[ACTUALIZAR][ESCOBILLAS] No se pudo guardar:', e.message);
+}
+// ---------- Redirect ----------
+const params = new URLSearchParams();
+
+const pagina = Number(req.body.pagina || req.query.pagina || 1);
+if (Number.isFinite(pagina) && pagina > 0) params.set('pagina', String(pagina));
+
+const busqueda = (typeof req.body.busqueda === 'string' ? req.body.busqueda : (typeof req.query.busqueda === 'string' ? req.query.busqueda : '')).trim();
+if (busqueda) params.set('busqueda', busqueda);
+
+// Si en el POST no vienen, no rompe; si los empezás a mandar, ya quedan preservados.
+const proveedor = (typeof req.body.proveedorSeleccionado === 'string' ? req.body.proveedorSeleccionado : (typeof req.query.proveedor === 'string' ? req.query.proveedor : '')).trim();
+if (proveedor) params.set('proveedor', proveedor);
+
+const categoria = (typeof req.body.categoriaSeleccionada === 'string' ? req.body.categoriaSeleccionada : (typeof req.query.categoria === 'string' ? req.query.categoria : '')).trim();
+if (categoria) params.set('categoria', categoria);
+
+return res.redirect(`/productos/panelControl?${params.toString()}`);
+
+  } catch (error) {
+    console.error("===== Error durante la ejecución en actualizar =====");
+    console.error(error);
+    return res.status(500).send("Error: " + error.message);
+  }
+},
+
+    ultimos: function(req, res) {
+        producto.obtenerUltimos(conexion, 3, function(error, productos) {
+            if (error) {
+                return res.status(500).send('Error al obtener los productos');
+            } else {
+                productos.forEach(producto => {
+                    producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+                });
+                res.json(productos);
+            }
+        });
+    },
+panelControl: async (req, res) => {
+  try {
+    const proveedores = await producto.obtenerProveedores(conexion);
+    const categorias  = await producto.obtenerCategorias(conexion);
+
+    // Estado por URL (query)
+    const proveedorRaw = (typeof req.query.proveedor === 'string') ? req.query.proveedor : null;
+    const categoriaRaw = (typeof req.query.categoria === 'string') ? req.query.categoria : null;
+
+    const proveedorSeleccionado =
+      (!proveedorRaw || proveedorRaw === 'TODOS') ? null : String(proveedorRaw);
+
+    const categoriaSeleccionada =
+      (!categoriaRaw || categoriaRaw === '' || categoriaRaw === 'TODAS') ? null : String(categoriaRaw);
+
+    let paginaActual = Number(req.query.pagina || 1);
+    if (!Number.isFinite(paginaActual) || paginaActual < 1) paginaActual = 1;
+
+    const busquedaActual =
+      (typeof req.query.busqueda === 'string') ? req.query.busqueda.trim() : '';
+
+    const productosPorPagina = 30;
+
+    // ✅ calcular páginas con filtros (categoría + proveedor)
+    const numeroDePaginas = await producto.calcularNumeroDePaginas(
+      conexion,
+      productosPorPagina,
+      categoriaSeleccionada,
+      proveedorSeleccionado
+    );
+
+    if (paginaActual > numeroDePaginas) paginaActual = numeroDePaginas;
+
+    const saltar = (paginaActual - 1) * productosPorPagina;
+
+    // ✅ listado paginado con filtros (categoría + proveedor)
+    let productos = await producto.obtenerTodos(
+      conexion,
+      saltar,
+      productosPorPagina,
+      categoriaSeleccionada,
+      proveedorSeleccionado
+    );
+
+    // Normalización para la vista (imágenes + categoría)
+    productos = productos.map(p => ({
+      ...p, // ✅ IMPORTANTE: tres puntos (no ".p")
+      categoria: p.categoria || p.categoria_nombre || 'Sin categoría',
+      imagenes: Array.isArray(p.imagenes) ? p.imagenes : (p.imagen ? [p.imagen] : [])
+    }));
+
+    return res.render('panelControl', {
+      proveedores,
+      proveedorSeleccionado,
+      categorias,
+      categoriaSeleccionada,
+      numeroDePaginas,
+      productos,
+      paginaActual,
+      busquedaActual
+    });
+
+  } catch (error) {
+    console.error('❌ Error en panelControl:', error);
+    return res.status(500).send('Error: ' + error.message);
+  }
+},
+todos: function (req, res) {
+  producto.obtener(conexion, function (error, productos) {
+    if (error) {
+    } else {
+      productos.forEach(producto => {
+        producto.precio_venta = parseFloat(producto.precio_venta).toLocaleString('de-DE');
+      });
+      res.render('productos', { productos: productos });
+    }
   });
 },
-obtenerUltimos: function (conexion, cantidad, funcion) {
-    conexion.query(`
-      SELECT productos.*, categorias.nombre AS categoria_nombre, 
-      (SELECT imagen FROM imagenes_producto WHERE producto_id = productos.id LIMIT 1) AS imagen
-      FROM productos 
-      INNER JOIN categorias ON productos.categoria_id = categorias.id 
-      GROUP BY productos.id 
-      ORDER BY productos.id DESC LIMIT ?`, 
-      [cantidad], 
-      function(err, rows) {
-        if (err) {
-          return funcion(err);
-        }
-        const productos = rows.map(row => ({
-          ...row,
-          imagen: row.imagen ? [row.imagen] : [],
-        }));
-  
-        funcion(null, productos);
-      }
-    );
-  },
-actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, porcentaje, callback) {
-  try {
 
+eliminarProveedor: async function (req, res) {
+  try {
+    const proveedorId = Number(req.params.id || req.body.proveedorId || 0);
+    const productoId  = Number((req.query && req.query.productoId) || req.body.productoId || 0);
+
+
+    if (!productoId || !proveedorId) {
+      return res.status(400).json({ success:false, message:'Faltan productoId o proveedorId' });
+    }
+
+    // 1) Anular referencias en presupuesto_productos (solo ese par producto/proveedor)
+    //    (dejamos el presupuesto vivo, pero sin proveedor asociado)
+    const sqlNullRefs = `
+      UPDATE presupuesto_productos
+      SET proveedor_id = NULL
+      WHERE producto_id = ? AND proveedor_id = ?
+    `;
+    const paramsNull = [productoId, proveedorId];
+    try {
+      const [rNull] = await conexion.promise().query(sqlNullRefs, paramsNull);
+    } catch (eNull) {
+      // No es fatal; seguimos, pero lo logueamos para diagnóstico
+      console.warn('⚠️ [CTRL] No se pudo nullificar refs (continuo):', eNull.code || eNull.message);
+    }
+
+    // 2) Intentar borrar la relación producto_proveedor
+    const result = await producto.eliminarProveedor(conexion, proveedorId, productoId);
+    let affected = (result && (result.affectedRows || (result[0] && result[0].affectedRows))) || 0;
+
+    // 3) Si aún está bloqueado por FK, intentamos nullificar y reintentar una vez
+    if (affected === 0) {
+      // Reintento solo si existe realmente la fila (para no dar 404 falso)
+      const [rowsExist] = await conexion.promise().query(
+        'SELECT 1 FROM producto_proveedor WHERE producto_id=? AND proveedor_id=? LIMIT 1',
+        [productoId, proveedorId]
+      );
+      const existe = Array.isArray(rowsExist) ? rowsExist.length > 0 : !!rowsExist;
+      if (existe) {
+        try {
+          // por si quedó alguna referencia que no matcheó en el paso 1
+          const [rNull2] = await conexion.promise().query(sqlNullRefs, paramsNull);
+          const result2 = await producto.eliminarProveedor(conexion, proveedorId, productoId);
+          affected = (result2 && (result2.affectedRows || (result2[0] && result2[0].affectedRows))) || 0;
+        } catch (eRetry) {
+          if (eRetry && (eRetry.code === 'ER_ROW_IS_REFERENCED' || eRetry.code === 'ER_ROW_IS_REFERENCED_2' || eRetry.errno === 1451)) {
+            console.error('❌ [CTRL] Bloqueado por FK incluso tras nullify:', eRetry.sqlMessage || eRetry.message);
+            return res.status(409).json({
+              success:false,
+              message:'No se puede eliminar: el proveedor sigue referenciado en otra tabla.',
+              code:eRetry.code, errno:eRetry.errno
+            });
+          }
+          throw eRetry;
+        }
+      }
+    }
+
+    if (affected > 0) {
+      return res.json({ success:true, affectedRows: affected });
+    }
+    return res.status(404).json({ success:false, message:'No se encontró relación producto-proveedor para borrar.' });
+
+  } catch (e) {
+    if (e && (e.code === 'ER_ROW_IS_REFERENCED' || e.code === 'ER_ROW_IS_REFERENCED_2' || e.errno === 1451)) {
+      console.error('❌ [CTRL] Bloqueado por FK:', e.sqlMessage || e.message);
+      return res.status(409).json({
+        success:false,
+        message:'No se puede eliminar: el proveedor está referenciado en otra tabla.',
+        code:e.code, errno:e.errno
+      });
+    }
+    console.error('❌ [CTRL] Error eliminando proveedor:', e);
+    return res.status(500).json({ success:false, message:'Error interno', code:e.code, errno:e.errno });
+  }
+},
+
+eliminarImagen: function(req, res) {
+    let imagenId = req.params.id;
+    producto.eliminarImagen(imagenId).then(() => {
+        res.json({ success: true });
+    }).catch(error => {
+        res.status(500).json({ success: false, error: error });
+    });
+},
+modificarPorProveedor: async function (req, res) {
+  try {
+    const proveedores = await producto.obtenerProveedores(conexion);
+    let productos = [];
+    const proveedorSeleccionado = req.query.proveedor ? String(req.query.proveedor) : null;
+    const proveedor = proveedorSeleccionado
+      ? (proveedores.find(p => String(p.id) === proveedorSeleccionado) || {})
+      : {};
+
+    // (opcional) si en el futuro agregás categoría en esta vista
+    const categoriaSeleccionada = req.query.categoria ? String(req.query.categoria) : null;
+
+    if (proveedorSeleccionado) {
+      productos = await producto.obtenerProductosPorProveedorDetalle(
+  conexion,
+  proveedorSeleccionado,
+  categoriaSeleccionada
+);
+
+
+      // ✅ Adjuntar imágenes desde imagenes_producto
+      const ids = (productos || []).map(p => Number(p.id)).filter(Boolean);
+
+      if (ids.length) {
+        const imgsRows = await producto.obtenerImagenesProducto(conexion, ids);
+
+        const mapImgs = new Map();
+        for (const r of (imgsRows || [])) {
+          const id = Number(r.producto_id);
+          if (!mapImgs.has(id)) mapImgs.set(id, []);
+          if (r.imagen) mapImgs.get(id).push(r.imagen); // filename
+        }
+
+        productos = productos.map(p => {
+          const arr = mapImgs.get(Number(p.id)) || [];
+          return {
+            ...p,
+            imagenes: arr,           // ✅ array de filenames
+            imagen: arr[0] || null   // ✅ compat si alguna vista usa producto.imagen
+          };
+        });
+      } else {
+        productos = productos.map(p => ({ ...p, imagenes: [], imagen: null }));
+      }
+    }
+
+    return res.render('modificarPorProveedor', {
+      proveedores,
+      productos,
+      proveedor,
+      proveedorSeleccionado,
+      success: req.query.success || null,
+      errorMsg: req.query.error || null
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send('Hubo un error al obtener los datos');
+  }
+},
+
+actualizarPorProveedor: function (req, res) {
+
+    const proveedorId = req.body.proveedor && req.body.proveedor !== '' ? Number(req.body.proveedor) : null;
+    const tipoCambio = req.body.tipoCambio;
+    let porcentaje = req.body.porcentaje ? Number(req.body.porcentaje) / 100 : null;
+
+    if (tipoCambio === 'descuento') porcentaje = -porcentaje;
+
+    if (!proveedorId || isNaN(porcentaje)) {
+        console.error("❌ Parámetros inválidos");
+        return res.status(400).send("Error en los datos");
+    }
+
+    conexion.getConnection((err, conn) => {
+        if (err) {
+            console.error('❌ Error de conexión:', err);
+            return res.status(500).send("Error de conexión");
+        }
+
+        producto.actualizarPreciosPorProveedorConCalculo(conn, proveedorId, porcentaje, (error, count) => {
+            conn.release();
+
+            if (error) {
+                console.error("❌ Error al actualizar:", error);
+                return res.redirect(`/productos/modificarPorProveedor?proveedor=${proveedorId}&error=Hubo un error`);
+            }
+
+            res.redirect(`/productos/modificarPorProveedor?proveedor=${proveedorId}&success=${count} productos actualizados`);
+        });
+    });
+},
+
+actualizarPrecio: function(req, res) {
+    let idProducto = req.body.id;
+    let nuevoPrecio = req.body.precio_venta;
+    let proveedorId = req.body.proveedor; 
+    producto.actualizarPrecio(idProducto, nuevoPrecio, function(err) {
+        if (err) {
+            console.error(err);
+            res.redirect('/productos/modificarPorProveedor?error=Hubo un error al actualizar el precio');
+        } else {
+            res.redirect('/productos/modificarPorProveedor?proveedor=' + proveedorId);
+        }
+    });
+},
+obtenerProveedores: function(req, res) {
+    producto.obtenerProveedores(conexion, function(error, proveedores) {
+        if (error) {
+            return;
+        }
+        res.render('crear', { proveedores: proveedores });
+    });
+},
+obtenerModelosPorMarca: function(req, res) {
+    var marcaId = req.params.marcaId;
+    producto.obtenerModelosPorMarca(conexion, marcaId)
+      .then(modelos => {
+        res.json(modelos);
+      })
+      .catch(error => {
+      });
+  },
+generarPDF: async function (req, res) {
+  const { doc, fail500 } = crearPDFResponse(res, { filename: 'lista_precios.pdf', margin: 40 });
+
+  // Normalización
+  const proveedorId = normalizarIdFiltro(req.query.proveedor, ['TODOS', '']);
+  const categoriaId = normalizarIdFiltro(req.query.categoria, ['TODAS', '']);
+
+  try {
+    const { nombreProveedor, nombreCategoria, categoriaSel } = await obtenerNombresFiltros({ proveedorId, categoriaId });
+
+    // Título
+    const titulo = `Lista de precios - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`;
+    doc.fontSize(16).text(titulo, { align: 'center', width: doc.page.width - 60 });
+    doc.moveDown(1.2);
+
+    // Productos
+    let productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+
+    // Deduplicar defensivo
+    if (Array.isArray(productos)) {
+      const vistos = new Set();
+      productos = productos.filter(p => {
+        const key = `${p.id || ''}::${p.codigo_proveedor || ''}`;
+        if (vistos.has(key)) return false;
+        vistos.add(key);
+        return true;
+      });
+    } else {
+      productos = [];
+    }
+
+    if (!productos.length) {
+      doc.fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
+      doc.end(); // el helper envía el PDF
+      return;
+    }
+
+    // ── Helpers de formato ──
+    const fmtAr = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    const fmt$  = (n) => { const v = Number(n); return (Number.isFinite(v) && v > 0) ? `$ ${fmtAr.format(v)}` : '-'; };
+
+    // ── Layout A4: 595pt ──
+    // Márgenes 40pt → área útil 515pt
+    const ML         = 40;
+    const PAGE_RIGHT = 555;
+
+    const C = {
+      cod:  { x: 40,  w: 80  },
+      desc: { x: 129, w: 212 },
+      civa: { x: 350, w: 82  },
+      util: { x: 441, w: 40  },
+      pven: { x: 490, w: 65  },
+    };
+
+    const FS = 7.5;
+
+    // Dibuja texto centrado en la columna, restaurando doc.y después
+    const drawCenter = (txt, col, y) => {
+      const tw   = doc.widthOfString(txt);
+      const xPos = col.x + (col.w - tw) / 2;
+      doc.text(txt, xPos, y, { lineBreak: false });
+      doc.y = y;
+    };
+
+    const drawLeft = (txt, col, y) => {
+      doc.text(txt, col.x, y, { width: col.w, align: 'left', lineBreak: false });
+      doc.y = y;
+    };
+
+    // ── Encabezado ──
+    const drawHeader = () => {
+      const y = doc.y;
+      doc.fontSize(FS).font('Helvetica-Bold').fillColor('#333333');
+      doc.text('Código',       C.cod.x,  y, { width: C.cod.w,  align: 'left',   lineBreak: false });
+      doc.text('Descripción',  C.desc.x, y, { width: C.desc.w, align: 'left',   lineBreak: false });
+      doc.text('Costo c/IVA',  C.civa.x, y, { width: C.civa.w, align: 'center', lineBreak: false });
+      doc.text('Utilidad',     C.util.x, y, { width: C.util.w, align: 'center', lineBreak: false });
+      doc.text('Precio venta', C.pven.x, y, { width: C.pven.w, align: 'center', lineBreak: false });
+      doc.font('Helvetica');
+      const lineY = y + FS + 4;
+      doc.moveTo(ML, lineY).lineTo(PAGE_RIGHT, lineY)
+        .strokeColor('#555555').lineWidth(0.7).stroke();
+      doc.strokeColor('black').lineWidth(1);
+      doc.y = lineY + 5;
+    };
+
+    const ensurePage = (rowH) => {
+      if (doc.y + rowH > doc.page.height - 45) {
+        doc.addPage();
+        drawHeader();
+      }
+    };
+
+    drawHeader();
+
+    productos.forEach((p, idx) => {
+      const nombre = (p.nombre || '-').trim();
+      const codigo = p.codigo_proveedor || '-';
+
+      const lista    = Number(p.precio_lista || 0);
+      const desc     = Number(p.descuento    || 0);
+      const iva      = Number(p.iva          || 21);
+      const costoIva = lista > 0
+        ? Math.round(lista * (1 - desc / 100) * (1 + iva / 100))
+        : Number(p.costo_iva || 0);
+
+      const utilidad    = Number(p.utilidad    || 0);
+      const precioVenta = Number(p.precio_venta || 0);
+
+      const txtCosto = fmt$(costoIva);
+      const txtUtil  = utilidad > 0 ? `${Math.round(utilidad)}%` : '-';
+      const txtVenta = fmt$(precioVenta);
+
+      doc.fontSize(FS).font('Helvetica');
+      const rowH = Math.max(FS + 4, doc.heightOfString(nombre, { width: C.desc.w }));
+
+      ensurePage(rowH + 4);
+
+      const y = doc.y;
+
+      // Fondo alternado
+      if (idx % 2 === 0) {
+        doc.rect(ML - 2, y - 1, PAGE_RIGHT - ML + 4, rowH + 3).fill('#f4f4f4');
+        doc.fontSize(FS).font('Helvetica').fillColor('#111111');
+      }
+
+      doc.fillColor('#111111');
+      doc.text(codigo, C.cod.x,  y, { width: C.cod.w,  align: 'left', lineBreak: false });
+      doc.text(nombre, C.desc.x, y, { width: C.desc.w, align: 'left', lineBreak: false });
+
+      // Columnas numéricas centradas, cursor restaurado después de cada una
+      drawCenter(txtCosto, C.civa, y);
+      drawCenter(txtUtil,  C.util, y);
+      drawCenter(txtVenta, C.pven, y);
+
+      // Avance manual del cursor
+      const afterY = y + rowH + 3;
+      doc.moveTo(ML, afterY).lineTo(PAGE_RIGHT, afterY)
+        .strokeColor('#dddddd').lineWidth(0.3).stroke();
+      doc.strokeColor('black').lineWidth(1);
+      doc.y = afterY + 1;
+    });
+
+    doc.end();
+  } catch (error) {
+    return fail500(error, 'Error al generar el PDF');
+  }
+},
+
+getProductosPorCategoria : async (req, res) => {
+    const categoriaId = req.query.categoria;
+    producto.obtenerProductosPorCategoria(categoriaId, (error, productos) => {
+      if (error) {
+        res.status(500).send(error);
+      } else {
+        res.render('productos', { productos });
+      }
+    });
+  },
+generarPDFProveedor: async function (req, res) {
+  const { doc, fail500 } = crearPDFResponse(res, { filename: 'stock_proveedor.pdf', margin: 30 });
+
+  // Normalización
+  const proveedorId = normalizarIdFiltro(req.query.proveedor, ['TODOS', '']);
+  const categoriaId = normalizarIdFiltro(req.query.categoria, ['TODAS', '']);
+  const tipo = String(req.query.tipo || 'stock');
+
+  try {
+    const { nombreProveedor, nombreCategoria, proveedorSel, categoriaSel } =
+      await obtenerNombresFiltros({ proveedorId, categoriaId });
+
+    // Título
+    const titulos = {
+      pedido: `Faltantes (Proveedor más barato) - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`,
+      asignado: `Faltantes del proveedor asignado - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`,
+      asignadoCompleto: `Listado completo del proveedor asignado - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`,
+      asignadoPorCategoria: `Proveedor asignado por categoría - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`,
+      porCategoria: `Stock por categoría - ${nombreCategoria}${proveedorSel ? ' - ' + nombreProveedor : ''}`,
+      categoriaProveedorMasBarato: `Proveedor más barato por categoría - ${nombreProveedor} - ${nombreCategoria}`,
+      stock: `Stock - ${nombreProveedor}${categoriaSel ? ' - ' + nombreCategoria : ''}`
+    };
+
+    const titulo = titulos[tipo] || titulos.stock;
+
+    doc.fontSize(14).text(titulo, { align: 'center', width: doc.page.width - 60 });
+    doc.moveDown(1.5);
+
+    // Productos según tipo
+    let productos = [];
+
+    if (tipo === 'pedido') {
+      productos = await producto.obtenerProductosProveedorMasBaratoConStock(conexion, proveedorId, categoriaId);
+
+    } else if (tipo === 'asignado') {
+      productos = proveedorId
+        ? await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId)
+        : [];
+      productos = productos.filter(p => (Number(p.stock_actual) || 0) < (Number(p.stock_minimo) || 0));
+
+    } else if (tipo === 'asignadoCompleto') {
+      productos = proveedorId
+        ? await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId)
+        : [];
+
+    } else if (tipo === 'asignadoPorCategoria') {
+      productos = (proveedorId && categoriaId)
+        ? await producto.obtenerProductosAsignadosAlProveedor(conexion, proveedorId, categoriaId)
+        : [];
+
+    } else if (tipo === 'porCategoria') {
+      productos = categoriaId
+        ? await producto.obtenerProductosPorCategoria(conexion, categoriaId)
+        : [];
+
+    } else if (tipo === 'categoriaProveedorMasBarato') {
+      productos = (proveedorId && categoriaId)
+        ? await producto.obtenerProductosPorCategoriaYProveedorMasBarato(conexion, proveedorId, categoriaId)
+        : [];
+
+    } else {
+      productos = await producto.obtenerProductosPorProveedorYCategoria(conexion, proveedorId, categoriaId);
+    }
+
+    // Dedupe por ID (defensivo)
+    productos = (productos || []).filter((v, i, self) =>
+      i === self.findIndex(t => String(t.id || '') === String(v.id || ''))
+    );
+
+    if (!productos.length) {
+      doc.fontSize(12).fillColor('red').text('No hay productos que cumplan los criterios.');
+      doc.end();
+      return;
+    }
+
+    // Render
+    const drawHeader = (cols) => {
+      doc.fontSize(10).fillColor('black');
+      const y = doc.y;
+      let x = 40;
+      cols.forEach(col => {
+        doc.text(col.t, x, y, { width: col.w, align: col.a || 'left' });
+        x += col.w;
+      });
+      doc.moveDown(1.2);
+      doc.moveTo(40, doc.y).lineTo(doc.page.width - 40, doc.y).stroke();
+      doc.moveDown(0.6);
+    };
+
+    const drawRow = (vals) => {
+      if (doc.y + 20 > doc.page.height - doc.page.margins.bottom) {
+        doc.addPage();
+      }
+      doc.fontSize(8).fillColor('black');
+      const y = doc.y;
+      let x = 40;
+      vals.forEach(v => {
+        doc.text(v.t, x, y, { width: v.w, align: v.a || 'left' });
+        x += v.w;
+      });
+      doc.moveDown(0.6);
+    };
+
+    const COLS_STOCK = [
+      { t: 'Código',       w: 80 },
+      { t: 'Descripción',  w: 290 },
+      { t: 'Stock Mín.',   w: 80, a: 'center' },
+      { t: 'Stock Act.',   w: 90, a: 'center' },
+    ];
+
+    const COLS_SIMPLE = [
+      { t: 'Código',       w: 100 },
+      { t: 'Descripción',  w: 330 },
+      { t: 'Stock Act.',   w: 100, a: 'center' },
+    ];
+
+    if (tipo === 'porCategoria' || tipo === 'categoriaProveedorMasBarato') {
+      drawHeader(COLS_SIMPLE);
+      productos.forEach(p => {
+        drawRow([
+          { t: (p.codigo_proveedor || p.codigo || '-'), w: 100 },
+          { t: p.nombre || '-',                         w: 330 },
+          { t: String(Number(p.stock_actual) || 0),     w: 100, a: 'center' },
+        ]);
+      });
+    } else {
+      drawHeader(COLS_STOCK);
+      productos.forEach(p => {
+        drawRow([
+          { t: (p.codigo_proveedor || p.codigo || '-'), w: 80 },
+          { t: p.nombre || '-',                         w: 290 },
+          { t: String(Number(p.stock_minimo) || 0),     w: 80, a: 'center' },
+          { t: String(Number(p.stock_actual) || 0),     w: 90, a: 'center' },
+        ]);
+      });
+    }
+
+    doc.end();
+  } catch (error) {
+    return fail500(error, 'Error al generar el PDF');
+  }
+},
+
+presupuestoMostrador: async function(req, res) {
+    try {
+      const siguienteID = await producto.obtenerSiguienteID();
+      res.render('presupuestoMostrador', { idPresupuesto: siguienteID });
+    } catch (error) {
+      console.error('Error al obtener el siguiente ID de presupuesto:', error.message);
+      res.status(500).send('Error al obtener el siguiente ID de presupuesto.');
+    }
+  },
+  facturasMostrador: async function(req, res) {
+    try {
+        const siguienteIDFactura = await producto.obtenerSiguienteIDFactura(); 
+        res.render('facturasMostrador', { idFactura: siguienteIDFactura }); 
+    } catch (error) {
+        res.status(500).send('Error al obtener el siguiente ID de factura.');
+    }
+},
+procesarFormulario: async (req, res) => {
+
+  try {
+      const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems } = req.body;
+      const totalLimpio = totalPresupuesto.replace('$', '').replace(',', '');
+
+      const fechaHoraActual = new Date();
+      const creadoEn = fechaHoraActual.toISOString().slice(0, 19).replace('T', ' ');
+
+      const presupuesto = {
+          nombre_cliente: nombreCliente,
+          fecha: fechaPresupuesto,
+          total: totalLimpio,
+          creado_en: creadoEn 
+      };
+
+      const presupuestoId = await producto.guardarPresupuesto(presupuesto);
+
+      const items = await Promise.all(invoiceItems.map(async item => {
+          // Si producto_id es un número entero válido, buscar directo por id
+          const idNumerico = Number(item.producto_id);
+          let producto_id;
+          if (Number.isInteger(idNumerico) && idNumerico > 0) {
+              producto_id = idNumerico;
+          } else {
+              // Para PRODUCTO PRUEBA no usar descripcion como filtro de nombre en la DB
+              const nombreParaBusqueda = item.es_producto_prueba ? null : item.descripcion;
+              producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, nombreParaBusqueda);
+          }
+
+          if (!producto_id) {
+              throw new Error(`Producto no encontrado: "${item.descripcion}" (código: ${item.producto_id})`);
+          }
+
+          await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
+
+          return [
+              presupuestoId,
+              producto_id,
+              item.cantidad,
+              item.precio_unitario,
+              item.subtotal
+          ];
+      }));
+
+      await producto.guardarItemsPresupuesto(items);
+      res.status(200).json({ message: 'PRESUPUESTO GUARDADO CORRECTAMENTE' });
+
+  } catch (error) {
+      console.error('Error al guardar el presupuesto:', error);
+      res.status(500).json({ error: 'Error al guardar el presupuesto: ' + error.message });
+  }
+},
+procesarFormularioFacturas: async (req, res) => {
+
+  try {
+    const { nombreCliente, fechaPresupuesto, totalPresupuesto, invoiceItems, metodosPago } = req.body;
+
+    // Validaciones mínimas (factura interna)
+    if (!fechaPresupuesto) {
+      return res.status(400).json({ error: "Falta fechaPresupuesto" });
+    }
+    if (!Array.isArray(invoiceItems) || invoiceItems.length === 0) {
+      return res.status(400).json({ error: "No se proporcionaron items de factura." });
+    }
+
+    // Normalizar total a "1234.56"
+    const parseMoneyToDecimalStr = (v) => {
+      const s = String(v ?? "").trim();
+      if (!s) return "0.00";
+      let t = s.replace(/[^\d.,-]/g, "");
+      if (t.includes(".") && t.includes(",")) {
+        t = t.replace(/\./g, "").replace(",", ".");
+      } else if (t.includes(",") && !t.includes(".")) {
+        t = t.replace(",", ".");
+      }
+      const n = Number(t);
+      return Number.isFinite(n) ? n.toFixed(2) : "0.00";
+    };
+
+    const metodosPagoString = Array.isArray(metodosPago)
+      ? metodosPago.filter(Boolean).join(", ")
+      : (metodosPago || "");
+
+    // ── Recargo tarjeta de crédito ────────────────────────────────────────────
+    // El frontend ya distribuyó el 15% en cada ítem antes de enviarlos.
+    // NO se vuelve a aplicar el factor acá para evitar duplicarlo.
+    const esCredito = metodosPagoString.toUpperCase().includes("CREDITO");
+
+    const itemsNormalizados = invoiceItems.map(item => {
+      const pu  = Math.round(parseFloat(item.precio_unitario) * 100) / 100;
+      const qty = parseInt(item.cantidad) || 1;
+      const sub = Math.round(pu * qty * 100) / 100;
+      return { ...item, precio_unitario: pu, subtotal: sub };
+    });
+
+    // Total recalculado en servidor (fuente de verdad)
+    const totalServidor = itemsNormalizados.reduce((acc, i) => acc + i.subtotal, 0);
+    const totalLimpio   = totalServidor.toFixed(2);
+
+    // Auditoría: loguear si el front mandó un total diferente al calculado
+    const totalFront = parseFloat(String(totalPresupuesto ?? "").replace(/[^\d.,-]/g, "").replace(",", ".")) || 0;
+    if (Math.abs(totalFront - totalServidor) > 1) {
+      console.warn(
+        `[Factura] Discrepancia de total: front=${totalFront.toFixed(2)} | servidor=${totalServidor.toFixed(2)} | método=${metodosPagoString}`
+      );
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const creadoEn = new Date().toISOString().slice(0, 19).replace("T", " ");
+
+  // Vendedor: priorizar lo elegido en el formulario, luego sesión
+const sUser = req.session?.usuario || req.session?.user || {};
+
+const vendedorNombre =
+  sUser.nombre || sUser.name || sUser.username || sUser.user || sUser.email || null;
+
+const vendedorId =
+  sUser.id ||
+  req.session?.usuario_id ||
+  req.session?.user_id ||
+  req.session?.id_usuario ||
+  req.session?.userId ||
+  req.session?.usuarioId ||
+  null;
+
+const vendedorForm = String(nombreCliente || "").trim();
+
+const vendedor = vendedorForm
+  ? vendedorForm
+  : ((vendedorNombre && String(vendedorNombre).trim())
+      ? String(vendedorNombre).trim()
+      : (vendedorId ? `usuario_${vendedorId}` : null));
+    // Factura interna (cliente real se define en ARCA al emitir)
+    const factura = {
+      nombre_cliente: "MOSTRADOR",   // NOT NULL (legacy)
+      cliente_nombre: null,          // NO inventar cliente acá
+      vendedor: vendedor,            // guardar quién la cargó
+      fecha: fechaPresupuesto,
+      total: totalLimpio,            // total verificado en servidor
+      metodos_pago: metodosPagoString,
+      creado_en: creadoEn
+    };
+
+    const facturaId = await producto.guardarFactura(factura);
+
+    const items = await Promise.all(
+      itemsNormalizados.map(async (item) => {
+        // Para PRODUCTO PRUEBA la descripción es el nombre editado por el vendedor,
+        // NO debe usarse como filtro de nombre en la DB (el producto se busca solo por código).
+        const nombreParaBusqueda = item.es_producto_prueba ? null : item.descripcion;
+        const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, nombreParaBusqueda);
+        if (!producto_id) {
+          throw new Error(
+            `Producto con ID ${item.producto_id} y descripción ${item.descripcion} no encontrado.`
+          );
+        }
+
+        await producto.actualizarStockPresupuesto(producto_id, item.cantidad);
+
+        // descripcion: guardar el nombre editado (o el nombre del producto si no es prueba)
+        const descripcionGuardar = item.descripcion || null;
+
+        return [
+          facturaId,
+          producto_id,
+          item.cantidad,
+          item.precio_unitario,
+          item.subtotal,
+          descripcionGuardar   // ← se guarda en factura_items.descripcion
+        ];
+      })
+    );
+
+    await producto.guardarItemsFactura(items);
+
+    return res.status(200).json({ message: "FACTURA GUARDADA CORRECTAMENTE", facturaId });
+  } catch (error) {
+    console.error("Error al guardar la factura:", error);
+    return res.status(500).json({ error: "Error al guardar la factura: " + error.message });
+  }
+},
+
+
+listadoPresupuestos: (req, res) => {
+  const { fechaInicio, fechaFin } = req.query;
+
+  // Si no se pasaron fechas, se usa la de hoy
+  const hoy = new Date().toISOString().split('T')[0];
+
+  res.render('listadoPresupuestos', {
+      fechaInicio: fechaInicio || hoy,
+      fechaFin: fechaFin || hoy
+  });
+},
+listaFacturas: (req, res) => {
+  const { fechaInicio, fechaFin } = req.query;
+  const hoy = new Date().toISOString().split('T')[0];
+  res.render('listaFacturas', {
+    fechaInicio: fechaInicio || hoy,
+    fechaFin: fechaFin || hoy
+  });
+},
+getPresupuestos: async (req, res) => {
+    try {
+        const { fechaInicio, fechaFin } = req.query;
+        const presupuestos = await producto.getAllPresupuestos(fechaInicio, fechaFin);
+        res.json(presupuestos);
+    } catch (error) {
+        console.error('Error al obtener presupuestos:', error);
+        res.status(500).json({ error: 'Error al obtener presupuestos' });
+    }
+},
+getFacturas: async (req, res) => { 
+    try {
+        const { fechaInicio, fechaFin } = req.query;
+        
+        const facturas = await producto.getAllFacturas(fechaInicio, fechaFin);
+        res.json(facturas);
+    } catch (error) {
+        console.error('Error al obtener facturas:', error);
+        res.status(500).json({ error: 'Error al obtener facturas' });
+    }
+},
+editPresupuesto : (req, res) => {
+    const { id } = req.params;
+    const { nombre_cliente, fecha, total, items } = req.body;
+
+    producto.editarPresupuesto(id, nombre_cliente, fecha, total, items)
+        .then(affectedRows => {
+            res.status(200).json({ message: 'Presupuesto editado exitosamente', affectedRows });
+        })
+        .catch(error => {
+            console.error('Error al editar presupuesto:', error);
+            res.status(500).json({ message: 'Error al editar presupuesto: ' + error.message });
+        });
+},
+editarFacturas : (req, res) => {
+    const { id } = req.params;
+    const { nombre_cliente, fecha, total, items } = req.body;
+    producto.editarFacturas(id, nombre_cliente, fecha, total, items)
+        .then(affectedRows => {
+            res.status(200).json({ message: 'Presupuesto editado exitosamente', affectedRows });
+        })
+        .catch(error => {
+            console.error('Error al editar presupuesto:', error);
+            res.status(500).json({ message: 'Error al editar presupuesto: ' + error.message });
+        });
+},
+presupuesto : (req, res) => {
+    const id = req.params.id;
+    producto.obtenerDetallePresupuesto(id)
+        .then(data => {
+            if (data && data.items.length > 0) {
+                res.render('presupuesto', {
+                    presupuesto: data.presupuesto,
+                    detalles: data.items 
+                });
+            } else {
+                res.status(404).send('Presupuesto no encontrado');
+            }
+        })
+        .catch(error => {
+            res.status(500).send('Error interno del servidor');
+        });
+},
+factura: (req, res) => {
+    const id = req.params.id;
+    producto.obtenerDetalleFactura(id)
+        .then(data => {
+            if (data && data.items && data.items.length > 0) {
+                res.json({
+                    factura: data.factura,
+                    items: data.items
+                });
+            } else {
+                res.status(404).json({ message: 'Factura no encontrada o no tiene items.' });
+            }
+        })
+        .catch(error => {
+            res.status(500).json({ message: 'Error interno del servidor' });
+        });
+},
+facturaVista: async (req, res) => {
+  const id = req.params.id;
+  try {
+    const data = await producto.obtenerDetalleFactura(id);
+    if (data && data.items.length > 0) {
+      res.render('factura', {
+        factura: data.factura,
+        detalles: data.items
+      });
+    } else {
+      res.status(404).send('Factura no encontrada o no tiene productos.');
+    }
+  } catch (error) {
+    console.error('Error al cargar factura:', error);
+    res.status(500).send('Error interno del servidor');
+  }
+},
+deletePresupuesto : (req, res) => {
+    const { id } = req.params;
+    producto.eliminarPresupuesto(conexion, id)
+        .then(affectedRows => {
+            res.json({ message: 'Presupuesto eliminado exitosamente', affectedRows });
+        })
+        .catch(error => {
+            res.status(500).json({ message: 'Error al eliminar presupuesto: ' + error.message });
+        });
+},
+
+deleteFactura: (req, res) => {
+    const { id } = req.params;
+    producto.eliminarFactura(id)
+        .then(affectedRows => {
+            res.json({ message: 'Presupuesto eliminado exitosamente', affectedRows });
+        })
+        .catch(error => {
+            res.status(500).json({ message: 'Error al eliminar presupuesto: ' + error.message });
+        });
+},
+generarPresupuestoPDF: function(req, res) {
+    let doc = new PDFDocument();
+    let buffers = [];
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => {
+        let pdfData = Buffer.concat(buffers);
+        res.writeHead(200, {
+            'Content-Length': Buffer.byteLength(pdfData),
+            'Content-Type': 'application/pdf',
+            'Content-disposition': 'attachment;filename=presupuesto.pdf', 
+        });
+        res.end(pdfData);
+    });
+    let datos = req.body;
+    doc.fontSize(20).text('Presupuesto', {align: 'center'});
+    doc.fontSize(14)
+       .text(`Nombre del cliente: ${datos.nombreCliente}`, {align: 'left'})
+       .text(`Fecha: ${datos.fecha}`, {align: 'left'})
+       .text(`Presupuesto N°: ${datos.numeroPresupuesto}`, {align: 'left'});
+    doc.moveDown();
+    doc.fontSize(12)
+       .text('Código', {align: 'left'})
+       .text('Descripción', {align: 'left'})
+       .text('Precio', {align: 'left'})
+       .text('Cantidad', {align: 'left'})
+       .text('Subtotal', {align: 'left'});
+    if (Array.isArray(datos.productos)) {
+        datos.productos.forEach(producto => {
+            doc.moveDown();
+            doc.text(producto.codigo, {align: 'left'})
+               .text(producto.descripcion, {align: 'left'})
+               .text(producto.precio, {align: 'left'})
+               .text(producto.cantidad, {align: 'left'})
+               .text(producto.subtotal, {align: 'left'});
+        });
+    } else {
+        return res.status(400).send('Productos no es un array');
+    }
+    doc.end();
+},
+actualizarPrecios: function(req, res) {
+    let datosProducto = {
+        id: req.params.id,
+        precio_lista: req.body.precio_lista,
+        costo_neto: req.body.costo_neto,
+        utilidad: req.body.utilidad
+    };
+
+    producto.actualizarPrecios(conexion, datosProducto)
+    .then(() => {
+        res.json(datosProducto);
+    })
+    .catch(error => {
+        res.status(500).send('Error: ' + error.message);
+    });
+}, 
+actualizarPreciosExcel: async (req, res) => {
+  try {
+    const proveedor_id = Number(req.body.proveedor);
+    // Compatibilidad: multer .array() → req.files[0], .single() → req.file
+    const file = (req.files && req.files[0]) || req.file || null;
+
+    if (!proveedor_id || !file) {
+      console.error('[actualizarPreciosExcel] proveedor_id=%s file=%s body=%j files=%j',
+        proveedor_id, !!file, req.body, req.files);
+      return res.status(400).send('Proveedor y archivo son requeridos.');
+    }
+
+    const quitarAcentos = (txt = '') => txt.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const norm = (txt = '') => quitarAcentos(String(txt).trim().toLowerCase());
+    const str = (x) => (x ?? '').toString().trim();
+
+    function limpiarPrecio(valor) {
+      if (valor === null || valor === undefined) return 0;
+
+      if (typeof valor === 'number' && Number.isFinite(valor)) {
+        return Math.round((valor + Number.EPSILON) * 100) / 100;
+      }
+
+      let s = String(valor).trim();
+      s = s.replace(/\$/g, '').replace(/\s+/g, '');
+
+      const comaDec = /,\d{1,2}$/.test(s);
+      if (comaDec) {
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else {
+        const partes = s.split('.');
+        if (partes.length > 2) {
+          const dec = partes.pop();
+          s = partes.join('') + '.' + dec;
+        }
+      }
+
+      const n = Number(s);
+      if (!Number.isFinite(n) || n <= 0) return 0;
+      return Math.round((n + Number.EPSILON) * 100) / 100;
+    }
+
+    const incluye = (haystack, needle) =>
+      str(haystack).toUpperCase().includes(str(needle).toUpperCase());
+
+    // Fallback SOLO para NUEVOS (si no existe en DB)
+    function detectarPresentacionFila({ proveedorNombre, sheetName, codigo, descripcion }) {
+      const esMYL = str(proveedorNombre).toUpperCase() === 'MYL';
+      const esBAIML =
+        incluye(sheetName, 'BAIML') ||
+        str(codigo).toUpperCase().startsWith('BAIML') ||
+        incluye(descripcion, 'BAIML');
+
+      if (esMYL && esBAIML) return { presentacion: 'juego' };
+      return { presentacion: 'unidad' };
+    }
+
+    // redondeo a centena (igual idea que usás en otros lados)
     function redondearAlCentenar(valor) {
       let n = Number(valor) || 0;
       const resto = n % 100;
@@ -440,2526 +2488,773 @@ actualizarPreciosPorProveedorConCalculo: async function (conexion, proveedorId, 
       return Math.ceil(n);
     }
 
-    // 1) Traer productos del proveedor (incluye asignado + iva + presentacion)
-    const queryProductos = `
-      SELECT
-        p.id,
-        p.utilidad,
-        p.proveedor_id AS proveedor_asignado,
-        p.proveedor_id_manual,
-        COALESCE(pp.iva, p.IVA, 21) AS iva_aplicado,
-        LOWER(COALESCE(pp.presentacion, 'unidad')) AS presentacion,
-        pp.precio_lista,
-        COALESCE(dp.descuento, 0) AS descuento,
-        pp.producto_id
-      FROM producto_proveedor pp
-      JOIN productos p ON p.id = pp.producto_id
-      LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-      WHERE pp.proveedor_id = ?
-    `;
-    const [productos] = await conexion.promise().query(queryProductos, [proveedorId]);
+    let proveedorNombre = '';
+    try {
+      const [provRow] = await conexion.promise().query(
+        'SELECT nombre FROM proveedores WHERE id=? LIMIT 1',
+        [proveedor_id]
+      );
+      proveedorNombre = (provRow && provRow[0] && provRow[0].nombre) ? provRow[0].nombre : '';
+    } catch {}
 
-    if (!productos || productos.length === 0) {
-      return callback(null, 0);
-    }
+    const PROVEEDOR_OFERTAS_ID = 24;
 
-    let actualizadosPP = 0;
-    let actualizadosProductos = 0;
-
-    for (const prod of productos) {
-      const precioListaBase = Number(prod.precio_lista || 0);
-      if (!Number.isFinite(precioListaBase) || precioListaBase <= 0) {
-        continue;
-      }
-
-      const nuevaLista = +(precioListaBase * (1 + porcentaje)).toFixed(2);
-
-      const descuento = Number(prod.descuento || 0);
-      const utilidad = Number(prod.utilidad || 0);
-
-      const iva = Number(String(prod.iva_aplicado ?? 21).replace(',', '.')) || 21;
-
-      const pres = (String(prod.presentacion || 'unidad').toLowerCase() === 'juego') ? 'juego' : 'unidad';
-      const factor = (pres === 'juego') ? 0.5 : 1;
-
-      // costo neto raw (como venís usando en editar.js)
-      const costo_neto_raw = nuevaLista * (1 - (descuento / 100));
-      const costo_neto_guardado = Math.ceil(costo_neto_raw);
-
-      // costo IVA normalizado a UNIDAD (respeta presentacion + iva por proveedor)
-      const costo_neto_unidad = costo_neto_raw * factor;
-      const costo_iva_unidad = Math.ceil(costo_neto_unidad * (1 + (iva / 100)));
-
-      const precio_venta_calc = costo_iva_unidad * (1 + utilidad / 100);
-      const precio_venta = redondearAlCentenar(precio_venta_calc);
-
-      // ✅ Siempre actualizar la lista del proveedor para ese producto
-      const updatePP = `
-        UPDATE producto_proveedor
-           SET precio_lista = ?,
-               costo_neto   = ?,
-               costo_iva    = ?,
-               actualizado_en = NOW()
-         WHERE producto_id = ? AND proveedor_id = ?;
-      `;
-      await conexion.promise().query(updatePP, [
-        nuevaLista,
-        costo_neto_guardado,
-        costo_iva_unidad,
-        prod.producto_id,
-        proveedorId
-      ]);
-      actualizadosPP++;
-
-      // ✅ SOLO actualizar tabla productos si ESTE proveedor es el asignado del producto
-      // y el producto NO tiene selección manual que apunte a otro proveedor.
-      const tieneManualOtro = Number(prod.proveedor_id_manual) === 1
-        && Number(prod.proveedor_asignado) !== Number(proveedorId);
-
-      if (Number(prod.proveedor_asignado) === Number(proveedorId) && !tieneManualOtro) {
-        const updateProducto = `
-          UPDATE productos
-             SET costo_neto   = ?,
-                 costo_iva    = ?,
-                 precio_venta = ?,
-                 IVA          = ?
-           WHERE id = ?;
-        `;
-        await conexion.promise().query(updateProducto, [
-          costo_neto_guardado,
-          costo_iva_unidad,
-          precio_venta,
-          iva,
-          prod.id
-        ]);
-        actualizadosProductos++;
-      }
-    }
-
-
-    // mantenemos el "count" como antes: cantidad procesada para ese proveedor
-    return callback(null, actualizadosPP);
-
-  } catch (err) {
-    console.error('❌ Error al actualizar precios por proveedor con cálculo:', err);
-    return callback(err);
-  }
-},
-
-// ─── Actualización bulk de precios (para listas grandes como CROMOSOL) ────────
-// En lugar de 5 queries por item, hace 3 queries TOTALES para todo el lote.
-// Reducción: 120.000 queries → ~10 queries para 24.000 items.
-actualizarPreciosBulk: async function (items, proveedor_id) {
-  /**
-   * Actualización bulk de precios para listas grandes.
-   * Usa INSERT ... ON DUPLICATE KEY UPDATE para evitar queries CASE WHEN masivas.
-   * Requiere que producto_proveedor tenga índice único en (proveedor_id, codigo).
-   * Si hay dos registros con el mismo codigo (izq/der), ambos se actualizan
-   * porque iteramos sobre todos los rows del bdMap para ese codigo.
-   */
-  if (!items || items.length === 0) return { actualizados: [], nuevos: [] };
-
-  function redondearAlCentenar(valor) {
-    let n = Number(valor) || 0;
-    const resto = n % 100;
-    n = (resto < 50) ? (n - resto) : (n + (100 - resto));
-    return Math.ceil(n);
-  }
-
-  const conn = await conexion.promise().getConnection();
-  try {
-    // ── PASO 1: Traer TODOS los registros del proveedor de una sola vez ──────
-    const [ppRows] = await conn.query(
-      `SELECT
-         pp.producto_id,
-         pp.codigo,
-         LOWER(COALESCE(pp.presentacion,'unidad')) AS presentacion,
-         COALESCE(pp.iva, p.IVA, 21) AS iva_aplicado,
-         p.utilidad,
-         p.nombre,
-         p.proveedor_id AS proveedor_asignado,
-         p.proveedor_id_manual,
-         COALESCE(dp.descuento, 0) AS descuento
-       FROM producto_proveedor pp
-       JOIN productos p ON pp.producto_id = p.id
-       LEFT JOIN descuentos_proveedor dp ON dp.proveedor_id = pp.proveedor_id
-       WHERE pp.proveedor_id = ?`,
+    // === Precarga: precio_lista anterior + presentacion guardada ===
+    const [ppInfoRows] = await conexion.promise().query(
+      `SELECT 
+          codigo,
+          precio_lista,
+          LOWER(COALESCE(presentacion,'unidad')) AS presentacion
+       FROM producto_proveedor
+       WHERE proveedor_id = ?`,
       [proveedor_id]
     );
 
-    // Indexar por codigo upper → ARRAY de rows (mismo código puede tener izq y der)
-    const bdMap = new Map();
-    for (const row of ppRows) {
-      const key = String(row.codigo || '').trim().toUpperCase();
-      if (!key) continue;
-      if (!bdMap.has(key)) bdMap.set(key, []);
-      bdMap.get(key).push(row);
-    }
-
-    // ── PASO 2: Clasificar en encontrados y nuevos ────────────────────────────
-    const encontrados = [];  // { item, rows[] }
-    const nuevos      = [];  // { codigo, precio, descripcion }
-
-    for (const item of items) {
-      const key = String(item.codigo || '').trim().toUpperCase();
-      if (!key) continue;
-      const rows = bdMap.get(key);
-      if (rows && rows.length > 0) {
-        encontrados.push({ item, rows });
-      } else {
-        nuevos.push({ codigo: item.codigo, precio: item.precio,
-                      descripcion: item.descripcion || '' });
-      }
-    }
-
-    // ── PASO 3: Calcular nuevos valores y preparar updates ────────────────────
-    // ppUpdates: [precio_lista, costo_neto, costo_iva, producto_id, proveedor_id, codigo]
-    const ppUpdates = [];
-    const resultados = [];
-    const masBaratoMap = new Map();  // para el return final
-
-    for (const { item, rows } of encontrados) {
-      const precioListaNum = Number(item.precio);
-
-      for (const row of rows) {
-        const utilidad  = Number(row.utilidad || 0);
-        const descuento = Number(row.descuento || 0);
-        const iva       = Number(row.iva_aplicado || 21);
-        const pres      = row.presentacion === 'juego' ? 'juego' : 'unidad';
-        const factor    = pres === 'juego' ? 0.5 : 1;
-
-        const costo_neto_raw    = precioListaNum - (precioListaNum * descuento / 100);
-        const costo_neto_unidad = costo_neto_raw * factor;
-        const costo_iva_unidad  = Math.ceil(costo_neto_unidad * (1 + iva / 100));
-        const precio_venta      = redondearAlCentenar(costo_iva_unidad * (1 + utilidad / 100));
-
-        ppUpdates.push([
-          precioListaNum,
-          Math.ceil(costo_neto_raw),
-          costo_iva_unidad,
-          Number(row.producto_id),
-          proveedor_id,
-          row.codigo,
-        ]);
-
-        resultados.push({
-          producto_id:         Number(row.producto_id),
-          codigo:              row.codigo,
-          nombre:              row.nombre,
-          precio_lista_nuevo:  precioListaNum,
-          precio_venta,
-          proveedor_asignado:  Number(row.proveedor_asignado || 0),
-          proveedor_id_manual: Number(row.proveedor_id_manual || 0),
-          costo_neto_raw:      Math.ceil(costo_neto_raw),
-          costo_iva_unidad,
-        });
-      }
-    }
-
-    // ── PASO 4: UPDATE producto_proveedor con JOIN a tabla temporal ─────────
-    // Usamos una tabla VALUES temporal para hacer un UPDATE masivo en una sola query.
-    // Esto evita las limitaciones de CASE WHEN (tamaño de query) y multi-statement.
-    if (ppUpdates.length > 0) {
-      const BATCH = 500;
-      for (let i = 0; i < ppUpdates.length; i += BATCH) {
-        const batch = ppUpdates.slice(i, i + BATCH);
-        // Construir: UPDATE producto_proveedor pp
-        //   JOIN (SELECT ? AS pl, ? AS cn, ? AS ci, ? AS pid, ? AS prov, ? AS cod
-        //         UNION ALL SELECT ... ) v
-        //   ON pp.producto_id=v.pid AND pp.proveedor_id=v.prov AND pp.codigo=v.cod
-        //   SET pp.precio_lista=v.pl, ...
-        const unionRows = batch.map(() => 'SELECT ? AS pl, ? AS cn, ? AS ci, ? AS pid, ? AS cod').join(' UNION ALL ');
-        const params    = batch.flatMap(r => [r[0], r[1], r[2], r[3], r[5]]);
-        await conn.query(
-          `UPDATE producto_proveedor pp
-             JOIN (${unionRows}) v ON pp.producto_id = v.pid AND pp.proveedor_id = ? AND pp.codigo = v.cod
-              SET pp.precio_lista   = v.pl,
-                  pp.costo_neto     = v.cn,
-                  pp.costo_iva      = v.ci,
-                  pp.actualizado_en = NOW()`,
-          [...params, proveedor_id]
-        );
-      }
-    }
-
-    // ── PASO 5: Calcular proveedor más barato para cada producto ──────────────
-    if (resultados.length > 0) {
-      const prodIds = [...new Set(resultados.map(r => r.producto_id))];
-      const BATCH2 = 500;
-
-      for (let i = 0; i < prodIds.length; i += BATCH2) {
-        const chunk = prodIds.slice(i, i + BATCH2);
-        const [cheapRows] = await conn.query(
-          `SELECT pp.producto_id,
-                  pp.proveedor_id AS prov_barato,
-                  MIN(
-                    (pp.precio_lista - (pp.precio_lista * IFNULL(dp.descuento,0)/100))
-                    * (CASE WHEN LOWER(COALESCE(pp.presentacion,'unidad'))='juego' THEN 0.5 ELSE 1 END)
-                    * (1 + COALESCE(pp.iva,21)/100)
-                  ) AS costo_min
-             FROM producto_proveedor pp
-             LEFT JOIN descuentos_proveedor dp ON dp.proveedor_id = pp.proveedor_id
-            WHERE pp.producto_id IN (${chunk.map(()=>'?').join(',')})
-              AND pp.precio_lista > 0
-            GROUP BY pp.producto_id, pp.proveedor_id
-            ORDER BY pp.producto_id, costo_min ASC`,
-          chunk
-        );
-        const seen = new Set();
-        for (const row of cheapRows) {
-          const pid = Number(row.producto_id);
-          if (!seen.has(pid)) {
-            seen.add(pid);
-            masBaratoMap.set(pid, Number(row.prov_barato));
-          }
-        }
-      }
-
-      // ── PASO 6: Actualizar precio_venta en productos ────────────────────────
-      const updatesPV = [];
-      for (const r of resultados) {
-        const esManual    = r.proveedor_id_manual === 1;
-        const provBarato  = masBaratoMap.get(r.producto_id);
-        const esMasBarato = provBarato === proveedor_id;
-        const esElAsignado = r.proveedor_asignado === proveedor_id;
-
-        if (esManual && !esElAsignado) continue;
-        if (!esManual && !esMasBarato) continue;
-
-        updatesPV.push([r.precio_venta, r.costo_neto_raw, r.costo_iva_unidad, r.producto_id]);
-      }
-
-      if (updatesPV.length > 0) {
-        const BATCH3 = 500;
-        for (let i = 0; i < updatesPV.length; i += BATCH3) {
-          const batch = updatesPV.slice(i, i + BATCH3);
-          const unionRows = batch.map(() => 'SELECT ? AS pv, ? AS cn, ? AS ci, ? AS pid').join(' UNION ALL ');
-          const params    = batch.flatMap(r => r);
-          await conn.query(
-            `UPDATE productos p
-               JOIN (${unionRows}) v ON p.id = v.pid
-                SET p.precio_venta = v.pv,
-                    p.costo_neto   = v.cn,
-                    p.costo_iva    = v.ci`,
-            params
-          );
-        }
-
-        // Actualizar proveedor_id para los no-manuales que son el más barato
-        const noManuales = updatesPV.filter(r => {
-          const res = resultados.find(x => x.producto_id === r[3]);
-          return res && res.proveedor_id_manual !== 1;
-        });
-        if (noManuales.length > 0) {
-          const BATCH4 = 500;
-          for (let i = 0; i < noManuales.length; i += BATCH4) {
-            const chunk = noManuales.slice(i, i + BATCH4);
-            const ids = chunk.map(r => r[3]);
-            await conn.query(
-              `UPDATE productos SET proveedor_id = ?
-                WHERE id IN (${ids.map(()=>'?').join(',')})
-                  AND proveedor_id_manual != 1`,
-              [proveedor_id, ...ids]
-            );
-          }
-        }
-      }
-    }
-
-    // ── Armar respuesta ───────────────────────────────────────────────────────
-    const actualizados = resultados.map(r => {
-      const provBarato  = masBaratoMap.get(r.producto_id);
-      const esMasBarato = provBarato === proveedor_id;
-      const esManual    = r.proveedor_id_manual === 1;
-      return {
-        producto_id:              r.producto_id,
-        codigo:                   r.codigo,
-        nombre:                   r.nombre,
-        precio_lista_nuevo:       r.precio_lista_nuevo,
-        precio_venta:             r.precio_venta,
-        es_proveedor_mas_barato:  esMasBarato,
-        proveedor_asignado_id:    r.proveedor_asignado,
-        proveedor_id_manual:      r.proveedor_id_manual,
-        sera_proveedor_asignado:  !esManual && esMasBarato,
-        es_proveedor_manual_asignado: esManual && r.proveedor_asignado === proveedor_id,
-      };
+    const ppInfoMap = new Map();
+    (ppInfoRows || []).forEach(r => {
+      const k = norm(r.codigo);
+      ppInfoMap.set(k, {
+        precio_lista: Number(r.precio_lista || 0),
+        presentacion: (r.presentacion === 'juego') ? 'juego' : 'unidad'
+      });
     });
 
-    return { actualizados, nuevos };
+    let productosActualizados = [];
+    const codigosProcesados = new Set();     // guardo norm(codigo)
+    const productosTocados = new Set();
+    const nuevosProductos = [];
+    const codigosNuevosSet = new Set();
 
-  } finally {
-    conn.release();
-  }
-},
+    // ── Parser inteligente: delega la lectura del Excel a parser_precios.py ──────
+    // Si el archivo es .xls (OLE2), lo convertimos a .xlsx aquí en Node usando el
+    // módulo xlsx (ya instalado en el proyecto) — sin depender de LibreOffice.
+    // Python solo recibe .xlsx, lo que elimina toda dependencia externa.
+    const path_mod = require('path');
+    const fs_sync  = require('fs');
+    const os_mod   = require('os');
 
-actualizarPreciosPDF: async function (precio_lista, codigo, proveedor_id) {
-  try {
-    if (typeof codigo !== 'string') return null;
+    let fileParaParser = file.path;
+    let tmpXlsxPath    = null;
 
-    const precioListaNum = Number(precio_lista);
-    if (!Number.isFinite(precioListaNum) || precioListaNum <= 0) return null;
+    // Detectar XLS por magic bytes (D0 CF 11 E0) o por extensión
+    const _isXls = (() => {
+      try {
+        const buf = Buffer.alloc(4);
+        const fd  = fs_sync.openSync(file.path, 'r');
+        fs_sync.readSync(fd, buf, 0, 4, 0);
+        fs_sync.closeSync(fd);
+        return buf[0] === 0xD0 && buf[1] === 0xCF && buf[2] === 0x11 && buf[3] === 0xE0;
+      } catch { return false; }
+    })() || path_mod.extname(file.originalname || '').toLowerCase() === '.xls';
 
-    function redondearAlCentenar(valor) {
-      let n = Number(valor) || 0;
-      const resto = n % 100;
-      n = (resto < 50) ? (n - resto) : (n + (100 - resto));
-      return Math.ceil(n);
+    if (_isXls) {
+      // Convertir .xls → .xlsx usando el módulo xlsx (ya en node_modules)
+      tmpXlsxPath = path_mod.join(os_mod.tmpdir(), `dm_conv_${Date.now()}.xlsx`);
+      try {
+        const wb = xlsx.readFile(file.path, { type: 'file' });
+        xlsx.writeFile(wb, tmpXlsxPath);
+        fileParaParser = tmpXlsxPath;
+      } catch (convErr) {
+        if (tmpXlsxPath) try { fs_sync.unlinkSync(tmpXlsxPath); } catch {}
+        throw new Error('No se pudo convertir el archivo .xls: ' + convErr.message);
+      }
     }
 
-    const buscarProductos = `
-      SELECT 
-        pp.producto_id,
-        pp.codigo,
-        LOWER(COALESCE(pp.presentacion,'unidad')) AS presentacion,
-        COALESCE(pp.iva, p.IVA, 21) AS iva_aplicado,
-        p.utilidad,
-        p.nombre,
-        p.precio_venta AS precio_venta_anterior,
-        COALESCE(dp.descuento, 0) AS descuento
-      FROM producto_proveedor pp
-      JOIN productos p ON pp.producto_id = p.id
-      LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-      WHERE pp.codigo = ? AND pp.proveedor_id = ?
-    `;
-
-    const conn = await conexion.promise().getConnection();
-    try {
-      // Buscar con el código tal cual, luego probar UPPER y LOWER como fallback
-      let [results] = await conn.query(buscarProductos, [codigo, proveedor_id]);
-      if (!results || results.length === 0)
-        [results] = await conn.query(buscarProductos, [codigo.toUpperCase(), proveedor_id]);
-      if (!results || results.length === 0)
-        [results] = await conn.query(buscarProductos, [codigo.toLowerCase(), proveedor_id]);
-
-      if (!results || results.length === 0) return null;
-
-      const salidas = await Promise.all(results.map(async (row) => {
-        const producto_id = Number(row.producto_id);
-        const utilidad = Number(row.utilidad || 0);
-        const descuento = Number(row.descuento || 0);
-        const iva = Number(row.iva_aplicado || 21);
-
-        const pres = (row.presentacion === 'juego') ? 'juego' : 'unidad';
-        const factor = (pres === 'juego') ? 0.5 : 1;
-
-        // costo neto sobre el precio_lista (raw)
-        const costo_neto_raw = precioListaNum - (precioListaNum * descuento / 100);
-
-        // normalizado a unidad (igual que tu editar.js)
-        const costo_neto_unidad = costo_neto_raw * factor;
-        const costo_iva_unidad = Math.ceil(costo_neto_unidad * (1 + iva / 100));
-
-        const precio_venta_calc = costo_iva_unidad * (1 + utilidad / 100);
-        const precio_venta = redondearAlCentenar(precio_venta_calc);
-
-        // Guardamos costo_neto (raw, como venís manejando) y costo_iva por unidad
-        const updatePrecioLista = `
-          UPDATE producto_proveedor 
-             SET precio_lista = ?,
-                 costo_neto = ?,
-                 costo_iva = ?,
-                 actualizado_en = NOW()
-           WHERE producto_id = ? AND proveedor_id = ? AND codigo = ?
-        `;
-
-        await conn.query(updatePrecioLista, [
-          precioListaNum,
-          Math.ceil(costo_neto_raw),   // igual que tu JS (ceil)
-          costo_iva_unidad,            // por unidad
-          producto_id,
-          proveedor_id,
-          codigo
-        ]);
-
-        // Comparar proveedor más barato (POR UNIDAD, respetando presentacion + iva)
-        const compararProveedor = `
-          SELECT 
-            pp.proveedor_id,
-            (
-              (
-                (pp.precio_lista - (pp.precio_lista * IFNULL(dp.descuento, 0) / 100))
-                * (CASE 
-                    WHEN LOWER(COALESCE(pp.presentacion,'unidad')) = 'juego' THEN 0.5
-                    ELSE 1
-                  END)
-              )
-              * (1 + (COALESCE(pp.iva, 21) / 100))
-            ) AS costo_iva_unit
-          FROM producto_proveedor pp
-          LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-          WHERE pp.producto_id = ?
-          ORDER BY costo_iva_unit ASC
-          LIMIT 1
-        `;
-
-        const [res2] = await conn.query(compararProveedor, [producto_id]);
-        if (!res2 || res2.length === 0) {
-          return {
-            codigo,
-            nombre: row.nombre,
-            producto_id,
-            precio_lista: precioListaNum,
-            precio_venta: 0,
-            sin_cambio: true
-          };
+    const parserResult = await new Promise((resolve, reject) => {
+      const { spawn } = require('child_process');
+      const venvPython = path_mod.join(__dirname, '../venv/bin/python3');
+      const pythonBin  = fs_sync.existsSync(venvPython) ? venvPython : 'python3';
+      const py = spawn(pythonBin, [
+        path_mod.join(__dirname, '../utils/parser_precios.py'),
+        fileParaParser
+      ]);
+      let stdout = '';
+      let stderr = '';
+      py.stdout.on('data', chunk => { stdout += chunk; });
+      py.stderr.on('data', chunk => { stderr += chunk; });
+      py.on('close', code => {
+        if (code !== 0) {
+          return reject(new Error(`parser_precios.py falló (código ${code}): ${stderr.slice(0,300)}`));
         }
+        try {
+          resolve(JSON.parse(stdout));
+        } catch (e) {
+          reject(new Error(`JSON inválido del parser: ${e.message} — stdout: ${stdout.slice(0,200)}`));
+        }
+      });
+      py.on('error', err => reject(new Error(`No se pudo iniciar python3: ${err.message}`)));
+    });
 
-        // ── Verificar si el admin fijó el proveedor manualmente ──
-        const [resManual] = await conn.query(
-          `SELECT proveedor_id, proveedor_id_manual FROM productos WHERE id = ? LIMIT 1`,
-          [producto_id]
-        );
-        const esManual = resManual && resManual.length > 0
-          ? Number(resManual[0].proveedor_id_manual) === 1
-          : false;
-        const proveedorManualId = resManual && resManual.length > 0
-          ? Number(resManual[0].proveedor_id || 0)
-          : 0;
+    if (parserResult.errores && parserResult.errores.length) {
+      console.warn('⚠️  parser_precios advertencias:', parserResult.errores);
+    }
 
-        if (esManual) {
-          // El admin eligió un proveedor a mano: NO reasignamos proveedor_id.
-          // Solo recalculamos precio_venta si el proveedor importado ES el que
-          // está asignado manualmente (actualizamos su precio pero no cambiamos quién está asignado).
-          if (proveedorManualId === Number(proveedor_id)) {
-            // Recalcular PV con los nuevos costos del proveedor asignado manualmente
-            await conn.query(
-              `UPDATE productos
-                  SET precio_venta = ?,
-                      costo_neto   = ?,
-                      costo_iva    = ?
-                WHERE id = ?`,
-              [precio_venta, Math.ceil(costo_neto_raw), costo_iva_unidad, producto_id]
-            );
-            return {
-              codigo,
-              nombre: row.nombre,
-              producto_id,
-              precio_lista: precioListaNum,
-              precio_venta,
-              sin_cambio: false,
-              seleccion_manual: true
-            };
+    const itemsParser = parserResult.items || [];
+
+    // ── Separar items DM (tienen proveedor_id_override) del resto ────────────
+    // DM necesita procesarse por sub-proveedor separado; el resto va por bulk.
+    const itemsDM    = itemsParser.filter(it => it.proveedor_id_override != null);
+    const itemsBulk  = itemsParser.filter(it => it.proveedor_id_override == null);
+
+    // ── Procesar items NO-DM con bulk update (una query para todo el lote) ───
+    if (itemsBulk.length > 0) {
+      // Filtrar y limpiar
+      const itemsValidos = [];
+      for (const item of itemsBulk) {
+        const codigoRaw   = str(item.codigo);
+        const precioBruto = limpiarPrecio(item.precio);
+        if (!codigoRaw || !Number.isFinite(precioBruto) || precioBruto <= 0) continue;
+        const key = norm(codigoRaw) + '|' + proveedor_id;
+        if (codigosProcesados.has(key)) continue;
+        codigosProcesados.add(key);
+        itemsValidos.push({ codigo: codigoRaw, precio: precioBruto });
+      }
+
+      if (itemsValidos.length > 0) {
+        const bulkResult = await producto.actualizarPreciosBulk(itemsValidos, proveedor_id);
+
+        (bulkResult.actualizados || []).forEach(p => {
+          const infoBD = ppInfoMap.get(norm(p.codigo));
+          const precioAnterior = infoBD?.precio_lista || 0;
+          const sinCambio = Math.abs(precioAnterior - p.precio_lista_nuevo) < 0.01;
+          // Solo incluir en la vista los que tuvieron cambio de precio
+          if (!sinCambio) {
+            productosActualizados.push({
+              producto_id:               p.producto_id,
+              codigo:                    p.codigo,
+              nombre:                    p.nombre,
+              precio_lista_antiguo:      precioAnterior,
+              precio_lista_nuevo:        p.precio_lista_nuevo,
+              precio_venta:              p.precio_venta || 0,
+              sin_cambio:                false,
+              es_proveedor_mas_barato:   p.es_proveedor_mas_barato,
+              sera_proveedor_asignado:   p.sera_proveedor_asignado,
+              proveedor_id_manual:       p.proveedor_id_manual,
+              es_proveedor_manual_asignado: p.es_proveedor_manual_asignado,
+              proveedor_asignado_id:     p.proveedor_asignado_id,
+            });
           }
-          // El proveedor importado NO es el asignado manualmente: no tocar productos.
-          return {
-            codigo,
-            nombre: row.nombre,
-            producto_id,
-            precio_lista: precioListaNum,
-            precio_venta: 0,
-            sin_cambio: true,
-            seleccion_manual: true
-          };
-        }
-
-        const proveedorMasBarato = res2[0];
-        const esMasBarato = Number(proveedorMasBarato.proveedor_id) === Number(proveedor_id);
-
-        if (esMasBarato) {
-          // Sin selección manual: reasignar al proveedor más barato y recalcular PV.
-          await conn.query(
-            `UPDATE productos
-                SET precio_venta = ?,
-                    proveedor_id  = ?,
-                    costo_neto    = ?,
-                    costo_iva     = ?
-              WHERE id = ?`,
-            [precio_venta, proveedor_id, Math.ceil(costo_neto_raw), costo_iva_unidad, producto_id]
-          );
-          return {
-            codigo,
-            nombre: row.nombre,
-            producto_id,
-            precio_lista: precioListaNum,
-            precio_venta,
-            sin_cambio: false
-          };
-        }
-
-        // El proveedor importado NO es el más barato: solo guardamos precio_lista
-        // en producto_proveedor (ya hecho arriba). No tocamos precio_venta ni proveedor_id.
-        return {
-          codigo,
-          nombre: row.nombre,
-          producto_id,
-          precio_lista: precioListaNum,
-          precio_venta: 0,
-          sin_cambio: true
-        };
-      }));
-
-      return salidas.filter(Boolean);
-
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    console.error('❌ Error en actualizarPreciosPDF:', err);
-    return null;
-  }
-},
-    buscar : async (busqueda, categoria_id, marca_id, modelo_id) => {
-        let query = `
-            SELECT productos.*, imagenes_producto.imagen, categorias.nombre AS categoria 
-            FROM productos 
-            LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id 
-            LEFT JOIN categorias ON productos.categoria_id = categorias.id`;
-        let params = [];
-    
-        if (busqueda && typeof busqueda === 'string') {
-            query += ' WHERE LOWER(productos.nombre) LIKE ?';
-            params.push(`%${busqueda.toLowerCase()}%`);
-        }
-        if (categoria_id) {
-            query += (params.length ? ' AND' : ' WHERE') + ' productos.categoria_id = ?';
-            params.push(categoria_id);
-        }
-        if (marca_id) {
-            query += (params.length ? ' AND' : ' WHERE') + ' productos.marca_id = ?';
-            params.push(marca_id);
-        }
-        if (modelo_id) {
-            query += (params.length ? ' AND' : ' WHERE') + ' productos.modelo_id = ?';
-            params.push(modelo_id);
-        }
-    
-        const [filas] = await conexion.promise().query(query, params);
-        const productos = {};
-        filas.forEach(fila => {
-            if (!productos[fila.id]) {
-                productos[fila.id] = {
-                    ...fila,
-                    imagenes: fila.imagen ? [fila.imagen] : []
-                };
-            } else if (fila.imagen) {
-                productos[fila.id].imagenes.push(fila.imagen);
-            }
+          productosTocados.add(Number(p.producto_id));
         });
-    
-        return Object.values(productos);
-    },
 
-    obtenerStock: function(conexion, idProducto) {
-        return new Promise((resolve, reject) => {
-            conexion.query('SELECT stock_minimo, stock_actual FROM productos WHERE id = ?', [idProducto], (error, results) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(results[0]);
-                }
+        (bulkResult.nuevos || []).forEach(n => {
+          const key = norm(n.codigo) + '|' + proveedor_id;
+          if (!codigosNuevosSet.has(key)) {
+            codigosNuevosSet.add(key);
+            nuevosProductos.push({
+              codigo:               n.codigo,
+              descripcion:          '(sin descripción)',
+              precio:               n.precio,
+              presentacion_sugerida: 'unidad'
             });
+          }
         });
-    }, 
-    actualizarStockPresupuesto: (productoId, cantidadVendida) => {
-        return new Promise((resolve, reject) => {
-            const query = 'UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?';
-            conexion.query(query, [cantidadVendida, productoId], (error, resultado) => {
-                if (error) {
-                    console.error('Error al actualizar el stock:', error);
-                    reject(error);
-                } else {
-                    resolve(resultado);
-                }
+      }
+    }
+
+    // ── Procesar items DM con el método original (uno por uno, son pocos) ────
+    for (const item of itemsDM) {
+      const codigoRaw      = str(item.codigo);
+      const precioBruto    = limpiarPrecio(item.precio);
+      const descRaw        = str(item.descripcion);
+      const sheetName      = str(item.hoja);
+      const provIdEfectivo = Number(item.proveedor_id_override);
+
+      const codigoKey = norm(codigoRaw) + '|' + provIdEfectivo;
+      if (!codigoRaw || !Number.isFinite(precioBruto) || precioBruto <= 0) continue;
+      if (codigosProcesados.has(codigoKey)) continue;
+      codigosProcesados.add(codigoKey);
+
+      const infoBD = ppInfoMap.get(norm(codigoRaw));
+      let presentacionUsada = infoBD?.presentacion;
+      if (!presentacionUsada) {
+        const det = detectarPresentacionFila({ proveedorNombre, sheetName, codigo: codigoRaw, descripcion: descRaw });
+        presentacionUsada = det.presentacion;
+      }
+
+      const resultado = await producto.actualizarPreciosPDF(precioBruto, codigoRaw, provIdEfectivo);
+
+      if (Array.isArray(resultado) && resultado.length) {
+        resultado.forEach(p => {
+          const precioAnt = infoBD?.precio_lista || 0;
+          const sinCambio = Math.abs(precioAnt - precioBruto) < 0.01;
+          if (!sinCambio) {
+            productosActualizados.push({
+              producto_id:               p.producto_id,
+              codigo:                    p.codigo,
+              nombre:                    p.nombre,
+              precio_lista_antiguo:      precioAnt,
+              precio_lista_nuevo:        precioBruto,
+              precio_venta:              p.precio_venta || 0,
+              sin_cambio:                false,
+              es_proveedor_mas_barato:   !p.sin_cambio,
+              sera_proveedor_asignado:   !p.seleccion_manual && !p.sin_cambio,
+              proveedor_id_manual:       p.seleccion_manual ? 1 : 0,
+              es_proveedor_manual_asignado: !!p.seleccion_manual,
+              proveedor_asignado_id:     provIdEfectivo,
             });
+          }
+          productosTocados.add(Number(p.producto_id));
         });
-    },
-      obtenerPosicion: function(conexion, idProducto) {
-        return new Promise((resolve, reject) => {
-            const consulta = 'SELECT COUNT(*) AS posicion FROM productos WHERE id <= ? ORDER BY id';
-            conexion.query(consulta, [idProducto], (error, resultados) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(resultados[0].posicion);
-                }
-            });
+      } else {
+        const nuevoKey = norm(codigoRaw) + '|' + provIdEfectivo;
+        if (!codigosNuevosSet.has(nuevoKey)) {
+          codigosNuevosSet.add(nuevoKey);
+          nuevosProductos.push({
+            codigo:                codigoRaw,
+            descripcion:           descRaw || '(sin descripción)',
+            precio:                precioBruto,
+            presentacion_sugerida: presentacionUsada
+          });
+        }
+      }
+    }
+
+    // dedupe
+    productosActualizados = productosActualizados.filter(
+      (v, i, s) => i === s.findIndex(t => t.producto_id === v.producto_id && t.codigo === v.codigo)
+    );
+
+    // === Recalcular PV para productos "tocados" cuyo proveedor asignado NO es el que estás actualizando ===
+    // (tu lógica original) pero ahora respeta presentacion + iva del proveedor asignado
+    if (productosTocados.size > 0) {
+      const ids = Array.from(productosTocados);
+
+      const [rowsProd] = await conexion.promise().query(
+        `SELECT id, proveedor_id AS asignado_id, proveedor_id_manual, utilidad, COALESCE(IVA,21) AS IVA
+           FROM productos
+          WHERE id IN (${ids.map(() => '?').join(',')})`,
+        ids
+      );
+
+      const mapProd = new Map();
+      (rowsProd || []).forEach(r => {
+        mapProd.set(Number(r.id), {
+          asignado_id:        Number(r.asignado_id || 0),
+          proveedor_id_manual: Number(r.proveedor_id_manual || 0),
+          utilidad:           Number(r.utilidad || 0),
+          IVA:                Number(r.IVA || 21)
         });
-    }, 
-obtenerTodos: function (conexion, saltar, productosPorPagina, categoriaSeleccionada = null, proveedorSeleccionado = null) {
-  // ✅ Compatibilidad con llamada vieja: obtenerTodos(conexion, callback)
-  if (typeof saltar === 'function') {
-    const cb = saltar;
-    const sql = `SELECT id, nombre, imagen, precio_venta FROM productos ORDER BY id DESC`;
-    return conexion.query(sql, cb);
-  }
-
-  return new Promise((resolve, reject) => {
-    let consulta = `
-      SELECT
-        productos.*,
-        categorias.nombre AS categoria,
-        GROUP_CONCAT(
-          imagenes_producto.imagen
-          ORDER BY IFNULL(imagenes_producto.posicion, 999999), imagenes_producto.id
-          SEPARATOR ','
-        ) AS imagenes
-      FROM productos
-      LEFT JOIN categorias ON productos.categoria_id = categorias.id
-      LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id
-    `;
-
-    const where = [];
-    const params = [];
-
-    const catNum = Number(categoriaSeleccionada);
-    if (Number.isFinite(catNum) && catNum > 0) {
-      where.push(`productos.categoria_id = ?`);
-      params.push(catNum);
-    }
-
-    const provNum = Number(proveedorSeleccionado);
-    if (Number.isFinite(provNum) && provNum > 0) {
-      // ✅ filtra por relación producto_proveedor (mismo criterio que /productos/api/buscar)
-      where.push(`
-        EXISTS (
-          SELECT 1
-          FROM producto_proveedor pp
-          WHERE pp.producto_id = productos.id
-            AND pp.proveedor_id = ?
-        )
-      `);
-      params.push(provNum);
-    }
-
-    if (where.length) {
-      consulta += ` WHERE ${where.join(' AND ')} `;
-    }
-
-    consulta += ` GROUP BY productos.id ORDER BY productos.id DESC LIMIT ?, ?`;
-    params.push(Number(saltar) || 0, Number(productosPorPagina) || 30);
-
-    conexion.query(consulta, params, (error, resultados) => {
-      if (error) return reject(error);
-
-      (resultados || []).forEach(p => {
-        p.imagenes = p.imagenes ? String(p.imagenes).split(',') : [];
       });
 
-      resolve(resultados || []);
-    });
-  });
-},
+      for (const prodId of ids) {
+        const meta = mapProd.get(prodId);
+        if (!meta || !meta.asignado_id) continue;
+        if (meta.asignado_id === proveedor_id) continue;
 
-obtenerProductosPorProveedorDetalle: async function (conexion, proveedorId, categoriaId = null) {
-  let sql = `
-    SELECT
-      p.*,
-      pp.codigo AS codigo_proveedor,
-      pp.precio_lista,
-      p.precio_venta
-    FROM productos p
-    INNER JOIN producto_proveedor pp
-      ON p.id = pp.producto_id
-    WHERE pp.proveedor_id = ?
-  `;
+        // Si el admin asignó el proveedor manualmente, no recalculamos PV
+        // (actualizarPreciosPDF ya lo maneja correctamente para ese caso)
+        if (meta.proveedor_id_manual === 1) continue;
 
-  const params = [proveedorId];
+        const [ppRows] = await conexion.promise().query(
+          `SELECT 
+              pp.precio_lista,
+              LOWER(COALESCE(pp.presentacion,'unidad')) AS presentacion,
+              COALESCE(pp.iva, ?) AS iva_prov,
+              COALESCE(dp.descuento, 0) AS descuento
+           FROM producto_proveedor pp
+           LEFT JOIN descuentos_proveedor dp ON dp.proveedor_id = pp.proveedor_id
+           WHERE pp.producto_id = ? AND pp.proveedor_id = ?
+           LIMIT 1`,
+          [meta.IVA || 21, prodId, meta.asignado_id]
+        );
 
-  if (categoriaId && categoriaId !== 'TODAS' && categoriaId !== '') {
-    sql += ` AND p.categoria_id = ? `;
-    params.push(categoriaId);
-  }
+        if (!ppRows || ppRows.length === 0) continue;
 
-  sql += ` ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC, p.nombre ASC `;
+        const pl = Number(ppRows[0].precio_lista || 0);
+        const desc = Number(ppRows[0].descuento || 0);
+        const pres = (ppRows[0].presentacion === 'juego') ? 'juego' : 'unidad';
+        const ivaProv = Number(ppRows[0].iva_prov || meta.IVA || 21);
 
-  const [rows] = await conexion.promise().query(sql, params);
-  return rows;
-},
+        if (!(pl > 0)) continue;
 
-obtenerProveedores: function(conexion) {
-    return new Promise((resolve, reject) => {
-        const query = `
-            SELECT proveedores.id, proveedores.nombre, dp.descuento
-            FROM proveedores
-            LEFT JOIN (
-                SELECT proveedor_id, MAX(descuento) AS descuento
-                FROM descuentos_proveedor
-                GROUP BY proveedor_id
-            ) AS dp ON proveedores.id = dp.proveedor_id
-            ORDER BY proveedores.nombre ASC
-        `;
+        // neto sobre el precio_lista (puede ser juego o unidad)
+        const costoNeto = pl - (pl * desc / 100);
 
-        conexion.query(query, function(error, resultados) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(resultados);
-            }
-        });
-    });
-},
-obtenerPorFiltrosYProveedor: function (
-  conexion,
-  categoria_id,
-  marca_id,
-  modelo_id,
-  busqueda_nombre,
-  limite,
-  proveedorId
-) {
-  return new Promise((resolve, reject) => {
-    const params = [Number(proveedorId)];
+        // normalizar a UNIDAD si es juego (par)
+        const factor = (pres === 'juego') ? 0.5 : 1;
+        const costoNetoUnidad = costoNeto * factor;
 
-    let sql = `
-      SELECT
-        p.id,
-        p.nombre,
-        p.descripcion,
-        p.categoria_id,
-        p.marca_id,
-        p.modelo_id,
-        p.proveedor_id,
-        p.utilidad,
-        p.estado,
-        p.stock_actual,
-        p.stock_minimo,
-        p.oferta,
-        p.calidad_original,
-        p.calidad_vic,
-        p.calidad_mm,
-        p.calidad_original_premium,
+        const costoIVAUnidad = costoNetoUnidad * (1 + (ivaProv / 100));
+        let nuevoPV = costoIVAUnidad * (1 + (meta.utilidad || 0) / 100);
+        nuevoPV = redondearAlCentenar(nuevoPV);
 
-        pp.codigo        AS codigo,
-        pp.precio_lista  AS precio_lista,
-        pp.descuento     AS descuento,
-        pp.costo_neto    AS costo_neto,
-        pp.costo_iva     AS costo_iva,
-        pp.iva           AS iva,
-        pp.presentacion  AS presentacion,
-        pp.factor_unidad AS factor_unidad
-      FROM productos p
-      INNER JOIN producto_proveedor pp
-        ON pp.producto_id = p.id
-       AND pp.proveedor_id = ?
-      WHERE 1=1
-    `;
-
-    if (categoria_id) { sql += ` AND p.categoria_id = ?`; params.push(Number(categoria_id)); }
-    if (marca_id)     { sql += ` AND p.marca_id = ?`;     params.push(Number(marca_id)); }
-    if (modelo_id)    { sql += ` AND p.modelo_id = ?`;    params.push(Number(modelo_id)); }
-
-    // ✅ BUSCAR EN nombre + descripcion + codigo proveedor
-    if (busqueda_nombre && String(busqueda_nombre).trim().length) {
-      const raw = String(busqueda_nombre).trim().replace(/\s+/g, ' ');
-      const tokens = raw.split(' ').map(t => t.trim()).filter(t => t.length >= 2);
-
-      if (tokens.length) {
-        sql += ` AND (`;
-        tokens.forEach((t, idx) => {
-          if (idx > 0) sql += ` AND `;
-          sql += `(p.nombre LIKE ? OR p.descripcion LIKE ? OR pp.codigo LIKE ?)`;
-          const likeTok = `%${t}%`;
-          params.push(likeTok, likeTok, likeTok);
-        });
-        sql += `)`;
+        await conexion.promise().query(
+          `UPDATE productos SET precio_venta=? WHERE id=?`,
+          [nuevoPV, prodId]
+        );
       }
     }
 
-    sql += ` ORDER BY p.id DESC LIMIT ?`;
-    params.push(Number(limite) || 100);
+    // === Ofertas faltantes (corrigiendo set por norm) ===
+    let ofertasFaltantes = [];
+    if (proveedor_id === PROVEEDOR_OFERTAS_ID) {
+      const [rows] = await conexion.promise().query(`
+        SELECT pp.producto_id, pp.codigo, pp.precio_lista AS precio_lista_oferta,
+               p.nombre, p.precio_venta, p.oferta
+          FROM producto_proveedor pp
+          JOIN productos p ON p.id = pp.producto_id
+         WHERE pp.proveedor_id = ?`, [proveedor_id]);
 
-    conexion.query(sql, params, (error, rows) => {
-      if (error) return reject(error);
-      resolve(rows || []);
+      ofertasFaltantes = (rows || [])
+        .filter(r => {
+          const cod = str(r.codigo);
+          return cod && !codigosProcesados.has(norm(cod));
+        })
+        .map(r => ({
+          producto_id: r.producto_id,
+          codigo: r.codigo,
+          nombre: r.nombre,
+          precio_lista_oferta: Number(r.precio_lista_oferta || 0),
+          precio_venta: Number(r.precio_venta || 0),
+          oferta_flag: Number(r.oferta) === 1 ? 'SI' : 'NO'
+        }));
+    }
+
+    try { fs.unlinkSync(file.path); } catch {}
+    if (tmpXlsxPath) try { fs_sync.unlinkSync(tmpXlsxPath); } catch {}
+
+    if (!req.session) req.session = {};
+    req.session.nuevosProductos = {
+      proveedor_id,
+      proveedor_nombre: proveedorNombre,
+      fecha: new Date(),
+      items: nuevosProductos
+    };
+
+    // Resumen estadístico para la vista
+    const conAumento  = productosActualizados.filter(p => p.precio_lista_nuevo > p.precio_lista_antiguo).length;
+    const conBaja     = productosActualizados.filter(p => p.precio_lista_nuevo < p.precio_lista_antiguo).length;
+    const cambiaProv  = productosActualizados.filter(p => p.sera_proveedor_asignado).length;
+
+    res.render('productosActualizados', {
+      productos:        productosActualizados,
+      ofertasFaltantes,
+      cantidadNuevos:   nuevosProductos.length,
+      proveedorNombre,
+      proveedor_id,
+      stats: {
+        total:      productosActualizados.length,
+        conAumento,
+        conBaja,
+        sinCambio:  0,   // ya no enviamos los sin cambio
+        cambiaProv,
+        nuevos:     nuevosProductos.length,
+      }
     });
-  });
+
+  } catch (error) {
+    console.error('❌ Error en actualizarPreciosExcel:', error);
+    res.status(500).send(error.message);
+  }
 },
 
-obtenerProveedorMasBarato : async (conexion, productoId) => {
+descargarPDFNuevos : async (req, res) => {
+  try {
+    const data = req.session && req.session.nuevosProductos;
+    if (!data || !data.items || data.items.length === 0) {
+      return res.status(404).send('No hay productos nuevos detectados en la última importación.');
+    }
+
+    const proveedor = data.proveedor_nombre || `Proveedor_${data.proveedor_id}`;
+    const fecha = new Date(data.fecha || Date.now());
+    const yyyy = fecha.getFullYear();
+    const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dd = String(fecha.getDate()).padStart(2, '0');
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="PRODUCTOS_NUEVOS_${proveedor.replace(/\s+/g,'_')}_${yyyy}-${mm}-${dd}.pdf"`
+    );
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    doc.pipe(res);
+
+    // Título
+    doc.fontSize(16).text('PRODUCTOS NUEVOS', { align: 'center' });
+    doc.moveDown(0.3);
+    doc.fontSize(11).text(`Proveedor: ${proveedor}`, { align: 'center' });
+    doc.text(`Fecha: ${dd}/${mm}/${yyyy}`, { align: 'center' });
+    doc.moveDown(1);
+
+    // Encabezados de tabla
+    const colX = { codigo: 40, descrip: 170, precio: 480 };
+    const rowHeight = 20;
+
+    doc.fontSize(11).text('Código', colX.codigo, doc.y, { width: 120, continued: false });
+    doc.text('Descripción', colX.descrip, doc.y, { width: 290 });
+    doc.text('Precio', colX.precio, doc.y, { width: 100, align: 'right' });
+    doc.moveTo(40, doc.y + 5).lineTo(555, doc.y + 5).stroke();
+    doc.moveDown(0.5);
+
+    // Filas
+    data.items.forEach(item => {
+      const precioFmt = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.precio || 0);
+      const yStart = doc.y;
+      // Código
+      doc.fontSize(10).text(item.codigo || '', colX.codigo, yStart, { width: 120 });
+      // Descripción (ajusta altura)
+      const descHeight = doc.heightOfString(item.descripcion || '', { width: 290 });
+      doc.text(item.descripcion || '', colX.descrip, yStart, { width: 290 });
+      // Precio
+      doc.text(`$ ${precioFmt}`, colX.precio, yStart, { width: 100, align: 'right' });
+
+      const h = Math.max(rowHeight, descHeight);
+      doc.moveDown(h / 14); // ajuste fino para mantener separación visual
+      if (doc.y > 760) doc.addPage();
+    });
+
+    doc.end();
+  } catch (err) {
+    console.error('❌ Error al generar PDF de nuevos:', err);
+    res.status(500).send('Error al generar PDF.');
+  }
+},
+  seleccionarProveedorMasBarato : async (conexion, productoId) => {
     try {
-      const query = `
-        SELECT 
-          pp.proveedor_id,
-          pp.precio_lista,
-          dp.descuento,
-          (pp.precio_lista * (1 - (dp.descuento / 100))) + (pp.precio_lista * 0.21) AS costo_iva
-        FROM 
-          producto_proveedor pp
-        INNER JOIN 
-          descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-        WHERE 
-          pp.producto_id = ?
-        ORDER BY 
-          costo_iva ASC
-        LIMIT 1
-      `;
-      const resultado = await conexion.query(query, [productoId]);
-      return resultado[0];
+      const proveedorMasBarato = await producto.obtenerProveedorMasBarato(conexion, productoId);
+      if (proveedorMasBarato) {
+        await producto.asignarProveedorMasBarato(conexion, productoId, proveedorMasBarato.proveedor_id);
+      } else {
+      }
     } catch (error) {
-      console.error(`Error al obtener el proveedor más barato para el producto con ID ${productoId}:`, error);
+      console.error(`Error al seleccionar el proveedor más barato para el producto con ID ${productoId}:`, error);
       throw error;
     }
   },
-obtenerMarcas: function(conexion) {
-    return new Promise((resolve, reject) => {
-        const consulta = 'SELECT * FROM marcas ORDER BY nombre ASC';
-
-        conexion.query(consulta, function(error, resultados) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(resultados); 
-            }
-        });
-    });
-},
-
-  obtenerModelosPorMarca: function(conexion, marcaId) {
-    return new Promise((resolve, reject) => {
-        let query = 'SELECT * FROM modelos';
-        let params = [];  
-  
-        if (marcaId) {
-            query += ' WHERE id_marca = ?';
-            params.push(marcaId);
-        }
-  
-        query += ' ORDER BY nombre ASC';
-  
-        conexion.query(query, params, function(error, resultados) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(resultados);
-            }
-        });
-    });
-  },
-obtenerCategorias: function(conexion) {
-    return new Promise((resolve, reject) => {
-        let query = 'SELECT * FROM categorias ORDER BY nombre ASC';
-
-        conexion.query(query, function(error, resultados) {
-            if (error) {
-                console.error('Error al obtener categorías:', error);
-                reject(error);
-            } else {
-                resolve(resultados);
-            }
-        });
-    });
-},
-obtenerProductosPorCategoria: function(conexion, categoriaId) {
-  const query = `
-    SELECT 
-      p.id,                           -- ✅ necesario para deduplicar
-      p.nombre, 
-      p.stock_actual, 
-      pp.codigo AS codigo
-    FROM productos p
-    LEFT JOIN producto_proveedor pp ON p.id = pp.producto_id
-    WHERE p.categoria_id = ?
-    ORDER BY p.nombre ASC
-  `;
-  return new Promise((resolve, reject) => {
-    conexion.query(query, [categoriaId], (err, results) => {
-      if (err) return reject(err);
-      resolve(results);
-    });
-  });
-},
-  
-obtenerProductosPorProveedorYCategoria: function (conexion, proveedor, categoria) {
-  const prov = (!proveedor || proveedor === 'TODOS') ? null : Number(proveedor);
-  const cat  = (!categoria || categoria === 'TODAS') ? null : Number(categoria);
-
-  // Construir query dinámicamente según filtros presentes
-  const params = [];
-  let query = `
-    SELECT
-      p.id,
-      p.nombre,
-      p.utilidad,
-      p.precio_venta,
-      p.stock_minimo,
-      p.stock_actual,
-      pp.codigo                               AS codigo_proveedor,
-      pp.precio_lista                         AS precio_lista,
-      COALESCE(pp.iva, 21)                    AS iva,
-      COALESCE(dp.descuento, 0)               AS descuento
-    FROM productos p
-    INNER JOIN producto_proveedor pp ON pp.producto_id = p.id
-    LEFT JOIN (
-      SELECT proveedor_id, MAX(descuento) AS descuento
-      FROM descuentos_proveedor
-      GROUP BY proveedor_id
-    ) dp ON dp.proveedor_id = pp.proveedor_id
-    WHERE 1=1
-  `;
-
-  if (prov) {
-    query += ` AND pp.proveedor_id = ?`;
-    params.push(prov);
-  }
-
-  if (cat) {
-    query += ` AND p.categoria_id = ?`;
-    params.push(cat);
-  }
-
-  query += `
-    ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC, p.nombre ASC
-  `;
-
-  const queryPromise = require('util').promisify(conexion.query).bind(conexion);
-  return queryPromise(query, params);
-},
- 
-obtenerPorFiltros: function(conexion, categoria, marca, modelo, busqueda_nombre, limite) {
-  return new Promise((resolve, reject) => {
-    let sql = 'SELECT productos.*, categorias.nombre as categoria_nombre, imagenes_producto.imagen as imagen, producto_proveedor.codigo, productos.stock_actual, productos.stock_minimo, productos.oferta, productos.calidad_original, productos.calidad_vic, productos.calidad_mm, productos.calidad_original_premium FROM productos'; 
-    sql += ' LEFT JOIN categorias ON productos.categoria_id = categorias.id';
-    sql += ' LEFT JOIN imagenes_producto ON productos.id = imagenes_producto.producto_id';
-    sql += ' LEFT JOIN producto_proveedor ON productos.id = producto_proveedor.producto_id';
-    sql += ' WHERE 1=1';
-    const parametros = []; 
-    
-    if (categoria) {
-      sql += ' AND categoria_id = ?';
-      parametros.push(categoria);
-    }
-    if (marca && marca !== '' && !isNaN(parseInt(marca))) {
-      sql += ' AND marca_id = ?';
-      parametros.push(parseInt(marca));
-    }
-    if (modelo && modelo !== '' && !isNaN(parseInt(modelo))) {
-      sql += ' AND modelo_id = ?';
-      parametros.push(parseInt(modelo));
-    }
-
-    // ✅ BUSCAR EN nombre + descripcion + codigo proveedor
-    if (busqueda_nombre && typeof busqueda_nombre === 'string') {
-      const palabras = busqueda_nombre.split(' ');
-      palabras.forEach(palabra => {
-        if (palabra !== undefined && palabra !== null && palabra !== '') {
-          sql += ' AND (productos.nombre LIKE ? OR productos.descripcion LIKE ? OR producto_proveedor.codigo LIKE ?)';
-          parametros.push('%' + palabra + '%', '%' + palabra + '%', '%' + palabra + '%');
-        }
-      });
-    }
-    
-    sql += ' ORDER BY productos.nombre ASC';
-    if (limite && typeof limite === 'number' && limite > 0 && limite % 1 === 0) {
-      sql += ' LIMIT ?';
-      parametros.push(limite);
-    }
-
-    conexion.query(sql, parametros, (error, productos) => {
-      if (error) return reject(error);
-
-      const productosAgrupados = productos.reduce((acc, producto) => {
-        const productoExistente = acc.find(p => p.id === producto.id);
-        if (productoExistente) {
-          if (producto.imagen) {
-            productoExistente.imagenes.push({ imagen: producto.imagen });
-          }
-        } else {
-          producto.imagenes = producto.imagen ? [{ imagen: producto.imagen }] : [];
-          producto.codigo = producto.codigo || '';
-          acc.push(producto);
-        }
-        return acc;
-      }, []);
-
-      resolve(productosAgrupados);
-    });
-  });
-},
-
-eliminarFactura: (id) => {
-    return new Promise((resolve, reject) => {
-        conexion.getConnection((err, conexion) => {
-            if (err) return reject(err);
-
-            conexion.beginTransaction(err => {
-                if (err) {
-                    conexion.release();
-                    return reject(err); 
-                }
-
-                // Eliminar los items relacionados con la factura
-                conexion.query(`
-                    DELETE FROM factura_items
-                    WHERE factura_id = ?
-                `, [id], (error, resultados) => {
-                    if (error) {
-                        return conexion.rollback(() => {
-                            conexion.release();
-                            return reject(error);
-                        });
-                    }
-
-                    // Eliminar la factura
-                    conexion.query(`
-                        DELETE FROM facturas_mostrador
-                        WHERE id = ?
-                    `, [id], (error, result) => {
-                        if (error) {
-                            return conexion.rollback(() => {
-                                conexion.release();
-                                return reject(error);
-                            });
-                        }
-
-                        if (result.affectedRows > 0) {
-                            conexion.commit(err => {
-                                if (err) {
-                                    return conexion.rollback(() => {
-                                        conexion.release();
-                                        return reject(err);
-                                    });
-                                }
-                                conexion.release();
-                                resolve(result.affectedRows);
-                            });
-                        } else {
-                            conexion.rollback(() => {
-                                conexion.release();
-                                reject(new Error('No se encontró la factura para eliminar.'));
-                            });
-                        }
-                    });
-                });
-            });
-        });
-    });
-},
-obtenerDetallePresupuesto : (id) => {
-    return new Promise((resolve, reject) => {
-      const query = `
-        SELECT pm.id AS presupuesto_id, pm.nombre_cliente, pm.fecha, pm.total,
-               p.nombre AS nombre_producto, pi.cantidad, pi.precio_unitario, pi.subtotal
-        FROM presupuestos_mostrador pm
-        LEFT JOIN presupuesto_items pi ON pm.id = pi.presupuesto_id
-        LEFT JOIN productos p ON pi.producto_id = p.id
-        WHERE pm.id = ?;
-      `;
-      conexion.query(query, [id], (error, resultados) => {
-        if (error) {
-          reject(error);
-        } else if (resultados.length === 0) {
-          reject(new Error("No se encontró el presupuesto"));
-        } else {
-          const presupuesto = resultados[0];
-          const items = resultados.map(r => ({
-            nombre_producto: r.nombre_producto,
-            cantidad: r.cantidad,
-            precio_unitario: r.precio_unitario,
-            subtotal: r.subtotal
-          }));
-          resolve({ presupuesto, items });
-        }
-      });
-    });
-  },  
-  obtenerDetalleFactura: (id) => {
-    return new Promise((resolve, reject) => {
-        const query = `
-            SELECT fm.id AS factura_id, fm.nombre_cliente, fm.fecha, fm.total, fm.creado_en,
-                   COALESCE(fi.descripcion, p.nombre) AS nombre_producto,
-                   fi.cantidad, fi.precio_unitario, fi.subtotal
-            FROM facturas_mostrador fm
-            LEFT JOIN factura_items fi ON fm.id = fi.factura_id
-            LEFT JOIN productos p ON fi.producto_id = p.id
-            WHERE fm.id = ?;
-        `;
-
-        conexion.query(query, [id], (error, resultados) => {
-            if (error) {
-                reject(error);
-            } else if (resultados.length === 0) {
-                reject(new Error("No se encontró la factura"));
-            } else {
-                const factura = {
-                    id: resultados[0].factura_id,
-                    nombre_cliente: resultados[0].nombre_cliente,
-                    fecha: resultados[0].fecha,
-                    total: resultados[0].total,
-                    creado_en: resultados[0].creado_en // ✅ Aquí incluimos la hora
-                };
-
-                const items = resultados[0].nombre_producto ? resultados.map(r => ({
-                    nombre_producto: r.nombre_producto,
-                    cantidad: r.cantidad,
-                    precio_unitario: r.precio_unitario,
-                    subtotal: r.subtotal
-                })) : [];
-
-                resolve({ factura, items });
-            }
-        });
-    });
-},
-editarPresupuesto : (id, nombre_cliente, fecha, total, items) => {
-    return new Promise((resolve, reject) => {
-        conexion.getConnection((err, conexion) => {
-            if (err) {
-                console.error('Error obteniendo conexión:', err);
-                return reject(err);
-            }
-
-            conexion.beginTransaction(err => {
-                if (err) {
-                    console.error('Error iniciando transacción:', err);
-                    conexion.release();
-                    return reject(err);
-                }
-
-                const updateFields = [];
-                const updateValues = [];
-                if (nombre_cliente !== undefined && nombre_cliente !== '') {
-                    updateFields.push('nombre_cliente = ?');
-                    updateValues.push(nombre_cliente);
-                }
-                if (fecha !== undefined && fecha !== '') {
-                    updateFields.push('fecha = ?');
-                    updateValues.push(fecha);
-                }
-                if (total !== undefined) {
-                    updateFields.push('total = ?');
-                    updateValues.push(total);
-                }
-                if (updateFields.length === 0) {
-                    return reject(new Error('No fields to update'));
-                }
-                updateValues.push(id);
-
-                const query = `UPDATE presupuestos_mostrador SET ${updateFields.join(', ')} WHERE id = ?`;
-                conexion.query(query, updateValues, (error, resultados) => {
-                    if (error) {
-                        return conexion.rollback(() => {
-                            conexion.release();
-                            return reject(error);
-                        });
-                    }
-
-                    const updates = items.map(item => {
-                        return new Promise((resolve, reject) => {
-                            const itemUpdateFields = [];
-                            const itemUpdateValues = [];
-                            if (item.producto_id !== undefined) {
-                                itemUpdateFields.push('producto_id = ?');
-                                itemUpdateValues.push(item.producto_id);
-                            }
-                            if (item.cantidad !== undefined) {
-                                itemUpdateFields.push('cantidad = ?');
-                                itemUpdateValues.push(item.cantidad);
-                            }
-                            if (item.precio_unitario !== undefined) {
-                                itemUpdateFields.push('precio_unitario = ?');
-                                itemUpdateValues.push(item.precio_unitario);
-                            }
-                            if (item.subtotal !== undefined) {
-                                itemUpdateFields.push('subtotal = ?');
-                                itemUpdateValues.push(item.subtotal);
-                            }
-                            itemUpdateValues.push(item.id, id);
-
-                            const itemQuery = `UPDATE presupuesto_items SET  ${itemUpdateFields.join(', ')} WHERE id = ? AND presupuesto_id = ?`;
-                            conexion.query(itemQuery, itemUpdateValues, (error, result) => {
-                                if (error) {
-                                    console.error('Error ejecutando query de item:', error);
-                                    return reject(error);
-                                }
-                                resolve(result);
-                            });
-                        });
-                    });
-
-                    Promise.all(updates)
-                        .then(() => {
-                            conexion.commit(err => {
-                                if (err) {
-                                    console.error('Error al hacer commit:', err);
-                                    return conexion.rollback(() => {
-                                        conexion.release();
-                                        return reject(err);
-                                    });
-                                }
-                                conexion.release();
-                                resolve(resultados.affectedRows);
-                            });
-                        })
-                        .catch(error => {
-                            console.error('Error al actualizar items:', error);
-                            conexion.rollback(() => {
-                                conexion.release();
-                                return reject(error);
-                            });
-                        });
-                });
-            });
-        });
-    });
-},
-editarFactura: (id, nombre_cliente, fecha, total, items) => {
-    return new Promise((resolve, reject) => {
-        conexion.getConnection((err, conexion) => {
-            if (err) {
-                console.error('Error obteniendo conexión:', err);
-                return reject(err);
-            }
-
-            conexion.beginTransaction(err => {
-                if (err) {
-                    console.error('Error iniciando transacción:', err);
-                    conexion.release();
-                    return reject(err);
-                }
-
-                const updateFields = [];
-                const updateValues = [];
-                if (nombre_cliente !== undefined && nombre_cliente !== '') {
-                    updateFields.push('nombre_cliente = ?');
-                    updateValues.push(nombre_cliente);
-                }
-                if (fecha !== undefined && fecha !== '') {
-                    updateFields.push('fecha = ?');
-                    updateValues.push(fecha);
-                }
-                if (total !== undefined) {
-                    updateFields.push('total = ?');
-                    updateValues.push(total);
-                }
-                if (updateFields.length === 0) {
-                    return reject(new Error('No fields to update'));
-                }
-                updateValues.push(id);
-
-                const query = `UPDATE facturas_mostrador SET ${updateFields.join(', ')} WHERE id = ?`;
-                conexion.query(query, updateValues, (error, resultados) => {
-                    if (error) {
-                        console.error('Error ejecutando query de factura:', error);
-                        return conexion.rollback(() => {
-                            conexion.release();
-                            return reject(error);
-                        });
-                    }
-
-                    const updates = items.map(item => {
-                        return new Promise((resolve, reject) => {
-                            const itemUpdateFields = [];
-                            const itemUpdateValues = [];
-                            if (item.producto_id !== undefined) {
-                                itemUpdateFields.push('producto_id = ?');
-                                itemUpdateValues.push(item.producto_id);
-                            }
-                            if (item.cantidad !== undefined) {
-                                itemUpdateFields.push('cantidad = ?');
-                                itemUpdateValues.push(item.cantidad);
-                            }
-                            if (item.precio_unitario !== undefined) {
-                                itemUpdateFields.push('precio_unitario = ?');
-                                itemUpdateValues.push(item.precio_unitario);
-                            }
-                            if (item.subtotal !== undefined) {
-                                itemUpdateFields.push('subtotal = ?');
-                                itemUpdateValues.push(item.subtotal);
-                            }
-                            itemUpdateValues.push(item.id, id);
-
-                            const itemQuery = `UPDATE factura_items SET ${itemUpdateFields.join(', ')} WHERE id = ? AND factura_id = ?`;
-                            conexion.query(itemQuery, itemUpdateValues, (error, result) => {
-                                if (error) {
-                                    console.error('Error ejecutando query de item:', error);
-                                    return reject(error);
-                                }
-                                resolve(result);
-                            });
-                        });
-                    });
-
-                    Promise.all(updates)
-                        .then(() => {
-                            conexion.commit(err => {
-                                if (err) {
-                                    console.error('Error al hacer commit:', err);
-                                    return conexion.rollback(() => {
-                                        conexion.release();
-                                        return reject(err);
-                                    });
-                                }
-                                conexion.release();
-                                resolve(resultados.affectedRows);
-                            });
-                        })
-                        .catch(error => {
-                            console.error('Error al actualizar items:', error);
-                            conexion.rollback(() => {
-                                conexion.release();
-                                return reject(error);
-                            });
-                        });
-                });
-            });
-        });
-    });
-},
-retornarDatosId: function(conexion, id) { 
-  return new Promise((resolve, reject) => {
-    const sql = `
-      SELECT
-        productos.*,
-        IFNULL(productos.costo_neto, 0) AS costo_neto,
-        IFNULL(productos.costo_iva, 0) AS costo_iva,
-        IFNULL(productos.utilidad, 0) AS utilidad,
-        productos.precio_venta,
-        imagenes_producto.id AS imagen_id,
-        imagenes_producto.imagen
-      FROM productos
-      LEFT JOIN imagenes_producto
-        ON productos.id = imagenes_producto.producto_id
-      WHERE productos.id = ?
-      -- ✅ FIX: respetar el orden guardado (posicion)
-      ORDER BY IFNULL(imagenes_producto.posicion, 999999), imagenes_producto.id ASC
-    `;
-
-    conexion.query(sql, [id], function(error, results) {
-      if (error) return reject(error);
-      if (!results || results.length === 0) return resolve(null);
-
-      const producto = results[0];
-
-      // ✅ FIX: no inventar imagen por defecto; si no hay imagen, devolver []
-      producto.imagenes = (results || [])
-        .filter(r => !!r.imagen)
-        .map(r => ({
-          id: r.imagen_id,
-          imagen: path.join('/uploads/productos', r.imagen)
-        }));
-
-      resolve(producto);
-    });
-  });
-},
-
-obtenerImagenesProducto: function(conexion, ids) {
-    return new Promise((resolve, reject) => {
-        if (!ids || ids.length === 0) {
-            return resolve([]); // Si no hay productos, devolvemos una lista vacía
-        }
-
-        let placeholders = ids.map(() => '?').join(', '); // Generar los placeholders correctos
-        let query = `
-            SELECT imagen, producto_id
-            FROM imagenes_producto
-            WHERE producto_id IN (${placeholders})
-        `;
-
-        conexion.query(query, ids, function(error, resultados) {
-            if (error) {
-                console.error('Error al obtener las imágenes del producto:', error);
-                reject(error);
-            } else {
-                resolve(resultados);
-            }
-        });
-    });
-},
-asignarProveedorMasBarato:function(conexion, productoId, proveedorId) {
-    return new Promise((resolve, reject) => {
-        const query = 'UPDATE productos SET proveedor_id = ? WHERE id = ?';
-        conexion.query(query, [proveedorId, productoId], (error, results) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(results);
-            }
-        });
-    });
-},
-obtenerDescuentosProveedor: function(conexion) {
-  return new Promise((resolve, reject) => {
-      conexion.query('SELECT proveedor_id, descuento FROM descuentos_proveedor', function(error, results, fields) {
-          if (error) reject(error);
-          resolve(results);
-      });
-  });
-},
-retornarDatosProveedores: function (conexion, producto_id) {
-  return new Promise((resolve, reject) => {
-    const sql = `
-      SELECT
-        pp.producto_id,
-        pp.proveedor_id,
-        pp.precio_lista,
-        pp.codigo,
-        pp.iva,
-        COALESCE(pp.presentacion, 'unidad') AS presentacion,
-        COALESCE(pp.factor_unidad, 1.0)    AS factor_unidad,
-        COALESCE(dp.descuento, 0.00)       AS descuento,
-        pr.nombre AS proveedor_nombre
-      FROM producto_proveedor pp
-      JOIN proveedores pr 
-        ON pr.id = pp.proveedor_id
-      LEFT JOIN (
-        SELECT proveedor_id, MAX(descuento) AS descuento
-        FROM descuentos_proveedor
-        GROUP BY proveedor_id
-      ) dp
-        ON dp.proveedor_id = pp.proveedor_id
-      WHERE pp.producto_id = ?
-      ORDER BY pr.nombre ASC, pp.proveedor_id ASC
-    `;
-    conexion.query(sql, [producto_id], (err, rows) => {
-      if (err) return reject(err);
-      resolve(rows || []);
-    });
-  });
-},
-
-eliminarProveedor: function (conexion, proveedorId, productoId) {
-  const pid = Number(productoId) || 0;
-  const prv = Number(proveedorId) || 0;
-
-  if (!pid || !prv) {
-    // entrada inválida: resolvemos coherentemente sin tocar DB
-    return Promise.resolve({ affectedRows: 0 });
-  }
-
-  const sql = `
-    DELETE FROM producto_proveedor
-    WHERE producto_id = ? AND proveedor_id = ?
-  `;
-  const params = [pid, prv];
-
-  // Soporta mysql2 (promises) y mysql (callbacks)
-  if (conexion.promise && typeof conexion.promise === 'function') {
-    return conexion.promise().query(sql, params).then(([result]) => result);
-  }
-
-  return new Promise((resolve, reject) => {
-    conexion.query(sql, params, (err, results) => {
-      if (err) return reject(err);
-      resolve(results); // results.affectedRows disponible
-    });
-  });
-},
-// models/producto.js (o donde esté)
-insertarImagenProducto(conexion, { producto_id, imagen, posicion = null }) {
-  const sql = `
-    INSERT INTO imagenes_producto (producto_id, imagen, posicion)
-    VALUES (?, ?, ?)
-  `;
-  return conexion.promise().query(sql, [producto_id, imagen, posicion]);
-},
-eliminarImagen : function(id) {
-    return new Promise((resolve, reject) => {
-        const sql = 'DELETE FROM imagenes_producto WHERE id = ?';
-        conexion.query(sql, [id], function(err, results) {
-            if (err) {
-                return reject(err);
-            }
-            resolve(results);
-        });
-    });
-},
-calcularNumeroDePaginas: function (conexion, productosPorPagina, categoriaId = null, proveedorId = null) {
-  return new Promise((resolve, reject) => {
-    let sql = 'SELECT COUNT(*) AS total FROM productos';
-    const where = [];
-    const params = [];
-
-    const catNum = Number(categoriaId);
-    if (Number.isFinite(catNum) && catNum > 0) {
-      where.push('categoria_id = ?');
-      params.push(catNum);
-    }
-
-    const provNum = Number(proveedorId);
-    if (Number.isFinite(provNum) && provNum > 0) {
-      where.push(`
-        EXISTS (
-          SELECT 1
-          FROM producto_proveedor pp
-          WHERE pp.producto_id = productos.id
-            AND pp.proveedor_id = ?
-        )
-      `);
-      params.push(provNum);
-    }
-
-    if (where.length) {
-      sql += ' WHERE ' + where.join(' AND ');
-    }
-
-    conexion.query(sql, params, (error, results) => {
-      if (error) return reject(error);
-
-      const total = results?.[0]?.total || 0;
-      const pages = Math.max(1, Math.ceil(total / (Number(productosPorPagina) || 30)));
-      resolve(pages);
-    });
-  });
-},
-
-
-obtenerProductosOferta: (conexion, callback) => {
-    const query = `
-    SELECT p.*, GROUP_CONCAT(i.imagen) AS imagenes
-    FROM productos p
-    LEFT JOIN imagenes_producto i ON p.id = i.producto_id
-    WHERE p.oferta = 1
-    GROUP BY p.id
-`;
-
-    conexion.query(query, (error, results) => {
-        if (error) {
-            return callback(error);
-        }
-        // Procesar las imágenes
-        results.forEach(producto => {
-            if (producto.imagenes) {
-                producto.imagenes = producto.imagenes.split(',');
-            } else {
-                producto.imagenes = [];
-            }
-        });
-        callback(null, results);
-    });
-},
-crearPedido: (proveedor_id, total) => {
-    return new Promise((resolve, reject) => {
-        const sql = 'INSERT INTO pedidos (proveedor_id, total) VALUES (?, ?)';
-        conexion.query(sql, [proveedor_id, total], (err, result) => {
-            if (err) reject(err);
-            resolve(result.insertId); 
-        });
-    });
-},
-crearPedidoItem : (pedido_id, producto_id, cantidad, precio_unitario, subtotal) => {
-    return new Promise((resolve, reject) => {
-        const sql = 'INSERT INTO pedido_items (pedido_id, producto_id, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)';
-        conexion.query(sql, [pedido_id, producto_id, cantidad, precio_unitario, subtotal], (err, result) => {
-            if (err) reject(err);
-            resolve(result);
-        });
-    });
-},
-obtenerProductoConImagenes: (id_producto, callback) => {
-    const query = `
-        SELECT 
-            p.id AS producto_id,
-            p.nombre,
-            p.descripcion,
-            p.precio_venta,
-            p.stock_actual,
-            p.oferta,
-            GROUP_CONCAT(i.imagen) AS imagenes
-        FROM 
-            productos p
-        LEFT JOIN 
-            imagenes_producto i ON p.id = i.producto_id
-        WHERE 
-            p.id = ?
-        GROUP BY 
-            p.id;
-    `;
-
-    conexion.query(query, [id_producto], (error, resultados) => {
-        if (error) {
-            callback(error, null);
-        } else {
-            if (resultados.length > 0) {
-                const producto = resultados[0];
-                producto.imagenes = producto.imagenes ? producto.imagenes.split(',') : [];
-                callback(null, producto);
-            } else {
-                callback(null, null); // Producto no encontrado
-            }
-        }
-    });
-},
-obtenerProductosProveedorMasBaratoConStock: async function (conexion, proveedorId, categoriaId) {
-  const util = require('util');
+generarPedidoManual: async (req, res) => {
   try {
-    let query = `
-      SELECT 
-        p.id, p.nombre,
-        pp.codigo AS codigo_proveedor,
-        p.stock_minimo, p.stock_actual
-      FROM productos p
-      JOIN producto_proveedor pp ON pp.producto_id = p.id
-      JOIN descuentos_proveedor dp ON dp.proveedor_id = pp.proveedor_id
-      WHERE
-        pp.proveedor_id = COALESCE(
-          p.proveedor_id,
-          (
-            SELECT sub_pp.proveedor_id
-            FROM producto_proveedor sub_pp
-            JOIN descuentos_proveedor sub_dp ON sub_pp.proveedor_id = sub_dp.proveedor_id
-            WHERE sub_pp.producto_id = p.id
-            ORDER BY (sub_pp.precio_lista * (1 - (sub_dp.descuento / 100))) * 1.21 ASC
-            LIMIT 1
-          )
-        )
-        AND (${proveedorId ? 'pp.proveedor_id = ?' : '1=1'})
-        AND (${categoriaId && categoriaId !== 'TODAS' ? 'p.categoria_id = ?' : '1=1'})
-        AND p.stock_actual < p.stock_minimo
-      ORDER BY 
-        LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) COLLATE utf8mb4_general_ci ASC,
-        p.nombre ASC
-    `;
+    const proveedores = await producto.obtenerProveedores(conexion);
 
-    const params = [];
-    if (proveedorId) params.push(proveedorId);
-    if (categoriaId && categoriaId !== 'TODAS') params.push(categoriaId);
+    const pedidoId = req.query.pedido_id ? Number(req.query.pedido_id) : null;
 
-    const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return await queryPromise(query, params);
-  } catch (error) {
-    console.error("❌ Error en obtenerProductosProveedorMasBaratoConStock:", error);
-    throw error;
-  }
-},
+    let proveedorId = null;
+    let pedidoItems = [];
 
-  obtenerProveedorMasBaratoPorProducto: async function (conexion, productoId) {
-    const query = `
-      SELECT pr.nombre AS proveedor_nombre, pp.codigo AS codigo_proveedor
-      FROM producto_proveedor pp
-      JOIN proveedores pr ON pr.id = pp.proveedor_id
-      JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-      WHERE pp.producto_id = ?
-      ORDER BY (pp.precio_lista * (1 - (dp.descuento / 100))) * 1.21 ASC
-      LIMIT 1
-    `;
-    return new Promise((resolve, reject) => {
-      conexion.query(query, [productoId], (err, results) => {
-        if (err) return reject(err);
-        resolve(results[0]); // { proveedor_nombre, codigo_proveedor }
-      });
-    });
-  },
-obtenerProductosAsignadosAlProveedor: async function (conexion, proveedorId, categoriaId) {
-  try {
-    let query = `
-      SELECT
-        p.id,
-        p.nombre,
-        COALESCE(p.stock_minimo, 0) AS stock_minimo,
-        COALESCE(p.stock_actual, 0) AS stock_actual,
-        (
-          SELECT pp.codigo
-          FROM producto_proveedor AS pp
-          WHERE pp.producto_id = p.id
-            AND pp.proveedor_id = ?
-          LIMIT 1
-        ) AS codigo_proveedor
-      FROM productos AS p
-      WHERE
-        (
-          p.proveedor_id = ?                                   -- ✅ estrictamente asignados al proveedor
-          OR (
-               p.proveedor_id IS NULL                          -- ✅ fallback: no asignado aún
-               AND EXISTS (
-                 SELECT 1
-                 FROM producto_proveedor AS pp2
-                 WHERE pp2.producto_id = p.id
-                   AND pp2.proveedor_id = ?                    -- ...pero hay relación con el proveedor elegido
-               )
-             )
-        )
-    `;
-
-    const params = [proveedorId, proveedorId, proveedorId];
-
-    if (categoriaId && categoriaId !== 'TODAS' && categoriaId !== '') {
-      query += ` AND p.categoria_id = ?`;
-      params.push(categoriaId);
-    }
-
-    query += `
-      ORDER BY LOWER(REGEXP_REPLACE(p.nombre, '^[0-9]+', '')) ASC, p.nombre ASC
-    `;
-
-    const [rows] = await conexion.promise().query(query, params);
-    return rows;
-  } catch (error) {
-    console.error('❌ Error en obtenerProductosAsignadosAlProveedor:', error);
-    return [];
-  }
-},
-
-  obtenerProductosOfertaFiltrados: function (conexion, filtros, callback) {
-    let sql = `
-      SELECT p.*, c.nombre AS categoria_nombre, m.nombre AS marca_nombre
-      FROM productos p
-      LEFT JOIN categorias c ON p.categoria_id = c.id
-      LEFT JOIN marcas m ON p.marca_id = m.id
-      WHERE p.oferta = 1
-    `;
-    const params = [];
-  
-    if (filtros.categoria_id) {
-      sql += " AND p.categoria_id = ?";
-      params.push(filtros.categoria_id);
-    }
-  
-    if (filtros.marca_id) {
-      sql += " AND p.marca_id = ?";
-      params.push(filtros.marca_id);
-    }
-  
-    sql += " ORDER BY p.nombre ASC";
-  
-    conexion.query(sql, params, (error, resultados) => {
-      if (error) {
-        console.error("❌ Error al filtrar productos en oferta:", error);
-        return callback(error, null);
+    if (pedidoId) {
+      const pedido = await producto.obtenerPedidoPorId(conexion, pedidoId);
+      if (pedido) {
+        proveedorId = pedido.proveedor_id;
+        pedidoItems = await producto.obtenerItemsPedido(conexion, pedidoId, proveedorId);
       }
-      callback(null, resultados);
-    });
-  },
-obtenerProveedoresPorProducto: async (conexion, producto_id) => {
-  const query = `
-    SELECT pp.proveedor_id AS id, pp.codigo, pr.nombre AS proveedor_nombre
-    FROM producto_proveedor pp
-    JOIN proveedores pr ON pr.id = pp.proveedor_id
-    WHERE pp.producto_id = ?
-  `;
-  return new Promise((resolve, reject) => {
-    conexion.query(query, [producto_id], (error, resultados) => {
-      if (error) reject(error);
-      else resolve(resultados);
-    });
-  });
+    }
+
+    res.render('pedidoManual', { proveedores, pedidoId, proveedorId, pedidoItems });
+  } catch (error) {
+    console.error("Error al generar el pedido manual:", error);
+    res.status(500).send("Error al generar el pedido manual: " + error.message);
+  }
 },
-  obtenerHistorialPedidosFiltrado: async function (conexion, fechaDesde, fechaHasta, proveedorId) {
-    let query = `
-      SELECT 
-        pedidos.id AS pedido_id,
-        pedidos.fecha,
-        pedidos.total,
-        proveedores.nombre AS proveedor
-      FROM pedidos
-      JOIN proveedores ON pedidos.proveedor_id = proveedores.id
-      WHERE 1 = 1
-    `;
-  
-    const params = [];
-  
-    if (fechaDesde) {
-      query += ' AND pedidos.fecha >= ?';
-      params.push(fechaDesde);
+guardarPedido: async (req, res) => {
+  try {
+    const { pedido_id, proveedor_id, total, productos } = req.body;
+
+    if (!proveedor_id || !Array.isArray(productos) || productos.length === 0) {
+      return res.status(400).json({ message: 'Datos incompletos' });
     }
-  
-    if (fechaHasta) {
-      query += ' AND pedidos.fecha <= ?';
-      params.push(fechaHasta);
-    }
-  
-    if (proveedorId) {
-      query += ' AND pedidos.proveedor_id = ?';
-      params.push(proveedorId);
-    }
-  
-    query += ' ORDER BY pedidos.fecha DESC';
-  
-    try {
-      const [rows] = await conexion.promise().query(query, params);
-      return rows;
-    } catch (error) {
-      console.error('❌ Error al obtener historial filtrado:', error);
-      return [];
-    }
-  }, 
-  obtenerPedidoPorId: async function (conexion, pedidoId) {
-  const sql = `SELECT id, proveedor_id, fecha, total FROM pedidos WHERE id = ? LIMIT 1`;
-  const [rows] = await conexion.promise().query(sql, [pedidoId]);
-  return rows?.[0] || null;
-},
-obtenerItemsPedido: async function (conexion, pedidoId, proveedorId) {
-  const sql = `
-    SELECT
-      pi.producto_id AS id,
-      p.nombre,
-      pi.cantidad,
-      pp.codigo,
-      COALESCE(NULLIF(pp.costo_neto,0), p.costo_neto) AS costo_neto
-    FROM pedido_items pi
-    JOIN productos p ON p.id = pi.producto_id
-    LEFT JOIN producto_proveedor pp
-      ON pp.producto_id = pi.producto_id
-     AND pp.proveedor_id = ?
-    WHERE pi.pedido_id = ?
-    ORDER BY p.nombre ASC
-  `;
-  const [rows] = await conexion.promise().query(sql, [proveedorId, pedidoId]);
-  return rows || [];
+
+    const pedidoId = await producto.upsertPedido(conexion, {
+      pedido_id: pedido_id ? Number(pedido_id) : null,
+      proveedor_id: Number(proveedor_id),
+      total: Number(total) || 0,
+      productos
+    });
+
+    return res.json({ pedido_id: pedidoId });
+  } catch (e) {
+    console.error('❌ guardarPedido:', e);
+    return res.status(500).json({ message: e.message });
+  }
 },
 
-upsertPedido: function (conexion, pedido, items) {
-  return new Promise((resolve, reject) => {
-    const getCx = (cb) => {
-      if (conexion && typeof conexion.getConnection === 'function') return conexion.getConnection(cb);
-      return cb(null, conexion); // conexión directa
+historialPedidos: async (req, res) => {
+  try {
+    const { fechaDesde, fechaHasta, proveedor } = req.query;
+
+    const historial = await producto.obtenerHistorialPedidosFiltrado(conexion, fechaDesde, fechaHasta, proveedor);
+    const proveedores = await producto.obtenerProveedores(conexion);
+
+    res.render('historialPedidos', {
+      historial,
+      proveedores,
+      fechaDesde,
+      fechaHasta,
+      proveedorSeleccionado: proveedor || ''
+    });
+  } catch (error) {
+    console.error('❌ Error en historialPedidos:', error.message);
+    res.status(500).send("Error al cargar el historial de pedidos");
+  }
+},
+verPedido: async (req, res) => {
+  try {
+    const pedidoId = req.params.id;
+    const detalle = await producto.obtenerDetallePedido(pedidoId);
+
+    if (detalle.length === 0) {
+      return res.status(404).send("Pedido no encontrado");
+    }
+
+    // Obtenemos datos generales del pedido (fecha, proveedor, etc.)
+    const pedido = {
+      fecha: detalle[0].fecha,
+      proveedor: detalle[0].proveedor,
+      productos: detalle,
+      total: detalle.reduce((acc, item) => acc + Number(item.subtotal), 0)
+
     };
 
-    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+    res.render('verPedido', { pedido });
+  } catch (error) {
+    console.error("Error al obtener detalle del pedido:", error);
+    res.status(500).send("Error al cargar detalle del pedido");
+  }
+},
+eliminarPedido: async (req, res) => {
+  const { id } = req.params;
 
-    // items pueden venir como arg o dentro del pedido (pedido.productos)
-    let lista = items ?? pedido?.productos ?? pedido?.items ?? [];
-    if (typeof lista === 'string') { try { lista = JSON.parse(lista); } catch { lista = []; } }
-    if (!Array.isArray(lista)) lista = [];
+  try {
+    const affectedRows = await producto.eliminarPedido(conexion, id);
+    res.json({ message: 'Pedido eliminado correctamente', affectedRows });
+  } catch (error) {
+    console.error('❌ Error al eliminar pedido:', error);
+    res.status(500).json({ message: 'Error al eliminar el pedido: ' + error.message });
+  }
+},
+masVendidos: async (req, res) => {
+  try {
+    // Si hay parámetros duplicados, quedate con el primero
+    const getFirst = (v) => Array.isArray(v) ? v[0] : v;
 
-    const proveedor_id = Number(pedido?.proveedor_id ?? pedido?.proveedorId ?? 0) || 0;
+    let categoria_id = getFirst(req.query.categoria_id) || null;
+    let desde        = getFirst(req.query.desde) || null;
+    let hasta        = getFirst(req.query.hasta) || null;
 
-    // ✅ pedido_id viene del frontend como "pedido_id"
-    let pedido_id = Number(pedido?.id ?? pedido?.pedido_id ?? pedido?.pedidoId ?? 0) || null;
+    // Pasar al modelo
+    const [productos, categorias] = await Promise.all([
+      producto.obtenerMasVendidos(conexion, { categoria_id, desde, hasta, limit: 100 }),
+      producto.obtenerCategorias(conexion)
+    ]);
 
-    if (!proveedor_id) return reject(new Error('proveedor_id inválido'));
+    res.render('productosMasVendidos', {
+      productos,
+      categorias,
+      filtros: { categoria_id: categoria_id || '', desde: desde || '', hasta: hasta || '' }
+    });
 
-    // ✅ producto_id en el frontend viene como "id"
-    const normItems = lista
-      .filter(it => it && (it.producto_id != null || it.id_producto != null || it.id != null))
-      .map(it => {
-        const producto_id = Number(it.producto_id ?? it.id_producto ?? it.id) || 0;
-        const cantidad = parseInt(it.cantidad, 10) > 0 ? parseInt(it.cantidad, 10) : 1;
+  } catch (error) {
+    console.error('❌ Error al obtener productos más vendidos:', error);
+    res.status(500).send('Error al obtener productos más vendidos');
+  }
+},
+apiProveedoresDeProducto : async function (req, res) {
+  try {
+    const { productoId } = req.params;
+    if (!productoId) return res.status(400).json({ error: 'productoId requerido' });
 
-        // precio unitario: en tu pedido manual es costo_neto
-        const precio_unitario = round2(it.precio_unitario ?? it.costo_neto ?? 0);
-        const subtotal = round2(precio_unitario * cantidad);
+    const lista = await producto.obtenerProveedoresOrdenadosPorCosto(conexion, Number(productoId));
+    return res.json(lista);
+  } catch (e) {
+    console.error('Error apiProveedoresDeProducto:', e);
+    res.status(500).json({ error: 'Error obteniendo proveedores' });
+  }
+},
+apiProveedorSiguiente : async function (req, res) {
+  try {
+    const productoId = Number(req.query.producto_id);
+    const actualId   = req.query.actual_id ? Number(req.query.actual_id) : null;
+    if (!productoId) return res.status(400).json({ error: 'producto_id requerido' });
 
-        return { producto_id, cantidad, precio_unitario, subtotal };
-      })
-      .filter(it => it.producto_id > 0);
+    const lista = await producto.obtenerProveedoresOrdenadosPorCosto(conexion, productoId);
+    if (!lista.length) return res.json(null);
 
-    if (!normItems.length) {
-      return reject(new Error('El pedido llegó sin productos (revisar keys: se espera productos[].id)'));
+    // Si no vino actual, devolvemos el primero (más barato)
+    if (!actualId) return res.json(lista[0]);
+
+    // Buscar el siguiente de forma cíclica
+    const idx = lista.findIndex(p => p.id === actualId);
+    const siguiente = idx === -1 ? lista[0] : lista[(idx + 1) % lista.length];
+    res.json(siguiente);
+  } catch (e) {
+    console.error('Error apiProveedorSiguiente:', e);
+    res.status(500).json({ error: 'Error obteniendo siguiente proveedor' });
+  }
+},
+recomendacionesProveedor: async (req, res) => {
+  try {
+    const getFirst = (v) => Array.isArray(v) ? v[0] : v;
+
+    const proveedor_id = getFirst(req.query.proveedor_id) || '';
+    let stock_max = parseInt(getFirst(req.query.stock_max) || '6', 10);
+    const desde = getFirst(req.query.desde) || '';
+    const hasta = getFirst(req.query.hasta) || '';
+
+    if (!Number.isFinite(stock_max) || stock_max < 1) stock_max = 1;
+    if (stock_max > 100) stock_max = 100;
+
+    const proveedores = await producto.obtenerProveedores(conexion);
+
+    return res.render('recomendacionesProveedor', {
+      proveedores,
+      filtros: { proveedor_id, stock_max, desde, hasta }
+    });
+
+  } catch (error) {
+    console.error('❌ Error en recomendacionesProveedor:', error);
+    return res.status(500).send('Error al mostrar filtros');
+  }
+},
+recomendacionesProveedorPDF: async (req, res) => {
+  const PDFDocument = require('pdfkit');
+  const streamBuffers = require('stream-buffers');
+
+  try {
+    const getFirst = (v) => Array.isArray(v) ? v[0] : v;
+
+    const proveedor_id = getFirst(req.query.proveedor_id) || '';
+    let stock_max = parseInt(getFirst(req.query.stock_max) || '6', 10);
+    const desde = getFirst(req.query.desde) || null;
+    const hasta = getFirst(req.query.hasta) || null;
+
+    if (!proveedor_id) return res.status(400).send('Proveedor requerido');
+    if (!Number.isFinite(stock_max) || stock_max < 1) stock_max = 1;
+    if (stock_max > 100) stock_max = 100;
+
+    const proveedores = await producto.obtenerProveedores(conexion);
+    const prov = proveedores.find(p => String(p.id) === String(proveedor_id));
+    const provNombre = prov ? prov.nombre : `Proveedor ${proveedor_id}`;
+
+    const [stockBajoRaw, masVendidosRaw] = await Promise.all([
+      producto.obtenerProductosProveedorConStockHasta(conexion, { proveedor_id, stock_max }),
+      producto.obtenerMasVendidosPorProveedor(conexion, { proveedor_id, desde, hasta, limit: 100 })
+    ]);
+
+    // ✅ FILTRO: los más vendidos también deben cumplir stock_actual <= stock_max
+    const masVendidos = (masVendidosRaw || []).filter(p => Number(p.stock_actual || 0) <= stock_max);
+
+    // ✅ No duplicar: si está en "más vendidos" va en bloque 2, se saca del bloque 1
+    const vendidosIds = new Set(masVendidos.map(p => String(p.id)));
+    const stockBajo = (stockBajoRaw || []).filter(p => !vendidosIds.has(String(p.id)));
+
+    const buffer = new streamBuffers.WritableStreamBuffer({
+      initialSize: 1024 * 1024,
+      incrementAmount: 1024 * 1024
+    });
+
+    const doc = new PDFDocument({ margin: 36, size: 'A4' });
+    doc.pipe(buffer);
+
+    const L = doc.page.margins.left;
+    const W = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+    const ensure = (h = 18) => {
+      const bottom = doc.page.height - doc.page.margins.bottom;
+      if (doc.y + h > bottom) doc.addPage();
+    };
+
+    const hr = () => {
+      doc.moveDown(0.3);
+      doc.moveTo(L, doc.y)
+        .lineTo(L + W, doc.y)
+        .strokeColor('#dfe7f2')
+        .stroke();
+      doc.strokeColor('black');
+      doc.moveDown(0.6);
+    };
+
+    const sectionCentered = (t) => {
+      ensure(30);
+      doc.x = L;
+      doc.fontSize(12).fillColor('#1f487e').text(t, L, doc.y, { width: W, align: 'center' });
+      doc.fillColor('black');
+      doc.moveDown(0.5);
+    };
+
+    // ====== TÍTULO ======
+    doc.x = L;
+    doc.fontSize(15).text(`LISTADO PEDIDO - ${provNombre}`, L, doc.y, { width: W, align: 'center' });
+    doc.moveDown(0.3);
+
+    const dDesde = desde || '...';
+    const dHasta = hasta || '...';
+    doc.fontSize(10).fillColor('#444').text(
+      `Stock Menos o Igual a ${stock_max} desde ${dDesde} / ${dHasta}`,
+      L,
+      doc.y,
+      { width: W, align: 'center' }
+    );
+    doc.fillColor('black');
+    doc.moveDown(1);
+
+    // ====== 1) LISTADO DE PRODUCTOS ======
+    sectionCentered('Listado de Productos');
+    doc.fontSize(9);
+
+    const X = L, WN = 330, WC = 110, WS = 60;
+    doc.text('Producto', X, doc.y, { width: WN });
+    doc.text('Código',   X + WN, doc.y, { width: WC });
+    doc.text('Stock',    X + WN + WC, doc.y, { width: WS, align: 'right' });
+    hr();
+
+    (stockBajo || []).forEach(p => {
+      ensure(18);
+      const y = doc.y;
+      doc.fontSize(8).text(p.nombre || '-', X, y, { width: WN });
+      doc.text(p.codigo_proveedor || p.codigo || '-', X + WN, y, { width: WC });
+      doc.text(String(Number(p.stock_actual || 0)), X + WN + WC, y, { width: WS, align: 'right' });
+      doc.moveDown(0.6);
+    });
+
+    if (!(stockBajo || []).length) {
+      doc.fontSize(9).fillColor('#666')
+        .text('Sin resultados.', L, doc.y, { width: W })
+        .fillColor('black');
     }
 
-    // total: usá el que manda el front si existe, sino recalculá
-    const totalReq = Number(pedido?.total);
-    const total = Number.isFinite(totalReq) && totalReq > 0
-      ? round2(totalReq)
-      : round2(normItems.reduce((acc, it) => acc + it.subtotal, 0));
+    doc.moveDown(0.8);
 
-    getCx((err, cx) => {
-      if (err) return reject(err);
-      if (!cx || typeof cx.beginTransaction !== 'function') {
-        return reject(new Error('No se pudo obtener una conexión con beginTransaction()'));
-      }
+    // ====== 2) MÁS VENDIDOS (FILTRADOS POR STOCK) ======
+    sectionCentered('Productos Mas Vendidos Para Pedir');
+    doc.fontSize(9);
 
-      const release = () => { if (typeof cx.release === 'function') cx.release(); };
+    const WV = 70;
+    doc.text('Producto', X, doc.y, { width: WN + WC - 40 });
+    doc.text('Vendido',  X + (WN + WC - 40), doc.y, { width: WV, align: 'right' });
+    doc.text('Stock',    X + (WN + WC - 40) + WV, doc.y, { width: 60, align: 'right' });
+    hr();
 
-      const rollback = (e) => cx.rollback(() => { release(); reject(e); });
-      const commit = () => cx.commit((e) => {
-        if (e) return rollback(e);
-        release();
-        resolve({ ok: true, pedido_id, total });
-      });
-
-      cx.beginTransaction((e) => {
-        if (e) { release(); return reject(e); }
-
-        const sqlPedido = pedido_id
-          ? `UPDATE pedidos SET proveedor_id=?, total=? WHERE id=?`
-          : `INSERT INTO pedidos (proveedor_id, total) VALUES (?, ?)`;
-
-        const paramsPedido = pedido_id
-          ? [proveedor_id, total, pedido_id]
-          : [proveedor_id, total];
-
-        cx.query(sqlPedido, paramsPedido, (e2, rPedido) => {
-          if (e2) return rollback(e2);
-
-          if (!pedido_id) pedido_id = rPedido.insertId;
-
-          cx.query(`DELETE FROM pedido_items WHERE pedido_id=?`, [pedido_id], (e3) => {
-            if (e3) return rollback(e3);
-
-            const values = normItems.map(it => ([
-              pedido_id,
-              it.producto_id,
-              it.cantidad,
-              it.precio_unitario,
-              it.subtotal
-            ]));
-
-            cx.query(
-              `INSERT INTO pedido_items (pedido_id, producto_id, cantidad, precio_unitario, subtotal) VALUES ?`,
-              [values],
-              (e4) => {
-                if (e4) return rollback(e4);
-                commit();
-              }
-            );
-          });
-        });
-      });
+    (masVendidos || []).forEach(p => {
+      ensure(18);
+      const y = doc.y;
+      doc.fontSize(8).text(p.nombre || '-', X, y, { width: WN + WC - 40 });
+      doc.text(String(Number(p.total_vendido || 0)), X + (WN + WC - 40), y, { width: WV, align: 'right' });
+      doc.text(String(Number(p.stock_actual || 0)), X + (WN + WC - 40) + WV, y, { width: 60, align: 'right' });
+      doc.moveDown(0.6);
     });
-  });
-},
 
-  obtenerDetallePedido: (pedidoId) => {
-    return new Promise((resolve, reject) => {
-      const sql = `
-        SELECT 
-          p.nombre AS producto,
-          pi.cantidad,
-          p.costo_neto AS costo_unitario,  -- ← Lo traemos desde la tabla productos
-          pi.subtotal,
-          ped.fecha,
-          prov.nombre AS proveedor,
-          pp.codigo AS codigo_proveedor
-        FROM pedidos ped
-        JOIN pedido_items pi ON ped.id = pi.pedido_id
-        JOIN productos p ON pi.producto_id = p.id
-        JOIN proveedores prov ON ped.proveedor_id = prov.id
-        LEFT JOIN producto_proveedor pp 
-          ON pp.producto_id = p.id AND pp.proveedor_id = ped.proveedor_id
-        WHERE ped.id = ?
-      `;
-      conexion.query(sql, [pedidoId], (err, rows) => {
-        if (err) return reject(err);
-        resolve(rows);
-      });
-    });
-  },
- eliminarPedido: async function (conexion, pedidoId) {
-  const conn = await conexion.promise().getConnection();
-  try {
-    await conn.beginTransaction();
+    if (!(masVendidos || []).length) {
+      doc.fontSize(9).fillColor('#666')
+        .text('Sin ventas en el rango (o no hay más vendidos con stock dentro del umbral).', L, doc.y, { width: W })
+        .fillColor('black');
+    }
 
-    // 1️⃣ Eliminar los items del pedido
-    await conn.query(
-      `DELETE FROM pedido_items WHERE pedido_id = ?`,
-      [pedidoId]
-    );
+    doc.end();
 
-    // 2️⃣ Eliminar el pedido
-    const [result] = await conn.query(
-      `DELETE FROM pedidos WHERE id = ?`,
-      [pedidoId]
-    );
-
-    await conn.commit();
-    return result.affectedRows;
-  } catch (error) {
-    await conn.rollback();
-    console.error('❌ Error al eliminar el pedido:', error);
-    throw error;
-  } finally {
-    conn.release();
-  }
-},
-obtenerProductosPorCategoriaYProveedorMasBarato: async function (conexion, proveedorId, categoriaId) {
-  const util = require('util');
-  try {
-    const query = `
-      SELECT 
-        p.id, p.nombre,
-        pp.codigo AS codigo_proveedor,
-        p.stock_minimo, p.stock_actual
-      FROM productos p
-      JOIN producto_proveedor pp ON pp.producto_id = p.id
-      JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-      WHERE 
-        p.categoria_id = ?
-        AND pp.proveedor_id = COALESCE(
-          p.proveedor_id,
-          (
-            SELECT sub_pp.proveedor_id
-            FROM producto_proveedor sub_pp
-            JOIN descuentos_proveedor sub_dp ON sub_pp.proveedor_id = sub_dp.proveedor_id
-            WHERE sub_pp.producto_id = p.id
-            ORDER BY (sub_pp.precio_lista * (1 - (sub_dp.descuento / 100))) * 1.21 ASC
-            LIMIT 1
-          )
-        )
-        AND pp.proveedor_id = ?
-      ORDER BY LOWER(p.nombre) ASC
-    `;
-    const queryPromise = util.promisify(conexion.query).bind(conexion);
-    return await queryPromise(query, [categoriaId, proveedorId]);
-  } catch (error) {
-    console.error("❌ Error en obtenerProductosPorCategoriaYProveedorMasBarato:", error);
-    throw error;
-  }
-},
-
-obtenerProductosPorCategoriaPaginado(conexion, categoriaId, offset, limit) {
-  return new Promise((resolve, reject) => {
-    // ① Productos
-    const sqlProductos = `
-      SELECT p.*, c.nombre   AS categoria_nombre,
-             GROUP_CONCAT(i.imagen) AS imagenes
-      FROM productos p
-      LEFT JOIN categorias        c ON p.categoria_id = c.id
-      LEFT JOIN imagenes_producto i ON p.id = i.producto_id
-      WHERE p.categoria_id = ?
-      GROUP BY p.id
-      ORDER BY p.id DESC 
-      LIMIT ? OFFSET ?`;
-    // ② Total para paginador
-    const sqlTotal = `SELECT COUNT(*) AS total FROM productos WHERE categoria_id = ?`;
-
-    conexion.query(sqlProductos, [categoriaId, limit, offset], (err, productos) => {
-      if (err) return reject(err);
-
-      // Convertimos la cadena de imágenes a array
-      productos.forEach(p =>
-        p.imagenes = p.imagenes ? p.imagenes.split(',') : []
+    buffer.on('finish', function () {
+      const pdfData = buffer.getContents();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="PEDIDO_${provNombre.replace(/\s+/g, '_')}.pdf"`
       );
-
-      conexion.query(sqlTotal, [categoriaId], (err2, totalRows) => {
-        if (err2) return reject(err2);
-        resolve({ productos, total: totalRows[0].total });
-      });
-    });
-  });
-},
-obtenerMasVendidos: function (
-  conexion,
-  { categoria_id = null, desde = null, hasta = null, ids = null, limit = 100 }
-) {
-  return new Promise((resolve, reject) => {
-    const filtros = [];
-    const params = [];
-
-    // Categoría
-    const cat = parseInt(categoria_id, 10);
-    if (!Number.isNaN(cat) && cat > 0) {
-      filtros.push(`p.categoria_id = ?`);
-      params.push(cat);
-    }
-
-    // Fechas (YYYY-MM-DD)
-    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
-    const d1 = isDate(desde) ? desde : null;
-    const d2 = isDate(hasta) ? hasta : null;
-
-    if (d1 && d2) { filtros.push(`v.fecha BETWEEN ? AND ?`); params.push(d1, d2); }
-    else if (d1)  { filtros.push(`v.fecha >= ?`);           params.push(d1); }
-    else if (d2)  { filtros.push(`v.fecha <= ?`);           params.push(d2); }
-
-    // IDs prefiltrados por texto (si vinieron)
-    const idList = Array.isArray(ids)
-      ? ids.map(n => parseInt(n, 10)).filter(Number.isInteger).slice(0, 500)
-      : null;
-
-    if (idList && idList.length) {
-      filtros.push(`p.id IN (${idList.map(() => '?').join(',')})`);
-      params.push(...idList);
-    }
-
-    const whereSQL = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
-    const safeLimit = Math.max(1, Math.min(parseInt(limit, 10) || 100, 500));
-
-    const sql = `
-      SELECT
-        p.id,
-        p.nombre,
-        p.precio_venta,
-        p.stock_actual,
-        p.stock_minimo,
-        SUM(v.cantidad) AS total_vendido
-      FROM (
-        /* FACTURAS */
-        SELECT fi.producto_id, fi.cantidad, fm.fecha
-        FROM factura_items fi
-        INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
-
-        UNION ALL
-
-        /* PRESUPUESTOS */
-        SELECT pi.producto_id, pi.cantidad, pm.fecha
-        FROM presupuesto_items pi
-        INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
-      ) v
-      INNER JOIN productos p ON p.id = v.producto_id
-      ${whereSQL}
-      GROUP BY p.id, p.nombre, p.precio_venta, p.stock_actual, p.stock_minimo
-      ORDER BY total_vendido DESC
-      LIMIT ${safeLimit}
-    `;
-
-    conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
-  });
-},
-
-obtenerMasBuscadosDetallado: function (
-  conexion,
-  { categoria_id = null, desde = null, hasta = null, limit = 50, weightText = 0.3 }
-) {
-  return new Promise((resolve, reject) => {
-    const filtrosClicks = [];
-    const pcParams = [];
-    const filtrosText = [];
-    const ptParams = [];
-    const filtrosOuter = [];
-    const outerParams = [];
-
-    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
-    const d1 = isDate(desde) ? desde : null;
-    const d2 = isDate(hasta) ? hasta : null;
-
-    // Fechas para clicks y texto
-    if (d1 && d2) {
-      filtrosClicks.push(`bp.created_at BETWEEN ? AND ?`);
-      pcParams.push(d1, d2);
-      filtrosText.push(`bt.created_at BETWEEN ? AND ?`);
-      ptParams.push(d1, d2);
-    } else if (d1) {
-      filtrosClicks.push(`bp.created_at >= ?`);
-      pcParams.push(d1);
-      filtrosText.push(`bt.created_at >= ?`);
-      ptParams.push(d1);
-    } else if (d2) {
-      filtrosClicks.push(`bp.created_at <= ?`);
-      pcParams.push(d2);
-      filtrosText.push(`bt.created_at <= ?`);
-      ptParams.push(d2);
-    }
-
-    // Categoría (se aplica en el outer)
-    const catNum = parseInt(categoria_id, 10);
-    if (!Number.isNaN(catNum) && catNum > 0) {
-      filtrosOuter.push(`p.categoria_id = ?`);
-      outerParams.push(catNum);
-    }
-
-    const whereClicks = filtrosClicks.length ? `WHERE ${filtrosClicks.join(' AND ')}` : '';
-    const whereText   = filtrosText.length   ? `WHERE ${filtrosText.join(' AND ')}`   : '';
-    const whereOuter  = filtrosOuter.length  ? `WHERE ${filtrosOuter.join(' AND ')}`  : '';
-
-    // Subselect + WHERE por total_buscado (evita errores en HAVING)
-    // Collate unificado para evitar "Illegal mix of collations" en LIKE
-    const sql = `
-      SELECT *
-      FROM (
-        SELECT
-          p.id,
-          p.nombre,
-          p.precio_venta,
-          p.stock_actual,                -- 👈 para "sugerido"
-          p.stock_minimo,                -- 👈 para "sugerido"
-          COALESCE(pc.clicks, 0)  AS clicks,
-          COALESCE(pt.textos, 0)  AS textos,
-          (COALESCE(pc.clicks, 0) + (? * COALESCE(pt.textos, 0))) AS total_buscado,
-          COALESCE(vv.ventas, 0)  AS ventas
-        FROM productos p
-        LEFT JOIN (
-          SELECT bp.producto_id, COUNT(*) AS clicks
-          FROM busquedas_producto bp
-          ${whereClicks}
-          GROUP BY bp.producto_id
-        ) pc ON pc.producto_id = p.id
-        LEFT JOIN (
-          SELECT p2.id AS producto_id, COUNT(*) AS textos
-          FROM busquedas_texto bt
-          INNER JOIN productos p2
-            ON p2.nombre COLLATE utf8mb4_general_ci
-               LIKE CONCAT('%', REPLACE(bt.q COLLATE utf8mb4_general_ci, ' ', '%'), '%')
-          ${whereText}
-          GROUP BY p2.id
-        ) pt ON pt.producto_id = p.id
-        LEFT JOIN (
-          /* Ventas (facturas + presupuestos) en el período */
-          SELECT v.producto_id, SUM(v.cantidad) AS ventas
-          FROM (
-            SELECT fi.producto_id, fi.cantidad, fm.fecha
-            FROM factura_items fi
-            INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
-            ${d1 || d2 ? `WHERE fm.fecha ${d1 && d2 ? 'BETWEEN ? AND ?' : d1 ? '>= ?' : '<= ?'}` : ''}
-
-            UNION ALL
-
-            SELECT pi.producto_id, pi.cantidad, pm.fecha
-            FROM presupuesto_items pi
-            INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
-            ${d1 || d2 ? `WHERE pm.fecha ${d1 && d2 ? 'BETWEEN ? AND ?' : d1 ? '>= ?' : '<= ?'}` : ''}
-          ) v
-          GROUP BY v.producto_id
-        ) vv ON vv.producto_id = p.id
-        ${whereOuter}
-      ) x
-      WHERE x.total_buscado > 0
-      ORDER BY x.total_buscado DESC
-      LIMIT ${Number(limit) || 50}
-    `;
-
-    // parámetros en orden
-    const w = Number(weightText) || 0.3;
-    const params = [w, ...pcParams, ...ptParams];
-
-    // Fechas para subconsulta de ventas (dos apariciones: facturas y presupuestos)
-    if (d1 && d2) params.push(d1, d2, d1, d2);
-    else if (d1) params.push(d1, d1);
-    else if (d2) params.push(d2, d2);
-
-    // Categoría al final (outer)
-    params.push(...outerParams);
-
-    conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
-  });
-},
-// Ventas (unidades) de un producto en un período (facturas + presupuestos)
-obtenerVentasDeProducto: function (
-  conexion,
-  { producto_id, desde = null, hasta = null, agruparPor = null } // agruparPor: 'dia' | null
-) {
-  return new Promise((resolve, reject) => {
-    const pid = parseInt(producto_id, 10);
-    if (!Number.isInteger(pid) || pid <= 0) {
-      return reject(new Error('producto_id inválido'));
-    }
-
-    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
-    const d1 = isDate(desde) ? desde : null;
-    const d2 = isDate(hasta) ? hasta : null;
-
-    const filtros = [`v.producto_id = ?`];
-    const params = [pid];
-
-    if (d1 && d2) { filtros.push(`v.fecha BETWEEN ? AND ?`); params.push(d1, d2); }
-    else if (d1) { filtros.push(`v.fecha >= ?`); params.push(d1); }
-    else if (d2) { filtros.push(`v.fecha <= ?`); params.push(d2); }
-
-    const whereSQL = `WHERE ${filtros.join(' AND ')}`;
-
-    // subconsulta unifica facturas + presupuestos
-    const base = `
-      FROM (
-        SELECT fi.producto_id, fi.cantidad, fm.fecha
-        FROM factura_items fi
-        INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
-
-        UNION ALL
-
-        SELECT pi.producto_id, pi.cantidad, pm.fecha
-        FROM presupuesto_items pi
-        INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
-      ) v
-      ${whereSQL}
-    `;
-
-    // si pedís agrupación por día
-    if (agruparPor === 'dia') {
-      const sql = `
-        SELECT DATE(v.fecha) AS dia, SUM(v.cantidad) AS unidades
-        ${base}
-        GROUP BY DATE(v.fecha)
-        ORDER BY dia ASC
-      `;
-      return conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve({
-        detalle: rows,
-        total: rows.reduce((acc, r) => acc + Number(r.unidades || 0), 0)
-      })));
-    }
-
-    // total simple
-    const sqlTotal = `
-      SELECT SUM(v.cantidad) AS total_unidades
-      ${base}
-    `;
-    conexion.query(sqlTotal, params, (err, rows) => {
-      if (err) return reject(err);
-      const total = Number(rows?.[0]?.total_unidades || 0);
-      resolve({ total });
-    });
-  });
-},
-// Búsquedas de un producto específico en un período
-obtenerBusquedasDeProducto: function (
-  conexion,
-  { producto_id, desde = null, hasta = null, weightText = 0.3 }
-) {
-  return new Promise((resolve, reject) => {
-    const pid = parseInt(producto_id, 10);
-    if (!Number.isInteger(pid) || pid <= 0) {
-      return reject(new Error('producto_id inválido'));
-    }
-
-    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
-    const d1 = isDate(desde) ? desde : null;
-    const d2 = isDate(hasta) ? hasta : null;
-
-    // filtros para clicks
-    const fc = ['bp.producto_id = ?'];
-    const pc = [pid];
-    if (d1 && d2) { fc.push('bp.created_at BETWEEN ? AND ?'); pc.push(d1, d2); }
-    else if (d1) { fc.push('bp.created_at >= ?'); pc.push(d1); }
-    else if (d2) { fc.push('bp.created_at <= ?'); pc.push(d2); }
-    const whereC = `WHERE ${fc.join(' AND ')}`;
-
-    // filtros para texto
-    const ft = [];
-    const pt = [];
-    if (d1 && d2) { ft.push('bt.created_at BETWEEN ? AND ?'); pt.push(d1, d2); }
-    else if (d1) { ft.push('bt.created_at >= ?'); pt.push(d1); }
-    else if (d2) { ft.push('bt.created_at <= ?'); pt.push(d2); }
-    const whereT = ft.length ? `WHERE ${ft.join(' AND ')}` : '';
-
-    const sql = `
-      SELECT
-        p.id,
-        p.nombre,
-        COALESCE(c.clicks, 0) AS clicks,
-        COALESCE(t.textos, 0) AS textos,
-        (COALESCE(c.clicks, 0) + (? * COALESCE(t.textos, 0))) AS total_buscado
-      FROM productos p
-      LEFT JOIN (
-        SELECT bp.producto_id, COUNT(*) AS clicks
-        FROM busquedas_producto bp
-        ${whereC}
-        GROUP BY bp.producto_id
-      ) c ON c.producto_id = p.id
-      LEFT JOIN (
-        /* mapeo de búsquedas de texto al nombre del producto */
-        SELECT ? AS producto_id, COUNT(*) AS textos
-        FROM busquedas_texto bt
-        INNER JOIN productos px
-          ON px.id = ?
-         AND px.nombre COLLATE utf8mb4_general_ci
-             LIKE CONCAT('%', REPLACE(bt.q COLLATE utf8mb4_general_ci, ' ', '%'), '%')
-        ${whereT}
-      ) t ON t.producto_id = p.id
-      WHERE p.id = ?
-      LIMIT 1
-    `;
-
-    const w = Number(weightText) || 0.3;
-    const params = [w, ...pc, pid, pid, ...pt, pid];
-
-    conexion.query(sql, params, (err, rows) => {
-      if (err) return reject(err);
-      resolve(rows[0] || { id: pid, nombre: null, clicks: 0, textos: 0, total_buscado: 0 });
-    });
-  });
-},
-
-obtenerProveedoresOrdenadosPorCosto : function (conexion, productoId) {
-  return new Promise((resolve, reject) => {
-    const sql = `
-      SELECT 
-        pp.proveedor_id   AS id,
-        pr.nombre         AS proveedor_nombre,
-        pp.codigo         AS codigo,
-        pp.precio_lista   AS precio_lista,
-        COALESCE(dp.descuento, 0) AS descuento,
-        /* costo_neto = lista * (1 - desc/100), costo_iva = costo_neto * 1.21 */
-        ROUND(pp.precio_lista * (1 - COALESCE(dp.descuento, 0)/100) * 1.21, 2) AS costo_iva
-      FROM producto_proveedor pp
-      JOIN proveedores pr        ON pr.id = pp.proveedor_id
-      LEFT JOIN (
-        SELECT proveedor_id, MAX(descuento) AS descuento
-        FROM descuentos_proveedor
-        GROUP BY proveedor_id
-      ) dp ON dp.proveedor_id = pp.proveedor_id
-      WHERE pp.producto_id = ?
-      ORDER BY costo_iva ASC, pr.nombre ASC
-    `;
-    conexion.query(sql, [productoId], (err, rows) => {
-      if (err) return reject(err);
-      resolve(rows || []);
-    });
-  });
-},
-obtenerProductosProveedorConStockHasta: function (conexion, { proveedor_id, stock_max }) {
-  return new Promise((resolve, reject) => {
-    const prov = parseInt(proveedor_id, 10);
-    const max  = parseInt(stock_max, 10);
-
-    if (!prov || !Number.isFinite(max)) return resolve([]);
-
-    const sql = `
-      SELECT
-        p.id,
-        p.nombre,
-        p.stock_actual,
-        p.stock_minimo,
-        pp.codigo AS codigo_proveedor,
-        pp.precio_lista
-      FROM producto_proveedor pp
-      INNER JOIN productos p ON p.id = pp.producto_id
-      WHERE pp.proveedor_id = ?
-        AND p.stock_actual >= 0
-        AND p.stock_actual <= ?
-      ORDER BY p.stock_actual ASC, p.nombre ASC
-    `;
-
-    conexion.query(sql, [prov, max], (err, rows) => (err ? reject(err) : resolve(rows)));
-  });
-},
-
-obtenerMasVendidosPorProveedor: function (conexion, { proveedor_id, desde = null, hasta = null, limit = 100 }) {
-  return new Promise((resolve, reject) => {
-    const prov = parseInt(proveedor_id, 10);
-    if (!prov) return resolve([]);
-
-    const filtros = [];
-    const params = [prov];
-
-    const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
-    const d1 = isDate(desde) ? desde : null;
-    const d2 = isDate(hasta) ? hasta : null;
-
-    if (d1 && d2) { filtros.push(`v.fecha BETWEEN ? AND ?`); params.push(d1, d2); }
-    else if (d1)  { filtros.push(`v.fecha >= ?`);           params.push(d1); }
-    else if (d2)  { filtros.push(`v.fecha <= ?`);           params.push(d2); }
-
-    const whereFechas = filtros.length ? `AND ${filtros.join(' AND ')}` : '';
-    const safeLimit = Math.max(1, Math.min(parseInt(limit, 10) || 100, 500));
-
-    const sql = `
-      SELECT
-        p.id,
-        p.nombre,
-        p.stock_actual,
-        SUM(v.cantidad) AS total_vendido
-      FROM (
-        /* FACTURAS */
-        SELECT fi.producto_id, fi.cantidad, fm.fecha
-        FROM factura_items fi
-        INNER JOIN facturas_mostrador fm ON fm.id = fi.factura_id
-
-        UNION ALL
-
-        /* PRESUPUESTOS */
-        SELECT pi.producto_id, pi.cantidad, pm.fecha
-        FROM presupuesto_items pi
-        INNER JOIN presupuestos_mostrador pm ON pm.id = pi.presupuesto_id
-      ) v
-      INNER JOIN productos p ON p.id = v.producto_id
-      INNER JOIN producto_proveedor pp
-        ON pp.producto_id = p.id AND pp.proveedor_id = ?
-      WHERE 1=1
-      ${whereFechas}
-      GROUP BY p.id, p.nombre, p.stock_actual
-      ORDER BY total_vendido DESC
-      LIMIT ${safeLimit}
-    `;
-
-    conexion.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
-  });
-},
-
-
-// 4) Registrar consultas de búsqueda (consultados)
-registrarConsultasBusqueda: function (conexion, { productoIds = [], termino = null, usuario_id = null }) {
-  return new Promise((resolve, reject) => {
-    const ids = Array.isArray(productoIds)
-      ? productoIds.map(n => parseInt(n, 10)).filter(Number.isInteger).slice(0, 50)
-      : [];
-
-    if (!ids.length) return resolve({ inserted: 0 });
-
-    const values = ids.map(() => `(?, ?, ?, NOW())`).join(',');
-    const params = [];
-    ids.forEach(id => {
-      params.push(id, termino ? String(termino).slice(0,255) : null, usuario_id ? parseInt(usuario_id,10) : null);
+      res.send(pdfData);
     });
 
-    const sql = `
-      INSERT INTO busquedas_producto_log (producto_id, termino, usuario_id, fecha)
-      VALUES ${values}
-    `;
-
-    conexion.query(sql, params, (err, r) => (err ? reject(err) : resolve(r)));
-  });
+  } catch (error) {
+    console.error('❌ Error en recomendacionesProveedorPDF:', error);
+    return res.status(500).send('Error al generar PDF');
+  }
 },
-
-
 
 }
