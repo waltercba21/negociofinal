@@ -3014,6 +3014,5 @@ registrarConsultasBusqueda: function (conexion, { productoIds = [], termino = nu
       );
       return { productos: rows, total };
     },
-    obtenerSiguienteIDFactura: async function() { throw new Error('obtenerSiguienteIDFactura: stub'); },
 
 }
