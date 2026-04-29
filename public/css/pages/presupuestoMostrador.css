@@ -799,21 +799,52 @@
   background: transparent !important;
 }
 /* ═══════════════════════════════════════════════════════════════════
-   BUSCADOR AVANZADO — Estilos para controles qty/delete en resultados
-   Agregar a: facturasMostrador.css  Y  presupuestoMostrador.css
-   v2026-04-29
+   BUSCADOR AVANZADO — Estilos v2
+   Agregar al final de: facturasMostrador.css  Y  presupuestoMostrador.css
+   v2026-04-29-v2
 ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Imagen en el dropdown ─────────────────────────────────────── */
+
+/* Contenedor cuadrado de la imagen */
+.srb-img-wrap {
+  width: 58px;
+  height: 58px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Imagen real */
+.srb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Placeholder cuando no hay imagen */
+.srb-img-placeholder {
+  font-size: 1.4rem;
+  opacity: 0.25;
+  color: #94a3b8;
+}
 
 /* ── Contenedor de cada resultado ──────────────────────────────── */
 .resultado-busqueda {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   padding: 8px 12px;
-  cursor: pointer;
+  cursor: default;   /* el cursor default ya que el click está en el botón Agregar */
   border-bottom: 1px solid rgba(255,255,255,0.04);
   transition: background 0.15s;
+  min-height: 70px;
 }
 
 .resultado-busqueda:last-child {
@@ -822,47 +853,51 @@
 
 .resultado-busqueda.hover-activo,
 .resultado-busqueda:hover {
-  background: rgba(99, 155, 255, 0.08);
+  background: rgba(99, 155, 255, 0.07);
 }
 
-/* Productos ya en tabla → borde izquierdo verde para identificarlos */
+/* Productos ya en tabla → borde izquierdo verde */
 .resultado-busqueda.en-tabla {
   border-left: 3px solid #22c55e;
   padding-left: 9px;
   background: rgba(34, 197, 94, 0.04);
 }
-
 .resultado-busqueda.en-tabla.hover-activo {
-  background: rgba(34, 197, 94, 0.10);
+  background: rgba(34, 197, 94, 0.09);
 }
 
-/* ── Lado izquierdo: imagen + nombre ───────────────────────────── */
-.resultado-contenedor {
+/* ── Bloque nombre + precio ──────────────────────────────────────── */
+.srb-info {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 3px;
   flex: 1;
   min-width: 0;
-  cursor: pointer;
 }
 
-.resultado-contenedor .srb-nombre {
-  flex: 1;
-  min-width: 0;
+.srb-nombre {
+  font-size: 0.86rem;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.88rem;
+  line-height: 1.3;
 }
 
-/* ── Badge de cantidad ──────────────────────────────────────────── */
+.srb-precio {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* ── Badge "ya en tabla" ──────────────────────────────────────────── */
 .srb-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
   border-radius: 50px;
   background: #22c55e;
   color: #fff;
@@ -872,7 +907,7 @@
   flex-shrink: 0;
 }
 
-/* ── Panel de controles derecho ─────────────────────────────────── */
+/* ── Panel de controles ─────────────────────────────────────────── */
 .srb-controles {
   display: flex;
   align-items: center;
@@ -880,117 +915,106 @@
   flex-shrink: 0;
 }
 
-/* ── Botones base ────────────────────────────────────────────────── */
+/* ── Base de todos los botones ──────────────────────────────────── */
 .srb-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  gap: 5px;
+  height: 32px;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   cursor: pointer;
-  font-size: 0.72rem;
-  transition: background 0.15s, transform 0.1s;
+  font-size: 0.74rem;
+  font-weight: 600;
+  transition: background 0.14s, transform 0.1s;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.srb-btn:hover {
-  transform: scale(1.1);
-}
+.srb-btn:hover  { transform: scale(1.06); }
+.srb-btn:active { transform: scale(0.94); }
 
-.srb-btn:active {
-  transform: scale(0.95);
-}
-
-/* Botón restar */
+/* Botón − */
 .srb-qty-minus {
-  background: rgba(234, 179, 8, 0.15);
-  color: #eab308;
-  border: 1px solid rgba(234, 179, 8, 0.25);
+  width: 30px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
-.srb-qty-minus:hover {
-  background: rgba(234, 179, 8, 0.28);
-}
+.srb-qty-minus:hover { background: rgba(148, 163, 184, 0.22); }
 
-/* Valor cantidad entre botones */
-.srb-qty-val {
-  min-width: 20px;
+/* Input de cantidad entre botones */
+.srb-qty-input {
+  width: 42px;
+  height: 32px;
   text-align: center;
-  font-size: 0.82rem;
-  font-weight: 700;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
   color: #e2e8f0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 0 4px;
+  /* Ocultar flechas nativas del input number */
+  -moz-appearance: textfield;
+}
+.srb-qty-input::-webkit-inner-spin-button,
+.srb-qty-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.srb-qty-input:focus {
+  outline: none;
+  border-color: rgba(99, 155, 255, 0.5);
+  background: rgba(99, 155, 255, 0.08);
 }
 
-/* Botón sumar */
+/* Botón + */
 .srb-qty-plus {
-  background: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.25);
+  width: 30px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
-.srb-qty-plus:hover {
-  background: rgba(34, 197, 94, 0.28);
-}
+.srb-qty-plus:hover { background: rgba(148, 163, 184, 0.22); }
 
-/* Botón eliminar */
+/* Botón Agregar */
+.srb-agregar {
+  padding: 0 12px;
+  background: rgba(34, 197, 94, 0.18);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  margin-left: 4px;
+}
+.srb-agregar:hover { background: rgba(34, 197, 94, 0.30); }
+
+/* Botón Quitar */
 .srb-delete {
+  padding: 0 10px;
   background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  margin-left: 2px;
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  margin-left: 4px;
 }
-.srb-delete:hover {
-  background: rgba(239, 68, 68, 0.25);
-}
+.srb-delete:hover { background: rgba(239, 68, 68, 0.24); }
 
-/* ── Animaciones de fila en tabla ───────────────────────────────── */
+/* ── Animaciones de fila en tabla ──────────────────────────────── */
 
-/* Flash verde: producto ya en tabla, se incrementó la cantidad */
 @keyframes rowFlash {
-  0%   { background: rgba(34, 197, 94, 0.25); }
+  0%   { background: rgba(34, 197, 94, 0.22); }
   100% { background: transparent; }
 }
-.row-flash {
-  animation: rowFlash 0.6s ease-out forwards;
-}
+.row-flash { animation: rowFlash 0.6s ease-out forwards; }
 
-/* Entrada suave de fila nueva */
 @keyframes rowNew {
-  from { opacity: 0; transform: translateY(-6px); }
+  from { opacity: 0; transform: translateY(-5px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.row-new {
-  animation: rowNew 0.4s ease-out forwards;
-}
+.row-new { animation: rowNew 0.35s ease-out forwards; }
 
-/* ── Mejora visual: hint de teclado en el buscador ─────────────── */
-.facturas-buscador-wrap,
-.presupuesto-buscador-wrap {
-  position: relative;
-}
-
-/* Tip flotante opcional (↑↓ Enter Esc) — se puede mostrar con JS si se desea */
-.buscador-kbd-hint {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  gap: 4px;
-  pointer-events: none;
-  opacity: 0.4;
-  font-size: 0.7rem;
-}
-
-.buscador-kbd-hint kbd {
-  padding: 1px 5px;
-  border: 1px solid currentColor;
-  border-radius: 3px;
-  font-family: monospace;
-}
-
-/* ── Responsive: ocultar controles en pantallas muy pequeñas ────── */
-@media (max-width: 480px) {
-  .srb-qty-val { display: none !important; }
-  .srb-btn     { width: 24px; height: 24px; }
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .srb-img-wrap    { width: 44px; height: 44px; }
+  .srb-agregar span,
+  .srb-delete span { display: none; }   /* solo iconos en pantallas chicas */
+  .srb-agregar,
+  .srb-delete      { width: 32px; padding: 0; }
 }
