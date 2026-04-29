@@ -1,4 +1,4 @@
-// buscadorPresupuesto.js — v2026-03-09-clean
+// buscadorPresupuesto.js — v2026-04-29-enhanced
 
 function fechaHoyYYYYMMDD(timeZone = 'America/Argentina/Cordoba') {
   return new Date().toLocaleDateString('en-CA', { timeZone });
@@ -74,6 +74,26 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
   const filas = tbody.rows;
   let filaDisponible = null;
 
+  // Verificar si el producto ya está en la tabla → incrementar cantidad
+  for (let i = 0; i < filas.length; i++) {
+    if (filas[i].cells[1].textContent.trim() === String(codigoProducto).trim()) {
+      const inputQty = filas[i].cells[4].querySelector('input');
+      const stockNum = parseInt(filas[i].cells[5].textContent) || 0;
+      if (inputQty) {
+        const actual = parseInt(inputQty.value) || 1;
+        if (actual < stockNum) {
+          inputQty.value = actual + 1;
+          updateSubtotal(filas[i]);
+          filas[i].classList.add('row-flash');
+          setTimeout(() => filas[i].classList.remove('row-flash'), 600);
+        } else {
+          Swal.fire({ title: 'Stock insuficiente', text: `Solo hay ${stockNum} unidades disponibles.`, icon: 'warning', confirmButtonText: 'Entendido' });
+        }
+      }
+      return;
+    }
+  }
+
   for (let i = 0; i < filas.length; i++) {
     if (!filas[i].cells[1].textContent.trim()) {
       filaDisponible = filas[i];
@@ -88,20 +108,16 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
 
   const stockNum = parseInt(stockActual) || 0;
 
-  // Guardar el id numérico en la fila para usarlo al hacer submit
   filaDisponible.dataset.productoId = productoId;
 
-  // Imagen
   const imgElement = filaDisponible.cells[0].querySelector("img");
   if (imagenProducto && imgElement) {
     imgElement.src = imagenProducto;
     imgElement.style.display = "block";
   }
 
-  // Código y descripción
   filaDisponible.cells[1].textContent = codigoProducto;
 
-  // Si es PRODUCTO PRUEBA → celda de descripción con input editable
   const esPrueba = nombreProducto.trim().toUpperCase() === 'PRODUCTO PRUEBA';
   if (esPrueba) {
     filaDisponible.cells[2].innerHTML =
@@ -116,7 +132,6 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
     filaDisponible.cells[2].textContent = nombreProducto;
   }
 
-  // Precio
   const inputPrecio = filaDisponible.cells[3].querySelector("input");
   if (inputPrecio) {
     inputPrecio.value = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
@@ -126,7 +141,6 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
     });
   }
 
-  // Cantidad con botones +/-
   filaDisponible.cells[4].innerHTML = `
     <div class="qty-control">
       <button type="button" class="qty-btn qty-btn--minus" tabindex="-1"><i class="fa-solid fa-minus"></i></button>
@@ -153,13 +167,11 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
 
   inputCantidad.addEventListener('input', function () { updateSubtotal(filaDisponible); });
 
-  // Stock y subtotal
   filaDisponible.cells[5].textContent = stockActual;
   filaDisponible.cells[6].textContent = parseFloat(precioVenta).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 
   calcularTotal();
 
-  // Botón eliminar
   const botonEliminar = filaDisponible.cells[7].querySelector("button");
   if (botonEliminar) {
     botonEliminar.style.display = "block";
@@ -174,8 +186,57 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
       if (imgElement) imgElement.style.display = "none";
       botonEliminar.style.display = "none";
       calcularTotal();
+      _actualizarContadoresEnResultados();
     });
   }
+
+  filaDisponible.classList.add('row-new');
+  setTimeout(() => filaDisponible.classList.remove('row-new'), 500);
+}
+
+// ── Estado global del buscador avanzado ───────────────────────────────────
+let _productosEnBusqueda = [];
+
+function _obtenerProductosEnTabla() {
+  const mapa = {};
+  const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+  for (let i = 0; i < filas.length; i++) {
+    const cod = filas[i].cells[1].textContent.trim();
+    if (cod) {
+      const qty = parseInt(filas[i].cells[4].querySelector('input')?.value) || 1;
+      mapa[cod] = { cantidad: qty, filaIndex: i };
+    }
+  }
+  return mapa;
+}
+
+function _actualizarContadoresEnResultados() {
+  const enTabla = _obtenerProductosEnTabla();
+  document.querySelectorAll('.resultado-busqueda').forEach(el => {
+    const cod = el.dataset.codigo;
+    const badgeEl  = el.querySelector('.srb-badge');
+    const deleteBtn = el.querySelector('.srb-delete');
+    const qtyMinus  = el.querySelector('.srb-qty-minus');
+    const qtyPlus   = el.querySelector('.srb-qty-plus');
+    const qtyVal    = el.querySelector('.srb-qty-val');
+
+    if (enTabla[cod]) {
+      const info = enTabla[cod];
+      if (badgeEl)   { badgeEl.textContent = info.cantidad; badgeEl.style.display = 'inline-flex'; }
+      if (deleteBtn)  deleteBtn.style.display = 'flex';
+      if (qtyMinus)   qtyMinus.style.display  = 'flex';
+      if (qtyPlus)    qtyPlus.style.display   = 'flex';
+      if (qtyVal)     { qtyVal.textContent = info.cantidad; qtyVal.style.display = 'inline-block'; }
+      el.classList.add('en-tabla');
+    } else {
+      if (badgeEl)    { badgeEl.textContent = ''; badgeEl.style.display = 'none'; }
+      if (deleteBtn)   deleteBtn.style.display = 'none';
+      if (qtyMinus)    qtyMinus.style.display  = 'none';
+      if (qtyPlus)     qtyPlus.style.display   = 'none';
+      if (qtyVal)      qtyVal.style.display    = 'none';
+      el.classList.remove('en-tabla');
+    }
+  });
 }
 
 // ── Todo lo que toca DOM va dentro de DOMContentLoaded ─────────────────────
@@ -275,72 +336,189 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Buscador
-  const entradaBusqueda   = document.getElementById('entradaBusqueda');
+  // ══════════════════════════════════════════════════════════════════════════
+  // BUSCADOR AVANZADO — mantiene texto, controles qty y borrar desde dropdown
+  // ══════════════════════════════════════════════════════════════════════════
+
+  const entradaBusqueda    = document.getElementById('entradaBusqueda');
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
   let timeoutId;
-
-  // Buscador con debounce + AbortController (evita duplicados y requests fantasma)
   let _searchTimer = null;
   let _searchController = null;
+  let _keepResultsOpen = false;
+
+  function crearElementoResultado(producto, enTabla) {
+    const cod = producto.codigo;
+    const enTablaInfo = enTabla[cod];
+
+    const resultado = document.createElement('div');
+    resultado.classList.add('resultado-busqueda');
+    if (enTablaInfo) resultado.classList.add('en-tabla');
+    resultado.dataset.id           = producto.id;
+    resultado.dataset.codigo       = cod;
+    resultado.dataset.nombre       = producto.nombre;
+    resultado.dataset.precio_venta = producto.precio_venta;
+    resultado.dataset.stock_actual = producto.stock_actual;
+    if (producto.imagenes && producto.imagenes.length > 0) {
+      resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
+    }
+
+    // Lado izquierdo: imagen + nombre
+    const izquierda = document.createElement('div');
+    izquierda.classList.add('resultado-contenedor');
+
+    if (producto.imagenes && producto.imagenes.length > 0) {
+      const imagen = document.createElement('img');
+      imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
+      imagen.classList.add('miniatura');
+      imagen.loading = 'lazy';
+      imagen.decoding = 'async';
+      izquierda.appendChild(imagen);
+    }
+
+    const nombreSpan = document.createElement('span');
+    nombreSpan.classList.add('srb-nombre');
+    nombreSpan.textContent = producto.nombre;
+    izquierda.appendChild(nombreSpan);
+
+    const badge = document.createElement('span');
+    badge.classList.add('srb-badge');
+    badge.textContent = enTablaInfo ? enTablaInfo.cantidad : '';
+    badge.style.display = enTablaInfo ? 'inline-flex' : 'none';
+    izquierda.appendChild(badge);
+
+    resultado.appendChild(izquierda);
+
+    // Lado derecho: controles
+    const derecha = document.createElement('div');
+    derecha.classList.add('srb-controles');
+
+    const btnMinus = document.createElement('button');
+    btnMinus.type = 'button';
+    btnMinus.classList.add('srb-qty-minus', 'srb-btn');
+    btnMinus.innerHTML = '<i class="fa-solid fa-minus"></i>';
+    btnMinus.style.display = enTablaInfo ? 'flex' : 'none';
+    btnMinus.title = 'Restar 1 unidad';
+
+    const qtyVal = document.createElement('span');
+    qtyVal.classList.add('srb-qty-val');
+    qtyVal.textContent = enTablaInfo ? enTablaInfo.cantidad : '';
+    qtyVal.style.display = enTablaInfo ? 'inline-block' : 'none';
+
+    const btnPlus = document.createElement('button');
+    btnPlus.type = 'button';
+    btnPlus.classList.add('srb-qty-plus', 'srb-btn');
+    btnPlus.innerHTML = '<i class="fa-solid fa-plus"></i>';
+    btnPlus.style.display = enTablaInfo ? 'flex' : 'none';
+    btnPlus.title = 'Agregar 1 unidad';
+
+    const btnDelete = document.createElement('button');
+    btnDelete.type = 'button';
+    btnDelete.classList.add('srb-delete', 'srb-btn');
+    btnDelete.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    btnDelete.style.display = enTablaInfo ? 'flex' : 'none';
+    btnDelete.title = 'Quitar del presupuesto';
+
+    derecha.appendChild(btnMinus);
+    derecha.appendChild(qtyVal);
+    derecha.appendChild(btnPlus);
+    derecha.appendChild(btnDelete);
+    resultado.appendChild(derecha);
+
+    // Eventos
+    izquierda.addEventListener('click', () => {
+      agregarProductoATabla(
+        resultado.dataset.id,
+        resultado.dataset.codigo,
+        resultado.dataset.nombre,
+        resultado.dataset.precio_venta,
+        resultado.dataset.stock_actual,
+        resultado.dataset.imagen
+      );
+      _actualizarContadoresEnResultados();
+      entradaBusqueda.focus();
+    });
+
+    btnPlus.addEventListener('mousedown', e => { e.preventDefault(); _keepResultsOpen = true; });
+    btnPlus.addEventListener('click', (e) => {
+      e.stopPropagation();
+      agregarProductoATabla(
+        resultado.dataset.id,
+        resultado.dataset.codigo,
+        resultado.dataset.nombre,
+        resultado.dataset.precio_venta,
+        resultado.dataset.stock_actual,
+        resultado.dataset.imagen
+      );
+      _actualizarContadoresEnResultados();
+      entradaBusqueda.focus();
+      _keepResultsOpen = false;
+    });
+
+    btnMinus.addEventListener('mousedown', e => { e.preventDefault(); _keepResultsOpen = true; });
+    btnMinus.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+      for (let i = 0; i < filas.length; i++) {
+        if (filas[i].cells[1].textContent.trim() === String(cod).trim()) {
+          const inputQty = filas[i].cells[4].querySelector('input');
+          if (inputQty) {
+            const actual = parseInt(inputQty.value) || 1;
+            if (actual > 1) {
+              inputQty.value = actual - 1;
+              updateSubtotal(filas[i]);
+            } else {
+              const boton = filas[i].cells[7].querySelector('button');
+              if (boton) boton.click();
+            }
+          }
+          break;
+        }
+      }
+      _actualizarContadoresEnResultados();
+      entradaBusqueda.focus();
+      _keepResultsOpen = false;
+    });
+
+    btnDelete.addEventListener('mousedown', e => { e.preventDefault(); _keepResultsOpen = true; });
+    btnDelete.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+      for (let i = 0; i < filas.length; i++) {
+        if (filas[i].cells[1].textContent.trim() === String(cod).trim()) {
+          const boton = filas[i].cells[7].querySelector('button');
+          if (boton) boton.click();
+          break;
+        }
+      }
+      _actualizarContadoresEnResultados();
+      entradaBusqueda.focus();
+      _keepResultsOpen = false;
+    });
+
+    resultado.addEventListener('mouseenter', function () {
+      document.querySelectorAll('.resultado-busqueda').forEach(r => r.classList.remove('hover-activo'));
+      this.classList.add('hover-activo');
+    });
+    resultado.addEventListener('mouseleave', function () {
+      this.classList.remove('hover-activo');
+    });
+
+    return resultado;
+  }
 
   function renderResultados(productos) {
+    _productosEnBusqueda = productos;
     resultadosBusqueda.innerHTML = '';
+
     if (!productos.length) {
       resultadosBusqueda.style.display = 'none';
       return;
     }
+
+    const enTabla = _obtenerProductosEnTabla();
     productos.forEach((producto) => {
-      const resultado = document.createElement('div');
-      resultado.classList.add('resultado-busqueda');
-      resultado.dataset.id           = producto.id;
-      resultado.dataset.codigo       = producto.codigo;
-      resultado.dataset.nombre       = producto.nombre;
-      resultado.dataset.precio_venta = producto.precio_venta;
-      resultado.dataset.stock_actual = producto.stock_actual;
-      if (producto.imagenes && producto.imagenes.length > 0) {
-        resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
-      }
-
-      const contenedor = document.createElement('div');
-      contenedor.classList.add('resultado-contenedor');
-
-      if (producto.imagenes && producto.imagenes.length > 0) {
-        const imagen = document.createElement('img');
-        imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
-        imagen.classList.add('miniatura');
-        contenedor.appendChild(imagen);
-      }
-
-      const nombreSpan = document.createElement('span');
-      nombreSpan.textContent = producto.nombre;
-      contenedor.appendChild(nombreSpan);
-      resultado.appendChild(contenedor);
-
-      resultado.addEventListener('mouseenter', function () {
-        document.querySelectorAll('.resultado-busqueda').forEach(r => r.classList.remove('hover-activo'));
-        this.classList.add('hover-activo');
-      });
-      resultado.addEventListener('mouseleave', function () {
-        this.classList.remove('hover-activo');
-      });
-
-      resultado.addEventListener('click', function () {
-        agregarProductoATabla(
-          this.dataset.id,
-          this.dataset.codigo,
-          this.dataset.nombre,
-          this.dataset.precio_venta,
-          this.dataset.stock_actual,
-          this.dataset.imagen
-        );
-        // ✅ FIX: cerrar lista pero mantener el texto para buscar más productos
-        resultadosBusqueda.style.display = 'none';
-        // Enfocar el input para que el vendedor siga escribiendo sin hacer click
-        entradaBusqueda.focus();
-      });
-
-      resultadosBusqueda.appendChild(resultado);
+      resultadosBusqueda.appendChild(crearElementoResultado(producto, enTabla));
     });
     resultadosBusqueda.style.display = 'block';
   }
@@ -348,17 +526,16 @@ document.addEventListener('DOMContentLoaded', function () {
   entradaBusqueda.addEventListener('input', (e) => {
     const busqueda = e.target.value.trim();
 
-    // Cancelar búsqueda anterior si todavía está en vuelo
     if (_searchController) { _searchController.abort(); _searchController = null; }
     clearTimeout(_searchTimer);
 
     if (!busqueda) {
       resultadosBusqueda.innerHTML = '';
       resultadosBusqueda.style.display = 'none';
+      _productosEnBusqueda = [];
       return;
     }
 
-    // Debounce 280ms: esperar a que el usuario deje de escribir
     _searchTimer = setTimeout(async () => {
       _searchController = new AbortController();
       try {
@@ -372,18 +549,62 @@ document.addEventListener('DOMContentLoaded', function () {
         if (err.name !== 'AbortError') {
           console.error('[Buscador] Error al buscar:', err);
         }
-        // Si fue abortado, ignorar silenciosamente
       }
     }, 280);
   });
 
+  entradaBusqueda.addEventListener('blur', () => {
+    if (_keepResultsOpen) return;
+    timeoutId = setTimeout(() => {
+      resultadosBusqueda.style.display = 'none';
+    }, 200);
+  });
+
+  entradaBusqueda.addEventListener('focus', () => {
+    clearTimeout(timeoutId);
+    if (_productosEnBusqueda.length > 0 && entradaBusqueda.value.trim()) {
+      renderResultados(_productosEnBusqueda);
+    }
+  });
+
   resultadosBusqueda.addEventListener('mouseleave', () => {
+    if (_keepResultsOpen) return;
     timeoutId = setTimeout(() => { resultadosBusqueda.style.display = 'none'; }, 300);
   });
 
   resultadosBusqueda.addEventListener('mouseenter', () => {
     clearTimeout(timeoutId);
     resultadosBusqueda.style.display = 'block';
+  });
+
+  // Navegación con teclado
+  entradaBusqueda.addEventListener('keydown', (e) => {
+    const items = resultadosBusqueda.querySelectorAll('.resultado-busqueda');
+    if (!items.length) return;
+    const activo = resultadosBusqueda.querySelector('.hover-activo');
+    let idx = [...items].indexOf(activo);
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = items[Math.min(idx + 1, items.length - 1)];
+      items.forEach(r => r.classList.remove('hover-activo'));
+      next.classList.add('hover-activo');
+      next.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = items[Math.max(idx - 1, 0)];
+      items.forEach(r => r.classList.remove('hover-activo'));
+      prev.classList.add('hover-activo');
+      prev.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && activo) {
+      e.preventDefault();
+      const contenedor = activo.querySelector('.resultado-contenedor');
+      if (contenedor) contenedor.click();
+    } else if (e.key === 'Escape') {
+      resultadosBusqueda.style.display = 'none';
+      resultadosBusqueda.innerHTML = '';
+      _productosEnBusqueda = [];
+    }
   });
 
   // Eventos inputs tabla

@@ -1,4 +1,4 @@
-// buscadorFacturasMostrador.js — v2026-03-09-clean
+// buscadorFacturasMostrador.js — v2026-04-29-enhanced
 
 function fechaHoyYYYYMMDD(timeZone = 'America/Argentina/Cordoba') {
   return new Date().toLocaleDateString('en-CA', { timeZone });
@@ -82,6 +82,28 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
   const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
   const filas = tablaFactura.rows;
   let filaDisponible = null;
+
+  // Verificar si el producto ya está en la tabla
+  for (let i = 0; i < filas.length; i++) {
+    if (filas[i].cells[1].textContent.trim() === String(codigoProducto).trim()) {
+      // Producto ya en tabla: incrementar cantidad en 1
+      const inputQty = filas[i].cells[4].querySelector('input');
+      const stockNum = parseInt(filas[i].cells[5].textContent) || 0;
+      if (inputQty) {
+        const actual = parseInt(inputQty.value) || 1;
+        if (actual < stockNum) {
+          inputQty.value = actual + 1;
+          updateSubtotal(filas[i]);
+          // Feedback visual: flash en la fila
+          filas[i].classList.add('row-flash');
+          setTimeout(() => filas[i].classList.remove('row-flash'), 600);
+        } else {
+          Swal.fire({ title: 'Stock insuficiente', text: `Solo hay ${stockNum} unidades disponibles.`, icon: 'warning', confirmButtonText: 'Entendido' });
+        }
+      }
+      return;
+    }
+  }
 
   for (let i = 0; i < filas.length; i++) {
     if (!filas[i].cells[1].textContent.trim()) {
@@ -177,8 +199,66 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
       if (imgElement) imgElement.style.display = "none";
       botonEliminar.style.display = "none";
       calcularTotal();
+      // Actualizar contadores en el buscador si está activo
+      _actualizarContadoresEnResultados();
     });
   }
+
+  // Animar entrada de la nueva fila
+  filaDisponible.classList.add('row-new');
+  setTimeout(() => filaDisponible.classList.remove('row-new'), 500);
+}
+
+// ── Estado global del buscador avanzado ───────────────────────────────────
+let _productosEnBusqueda = []; // Cache de los últimos resultados
+
+/**
+ * Devuelve un objeto { codigo → { cantidad, filaIndex } } con los productos ya en tabla.
+ */
+function _obtenerProductosEnTabla() {
+  const mapa = {};
+  const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+  for (let i = 0; i < filas.length; i++) {
+    const cod = filas[i].cells[1].textContent.trim();
+    if (cod) {
+      const qty = parseInt(filas[i].cells[4].querySelector('input')?.value) || 1;
+      mapa[cod] = { cantidad: qty, filaIndex: i };
+    }
+  }
+  return mapa;
+}
+
+/**
+ * Refresca los badges de cantidad y botones de eliminar en los resultados visibles,
+ * sin disparar una nueva búsqueda.
+ */
+function _actualizarContadoresEnResultados() {
+  const enTabla = _obtenerProductosEnTabla();
+  document.querySelectorAll('.resultado-busqueda').forEach(el => {
+    const cod = el.dataset.codigo;
+    const badgeEl = el.querySelector('.srb-badge');
+    const deleteBtn = el.querySelector('.srb-delete');
+    const qtyMinus = el.querySelector('.srb-qty-minus');
+    const qtyPlus  = el.querySelector('.srb-qty-plus');
+    const qtyVal   = el.querySelector('.srb-qty-val');
+
+    if (enTabla[cod]) {
+      const info = enTabla[cod];
+      if (badgeEl)  { badgeEl.textContent = info.cantidad; badgeEl.style.display = 'inline-flex'; }
+      if (deleteBtn) deleteBtn.style.display = 'flex';
+      if (qtyMinus)  qtyMinus.style.display = 'flex';
+      if (qtyPlus)   qtyPlus.style.display  = 'flex';
+      if (qtyVal)    { qtyVal.textContent = info.cantidad; qtyVal.style.display = 'inline-block'; }
+      el.classList.add('en-tabla');
+    } else {
+      if (badgeEl)   { badgeEl.textContent = ''; badgeEl.style.display = 'none'; }
+      if (deleteBtn)  deleteBtn.style.display = 'none';
+      if (qtyMinus)   qtyMinus.style.display = 'none';
+      if (qtyPlus)    qtyPlus.style.display  = 'none';
+      if (qtyVal)     qtyVal.style.display   = 'none';
+      el.classList.remove('en-tabla');
+    }
+  });
 }
 
 // ── Todo lo que toca el DOM va dentro de DOMContentLoaded ──────────────────
@@ -256,9 +336,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const nombreClienteInput = document.getElementById('nombre-cliente');
     const nombreCliente = nombreClienteInput ? nombreClienteInput.value.trim() : '';
 
-    // ── Interés tarjeta crédito ──────────────────────────────────────────────
-    // El interés se distribuye proporcionalmente en cada ítem para que ARCA
-    // recalcule correctamente desde precio_unitario (no usa el total de cabecera)
     const esCredito = metodosPagoSeleccionados.value === 'CREDITO';
     const factorInteres = esCredito ? 1.15 : 1;
     let interesCalculado = 0;
@@ -272,9 +349,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (esCredito) interesCalculado = totalSinInteres * 0.15;
     const totalConInteres = totalSinInteres + interesCalculado;
 
-    // ── Resumen: usar los precios YA con recargo aplicado ──────────────────
-    // invoiceItemsConInteres tiene precio_unitario y subtotal finales.
-    // La tabla muestra exactamente lo que se va a guardar y cobrar.
     const filasHTML = invoiceItemsConInteres.map((item, index) => `
       <tr>
         <td style="padding:4px 6px;text-align:center;">${index + 1}</td>
@@ -285,7 +359,6 @@ document.addEventListener('DOMContentLoaded', function () {
         <td style="padding:4px 6px;text-align:right;font-weight:500;">${formatCurrencyCL(item.subtotal)}</td>
       </tr>`).join('');
 
-    // Bloque de interés: solo se muestra si aplica recargo
     const bloqueInteres = esCredito ? `
       <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.9rem;">
         <span>Subtotal (sin recargo)</span>
@@ -351,13 +424,12 @@ document.addEventListener('DOMContentLoaded', function () {
         body: JSON.stringify({
           nombreCliente,
           fechaPresupuesto: fechaFactura,
-          totalPresupuesto: totalConInteres.toFixed(2),  // total real con interés incluido
-          invoiceItems: invoiceItemsConInteres,           // precios ya con el 15% distribuido
+          totalPresupuesto: totalConInteres.toFixed(2),
+          invoiceItems: invoiceItemsConInteres,
           metodosPago: metodosPagoSeleccionados.value
         })
       });
 
-      // Leer como texto primero para detectar si el servidor devolvió HTML (error 500)
       const rawText = await response.text();
       let data;
       try {
@@ -385,93 +457,224 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Buscador de productos
+  // ══════════════════════════════════════════════════════════════════════════
+  // BUSCADOR AVANZADO — mantiene texto, controles qty y borrar desde dropdown
+  // ══════════════════════════════════════════════════════════════════════════
+
   const entradaBusqueda = document.getElementById('entradaBusqueda');
   const resultadosBusqueda = document.getElementById('resultadosBusqueda');
   let timeoutId;
-
-  // ── FIX: debounce + AbortController — evita duplicados y race conditions ──
   let _searchTimer = null;
   let _searchController = null;
+  let _keepResultsOpen = false; // flag para no cerrar al hacer click en controles internos
+
+  /**
+   * Construye el elemento de resultado con:
+   *   - Imagen + nombre del producto
+   *   - Badge de cantidad (si ya está en tabla)
+   *   - Controles qty: [-] [N] [+]  (visibles solo si está en tabla)
+   *   - Botón eliminar de tabla (visible solo si está en tabla)
+   */
+  function crearElementoResultado(producto, enTabla) {
+    const cod = producto.codigo;
+    const enTablaInfo = enTabla[cod];
+
+    const resultado = document.createElement('div');
+    resultado.classList.add('resultado-busqueda');
+    if (enTablaInfo) resultado.classList.add('en-tabla');
+    resultado.dataset.codigo       = cod;
+    resultado.dataset.nombre       = producto.nombre;
+    resultado.dataset.precio_venta = producto.precio_venta;
+    resultado.dataset.stock_actual = producto.stock_actual;
+    if (producto.imagenes && producto.imagenes.length > 0) {
+      resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
+    }
+
+    // ── Lado izquierdo: imagen + nombre ──────────────────────────────────────
+    const izquierda = document.createElement('div');
+    izquierda.classList.add('resultado-contenedor');
+
+    if (producto.imagenes && producto.imagenes.length > 0) {
+      const imagen = document.createElement('img');
+      imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
+      imagen.classList.add('miniatura');
+      imagen.loading = 'lazy';
+      imagen.decoding = 'async';
+      izquierda.appendChild(imagen);
+    }
+
+    const nombreSpan = document.createElement('span');
+    nombreSpan.classList.add('srb-nombre');
+    nombreSpan.textContent = producto.nombre;
+    izquierda.appendChild(nombreSpan);
+
+    // Badge cantidad (siempre presente pero oculto si no está en tabla)
+    const badge = document.createElement('span');
+    badge.classList.add('srb-badge');
+    badge.textContent = enTablaInfo ? enTablaInfo.cantidad : '';
+    badge.style.display = enTablaInfo ? 'inline-flex' : 'none';
+    izquierda.appendChild(badge);
+
+    resultado.appendChild(izquierda);
+
+    // ── Lado derecho: controles qty + eliminar ────────────────────────────────
+    const derecha = document.createElement('div');
+    derecha.classList.add('srb-controles');
+
+    // Botón restar cantidad
+    const btnMinus = document.createElement('button');
+    btnMinus.type = 'button';
+    btnMinus.classList.add('srb-qty-minus', 'srb-btn');
+    btnMinus.innerHTML = '<i class="fa-solid fa-minus"></i>';
+    btnMinus.style.display = enTablaInfo ? 'flex' : 'none';
+    btnMinus.title = 'Restar 1 unidad';
+
+    // Display cantidad
+    const qtyVal = document.createElement('span');
+    qtyVal.classList.add('srb-qty-val');
+    qtyVal.textContent = enTablaInfo ? enTablaInfo.cantidad : '';
+    qtyVal.style.display = enTablaInfo ? 'inline-block' : 'none';
+
+    // Botón sumar cantidad
+    const btnPlus = document.createElement('button');
+    btnPlus.type = 'button';
+    btnPlus.classList.add('srb-qty-plus', 'srb-btn');
+    btnPlus.innerHTML = '<i class="fa-solid fa-plus"></i>';
+    btnPlus.style.display = enTablaInfo ? 'flex' : 'none';
+    btnPlus.title = 'Agregar 1 unidad';
+
+    // Botón eliminar de tabla
+    const btnDelete = document.createElement('button');
+    btnDelete.type = 'button';
+    btnDelete.classList.add('srb-delete', 'srb-btn');
+    btnDelete.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    btnDelete.style.display = enTablaInfo ? 'flex' : 'none';
+    btnDelete.title = 'Quitar de la factura';
+
+    derecha.appendChild(btnMinus);
+    derecha.appendChild(qtyVal);
+    derecha.appendChild(btnPlus);
+    derecha.appendChild(btnDelete);
+    resultado.appendChild(derecha);
+
+    // ── Eventos ───────────────────────────────────────────────────────────────
+
+    // Click en el resultado (lado izquierdo / nombre) → agregar a tabla o incrementar
+    izquierda.addEventListener('click', () => {
+      agregarProductoATabla(
+        resultado.dataset.codigo,
+        resultado.dataset.nombre,
+        resultado.dataset.precio_venta,
+        resultado.dataset.stock_actual,
+        resultado.dataset.imagen
+      );
+      _actualizarContadoresEnResultados();
+      // ✅ FIX PRINCIPAL: NO borrar el texto del buscador, solo mantener el foco
+      entradaBusqueda.focus();
+    });
+
+    // Botón [+]: incrementar cantidad en tabla
+    btnPlus.addEventListener('mousedown', e => { e.preventDefault(); _keepResultsOpen = true; });
+    btnPlus.addEventListener('click', (e) => {
+      e.stopPropagation();
+      agregarProductoATabla(
+        resultado.dataset.codigo,
+        resultado.dataset.nombre,
+        resultado.dataset.precio_venta,
+        resultado.dataset.stock_actual,
+        resultado.dataset.imagen
+      );
+      _actualizarContadoresEnResultados();
+      entradaBusqueda.focus();
+      _keepResultsOpen = false;
+    });
+
+    // Botón [-]: restar cantidad en tabla (si llega a 0 → eliminar fila)
+    btnMinus.addEventListener('mousedown', e => { e.preventDefault(); _keepResultsOpen = true; });
+    btnMinus.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+      for (let i = 0; i < filas.length; i++) {
+        if (filas[i].cells[1].textContent.trim() === String(cod).trim()) {
+          const inputQty = filas[i].cells[4].querySelector('input');
+          if (inputQty) {
+            const actual = parseInt(inputQty.value) || 1;
+            if (actual > 1) {
+              inputQty.value = actual - 1;
+              updateSubtotal(filas[i]);
+            } else {
+              // Cantidad llega a 0 → simular click en eliminar
+              const boton = filas[i].cells[7].querySelector('button');
+              if (boton) boton.click();
+            }
+          }
+          break;
+        }
+      }
+      _actualizarContadoresEnResultados();
+      entradaBusqueda.focus();
+      _keepResultsOpen = false;
+    });
+
+    // Botón papelera: eliminar fila completa de la tabla
+    btnDelete.addEventListener('mousedown', e => { e.preventDefault(); _keepResultsOpen = true; });
+    btnDelete.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
+      for (let i = 0; i < filas.length; i++) {
+        if (filas[i].cells[1].textContent.trim() === String(cod).trim()) {
+          const boton = filas[i].cells[7].querySelector('button');
+          if (boton) boton.click();
+          break;
+        }
+      }
+      _actualizarContadoresEnResultados();
+      entradaBusqueda.focus();
+      _keepResultsOpen = false;
+    });
+
+    // Hover
+    resultado.addEventListener('mouseenter', function () {
+      document.querySelectorAll('.resultado-busqueda').forEach(r => r.classList.remove('hover-activo'));
+      this.classList.add('hover-activo');
+    });
+    resultado.addEventListener('mouseleave', function () {
+      this.classList.remove('hover-activo');
+    });
+
+    return resultado;
+  }
 
   function renderResultadosMostrador(productos) {
+    _productosEnBusqueda = productos;
     resultadosBusqueda.innerHTML = '';
+
     if (!productos.length) {
       resultadosBusqueda.style.display = 'none';
       return;
     }
 
+    const enTabla = _obtenerProductosEnTabla();
+
     productos.forEach((producto) => {
-      const resultado = document.createElement('div');
-      resultado.classList.add('resultado-busqueda');
-      resultado.dataset.codigo       = producto.codigo;
-      resultado.dataset.nombre       = producto.nombre;
-      resultado.dataset.precio_venta = producto.precio_venta;
-      resultado.dataset.stock_actual = producto.stock_actual;
-
-      if (producto.imagenes && producto.imagenes.length > 0) {
-        resultado.dataset.imagen = '/uploads/productos/' + producto.imagenes[0].imagen;
-      }
-
-      const contenedor = document.createElement('div');
-      contenedor.classList.add('resultado-contenedor');
-
-      if (producto.imagenes && producto.imagenes.length > 0) {
-        const imagen = document.createElement('img');
-        imagen.src = '/uploads/productos/' + producto.imagenes[0].imagen;
-        imagen.classList.add('miniatura');
-        imagen.loading = 'lazy';
-        imagen.decoding = 'async';
-        contenedor.appendChild(imagen);
-      }
-
-      const nombreProducto = document.createElement('span');
-      nombreProducto.textContent = producto.nombre;
-      contenedor.appendChild(nombreProducto);
-      resultado.appendChild(contenedor);
-
-      resultado.addEventListener('mouseenter', function () {
-        document.querySelectorAll('.resultado-busqueda').forEach(r => r.classList.remove('hover-activo'));
-        this.classList.add('hover-activo');
-      });
-
-      resultado.addEventListener('mouseleave', function () {
-        this.classList.remove('hover-activo');
-      });
-
-      resultado.addEventListener('click', function () {
-        agregarProductoATabla(
-          this.dataset.codigo,
-          this.dataset.nombre,
-          this.dataset.precio_venta,
-          this.dataset.stock_actual,
-          this.dataset.imagen
-        );
-        resultadosBusqueda.style.display = 'none';
-        entradaBusqueda.value = '';
-      });
-
-      resultadosBusqueda.appendChild(resultado);
+      resultadosBusqueda.appendChild(crearElementoResultado(producto, enTabla));
     });
 
     resultadosBusqueda.style.display = 'block';
   }
 
-  // ── FIX: cambiar keyup → input, agregar debounce 350ms + AbortController ──
+  // ── Input del buscador ───────────────────────────────────────────────────
   entradaBusqueda.addEventListener('input', (e) => {
     const busqueda = e.target.value.trim();
 
-    // Limpiar visualmente de inmediato
     resultadosBusqueda.innerHTML = '';
     resultadosBusqueda.style.display = 'none';
 
-    // Cancelar request anterior si aún no respondió
     if (_searchController) { _searchController.abort(); _searchController = null; }
     clearTimeout(_searchTimer);
 
     if (!busqueda) return;
 
-    // Capturar query para stale-check
     const queryCapturada = busqueda;
 
     _searchTimer = setTimeout(async () => {
@@ -483,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function () {
         );
         const productos = await respuesta.json();
 
-        // ── FIX stale-check: descartar si la query cambió mientras viajaba ──
+        // Stale-check: descartar si la query cambió mientras viajaba
         if (entradaBusqueda.value.trim() !== queryCapturada) return;
 
         renderResultadosMostrador(productos);
@@ -491,16 +694,62 @@ document.addEventListener('DOMContentLoaded', function () {
         if (err.name === 'AbortError') return;
         console.error('[BuscadorFacturas] Error al buscar:', err);
       }
-    }, 350);
+    }, 300);
+  });
+
+  // Cerrar resultados al perder el foco (excepto cuando se interactúa con controles internos)
+  entradaBusqueda.addEventListener('blur', () => {
+    if (_keepResultsOpen) return;
+    timeoutId = setTimeout(() => {
+      resultadosBusqueda.style.display = 'none';
+    }, 200);
+  });
+
+  entradaBusqueda.addEventListener('focus', () => {
+    clearTimeout(timeoutId);
+    if (_productosEnBusqueda.length > 0 && entradaBusqueda.value.trim()) {
+      renderResultadosMostrador(_productosEnBusqueda);
+    }
   });
 
   resultadosBusqueda.addEventListener('mouseleave', () => {
+    if (_keepResultsOpen) return;
     timeoutId = setTimeout(() => { resultadosBusqueda.style.display = 'none'; }, 300);
   });
 
   resultadosBusqueda.addEventListener('mouseenter', () => {
     clearTimeout(timeoutId);
     resultadosBusqueda.style.display = 'block';
+  });
+
+  // Teclas de navegación en el buscador
+  entradaBusqueda.addEventListener('keydown', (e) => {
+    const items = resultadosBusqueda.querySelectorAll('.resultado-busqueda');
+    if (!items.length) return;
+    const activo = resultadosBusqueda.querySelector('.hover-activo');
+    let idx = [...items].indexOf(activo);
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = items[Math.min(idx + 1, items.length - 1)];
+      items.forEach(r => r.classList.remove('hover-activo'));
+      next.classList.add('hover-activo');
+      next.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = items[Math.max(idx - 1, 0)];
+      items.forEach(r => r.classList.remove('hover-activo'));
+      prev.classList.add('hover-activo');
+      prev.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && activo) {
+      e.preventDefault();
+      const contenedor = activo.querySelector('.resultado-contenedor');
+      if (contenedor) contenedor.click();
+    } else if (e.key === 'Escape') {
+      resultadosBusqueda.style.display = 'none';
+      resultadosBusqueda.innerHTML = '';
+      _productosEnBusqueda = [];
+    }
   });
 
   // Eventos de inputs de tabla
@@ -599,277 +848,85 @@ async function mostrarModalARCA(facturaId, totalConInteres) {
     return;
   }
 
-  const modoCuit = paso1.isDenied || paso1.value === 'cuit';
-
-  // ── Paso 2a: Consumidor Final (datos opcionales para seguros) ─────────────
-  if (!modoCuit) {
-    const htmlCF = `
-      <div style="display:flex;flex-direction:column;gap:14px;padding:4px 0;text-align:left">
-        <p style="color:#8fa3c0;font-size:.82rem;margin:0">
-          <i class="fa-solid fa-circle-info" style="margin-right:6px;color:#7aaee8"></i>
-          Opcional — completar solo si el cliente necesita sus datos en la factura (seguros, devoluciones).
-        </p>
-        <div>
-          <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
-            Nombre / Razón Social
-          </label>
-          <input id="cf-nombre" type="text" maxlength="100" placeholder="Ej: Juan García"
-            style="width:100%;padding:11px 14px;border-radius:10px;
-                   background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.4);
-                   color:#f0f4ff;font-size:.95rem;outline:none;font-family:inherit" />
-        </div>
-        <div style="display:flex;gap:10px">
-          <div style="flex:0 0 150px">
-            <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
-              Tipo doc.
-            </label>
-            <select id="cf-doc-tipo" style="width:100%;padding:11px 10px;border-radius:10px;
-              background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.4);
-              color:#f0f4ff;font-size:.88rem;outline:none;font-family:inherit;cursor:pointer">
-              <option value="96" style="background:#111c30">DNI (96)</option>
-              <option value="94" style="background:#111c30">Pasaporte (94)</option>
-              <option value="89" style="background:#111c30">Cédula (89)</option>
-            </select>
-          </div>
-          <div style="flex:1">
-            <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
-              Nro. de documento
-            </label>
-            <input id="cf-doc-nro" type="text" inputmode="numeric" maxlength="12"
-              placeholder="Ej: 30123456"
-              style="width:100%;padding:11px 14px;border-radius:10px;
-                     background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.4);
-                     color:#f0f4ff;font-size:.95rem;outline:none;font-family:inherit" />
-          </div>
-        </div>
-        <div id="cf-error" style="color:#f87171;font-size:.78rem;display:none"></div>
-      </div>`;
-
-    const pasoCF = await Swal.fire({
-      title: '<span style="font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:#7aaee8">Factura B — Consumidor Final</span>',
-      html: htmlCF,
-      background: '#111c30',
-      color: '#f0f4ff',
-      showConfirmButton: true,
-      confirmButtonText: 'Emitir',
-      showCancelButton: true,
-      cancelButtonText: 'Cancelar',
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      width: '460px',
-      customClass: { confirmButton: 'af-apps-confirm' },
-      preConfirm: () => {
-        const nombre    = (document.getElementById('cf-nombre').value || '').trim();
-        const docTipo   = Number(document.getElementById('cf-doc-tipo').value);
-        const docNroRaw = document.getElementById('cf-doc-nro').value.replace(/\D/g, '');
-        const docNro    = docNroRaw ? Number(docNroRaw) : 0;
-        const errEl     = document.getElementById('cf-error');
-        if (nombre && !docNro) {
-          errEl.textContent = 'Si ingresás nombre, también ingresá el número de documento.';
-          errEl.style.display = 'block';
-          return false;
-        }
-        if (docNro && !nombre) {
-          errEl.textContent = 'Si ingresás número de documento, también ingresá el nombre.';
-          errEl.style.display = 'block';
-          return false;
-        }
-        errEl.style.display = 'none';
-        return { nombre, docTipo, docNro };
-      }
-    });
-
-    if (!pasoCF.isConfirmed) { window.location.href = '/productos'; return; }
-
-    const { nombre: cfNombre, docTipo: cfDocTipo, docNro: cfDocNro } = pasoCF.value;
-
-    const cfPayload = (cfNombre && cfDocNro) ? {
-      cbte_tipo: 6, doc_tipo: cfDocTipo, doc_nro: cfDocNro,
-      receptor_cond_iva_id: 5, receptor_nombre: cfNombre
-    } : {
-      cbte_tipo: 6, doc_tipo: 99, doc_nro: 0, receptor_cond_iva_id: 5
-    };
-
-    await _emitirARCA(facturaId, cfPayload);
+  // ── Consumidor Final ──────────────────────────────────────────────────────
+  if (paso1.isConfirmed && paso1.value === 'cf') {
+    await _emitirARCA(facturaId, { cbte_tipo: 6, doc_tipo: 99, doc_nro: 0, receptor_cond_iva_id: 5 });
     return;
   }
 
-  // ── Paso 2b: Con CUIT ────────────────────────────────────
-  const htmlCuit = `
-    <div style="display:flex;flex-direction:column;gap:14px;padding:4px 0;text-align:left">
-
-      <div>
-        <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
-          CUIT del receptor (11 dígitos, sin guiones)
-        </label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input id="arca-cuit-input" type="text" inputmode="numeric" maxlength="11"
-            placeholder="Ej: 20123456789"
-            style="flex:1;padding:12px 14px;border-radius:10px;
-                   background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.4);
-                   color:#f0f4ff;font-size:1rem;outline:none;font-family:inherit" />
-          <button id="arca-cuit-buscar" type="button"
-            style="padding:11px 14px;border-radius:10px;flex-shrink:0;
-                   background:rgba(31,72,126,.25);border:1.5px solid rgba(31,72,126,.5);
-                   color:#c0d8f8;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">
-            <i class="fa-solid fa-magnifying-glass"></i> Buscar
-          </button>
-        </div>
-        <div id="arca-cuit-buscando" style="color:#7aaee8;font-size:.78rem;margin-top:5px;display:none">
-          <i class="fa-solid fa-spinner fa-spin"></i> Consultando padrón AFIP…
-        </div>
-        <div id="arca-cuit-error" style="color:#f87171;font-size:.78rem;margin-top:5px;display:none"></div>
-      </div>
-
-      <div>
-        <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
-          Razón Social / Nombre
-        </label>
-        <input id="arca-receptor-nombre" type="text" maxlength="100"
-          placeholder="Se completa automáticamente al buscar"
-          style="width:100%;padding:11px 14px;border-radius:10px;
-                 background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.35);
-                 color:#f0f4ff;font-size:.95rem;outline:none;font-family:inherit" />
-      </div>
-
-      <div id="arca-domicilio-row" style="display:none">
-        <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
-          Domicilio
-        </label>
-        <input id="arca-receptor-domicilio" type="text" maxlength="200" readonly
-          style="width:100%;padding:11px 14px;border-radius:10px;
-                 background:rgba(255,255,255,.03);border:1.5px solid rgba(31,72,126,.2);
-                 color:#8fa3c0;font-size:.9rem;outline:none;font-family:inherit" />
-      </div>
-
-      <div>
-        <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
-          Tipo de comprobante
-        </label>
-        <div style="display:flex;gap:10px">
-          <label style="flex:1;cursor:pointer">
-            <input type="radio" name="arca-cbte" value="6" checked style="display:none">
-            <div id="arca-radio-b" style="padding:10px 14px;border-radius:10px;border:1.5px solid rgba(31,72,126,.4);background:rgba(31,72,126,.2);text-align:center;font-size:.85rem;font-weight:700;color:#7aaee8;transition:.15s">
-              Factura B
-            </div>
-          </label>
-          <label style="flex:1;cursor:pointer">
-            <input type="radio" name="arca-cbte" value="1" style="display:none">
-            <div id="arca-radio-a" style="padding:10px 14px;border-radius:10px;border:1.5px solid rgba(99,102,241,.25);background:rgba(99,102,241,.07);text-align:center;font-size:.85rem;font-weight:700;color:#8fa3c0;transition:.15s">
-              Factura A
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div>
-        <label style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d6380;display:block;margin-bottom:6px">
-          Condición IVA del receptor
-        </label>
-        <select id="arca-cond-iva" style="width:100%;padding:12px 14px;border-radius:10px;
-          background:rgba(255,255,255,.06);border:1.5px solid rgba(31,72,126,.4);
-          color:#f0f4ff;font-size:.9rem;outline:none;font-family:inherit;cursor:pointer">
-          <option value="5" style="background:#111c30">Consumidor Final (5)</option>
-          <option value="4" style="background:#111c30">Exento (4)</option>
-          <option value="6" style="background:#111c30">Responsable Monotributo (6)</option>
-          <option value="1" style="background:#111c30">Responsable Inscripto (1) — solo Fact. A</option>
-        </select>
-      </div>
-
-    </div>`;
-
+  // ── Con CUIT ──────────────────────────────────────────────────────────────
   const paso2 = await Swal.fire({
-    title: '<span style="font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:#a5b4fc">Datos del receptor</span>',
-    html: htmlCuit,
+    title: '<span style="font-size:1rem;color:#a5b4fc">Datos del receptor</span>',
+    html: `
+      <div style="display:flex;flex-direction:column;gap:14px;text-align:left;padding:4px 0">
+
+        <div>
+          <label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">TIPO DE FACTURA</label>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;color:#f0f4ff;font-size:.9rem">
+              <input type="radio" name="af-cbte" value="6" checked> Factura B
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;color:#f0f4ff;font-size:.9rem">
+              <input type="radio" name="af-cbte" value="1"> Factura A
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">CONDICIÓN IVA RECEPTOR</label>
+          <select id="af-cond" style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.88rem">
+            <option value="5" selected>Consumidor Final (5)</option>
+            <option value="4">Exento (4)</option>
+            <option value="6">Monotributista (6)</option>
+            <option value="1">Responsable Inscripto (1)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">CUIT / CUIL *</label>
+          <input id="af-cuit" type="text" maxlength="11" placeholder="Ej: 20304050607"
+            style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.95rem;box-sizing:border-box">
+        </div>
+
+        <div>
+          <label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">RAZÓN SOCIAL (opcional)</label>
+          <input id="af-nombre" type="text" placeholder="Dejar vacío para resolver por CUIT"
+            style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.88rem;box-sizing:border-box">
+        </div>
+
+        <div>
+          <label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">DOMICILIO (opcional)</label>
+          <input id="af-dom" type="text" placeholder="Dejar vacío para resolver por CUIT"
+            style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.88rem;box-sizing:border-box">
+        </div>
+
+        <div id="af-err" style="display:none;color:#f87171;font-size:.82rem;padding:8px 12px;background:rgba(248,113,113,.07);border-radius:8px;border:1px solid rgba(248,113,113,.2)"></div>
+      </div>`,
     background: '#111c30',
     color: '#f0f4ff',
-    showConfirmButton: true,
-    confirmButtonText: 'Emitir ARCA',
-    showCancelButton: true,
+    confirmButtonText: 'Emitir comprobante',
     cancelButtonText: 'Cancelar',
+    showCancelButton: true,
+    reverseButtons: true,
+    width: '480px',
     allowOutsideClick: false,
     allowEscapeKey: false,
-    width: '480px',
     customClass: { confirmButton: 'af-apps-confirm' },
-    didOpen: () => {
-      // Highlight visual radios
-      document.querySelectorAll('input[name="arca-cbte"]').forEach(radio => {
-        radio.addEventListener('change', () => {
-          const isA = document.querySelector('input[name="arca-cbte"]:checked').value === '1';
-          document.getElementById('arca-radio-b').style.background    = isA ? 'rgba(31,72,126,.07)' : 'rgba(31,72,126,.2)';
-          document.getElementById('arca-radio-b').style.color          = isA ? '#4d6380' : '#7aaee8';
-          document.getElementById('arca-radio-b').style.borderColor    = isA ? 'rgba(31,72,126,.25)' : 'rgba(31,72,126,.4)';
-          document.getElementById('arca-radio-a').style.background    = isA ? 'rgba(99,102,241,.18)' : 'rgba(99,102,241,.07)';
-          document.getElementById('arca-radio-a').style.color          = isA ? '#c7d2fe' : '#8fa3c0';
-          document.getElementById('arca-radio-a').style.borderColor    = isA ? 'rgba(99,102,241,.5)' : 'rgba(99,102,241,.25)';
-          if (isA) document.getElementById('arca-cond-iva').value = '1';
-        });
-      });
-
-      // Autocomplete padrón AFIP
-      async function buscarCuit() {
-        const cuitVal = (document.getElementById('arca-cuit-input').value || '').replace(/\D/g, '');
-        const errEl   = document.getElementById('arca-cuit-error');
-        const busEl   = document.getElementById('arca-cuit-buscando');
-        errEl.style.display = 'none';
-        if (cuitVal.length !== 11) {
-          errEl.textContent = 'El CUIT debe tener exactamente 11 dígitos.';
-          errEl.style.display = 'block';
-          return;
-        }
-        busEl.style.display = 'block';
-        try {
-          const r = await fetch(`/arca/receptor?doc_tipo=80&doc_nro=${cuitVal}&resolve=1`);
-          const d = await r.json();
-          busEl.style.display = 'none';
-          if (d.razon_social || d.nombre) {
-            document.getElementById('arca-receptor-nombre').value = (d.razon_social || d.nombre || '').trim();
-            if (d.domicilio) {
-              document.getElementById('arca-receptor-domicilio').value = d.domicilio;
-              document.getElementById('arca-domicilio-row').style.display = 'block';
-            }
-            // Autoseleccionar condición IVA
-            if (d.cond_iva_id) {
-              const sel = document.getElementById('arca-cond-iva');
-              if (sel.querySelector(`option[value="${d.cond_iva_id}"]`)) {
-                sel.value = String(d.cond_iva_id);
-                if (Number(d.cond_iva_id) === 1) {
-                  document.querySelector('input[name="arca-cbte"][value="1"]').checked = true;
-                  document.querySelector('input[name="arca-cbte"][value="1"]').dispatchEvent(new Event('change'));
-                }
-              }
-            }
-          } else {
-            errEl.textContent = d.error || 'CUIT no encontrado en el padrón. Podés ingresar el nombre manualmente.';
-            errEl.style.display = 'block';
-          }
-        } catch(e) {
-          busEl.style.display = 'none';
-          errEl.textContent = 'Error al consultar padrón. Ingresá el nombre manualmente.';
-          errEl.style.display = 'block';
-        }
-      }
-
-      document.getElementById('arca-cuit-buscar').addEventListener('click', buscarCuit);
-      document.getElementById('arca-cuit-input').addEventListener('input', function() {
-        if (this.value.replace(/\D/g, '').length === 11) buscarCuit();
-      });
-    },
     preConfirm: () => {
-      const cuitVal        = (document.getElementById('arca-cuit-input').value || '').replace(/\D/g, '');
-      const errEl          = document.getElementById('arca-cuit-error');
-      const receptorNombre = (document.getElementById('arca-receptor-nombre').value || '').trim();
-      const receptorDom    = (document.getElementById('arca-receptor-domicilio')?.value || '').trim();
+      const errEl = document.getElementById('af-err');
+      errEl.style.display = 'none';
 
-      if (cuitVal.length !== 11) {
-        errEl.textContent = 'El CUIT debe tener exactamente 11 dígitos.';
+      const cbte_tipo  = Number(document.querySelector('input[name="af-cbte"]:checked')?.value || 6);
+      const cond_iva   = Number(document.getElementById('af-cond')?.value || 5);
+      const cuitVal    = document.getElementById('af-cuit')?.value.replace(/\D/g,'') || '';
+      const receptorNombre = document.getElementById('af-nombre')?.value.trim() || '';
+      const receptorDom    = document.getElementById('af-dom')?.value.trim()    || '';
+
+      if (!cuitVal || cuitVal.length < 10) {
+        errEl.textContent = 'Ingresá un CUIT/CUIL válido (10 u 11 dígitos).';
         errEl.style.display = 'block';
         return false;
       }
-      errEl.style.display = 'none';
-
-      const cbte_tipo = Number(document.querySelector('input[name="arca-cbte"]:checked').value);
-      const cond_iva  = Number(document.getElementById('arca-cond-iva').value);
 
       if (cbte_tipo === 1 && cond_iva !== 1) {
         errEl.textContent = 'Factura A requiere condición IVA: Responsable Inscripto (1).';
@@ -894,7 +951,6 @@ async function mostrarModalARCA(facturaId, totalConInteres) {
   if (receptorNombre) cuitPayload.receptor_nombre    = receptorNombre;
   if (receptorDom)    cuitPayload.receptor_domicilio = receptorDom;
 
-  // Solo pasar resolve_receptor si no tenemos nombre (para no pisar lo que ya completó el admin)
   await _emitirARCA(facturaId, cuitPayload, !receptorNombre);
 }
 
@@ -902,7 +958,6 @@ async function mostrarModalARCA(facturaId, totalConInteres) {
 /* ── Llamada real al endpoint ARCA ── */
 async function _emitirARCA(facturaId, payload, resolveReceptor = false) {
 
-  // Spinner mientras emite
   Swal.fire({
     title: 'Emitiendo comprobante ARCA…',
     html: '<p style="color:#8fa3c0;font-size:.9rem">Conectando con WSFE · no cerrar esta ventana</p>',
@@ -924,7 +979,6 @@ async function _emitirARCA(facturaId, payload, resolveReceptor = false) {
 
     const data = await resp.json();
 
-    // ── EMITIDO ─────────────────────────────────────────────
     if (resp.ok && data.estado === 'EMITIDO') {
       const tipoLabel = (data.cbte_tipo === 1 || data.cbte_tipo === 51) ? 'Factura A' : 'Factura B';
       const pdfUrl   = `/arca/pdf/${data.arca_id}`;
@@ -971,7 +1025,6 @@ async function _emitirARCA(facturaId, payload, resolveReceptor = false) {
       return;
     }
 
-    // ── PENDIENTE (WSFE no confirmó) ─────────────────────────
     if (resp.status === 202 || data.estado === 'PENDIENTE') {
       await Swal.fire({
         icon: 'warning',
@@ -994,7 +1047,6 @@ async function _emitirARCA(facturaId, payload, resolveReceptor = false) {
       return;
     }
 
-    // ── DUPLICADO (409) ───────────────────────────────────────
     if (resp.status === 409) {
       await Swal.fire({
         icon: 'info',
@@ -1012,7 +1064,6 @@ async function _emitirARCA(facturaId, payload, resolveReceptor = false) {
       return;
     }
 
-    // ── RECHAZADO u otro error ────────────────────────────────
     const detalle = data.error || data.obs_msg || JSON.stringify(data);
     await Swal.fire({
       icon: 'error',
@@ -1033,7 +1084,6 @@ async function _emitirARCA(facturaId, payload, resolveReceptor = false) {
     window.location.href = '/productos';
 
   } catch (err) {
-    // Error de red / respuesta no-JSON
     await Swal.fire({
       icon: 'error',
       title: 'Error de conexión con ARCA',

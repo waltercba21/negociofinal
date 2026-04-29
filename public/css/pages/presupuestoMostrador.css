@@ -798,3 +798,199 @@
   border: 1.5px solid rgba(31, 72, 126, 0.35) !important;
   background: transparent !important;
 }
+/* ═══════════════════════════════════════════════════════════════════
+   BUSCADOR AVANZADO — Estilos para controles qty/delete en resultados
+   Agregar a: facturasMostrador.css  Y  presupuestoMostrador.css
+   v2026-04-29
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Contenedor de cada resultado ──────────────────────────────── */
+.resultado-busqueda {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+
+.resultado-busqueda:last-child {
+  border-bottom: none;
+}
+
+.resultado-busqueda.hover-activo,
+.resultado-busqueda:hover {
+  background: rgba(99, 155, 255, 0.08);
+}
+
+/* Productos ya en tabla → borde izquierdo verde para identificarlos */
+.resultado-busqueda.en-tabla {
+  border-left: 3px solid #22c55e;
+  padding-left: 9px;
+  background: rgba(34, 197, 94, 0.04);
+}
+
+.resultado-busqueda.en-tabla.hover-activo {
+  background: rgba(34, 197, 94, 0.10);
+}
+
+/* ── Lado izquierdo: imagen + nombre ───────────────────────────── */
+.resultado-contenedor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.resultado-contenedor .srb-nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+}
+
+/* ── Badge de cantidad ──────────────────────────────────────────── */
+.srb-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 50px;
+  background: #22c55e;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── Panel de controles derecho ─────────────────────────────────── */
+.srb-controles {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Botones base ────────────────────────────────────────────────── */
+.srb-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.srb-btn:hover {
+  transform: scale(1.1);
+}
+
+.srb-btn:active {
+  transform: scale(0.95);
+}
+
+/* Botón restar */
+.srb-qty-minus {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.25);
+}
+.srb-qty-minus:hover {
+  background: rgba(234, 179, 8, 0.28);
+}
+
+/* Valor cantidad entre botones */
+.srb-qty-val {
+  min-width: 20px;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+/* Botón sumar */
+.srb-qty-plus {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+.srb-qty-plus:hover {
+  background: rgba(34, 197, 94, 0.28);
+}
+
+/* Botón eliminar */
+.srb-delete {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  margin-left: 2px;
+}
+.srb-delete:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* ── Animaciones de fila en tabla ───────────────────────────────── */
+
+/* Flash verde: producto ya en tabla, se incrementó la cantidad */
+@keyframes rowFlash {
+  0%   { background: rgba(34, 197, 94, 0.25); }
+  100% { background: transparent; }
+}
+.row-flash {
+  animation: rowFlash 0.6s ease-out forwards;
+}
+
+/* Entrada suave de fila nueva */
+@keyframes rowNew {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.row-new {
+  animation: rowNew 0.4s ease-out forwards;
+}
+
+/* ── Mejora visual: hint de teclado en el buscador ─────────────── */
+.facturas-buscador-wrap,
+.presupuesto-buscador-wrap {
+  position: relative;
+}
+
+/* Tip flotante opcional (↑↓ Enter Esc) — se puede mostrar con JS si se desea */
+.buscador-kbd-hint {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+  opacity: 0.4;
+  font-size: 0.7rem;
+}
+
+.buscador-kbd-hint kbd {
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+/* ── Responsive: ocultar controles en pantallas muy pequeñas ────── */
+@media (max-width: 480px) {
+  .srb-qty-val { display: none !important; }
+  .srb-btn     { width: 24px; height: 24px; }
+}
