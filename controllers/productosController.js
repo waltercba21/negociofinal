@@ -2856,6 +2856,35 @@ descargarPDFNuevos : async (req, res) => {
       return res.status(404).send('No hay productos nuevos detectados en la última importación.');
     }
 
+    // ── Filtrar productos que ya existen en la BD (en cualquier proveedor) ──
+    // Un producto es realmente "nuevo" si su código NO aparece en
+    // producto_proveedor para ningún proveedor, ni tampoco en productos.codigo.
+    const todosLosCodigos = data.items
+      .map(it => (it.codigo || '').toString().trim().toUpperCase())
+      .filter(Boolean);
+
+    let codigosExistentes = new Set();
+    if (todosLosCodigos.length > 0) {
+      const placeholders = todosLosCodigos.map(() => '?').join(',');
+      // Buscar en producto_proveedor (todos los proveedores)
+      const [ppRows] = await conexion.promise().query(
+        `SELECT UPPER(TRIM(codigo)) AS codigo FROM producto_proveedor
+         WHERE UPPER(TRIM(codigo)) IN (${placeholders})`,
+        todosLosCodigos
+      );
+      (ppRows || []).forEach(r => { if (r.codigo) codigosExistentes.add(r.codigo); });
+    }
+
+    // Filtrar los items que ya están cargados
+    const itemsRealesNuevos = data.items.filter(item => {
+      const cod = (item.codigo || '').toString().trim().toUpperCase();
+      return cod && !codigosExistentes.has(cod);
+    });
+
+    if (itemsRealesNuevos.length === 0) {
+      return res.status(404).send('Todos los productos de la lista ya están cargados en el sistema.');
+    }
+
     const proveedor = data.proveedor_nombre || `Proveedor_${data.proveedor_id}`;
     const fecha = new Date(data.fecha || Date.now());
     const yyyy = fecha.getFullYear();
@@ -2876,6 +2905,7 @@ descargarPDFNuevos : async (req, res) => {
     doc.moveDown(0.3);
     doc.fontSize(11).text(`Proveedor: ${proveedor}`, { align: 'center' });
     doc.text(`Fecha: ${dd}/${mm}/${yyyy}`, { align: 'center' });
+    doc.text(`(${itemsRealesNuevos.length} productos nuevos, ${data.items.length - itemsRealesNuevos.length} ya cargados omitidos)`, { align: 'center' });
     doc.moveDown(1);
 
     // Encabezados de tabla
@@ -2889,7 +2919,7 @@ descargarPDFNuevos : async (req, res) => {
     doc.moveDown(0.5);
 
     // Filas
-    data.items.forEach(item => {
+    itemsRealesNuevos.forEach(item => {
       const precioFmt = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.precio || 0);
       const yStart = doc.y;
       // Código

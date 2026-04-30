@@ -1128,21 +1128,22 @@ _FAL_HOJAS_MARCA_SET = {
 
 def _detectar_fal_xlsx(file_path):
     """
-    Detecta el xlsx convertido de FAL por la presencia de hojas de marca
-    y la ausencia de sharedStrings (Node genera strings inline).
+    Detecta el xlsx de FAL (convertido por Node o por LibreOffice).
+    Criterio principal: tiene la hoja maestra 'LISTA PRECIOS GESTION AL DIA'
+    y al menos 3 hojas de marca conocidas.
+    Funciona tanto si tiene sharedStrings (Node/xlsx) como si no (LibreOffice).
     """
     try:
         with zipfile.ZipFile(file_path) as zf:
-            # FAL convertido NO tiene sharedStrings.xml
-            if 'xl/sharedStrings.xml' in zf.namelist():
-                return False
-            # Debe tener el workbook con hojas de marca
             if 'xl/workbook.xml' not in zf.namelist():
                 return False
             with zf.open('xl/workbook.xml') as f:
                 wb_xml = f.read().decode('utf-8', errors='replace')
             sheet_names_lower = {n.lower() for n in re.findall(r'<sheet[^>]+name="([^"]+)"', wb_xml)}
-            # Verificar que tiene al menos 3 hojas de marca conocidas
+            # Debe tener la hoja maestra característica de FAL
+            if _FAL_HOJA_MAESTRA not in sheet_names_lower:
+                return False
+            # Y al menos 3 hojas de marca conocidas
             matches = sheet_names_lower & _FAL_HOJAS_MARCA_SET
             return len(matches) >= 3
     except Exception:
@@ -1150,81 +1151,148 @@ def _detectar_fal_xlsx(file_path):
 
 def _parsear_fal_xlsx(file_path):
     """
-    Lee el xlsx convertido por Node del XLS de FAL.
+    Lee el xlsx de FAL (convertido por Node o LibreOffice).
     - Primero carga la hoja maestra 'LISTA PRECIOS GESTION AL DIA' para obtener
-      descripcion larga (col D) indexada por codigo largo (col A).
+      descripcion larga (col D) y precio (col E) indexados por codigo largo (col A).
     - Luego lee cada hoja de marca:
         col A = codigo largo (para join con hoja maestra)
         col B = codigo corto (el que está en BD)
         col E = precio (resultado del VLOOKUP pre-calculado)
-    Los strings son inline (t="str") sin shared strings.
+    Soporta tanto strings inline (t="str", sin sharedStrings) como
+    strings compartidos (t="s", con sharedStrings.xml).
     """
-    _cell_a  = re.compile(r'<c r="A\d+"[^>]*><v[^>]*>([^<]*)</v>')
-    _cell_b  = re.compile(r'<c r="B\d+"[^>]*>(?:<f>[^<]*</f>)?<v[^>]*>([^<]+)</v>')
-    _cell_c  = re.compile(r'<c r="C\d+"[^>]*><v[^>]*>([^<]*)</v>')
-    _cell_d  = re.compile(r'<c r="D\d+"[^>]*><v[^>]*>([^<]*)</v>')
-    _cell_e  = re.compile(r'<c r="E\d+"[^>]*>(?:<f>[^<]*</f>)?<v[^>]*>([^<]+)</v>')
+    _cell_a  = re.compile(r'<c r="A\d+"[^>]*>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]*)</v>|<is><t>([^<]*)</t></is>)')
+    _cell_b  = re.compile(r'<c r="B\d+"[^>]*>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]+)</v>|<is><t>([^<]+)</t></is>)')
+    _cell_b_full = re.compile(r'<c r="B\d+"([^>]*)>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]+)</v>|<is><t>([^<]+)</t></is>)')
+    _cell_c  = re.compile(r'<c r="C\d+"[^>]*>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]*)</v>|<is><t>([^<]*)</t></is>)')
+    _cell_c_full = re.compile(r'<c r="C\d+"([^>]*)>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]*)</v>|<is><t>([^<]*)</t></is>)')
+    _cell_d  = re.compile(r'<c r="D\d+"[^>]*>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]*)</v>|<is><t>([^<]*)</t></is>)')
+    _cell_e  = re.compile(r'<c r="E\d+"[^>]*>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]+)</v>|<is><t>([^<]+)</t></is>)')
+    _cell_e_full = re.compile(r'<c r="E\d+"([^>]*)>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]+)</v>|<is><t>([^<]+)</t></is>)')
     _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
     _HOJA_MAESTRA = 'lista precios gestion al dia'
     dedup = {}
 
+    def _cell_val(match, shared):
+        """Extrae valor de un match: soporta <v>, inlineStr y shared strings."""
+        if match is None:
+            return ''
+        groups = match.groups()
+        # Para matches con attrs (full): groups = (attrs, v_val o None, is_val o None)
+        # Para matches sin attrs:        groups = (v_val o None, is_val o None)
+        if len(groups) == 3:
+            attrs, v_val, is_val = groups
+        else:
+            attrs, v_val, is_val = None, groups[0], groups[1] if len(groups) > 1 else None
+
+        val = v_val if v_val is not None else (is_val or '')
+        if attrs and ('t="s"' in attrs or "t='s'" in attrs) and shared:
+            try:
+                return shared[int(val)]
+            except Exception:
+                return val
+        return val
+
     try:
         with zipfile.ZipFile(file_path) as zf:
+            # Cargar shared strings si existen (Node-converted xlsx los tiene)
+            shared = []
+            if 'xl/sharedStrings.xml' in zf.namelist():
+                with zf.open('xl/sharedStrings.xml') as f:
+                    ss = f.read().decode('utf-8', errors='replace')
+                for block in ss.split('<si>')[1:]:
+                    texts = re.findall(r'<t[^>]*>([^<]*)</t>', block)
+                    shared.append(''.join(texts))
+
             with zf.open('xl/workbook.xml') as f:
                 wb_xml = f.read().decode('utf-8', errors='replace')
             sheet_entries = re.findall(r'<sheet[^>]+name="([^"]+)"[^>]+r:id="([^"]+)"', wb_xml)
 
             with zf.open('xl/_rels/workbook.xml.rels') as f:
                 rels_xml = f.read().decode('utf-8', errors='replace')
-            rels = dict(re.findall(r'Id="([^"]+)"[^>]+Target="([^"]+)"', rels_xml))
+            # Parsear rels soportando cualquier orden de atributos
+            rels = {}
+            for rel_m in re.finditer(r'<Relationship\b([^>]+)>', rels_xml):
+                attrs = rel_m.group(1)
+                id_m  = re.search(r'\bId="([^"]+)"', attrs)
+                tgt_m = re.search(r'\bTarget="([^"]+)"', attrs)
+                if id_m and tgt_m:
+                    rels[id_m.group(1)] = tgt_m.group(1)
+
+            def _resolve_path(target):
+                """Convierte target del rels a path dentro del zip."""
+                # Rutas absolutas: /xl/worksheets/sheet1.xml → xl/worksheets/sheet1.xml
+                t = target.lstrip('/')
+                if not t.startswith('xl/'):
+                    t = f"xl/{t}"
+                return t
 
             def _get_sheet_xml(name_lower):
                 for sh_name, rid in sheet_entries:
                     if sh_name.lower() == name_lower:
                         target = rels.get(rid, '')
-                        sheet_path = f"xl/{target}" if not target.startswith('xl/') else target
+                        sheet_path = _resolve_path(target)
                         if sheet_path in zf.namelist():
                             with zf.open(sheet_path) as f:
                                 return f.read().decode('utf-8', errors='replace')
                 return None
 
-            # ── 1. Cargar hoja maestra: cod_largo → descripcion larga ──────────
-            desc_map = {}
+            # ── 1. Cargar hoja maestra: cod_largo → (descripcion, precio) ──────
+            desc_map  = {}
+            precio_map = {}
             maestra_xml = _get_sheet_xml(_HOJA_MAESTRA)
             if maestra_xml:
+                _cell_a_m  = re.compile(r'<c r="A\d+"([^>]*)>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]*)</v>|<is><t>([^<]*)</t></is>)')
+                _cell_d_m  = re.compile(r'<c r="D\d+"([^>]*)>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]*)</v>|<is><t>([^<]*)</t></is>)')
+                _cell_e_m  = re.compile(r'<c r="E\d+"([^>]*)>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]+)</v>|<is><t>([^<]+)</t></is>)')
                 for m in _row_re.finditer(maestra_xml):
-                    if int(m.group(1)) <= 1: continue  # skip header
+                    if int(m.group(1)) <= 1: continue
                     row_xml = m.group(2)
-                    ma = _cell_a.search(row_xml)
-                    md = _cell_d.search(row_xml)
-                    if ma and md:
-                        cod_largo = re.sub(r'\s+', '', ma.group(1)).upper()
-                        desc_map[cod_largo] = md.group(1).strip()
+                    ma = _cell_a_m.search(row_xml)
+                    md = _cell_d_m.search(row_xml)
+                    me = _cell_e_m.search(row_xml)
+                    if ma:
+                        cod_largo = _cell_val(ma, shared)
+                        cod_largo = re.sub(r'\s+', '', str(cod_largo)).upper()
+                        if cod_largo.endswith('.0'): cod_largo = cod_largo[:-2]
+                        if cod_largo:
+                            if md:
+                                desc_map[cod_largo] = str(_cell_val(md, shared)).strip()
+                            if me:
+                                try:
+                                    precio_val = float(str(_cell_val(me, shared)).strip())
+                                    if precio_val > 0:
+                                        precio_map[cod_largo] = precio_val
+                                except Exception:
+                                    pass
 
             # ── 2. Parsear hojas de marca ──────────────────────────────────────
             for sheet_name, rid in sheet_entries:
                 if sheet_name.lower() not in _FAL_HOJAS_MARCA_SET:
                     continue
                 target = rels.get(rid, '')
-                sheet_path = f"xl/{target}" if not target.startswith('xl/') else target
+                sheet_path = _resolve_path(target)
                 if sheet_path not in zf.namelist():
                     continue
 
                 with zf.open(sheet_path) as f:
                     sheet_xml = f.read().decode('utf-8', errors='replace')
 
+                _cell_b_re = re.compile(r'<c r="B\d+"([^>]*)>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]+)</v>|<is><t>([^<]+)</t></is>)')
+                _cell_a_re = re.compile(r'<c r="A\d+"([^>]*)>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]*)</v>|<is><t>([^<]*)</t></is>)')
+                _cell_c_re = re.compile(r'<c r="C\d+"([^>]*)>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]*)</v>|<is><t>([^<]*)</t></is>)')
+                _cell_e_re = re.compile(r'<c r="E\d+"([^>]*)>(?:<f>[^<]*</f>)?(?:<v[^>]*>([^<]+)</v>|<is><t>([^<]+)</t></is>)')
+
                 for m in _row_re.finditer(sheet_xml):
                     if int(m.group(1)) <= 1:
                         continue
                     row_xml = m.group(2)
 
-                    mb = _cell_b.search(row_xml)
-                    me = _cell_e.search(row_xml)
-                    if not mb or not me:
+                    # col B = codigo corto
+                    mb = _cell_b_re.search(row_xml)
+                    if not mb:
                         continue
-
-                    # Código corto (col B) — el que está en BD
-                    cod_raw = re.sub(r'\s+', '', mb.group(1).strip())
+                    cod_raw = re.sub(r'\s+', '', str(_cell_val(mb, shared)))
                     if re.match(r'^\d+\.0$', cod_raw):
                         cod_raw = cod_raw[:-2]
                     if not cod_raw or cod_raw.startswith('*'):
@@ -1232,33 +1300,42 @@ def _parsear_fal_xlsx(file_path):
                     if not any(c.isdigit() for c in cod_raw):
                         continue
 
-                    try:
-                        precio = float(me.group(1))
-                    except Exception:
-                        continue
-                    if precio <= 0:
+                    # col A = codigo largo (para join con hoja maestra)
+                    ma = _cell_a_re.search(row_xml)
+                    cod_largo_key = ''
+                    if ma:
+                        cod_largo_key = re.sub(r'\s+', '', str(_cell_val(ma, shared))).upper()
+                        if cod_largo_key.endswith('.0'): cod_largo_key = cod_largo_key[:-2]
+
+                    # Precio: preferir hoja maestra, fallback col E
+                    precio = precio_map.get(cod_largo_key, 0)
+                    if not precio or precio <= 0:
+                        me = _cell_e_re.search(row_xml)
+                        if me:
+                            try:
+                                precio = float(str(_cell_val(me, shared)).strip())
+                            except Exception:
+                                precio = 0
+                    if not precio or precio <= 0:
                         continue
 
                     codigo_clean = limpiar_codigo(cod_raw)
                     if not codigo_clean:
                         continue
 
-                    # Descripcion: hoja maestra via cod_largo (col A), fallback col C
-                    ma = _cell_a.search(row_xml)
-                    desc = ''
-                    if ma:
-                        cod_largo = re.sub(r'\s+', '', ma.group(1)).upper()
-                        desc = desc_map.get(cod_largo, '')
+                    # Descripcion: hoja maestra via cod_largo, fallback col C
+                    desc = desc_map.get(cod_largo_key, '')
                     if not desc:
-                        mc = _cell_c.search(row_xml)
-                        desc = mc.group(1).strip() if mc else ''
+                        mc = _cell_c_re.search(row_xml)
+                        if mc:
+                            desc = str(_cell_val(mc, shared)).strip()
 
                     # Deduplicar por codigo_clean, precio mayor gana
                     existing = dedup.get(codigo_clean)
                     if existing is None or precio > existing['precio']:
                         dedup[codigo_clean] = {
                             'codigo':      codigo_clean,
-                            'precio':      precio,
+                            'precio':      float(precio),
                             'descripcion': _clean_desc(desc),
                             'hoja':        sheet_name,
                         }
