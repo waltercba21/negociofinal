@@ -460,14 +460,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Bloquear propagación en TODOS los eventos de controles ──────────────
     // mousedown: preventDefault evita que el buscador pierda el foco
     //            stopImmediatePropagation evita que suba al .resultado-busqueda
+    // mousedown: preventDefault evita que el buscador pierda el foco al hacer click en los controles
     [btnMinus, btnPlus, btnAgregar, btnQuitar, qtyInput].forEach(el => {
       el.addEventListener('mousedown', e => {
         e.preventDefault();
         e.stopImmediatePropagation();
         _keepOpen = true;
-      });
-      el.addEventListener('click', e => {
-        e.stopImmediatePropagation();
       });
     });
 
