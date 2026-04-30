@@ -159,10 +159,11 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
 let _productosEnBusqueda = [];
 
 function _obtenerProductosEnTabla() {
+  // Clave: código normalizado (string, trim)
   const mapa = {};
   const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   for (let i = 0; i < filas.length; i++) {
-    const cod = filas[i].cells[1].textContent.trim();
+    const cod = String(filas[i].cells[1].textContent).trim();
     if (cod) {
       const qty = parseInt(filas[i].cells[4].querySelector('input')?.value) || 1;
       mapa[cod] = { cantidad: qty, filaIndex: i };
@@ -174,8 +175,9 @@ function _obtenerProductosEnTabla() {
 function _actualizarContadoresEnResultados() {
   const enTabla = _obtenerProductosEnTabla();
   document.querySelectorAll('.resultado-busqueda[data-codigo]').forEach(el => {
-    const cod        = el.dataset.codigo;
-    const info       = enTabla[cod];
+    // Normalizar igual que cells[1]: String + trim
+    const cod        = String(el.dataset.codigo).trim();
+    const info       = enTabla.hasOwnProperty(cod) ? enTabla[cod] : null;
     const badge      = el.querySelector('.srb-badge');
     const qtyInput   = el.querySelector('.srb-qty-input');
     const btnAgregar = el.querySelector('.srb-agregar');
@@ -360,9 +362,10 @@ document.addEventListener('DOMContentLoaded', function () {
    * [Quitar]  → elimina de la tabla.
    */
   function crearElementoResultado(producto, enTabla) {
-    const cod       = producto.codigo;
+    // Normalizar el código igual que en _obtenerProductosEnTabla
+    const cod       = String(producto.codigo ?? producto.id ?? '').trim();
     const stockMax  = parseInt(producto.stock_actual) || 0;
-    const info      = enTabla[cod];
+    const info      = cod ? (enTabla.hasOwnProperty(cod) ? enTabla[cod] : null) : null;
 
     const resultado = document.createElement('div');
     resultado.classList.add('resultado-busqueda');
@@ -489,12 +492,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if (resultado.classList.contains('en-tabla')) {
         if (v <= 1) {
           _quitarDeTabla(cod);
-          _actualizarContadoresEnResultados();
         } else {
           qtyInput.value = v - 1;
           _setQtyEnTabla(cod, v - 1);
-          _actualizarContadoresEnResultados();
         }
+        renderResultadosMostrador(_productosEnBusqueda);
       } else {
         if (v > 1) qtyInput.value = v - 1;
       }
@@ -512,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function () {
         qtyInput.value = v + 1;
         if (resultado.classList.contains('en-tabla')) {
           _setQtyEnTabla(cod, v + 1);
-          _actualizarContadoresEnResultados();
+          renderResultadosMostrador(_productosEnBusqueda);
         }
       }
       entradaBusqueda.focus();
@@ -530,7 +532,8 @@ document.addEventListener('DOMContentLoaded', function () {
       e.stopImmediatePropagation();
       const qty = parseInt(qtyInput.value) || 1;
       agregarProductoATabla(_cod, _nombre, _precio, _stock, _imagen, qty);
-      _actualizarContadoresEnResultados();
+      // Re-renderizar toda la lista para garantizar estado correcto
+      renderResultadosMostrador(_productosEnBusqueda);
       entradaBusqueda.focus();
       _keepOpen = false;
     });
@@ -539,7 +542,7 @@ document.addEventListener('DOMContentLoaded', function () {
     btnQuitar.addEventListener('click', e => {
       e.stopImmediatePropagation();
       _quitarDeTabla(_cod);
-      _actualizarContadoresEnResultados();
+      renderResultadosMostrador(_productosEnBusqueda);
       entradaBusqueda.focus();
       _keepOpen = false;
     });
