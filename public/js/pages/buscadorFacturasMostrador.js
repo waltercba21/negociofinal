@@ -457,28 +457,36 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── EVENTOS ──────────────────────────────────────────────────────────────
 
-    // Evitar que clicks en controles cierren el dropdown (blur del input de búsqueda)
+    // ── Bloquear propagación en TODOS los eventos de controles ──────────────
+    // mousedown: preventDefault evita que el buscador pierda el foco
+    //            stopImmediatePropagation evita que suba al .resultado-busqueda
     [btnMinus, btnPlus, btnAgregar, btnQuitar, qtyInput].forEach(el => {
-      el.addEventListener('mousedown', e => { e.preventDefault(); _keepOpen = true; });
+      el.addEventListener('mousedown', e => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        _keepOpen = true;
+      });
+      el.addEventListener('click', e => {
+        e.stopImmediatePropagation();
+      });
     });
 
     // Input qty manual
-    qtyInput.addEventListener('input', () => {
+    qtyInput.addEventListener('input', e => {
+      e.stopImmediatePropagation();
       let v = parseInt(qtyInput.value) || 1;
       v = Math.max(1, Math.min(v, stockMax));
       qtyInput.value = v;
-      // Si ya está en tabla → sincronizar tabla en tiempo real
       if (resultado.classList.contains('en-tabla')) {
         _setQtyEnTabla(cod, v);
         _actualizarContadoresEnResultados();
       }
     });
-    qtyInput.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') e.preventDefault(); });
-    qtyInput.addEventListener('click',   e => { e.stopPropagation(); _keepOpen = true; });
+    qtyInput.addEventListener('keydown', e => { e.stopImmediatePropagation(); if (e.key === 'Enter') e.preventDefault(); });
 
     // Botón −
     btnMinus.addEventListener('click', e => {
-      e.stopPropagation();
+      e.stopImmediatePropagation();
       const v = parseInt(qtyInput.value) || 1;
       if (resultado.classList.contains('en-tabla')) {
         if (v <= 1) {
@@ -498,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Botón +
     btnPlus.addEventListener('click', e => {
-      e.stopPropagation();
+      e.stopImmediatePropagation();
       const v = parseInt(qtyInput.value) || 1;
       if (v >= stockMax) {
         Swal.fire({ title: 'Stock máximo', text: `Solo hay ${stockMax} unidades disponibles.`, icon: 'warning', confirmButtonText: 'Entendido' });
@@ -513,18 +521,17 @@ document.addEventListener('DOMContentLoaded', function () {
       _keepOpen = false;
     });
 
-    // Botón Agregar
+    // Botón Agregar — usa el codigo/nombre del closure, NO de dataset (evita leer el DOM en el momento del click)
+    const _cod       = cod;
+    const _nombre    = producto.nombre;
+    const _precio    = producto.precio_venta;
+    const _stock     = producto.stock_actual;
+    const _imagen    = resultado.dataset.imagen || '';
+
     btnAgregar.addEventListener('click', e => {
-      e.stopPropagation();
+      e.stopImmediatePropagation();
       const qty = parseInt(qtyInput.value) || 1;
-      agregarProductoATabla(
-        resultado.dataset.codigo,
-        resultado.dataset.nombre,
-        resultado.dataset.precio_venta,
-        resultado.dataset.stock_actual,
-        resultado.dataset.imagen,
-        qty
-      );
+      agregarProductoATabla(_cod, _nombre, _precio, _stock, _imagen, qty);
       _actualizarContadoresEnResultados();
       entradaBusqueda.focus();
       _keepOpen = false;
@@ -532,8 +539,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Botón Quitar
     btnQuitar.addEventListener('click', e => {
-      e.stopPropagation();
-      _quitarDeTabla(cod);
+      e.stopImmediatePropagation();
+      _quitarDeTabla(_cod);
       _actualizarContadoresEnResultados();
       entradaBusqueda.focus();
       _keepOpen = false;
