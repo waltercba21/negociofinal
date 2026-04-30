@@ -430,10 +430,12 @@ document.addEventListener('DOMContentLoaded', function () {
     btnMinus.innerHTML = '<i class="fa-solid fa-minus"></i>';
 
     const qtyInput = document.createElement('input');
-    qtyInput.type      = 'number';
-    qtyInput.min       = '1';
-    qtyInput.max       = String(stockMax);
-    qtyInput.value     = info ? String(info.cantidad) : '1';
+    qtyInput.type        = 'number';
+    qtyInput.min         = '0';           // min=0 evita el error "value < min"
+    qtyInput.max         = String(stockMax || 999);
+    qtyInput.value       = info ? String(info.cantidad) : '1';
+    qtyInput.tabIndex    = -1;            // no participa en Tab navigation
+    qtyInput.setAttribute('form', '');    // desvincula del form padre → no se valida en submit
     qtyInput.classList.add('srb-qty-input');
 
     const btnPlus = document.createElement('button');
