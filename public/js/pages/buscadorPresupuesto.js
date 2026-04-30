@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function () {
     _productosEnBusqueda = productos;
     resultadosBusqueda.innerHTML = '';
     if (!productos.length) { resultadosBusqueda.style.display = 'none'; return; }
-    const enTabla = _obtenerProductosEnTabla();
+    const enTabla = _obtenerIdsEnTabla();
     productos.forEach(p => resultadosBusqueda.appendChild(crearElementoResultado(p, enTabla)));
     resultadosBusqueda.style.display = 'block';
   }
