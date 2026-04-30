@@ -57,14 +57,14 @@ function calcularTotal() {
   if (totalAmountInput)   totalAmountInput.value   = total.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
 }
 
-function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto, cantidadInicial) {
+function agregarProductoATabla(productoId, codigoProducto, nombreProducto, precioVenta, stockActual, imagenProducto, cantidadInicial) {
   const cantAgregar  = parseInt(cantidadInicial) || 1;
   const tablaFactura = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
   const filas        = tablaFactura.rows;
 
-  // Si ya está en tabla → actualizar cantidad
+  // Si ya está en tabla (buscar por ID de BD) → actualizar cantidad
   for (let i = 0; i < filas.length; i++) {
-    if (filas[i].cells[1].textContent.trim() === String(codigoProducto).trim()) {
+    if (filas[i].dataset.productoId && String(filas[i].dataset.productoId) === String(productoId)) {
       const inputQty = filas[i].cells[4].querySelector('input');
       const stockNum = parseInt(filas[i].cells[5].textContent) || 0;
       if (inputQty) {
@@ -80,9 +80,12 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
   // Buscar fila libre
   let filaDisponible = null;
   for (let i = 0; i < filas.length; i++) {
-    if (!filas[i].cells[1].textContent.trim()) { filaDisponible = filas[i]; break; }
+    if (!filas[i].dataset.productoId) { filaDisponible = filas[i]; break; }
   }
   if (!filaDisponible) { Swal.fire("Límite alcanzado", "Solo se pueden agregar hasta 10 productos.", "warning"); return; }
+
+  // Guardar el ID de BD en el dataset de la fila — esta es la clave única
+  filaDisponible.dataset.productoId = String(productoId);
 
   const imgElement = filaDisponible.cells[0].querySelector("img");
   if (imagenProducto && imgElement) { imgElement.src = imagenProducto; imgElement.style.display = "block"; }
@@ -138,6 +141,7 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
     botonEliminar.style.display = "block";
     botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
     botonEliminar.addEventListener("click", function () {
+      delete filaDisponible.dataset.productoId;
       filaDisponible.cells[1].textContent = "";
       filaDisponible.cells[2].innerHTML   = "";
       if (inputPrecio) { inputPrecio.value = ""; inputPrecio.disabled = true; }
@@ -158,26 +162,25 @@ function agregarProductoATabla(codigoProducto, nombreProducto, precioVenta, stoc
 // ── Helpers buscador ────────────────────────────────────────────────────────
 let _productosEnBusqueda = [];
 
-function _obtenerProductosEnTabla() {
-  // Clave: código normalizado (string, trim)
+// Usa data-id (ID de BD, siempre único) como clave — nunca data-codigo que puede repetirse
+function _obtenerIdsEnTabla() {
   const mapa = {};
   const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   for (let i = 0; i < filas.length; i++) {
-    const cod = String(filas[i].cells[1].textContent).trim();
-    if (cod) {
+    const id = filas[i].dataset.productoId;
+    if (id) {
       const qty = parseInt(filas[i].cells[4].querySelector('input')?.value) || 1;
-      mapa[cod] = { cantidad: qty, filaIndex: i };
+      mapa[id] = { cantidad: qty, filaIndex: i };
     }
   }
   return mapa;
 }
 
 function _actualizarContadoresEnResultados() {
-  const enTabla = _obtenerProductosEnTabla();
-  document.querySelectorAll('.resultado-busqueda[data-codigo]').forEach(el => {
-    // Normalizar igual que cells[1]: String + trim
-    const cod        = String(el.dataset.codigo).trim();
-    const info       = enTabla.hasOwnProperty(cod) ? enTabla[cod] : null;
+  const enTabla = _obtenerIdsEnTabla();
+  document.querySelectorAll('.resultado-busqueda[data-id]').forEach(el => {
+    const id         = el.dataset.id;
+    const info       = enTabla[id] || null;
     const badge      = el.querySelector('.srb-badge');
     const qtyInput   = el.querySelector('.srb-qty-input');
     const btnAgregar = el.querySelector('.srb-agregar');
@@ -362,14 +365,15 @@ document.addEventListener('DOMContentLoaded', function () {
    * [Quitar]  → elimina de la tabla.
    */
   function crearElementoResultado(producto, enTabla) {
-    // Normalizar el código igual que en _obtenerProductosEnTabla
-    const cod       = String(producto.codigo ?? producto.id ?? '').trim();
+    const id        = String(producto.id);
+    const cod       = String(producto.codigo ?? '').trim();
     const stockMax  = parseInt(producto.stock_actual) || 0;
-    const info      = cod ? (enTabla.hasOwnProperty(cod) ? enTabla[cod] : null) : null;
+    const info      = enTabla[id] || null;
 
     const resultado = document.createElement('div');
     resultado.classList.add('resultado-busqueda');
     if (info) resultado.classList.add('en-tabla');
+    resultado.dataset.id           = id;
     resultado.dataset.codigo       = cod;
     resultado.dataset.nombre       = producto.nombre;
     resultado.dataset.precio_venta = producto.precio_venta;
@@ -491,10 +495,10 @@ document.addEventListener('DOMContentLoaded', function () {
       const v = parseInt(qtyInput.value) || 1;
       if (resultado.classList.contains('en-tabla')) {
         if (v <= 1) {
-          _quitarDeTabla(cod);
+          _quitarDeTabla(_id);
         } else {
           qtyInput.value = v - 1;
-          _setQtyEnTabla(cod, v - 1);
+          _setQtyEnTabla(_id, v - 1);
         }
         renderResultadosMostrador(_productosEnBusqueda);
       } else {
@@ -513,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         qtyInput.value = v + 1;
         if (resultado.classList.contains('en-tabla')) {
-          _setQtyEnTabla(cod, v + 1);
+          _setQtyEnTabla(_id, v + 1);
           renderResultadosMostrador(_productosEnBusqueda);
         }
       }
@@ -521,18 +525,18 @@ document.addEventListener('DOMContentLoaded', function () {
       _keepOpen = false;
     });
 
-    // Botón Agregar — usa el codigo/nombre del closure, NO de dataset (evita leer el DOM en el momento del click)
-    const _cod       = cod;
-    const _nombre    = producto.nombre;
-    const _precio    = producto.precio_venta;
-    const _stock     = producto.stock_actual;
-    const _imagen    = resultado.dataset.imagen || '';
+    // Variables del closure — fijadas en la creación, nunca leen el DOM después
+    const _id     = id;
+    const _cod    = cod;
+    const _nombre = producto.nombre;
+    const _precio = producto.precio_venta;
+    const _stock  = producto.stock_actual;
+    const _imagen = resultado.dataset.imagen || '';
 
     btnAgregar.addEventListener('click', e => {
       e.stopImmediatePropagation();
       const qty = parseInt(qtyInput.value) || 1;
-      agregarProductoATabla(_cod, _nombre, _precio, _stock, _imagen, qty);
-      // Re-renderizar toda la lista para garantizar estado correcto
+      agregarProductoATabla(_id, _cod, _nombre, _precio, _stock, _imagen, qty);
       renderResultadosMostrador(_productosEnBusqueda);
       entradaBusqueda.focus();
       _keepOpen = false;
@@ -541,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Botón Quitar
     btnQuitar.addEventListener('click', e => {
       e.stopImmediatePropagation();
-      _quitarDeTabla(_cod);
+      _quitarDeTabla(_id);
       renderResultadosMostrador(_productosEnBusqueda);
       entradaBusqueda.focus();
       _keepOpen = false;
@@ -557,10 +561,10 @@ document.addEventListener('DOMContentLoaded', function () {
     return resultado;
   }
 
-  function _setQtyEnTabla(cod, qty) {
+  function _setQtyEnTabla(id, qty) {
     const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     for (let i = 0; i < filas.length; i++) {
-      if (filas[i].cells[1].textContent.trim() === String(cod).trim()) {
+      if (String(filas[i].dataset.productoId) === String(id)) {
         const inputQty = filas[i].cells[4].querySelector('input');
         if (inputQty) { inputQty.value = qty; updateSubtotal(filas[i]); }
         break;
@@ -568,10 +572,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  function _quitarDeTabla(cod) {
+  function _quitarDeTabla(id) {
     const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     for (let i = 0; i < filas.length; i++) {
-      if (filas[i].cells[1].textContent.trim() === String(cod).trim()) {
+      if (String(filas[i].dataset.productoId) === String(id)) {
         const boton = filas[i].cells[7].querySelector('button');
         if (boton) boton.click();
         break;

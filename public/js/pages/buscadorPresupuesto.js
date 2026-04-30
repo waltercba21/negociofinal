@@ -56,9 +56,9 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
   const tbody = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0];
   const filas = tbody.rows;
 
-  // Si ya está en tabla → actualizar cantidad
+  // Si ya está en tabla (por ID de BD) → actualizar cantidad
   for (let i = 0; i < filas.length; i++) {
-    if (filas[i].cells[1].textContent.trim() === String(codigoProducto).trim()) {
+    if (filas[i].dataset.productoId && String(filas[i].dataset.productoId) === String(productoId)) {
       const inputQty = filas[i].cells[4].querySelector('input');
       const stockNum = parseInt(filas[i].cells[5].textContent) || 0;
       if (inputQty) {
@@ -73,12 +73,15 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
 
   let filaDisponible = null;
   for (let i = 0; i < filas.length; i++) {
-    if (!filas[i].cells[1].textContent.trim()) { filaDisponible = filas[i]; break; }
+    if (!filas[i].dataset.productoId) { filaDisponible = filas[i]; break; }
   }
   if (!filaDisponible) { Swal.fire("Límite alcanzado", "Solo se pueden agregar hasta 10 productos.", "warning"); return; }
 
   const stockNum     = parseInt(stockActual) || 0;
   const cantaInicial = Math.max(1, Math.min(cantAgregar, stockNum));
+
+  // Guardar ID de BD como clave única en la fila
+  filaDisponible.dataset.productoId = String(productoId);
 
   filaDisponible.dataset.productoId = productoId;
 
@@ -133,6 +136,7 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
     botonEliminar.style.display = "block";
     botonEliminar.innerHTML = '<i class="fas fa-trash"></i>';
     botonEliminar.addEventListener("click", function () {
+      delete filaDisponible.dataset.productoId;
       filaDisponible.cells[1].textContent = "";
       filaDisponible.cells[2].innerHTML   = "";
       if (inputPrecio) { inputPrecio.value = ""; inputPrecio.disabled = true; }
@@ -153,24 +157,24 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
 // ── Helpers buscador ────────────────────────────────────────────────────────
 let _productosEnBusqueda = [];
 
-function _obtenerProductosEnTabla() {
+function _obtenerIdsEnTabla() {
   const mapa = {};
   const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
   for (let i = 0; i < filas.length; i++) {
-    const cod = String(filas[i].cells[1].textContent).trim();
-    if (cod) {
+    const id = filas[i].dataset.productoId;
+    if (id) {
       const qty = parseInt(filas[i].cells[4].querySelector('input')?.value) || 1;
-      mapa[cod] = { cantidad: qty, filaIndex: i };
+      mapa[id] = { cantidad: qty, filaIndex: i };
     }
   }
   return mapa;
 }
 
 function _actualizarContadoresEnResultados() {
-  const enTabla = _obtenerProductosEnTabla();
-  document.querySelectorAll('.resultado-busqueda[data-codigo]').forEach(el => {
-    const cod        = String(el.dataset.codigo).trim();
-    const info       = cod ? (enTabla.hasOwnProperty(cod) ? enTabla[cod] : null) : null;
+  const enTabla = _obtenerIdsEnTabla();
+  document.querySelectorAll('.resultado-busqueda[data-id]').forEach(el => {
+    const id         = el.dataset.id;
+    const info       = enTabla[id] || null;
     const badge      = el.querySelector('.srb-badge');
     const qtyInput   = el.querySelector('.srb-qty-input');
     const btnAgregar = el.querySelector('.srb-agregar');
@@ -278,14 +282,15 @@ document.addEventListener('DOMContentLoaded', function () {
   let _keepOpen         = false;
 
   function crearElementoResultado(producto, enTabla) {
-    const cod      = String(producto.codigo ?? producto.id ?? '').trim();
+    const id       = String(producto.id);
+    const cod      = String(producto.codigo ?? '').trim();
     const stockMax = parseInt(producto.stock_actual) || 0;
-    const info     = cod ? (enTabla.hasOwnProperty(cod) ? enTabla[cod] : null) : null;
+    const info     = enTabla[id] || null;
 
     const resultado = document.createElement('div');
     resultado.classList.add('resultado-busqueda');
     if (info) resultado.classList.add('en-tabla');
-    resultado.dataset.id           = producto.id;
+    resultado.dataset.id           = id;
     resultado.dataset.codigo       = cod;
     resultado.dataset.nombre       = producto.nombre;
     resultado.dataset.precio_venta = producto.precio_venta;
@@ -433,10 +438,10 @@ document.addEventListener('DOMContentLoaded', function () {
     return resultado;
   }
 
-  function _setQtyEnTabla(cod, qty) {
+  function _setQtyEnTabla(id, qty) {
     const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     for (let i = 0; i < filas.length; i++) {
-      if (filas[i].cells[1].textContent.trim() === String(cod).trim()) {
+      if (String(filas[i].dataset.productoId) === String(id)) {
         const inputQty = filas[i].cells[4].querySelector('input');
         if (inputQty) { inputQty.value = qty; updateSubtotal(filas[i]); }
         break;
@@ -444,10 +449,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  function _quitarDeTabla(cod) {
+  function _quitarDeTabla(id) {
     const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
     for (let i = 0; i < filas.length; i++) {
-      if (filas[i].cells[1].textContent.trim() === String(cod).trim()) {
+      if (String(filas[i].dataset.productoId) === String(id)) {
         const boton = filas[i].cells[7].querySelector('button');
         if (boton) boton.click();
         break;
