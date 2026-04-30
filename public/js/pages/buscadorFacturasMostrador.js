@@ -661,74 +661,148 @@ document.addEventListener('DOMContentLoaded', function () {
 ═══════════════════════════════════════════════════════════ */
 
 async function mostrarModalARCA(facturaId, totalConInteres) {
-  const htmlPaso1 = `
-    <div style="display:flex;flex-direction:column;gap:12px;padding:4px 0">
-      <button id="arca-btn-cf"    type="button" style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:14px;background:rgba(31,72,126,.15);border:1.5px solid rgba(31,72,126,.4);color:#f0f4ff;font-size:1rem;font-weight:700;cursor:pointer;text-align:left;width:100%"><i class="fa-solid fa-receipt" style="font-size:1.4rem;color:#7aaee8;flex-shrink:0"></i><div><div style="font-size:.95rem;font-weight:800">Factura B — Consumidor Final</div><div style="font-size:.78rem;color:#8fa3c0;margin-top:3px">Sin CUIT · Emisión en un click</div></div></button>
-      <button id="arca-btn-cuit"  type="button" style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:14px;background:rgba(99,102,241,.1);border:1.5px solid rgba(99,102,241,.3);color:#f0f4ff;font-size:1rem;font-weight:700;cursor:pointer;text-align:left;width:100%"><i class="fa-solid fa-building" style="font-size:1.4rem;color:#a5b4fc;flex-shrink:0"></i><div><div style="font-size:.95rem;font-weight:800">Factura B/A — Con CUIT</div><div style="font-size:.78rem;color:#8fa3c0;margin-top:3px">Responsable Inscripto · ingresar CUIT</div></div></button>
-      <button id="arca-btn-saltar" type="button" style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,.08);color:#4d6380;font-size:.85rem;cursor:pointer;text-align:left;width:100%"><i class="fa-solid fa-forward" style="flex-shrink:0"></i> Solo guardar, emitir ARCA más tarde</button>
-    </div>`;
 
+  // ── Paso 1: elegir tipo de emisión ──────────────────────────────────────────
+  // Usamos preConfirm para distinguir las tres opciones sin depender de isDenied/isDismissed
   const paso1 = await Swal.fire({
     title: '<span style="font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:#7aaee8">Factura #' + facturaId + ' guardada</span>',
-    html: htmlPaso1, background: '#111c30', color: '#f0f4ff',
-    showConfirmButton: false, showCloseButton: false, allowOutsideClick: false, allowEscapeKey: false, width: '460px',
+    html: `
+      <div style="display:flex;flex-direction:column;gap:12px;padding:4px 0">
+        <button id="arca-btn-cf" type="button" style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:14px;background:rgba(31,72,126,.15);border:1.5px solid rgba(31,72,126,.4);color:#f0f4ff;font-size:1rem;font-weight:700;cursor:pointer;text-align:left;width:100%;box-sizing:border-box">
+          <i class="fa-solid fa-receipt" style="font-size:1.4rem;color:#7aaee8;flex-shrink:0"></i>
+          <div><div style="font-size:.95rem;font-weight:800">Factura B — Consumidor Final</div><div style="font-size:.78rem;color:#8fa3c0;margin-top:3px">Sin CUIT · Emisión en un click</div></div>
+        </button>
+        <button id="arca-btn-cuit" type="button" style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:14px;background:rgba(99,102,241,.1);border:1.5px solid rgba(99,102,241,.3);color:#f0f4ff;font-size:1rem;font-weight:700;cursor:pointer;text-align:left;width:100%;box-sizing:border-box">
+          <i class="fa-solid fa-building" style="font-size:1.4rem;color:#a5b4fc;flex-shrink:0"></i>
+          <div><div style="font-size:.95rem;font-weight:800">Factura B/A — Con CUIT</div><div style="font-size:.78rem;color:#8fa3c0;margin-top:3px">Responsable Inscripto · ingresar CUIT</div></div>
+        </button>
+        <button id="arca-btn-saltar" type="button" style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,.08);color:#4d6380;font-size:.85rem;cursor:pointer;text-align:left;width:100%;box-sizing:border-box">
+          <i class="fa-solid fa-forward" style="flex-shrink:0"></i> Solo guardar, emitir ARCA más tarde
+        </button>
+      </div>`,
+    background: '#111c30',
+    color: '#f0f4ff',
+    showConfirmButton: false,
+    showCancelButton: false,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    width: '480px',
     didOpen: () => {
-      document.getElementById('arca-btn-cf').addEventListener('click',     () => Swal.clickConfirm());
-      document.getElementById('arca-btn-cuit').addEventListener('click',   () => Swal.close({ isDenied: true, value: 'cuit' }));
-      document.getElementById('arca-btn-saltar').addEventListener('click', () => Swal.close({ isDismissed: true }));
-    },
-    preConfirm: () => 'cf'
+      document.getElementById('arca-btn-cf').addEventListener('click', () => {
+        Swal.fire._opcion = 'cf';
+        Swal.close();
+      });
+      document.getElementById('arca-btn-cuit').addEventListener('click', () => {
+        Swal.fire._opcion = 'cuit';
+        Swal.close();
+      });
+      document.getElementById('arca-btn-saltar').addEventListener('click', () => {
+        Swal.fire._opcion = 'saltar';
+        Swal.close();
+      });
+    }
   });
 
-  if (paso1.isDismissed) { window.location.href = '/productos'; return; }
-  if (paso1.isConfirmed && paso1.value === 'cf') {
+  const opcion = Swal.fire._opcion || 'saltar';
+  Swal.fire._opcion = null; // limpiar para próxima vez
+
+  if (opcion === 'saltar') {
+    window.location.href = '/productos';
+    return;
+  }
+
+  if (opcion === 'cf') {
     await _emitirARCA(facturaId, { cbte_tipo: 6, doc_tipo: 99, doc_nro: 0, receptor_cond_iva_id: 5 });
     return;
   }
 
+  // ── Paso 2: Con CUIT ────────────────────────────────────────────────────────
   const paso2 = await Swal.fire({
     title: '<span style="font-size:1rem;color:#a5b4fc">Datos del receptor</span>',
-    html: `<div style="display:flex;flex-direction:column;gap:14px;text-align:left;padding:4px 0">
-      <div><label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">TIPO DE FACTURA</label>
-        <div style="display:flex;gap:10px;margin-top:6px">
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;color:#f0f4ff;font-size:.9rem"><input type="radio" name="af-cbte" value="6" checked> Factura B</label>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;color:#f0f4ff;font-size:.9rem"><input type="radio" name="af-cbte" value="1"> Factura A</label>
-        </div></div>
-      <div><label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">CONDICIÓN IVA RECEPTOR</label>
-        <select id="af-cond" style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.88rem">
-          <option value="5" selected>Consumidor Final (5)</option><option value="4">Exento (4)</option><option value="6">Monotributista (6)</option><option value="1">Responsable Inscripto (1)</option>
-        </select></div>
-      <div><label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">CUIT / CUIL *</label>
-        <input id="af-cuit" type="text" maxlength="11" placeholder="Ej: 20304050607" style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.95rem;box-sizing:border-box"></div>
-      <div><label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">RAZÓN SOCIAL (opcional)</label>
-        <input id="af-nombre" type="text" placeholder="Dejar vacío para resolver por CUIT" style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.88rem;box-sizing:border-box"></div>
-      <div><label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">DOMICILIO (opcional)</label>
-        <input id="af-dom" type="text" placeholder="Dejar vacío para resolver por CUIT" style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.88rem;box-sizing:border-box"></div>
-      <div id="af-err" style="display:none;color:#f87171;font-size:.82rem;padding:8px 12px;background:rgba(248,113,113,.07);border-radius:8px;border:1px solid rgba(248,113,113,.2)"></div>
-    </div>`,
-    background: '#111c30', color: '#f0f4ff', confirmButtonText: 'Emitir comprobante',
-    cancelButtonText: 'Cancelar', showCancelButton: true, reverseButtons: true,
-    width: '480px', allowOutsideClick: false, allowEscapeKey: false,
+    html: `
+      <div style="display:flex;flex-direction:column;gap:14px;text-align:left;padding:4px 0">
+        <div>
+          <label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">TIPO DE FACTURA</label>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;color:#f0f4ff;font-size:.9rem"><input type="radio" name="af-cbte" value="6" checked> Factura B</label>
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;color:#f0f4ff;font-size:.9rem"><input type="radio" name="af-cbte" value="1"> Factura A</label>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">CONDICIÓN IVA RECEPTOR</label>
+          <select id="af-cond" style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.88rem">
+            <option value="5" selected>Consumidor Final (5)</option>
+            <option value="4">Exento (4)</option>
+            <option value="6">Monotributista (6)</option>
+            <option value="1">Responsable Inscripto (1)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">CUIT / CUIL *</label>
+          <input id="af-cuit" type="text" maxlength="11" placeholder="Ej: 20304050607"
+            style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.95rem;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">RAZÓN SOCIAL (opcional)</label>
+          <input id="af-nombre" type="text" placeholder="Dejar vacío para resolver por CUIT"
+            style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.88rem;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:.8rem;color:#8fa3c0;font-weight:700;letter-spacing:.04em">DOMICILIO (opcional)</label>
+          <input id="af-dom" type="text" placeholder="Dejar vacío para resolver por CUIT"
+            style="width:100%;margin-top:6px;padding:9px 12px;background:#1a2a40;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f0f4ff;font-size:.88rem;box-sizing:border-box">
+        </div>
+        <div id="af-err" style="display:none;color:#f87171;font-size:.82rem;padding:8px 12px;background:rgba(248,113,113,.07);border-radius:8px;border:1px solid rgba(248,113,113,.2)"></div>
+      </div>`,
+    background: '#111c30',
+    color: '#f0f4ff',
+    confirmButtonText: 'Emitir comprobante',
+    cancelButtonText: '← Volver',
+    showCancelButton: true,
+    reverseButtons: true,
+    width: '480px',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
     customClass: { confirmButton: 'af-apps-confirm' },
     preConfirm: () => {
-      const errEl = document.getElementById('af-err'); errEl.style.display = 'none';
+      const errEl     = document.getElementById('af-err');
+      errEl.style.display = 'none';
       const cbte_tipo = Number(document.querySelector('input[name="af-cbte"]:checked')?.value || 6);
       const cond_iva  = Number(document.getElementById('af-cond')?.value || 5);
-      const cuitVal   = document.getElementById('af-cuit')?.value.replace(/\D/g,'') || '';
-      const receptorNombre = document.getElementById('af-nombre')?.value.trim() || '';
-      const receptorDom    = document.getElementById('af-dom')?.value.trim()    || '';
-      if (!cuitVal || cuitVal.length < 10) { errEl.textContent = 'Ingresá un CUIT/CUIL válido.'; errEl.style.display = 'block'; return false; }
-      if (cbte_tipo === 1 && cond_iva !== 1) { errEl.textContent = 'Factura A requiere Responsable Inscripto.'; errEl.style.display = 'block'; return false; }
-      if (cbte_tipo === 6 && cond_iva === 1) { errEl.textContent = 'Factura B no acepta Responsable Inscripto.'; errEl.style.display = 'block'; return false; }
+      const cuitVal   = (document.getElementById('af-cuit')?.value || '').replace(/\D/g, '');
+      const receptorNombre = (document.getElementById('af-nombre')?.value || '').trim();
+      const receptorDom    = (document.getElementById('af-dom')?.value    || '').trim();
+
+      if (!cuitVal || cuitVal.length < 10) {
+        errEl.textContent = 'Ingresá un CUIT/CUIL válido (10 u 11 dígitos).';
+        errEl.style.display = 'block';
+        return false;
+      }
+      if (cbte_tipo === 1 && cond_iva !== 1) {
+        errEl.textContent = 'Factura A requiere condición IVA: Responsable Inscripto (1).';
+        errEl.style.display = 'block';
+        return false;
+      }
+      if (cbte_tipo === 6 && cond_iva === 1) {
+        errEl.textContent = 'Factura B no acepta Responsable Inscripto. Usá Factura A.';
+        errEl.style.display = 'block';
+        return false;
+      }
       return { cbte_tipo, doc_nro: Number(cuitVal), cond_iva, receptorNombre, receptorDom };
     }
   });
 
-  if (!paso2.isConfirmed) { window.location.href = '/productos'; return; }
+  // Canceló el paso 2 → ir a productos (factura ya guardada)
+  if (!paso2.isConfirmed) {
+    window.location.href = '/productos';
+    return;
+  }
+
   const { cbte_tipo, doc_nro, cond_iva, receptorNombre, receptorDom } = paso2.value;
   const cuitPayload = { cbte_tipo, doc_tipo: 80, doc_nro, receptor_cond_iva_id: cond_iva };
   if (receptorNombre) cuitPayload.receptor_nombre    = receptorNombre;
   if (receptorDom)    cuitPayload.receptor_domicilio = receptorDom;
+
   await _emitirARCA(facturaId, cuitPayload, !receptorNombre);
 }
 
