@@ -83,8 +83,6 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
   // Guardar ID de BD como clave única en la fila
   filaDisponible.dataset.productoId = String(productoId);
 
-  filaDisponible.dataset.productoId = productoId;
-
   const imgElement = filaDisponible.cells[0].querySelector("img");
   if (imagenProducto && imgElement) { imgElement.src = imagenProducto; imgElement.style.display = "block"; }
 
@@ -146,7 +144,7 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
       if (imgElement) imgElement.style.display = "none";
       botonEliminar.style.display = "none";
       calcularTotal();
-      _actualizarContadoresEnResultados();
+      renderResultados(_productosEnBusqueda);
     });
   }
 
@@ -199,8 +197,6 @@ function _actualizarContadoresEnResultados() {
 // ── DOMContentLoaded ────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', function () {
-
-  Swal.fire({ title: 'Está en la sección de Presupuesto', text: 'Recuerde que está realizando un presupuesto, no una factura.', icon: 'info', confirmButtonText: 'Entendido' });
 
   const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
   if (fechaPresupuestoInput && !fechaPresupuestoInput.value) {
@@ -381,15 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
 
-    qtyInput.addEventListener('input', e => {
-      e.stopImmediatePropagation();
-      let v = Math.max(1, Math.min(parseInt(qtyInput.value) || 1, stockMax));
-      qtyInput.value = v;
-      if (resultado.classList.contains('en-tabla')) { _setQtyEnTabla(cod, v); _actualizarContadoresEnResultados(); }
-    });
-    qtyInput.addEventListener('keydown', e => { e.stopImmediatePropagation(); if (e.key === 'Enter') e.preventDefault(); });
-
-    // Variables fijadas en el closure para que cada botón opere sobre SU producto
+    // Variables fijadas en el closure — deben estar ANTES de los listeners
     const _id     = producto.id;
     const _cod    = cod;
     const _nombre = producto.nombre;
@@ -397,12 +385,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const _stock  = producto.stock_actual;
     const _imagen = resultado.dataset.imagen || '';
 
+    qtyInput.addEventListener('input', e => {
+      e.stopImmediatePropagation();
+      let v = Math.max(1, Math.min(parseInt(qtyInput.value) || 1, stockMax));
+      qtyInput.value = v;
+      if (resultado.classList.contains('en-tabla')) { _setQtyEnTabla(_id, v); renderResultados(_productosEnBusqueda); }
+    });
+    qtyInput.addEventListener('keydown', e => { e.stopImmediatePropagation(); if (e.key === 'Enter') e.preventDefault(); });
+
     btnMinus.addEventListener('click', e => {
       e.stopImmediatePropagation();
       const v = parseInt(qtyInput.value) || 1;
       if (resultado.classList.contains('en-tabla')) {
-        if (v <= 1) { _quitarDeTabla(_cod); }
-        else        { qtyInput.value = v - 1; _setQtyEnTabla(_cod, v - 1); }
+        if (v <= 1) { _quitarDeTabla(_id); }
+        else        { qtyInput.value = v - 1; _setQtyEnTabla(_id, v - 1); }
         renderResultados(_productosEnBusqueda);
       } else {
         if (v > 1) qtyInput.value = v - 1;
@@ -416,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (v >= stockMax) { Swal.fire({ title: 'Stock máximo', text: `Solo hay ${stockMax} unidades.`, icon: 'warning', confirmButtonText: 'Entendido' }); }
       else {
         qtyInput.value = v + 1;
-        if (resultado.classList.contains('en-tabla')) { _setQtyEnTabla(_cod, v + 1); renderResultados(_productosEnBusqueda); }
+        if (resultado.classList.contains('en-tabla')) { _setQtyEnTabla(_id, v + 1); renderResultados(_productosEnBusqueda); }
       }
       entradaBusqueda.focus(); _keepOpen = false;
     });
@@ -431,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     btnQuitar.addEventListener('click', e => {
       e.stopImmediatePropagation();
-      _quitarDeTabla(_cod);
+      _quitarDeTabla(_id);
       renderResultados(_productosEnBusqueda);
       entradaBusqueda.focus(); _keepOpen = false;
     });

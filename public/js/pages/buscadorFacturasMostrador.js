@@ -151,7 +151,7 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
       if (imgElement) imgElement.style.display = "none";
       botonEliminar.style.display = "none";
       calcularTotal();
-      _actualizarContadoresEnResultados();
+      renderResultadosMostrador(_productosEnBusqueda);
     });
   }
 
@@ -466,6 +466,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── EVENTOS ──────────────────────────────────────────────────────────────
 
+    // Variables del closure — deben declararse ANTES de los listeners que las usan
+    const _id     = id;
+    const _cod    = cod;
+    const _nombre = producto.nombre;
+    const _precio = producto.precio_venta;
+    const _stock  = producto.stock_actual;
+    const _imagen = resultado.dataset.imagen || '';
+
     // ── Bloquear propagación en TODOS los eventos de controles ──────────────
     // mousedown: preventDefault evita que el buscador pierda el foco
     //            stopImmediatePropagation evita que suba al .resultado-busqueda
@@ -485,8 +493,8 @@ document.addEventListener('DOMContentLoaded', function () {
       v = Math.max(1, Math.min(v, stockMax));
       qtyInput.value = v;
       if (resultado.classList.contains('en-tabla')) {
-        _setQtyEnTabla(cod, v);
-        _actualizarContadoresEnResultados();
+        _setQtyEnTabla(_id, v);
+        renderResultadosMostrador(_productosEnBusqueda);
       }
     });
     qtyInput.addEventListener('keydown', e => { e.stopImmediatePropagation(); if (e.key === 'Enter') e.preventDefault(); });
@@ -526,14 +534,6 @@ document.addEventListener('DOMContentLoaded', function () {
       entradaBusqueda.focus();
       _keepOpen = false;
     });
-
-    // Variables del closure — fijadas en la creación, nunca leen el DOM después
-    const _id     = id;
-    const _cod    = cod;
-    const _nombre = producto.nombre;
-    const _precio = producto.precio_venta;
-    const _stock  = producto.stock_actual;
-    const _imagen = resultado.dataset.imagen || '';
 
     btnAgregar.addEventListener('click', e => {
       e.stopImmediatePropagation();
