@@ -49,6 +49,15 @@ def limpiar_codigo(v):
 def es_fila_vacia(row):
     return all(c is None or str(c).strip() == '' for c in row)
 
+def clean_meta(v):
+    if v is None:
+        return ''
+    return _html_mod.unescape(str(v)).strip()
+
+FABRICANTES_PERMITIDOS_MYL = {'AP', 'BAIML', 'MYL', 'P01-PORTAFICH'}
+
+def fabricante_myl_permitido(v):
+    return clean_meta(v).upper() in FABRICANTES_PERMITIDOS_MYL
 # ─── Detección de fila encabezado ─────────────────────────────────────────────
 
 _CLAVES_ENC = ['codigo','cod.','precio','articulo','descripcion',
@@ -321,6 +330,83 @@ def seleccionar_hojas(sheet_names):
 
     return [name for name, n in nn if n not in _HOJAS_IGNORAR]
 
+
+# ─── Parser específico DISTRIMAR / ALEMARGROUP ───────────────────────────────
+# Hoja útil: Lista abreviada
+# A = Producto/rubro
+# B = Codigo unico    → NO usar
+# C = Codigo          → usar para matchear BD
+# F = Precio de lista pesos
+
+def _es_archivo_distrimar(ws):
+    rows = list(ws.iter_rows(values_only=True, max_row=12))
+    for row in rows:
+        vals = [norm(c) for c in row if c is not None and str(c).strip()]
+        if (
+            'codigo unico' in vals
+            and 'codigo' in vals
+            and 'precio de lista pesos' in vals
+        ):
+            return True
+    return False
+
+def parsear_hoja_distrimar(sheet_name, ws):
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return []
+
+    header_idx = -1
+    col_producto = col_codigo = col_precio = None
+
+    for i, row in enumerate(rows[:12]):
+        vals = [norm(c) if c is not None else '' for c in row]
+
+        if 'codigo unico' in vals and 'codigo' in vals and 'precio de lista pesos' in vals:
+            header_idx = i
+            col_producto = vals.index('producto') if 'producto' in vals else None
+
+            # IMPORTANTE: usar columna "Codigo", NO "Codigo unico" ni "Codigo Anterior"
+            for idx, val in enumerate(vals):
+                if val == 'codigo':
+                    col_codigo = idx
+                    break
+
+            col_precio = vals.index('precio de lista pesos')
+            break
+
+    if header_idx < 0 or col_codigo is None or col_precio is None:
+        return []
+
+    items = []
+
+    for row in rows[header_idx + 1:]:
+        if not row or es_fila_vacia(row):
+            continue
+
+        def get(idx):
+            return row[idx] if idx is not None and idx < len(row) else None
+
+        codigo = limpiar_codigo(get(col_codigo))
+        precio = limpiar_precio(get(col_precio))
+
+        if not codigo or not precio or precio <= 0:
+            continue
+
+        rubro = clean_meta(get(col_producto))
+
+        items.append({
+            'codigo':      codigo,
+            'precio':      precio,
+            'descripcion': _clean_desc(rubro),
+            'hoja':        sheet_name,
+            'rubro':       _clean_desc(rubro),
+            'subrubro':    '',
+            'marca':       '',
+            'origen':      'DISTRIMAR',
+        })
+
+    return items
+
 # ─── Conversión .xls ─────────────────────────────────────────────────────────
 
 def convertir_xls(input_path):
@@ -359,7 +445,7 @@ def convertir_xls(input_path):
 #   col 3 = precio en DÓLARES (mayoría de productos) → convertir × TIPO_CAMBIO_USD
 # La fila 6 (índice) tiene los encabezados "PESOS" y "DÓLARES" en esas columnas.
 
-TIPO_CAMBIO_USD = 1500  # Tipo de cambio dólar oficial → pesos argentinos
+TIPO_CAMBIO_USD = float(os.environ.get('TIPO_CAMBIO_USD', '1500'))  # configurable por variable de entorno
 
 def _es_archivo_faros_ausili(ws):
     """True si la hoja tiene la estructura característica de Faros Ausili."""
@@ -377,48 +463,67 @@ def _es_archivo_faros_ausili(ws):
             return True
     return False
 
+
 def parsear_hoja_faros_ausili(sheet_name, ws):
     """
     Parser especializado para FAROS AUSILI.
     - col 0: código
     - col 1: descripción
-    - col 2: precio en PESOS (directo)
-    - col 3: precio en DÓLARES (× TIPO_CAMBIO_USD para convertir a pesos)
-    Si un producto tiene precio en PESOS usa ese; si tiene en DÓLARES lo convierte.
+    - col 2: precio en PESOS
+    - col 3: precio en DÓLARES × TIPO_CAMBIO_USD
+    - detecta rubro/sección desde filas título
     """
     rows = list(ws.iter_rows(values_only=True))
     items = []
+    rubro_actual = ''
 
     for row in rows:
-        if not row or all(c is None or str(c).strip() == '' for c in row):
+        if not row or es_fila_vacia(row):
             continue
 
         def get(idx):
             return row[idx] if idx < len(row) else None
 
         codigo = limpiar_codigo(get(0))
-        if not codigo:
+        descripcion = clean_meta(get(1))
+
+        precio_pesos = limpiar_precio(get(2))
+        precio_usd   = limpiar_precio(get(3))
+
+        # Detectar secciones: filas sin precio válido y texto descriptivo
+        if not precio_pesos and not precio_usd:
+            posible = clean_meta(get(0)) or clean_meta(get(1))
+            posible_norm = norm(posible)
+
+            if (
+                posible
+                and len(posible) >= 4
+                and not posible_norm.startswith('codigo')
+                and not posible_norm.startswith('cod')
+                and any(k in posible_norm for k in ['faro', 'lente', 'optica', 'portal', 'lampara', 'universal'])
+            ):
+                rubro_actual = posible
             continue
 
-        descripcion = str(get(1) or '').strip()
-
-        # Intentar precio en pesos primero (col 2)
-        precio_pesos = limpiar_precio(get(2))
-        # Intentar precio en dólares (col 3) y convertir
-        precio_usd   = limpiar_precio(get(3))
+        if not codigo:
+            continue
 
         if precio_pesos and precio_pesos > 0:
             precio_final = precio_pesos
         elif precio_usd and precio_usd > 0:
             precio_final = round(precio_usd * TIPO_CAMBIO_USD, 2)
         else:
-            continue  # Sin precio válido
+            continue
 
         items.append({
             'codigo':      codigo,
             'precio':      precio_final,
             'descripcion': _clean_desc(descripcion),
             'hoja':        sheet_name,
+            'rubro':       _clean_desc(rubro_actual),
+            'subrubro':    '',
+            'marca':       '',
+            'origen':      'AUSILI',
         })
 
     return items
@@ -489,7 +594,7 @@ def parsear_hoja_dm(sheet_name, ws):
 
     # Buscar fila header
     header_idx = -1
-    col_cod = col_padron = col_origen = col_articulo = col_precio = None
+    col_cod = col_padron = col_origen = col_articulo = col_precio = col_marca = None
 
     for i, row in enumerate(rows[:5]):
         if not row: continue
@@ -501,6 +606,7 @@ def parsear_hoja_dm(sheet_name, ws):
             col_padron  = cells_norm.index('padron') if 'padron' in cells_norm else None
             col_origen  = cells_norm.index('origen') if 'origen' in cells_norm else None
             col_articulo= cells_norm.index('articulo') if 'articulo' in cells_norm else None
+            col_marca   = cells_norm.index('marca') if 'marca' in cells_norm else None
             break
 
     if header_idx < 0 or col_precio is None: return []
@@ -521,6 +627,7 @@ def parsear_hoja_dm(sheet_name, ws):
         padron  = str(get(col_padron)  or '').strip()
         origen  = str(get(col_origen)  or '').strip()
         articulo= str(get(col_articulo) or '').strip()
+        marca    = str(get(col_marca) or '').strip()
 
         prov_ids = _mapear_subproveedor_dm(padron, origen)
 
@@ -530,6 +637,10 @@ def parsear_hoja_dm(sheet_name, ws):
                 'precio':               precio,
                 'descripcion':          articulo,
                 'hoja':                 sheet_name,
+                'rubro':                padron,
+                'subrubro':             '',
+                'marca':                marca,
+                'origen':               origen,
                 'proveedor_id_override': prov_id,
             })
 
@@ -569,44 +680,78 @@ def _es_archivo_fal(wb_sheetnames):
     names_norm = {n.strip().lower() for n in wb_sheetnames}
     return _FAL_HOJA_MAESTRA in names_norm
 
+
 def parsear_hoja_marca_fal(sheet_name, ws):
     """
     Parser para hojas por marca de FAL.
-    col 1 = código corto (el que está en la BD)
-    col 2 = descripción
-    col 4 = precio
+    Mantiene:
+    - col 1 = código corto, el que está en BD
+    - col 2 = descripción
+    - col 4 = precio
+    Agrega:
+    - rubro detectado por título/sección interna
     """
     rows = list(ws.iter_rows(values_only=True))
-    if not rows: return []
+    if not rows:
+        return []
 
     items = []
+    rubro_actual = ''
+
     for row in rows:
-        if not row or all(c is None or str(c).strip() == '' for c in row):
+        if not row or es_fila_vacia(row):
             continue
 
-        def get(idx): return row[idx] if idx < len(row) else None
+        def get(idx):
+            return row[idx] if idx < len(row) else None
 
-        # col 1 = código corto
         codigo_raw = get(1)
-        if codigo_raw is None: continue
-
-        # Limpiar: convertir float como 6801.0 → '6801'
-        s = str(codigo_raw).strip()
-        if re.match(r'^\d+\.0$', s): s = s[:-2]
-        codigo = s.upper().strip()
-        if not codigo or codigo.startswith('*') or codigo in ('CÓDIGO', 'CODIGO', 'COD.'): continue
-        # Ignorar si tiene solo letras (títulos de sección)
-        if not any(c.isdigit() for c in codigo): continue
-
+        descripcion_raw = clean_meta(get(2))
         precio = limpiar_precio(get(4))
-        if not precio or precio <= 0: continue
 
-        descripcion = str(get(2) or '').strip()
+        # Detectar título/sección si no hay precio válido
+        if not precio:
+            posible = clean_meta(get(0)) or clean_meta(get(1)) or clean_meta(get(2))
+            posible_norm = norm(posible)
 
-        items.append({'codigo': codigo, 'precio': precio,
-                      'descripcion': _clean_desc(descripcion), 'hoja': sheet_name})
+            if (
+                posible
+                and len(posible) >= 4
+                and not any(ch.isdigit() for ch in posible)
+                and any(k in posible_norm for k in ['faro', 'optica', 'lente', 'portal', 'ojo', 'circuito'])
+            ):
+                rubro_actual = posible
+            continue
+
+        if codigo_raw is None:
+            continue
+
+        s = str(codigo_raw).strip()
+        if re.match(r'^\d+\.0$', s):
+            s = s[:-2]
+
+        codigo = s.upper().strip()
+
+        if not codigo or codigo.startswith('*') or codigo in ('CÓDIGO', 'CODIGO', 'COD.'):
+            continue
+
+        if not any(c.isdigit() for c in codigo):
+            continue
+
+        if not precio or precio <= 0:
+            continue
+
+        items.append({
+            'codigo':      codigo,
+            'precio':      precio,
+            'descripcion': _clean_desc(descripcion_raw),
+            'hoja':        sheet_name,
+            'rubro':       _clean_desc(rubro_actual),
+            'subrubro':    '',
+            'marca':       sheet_name,
+            'origen':      'FAL',
+        })
     return items
-
 
 # ─── Detección y parser especializado para MYL ───────────────────────────────
 # MYL envía un archivo con hoja 'Page1' y estructura fija:
@@ -628,27 +773,38 @@ def _es_archivo_myl(ws):
             return True
     return False
 
+
 def parsear_hoja_myl(sheet_name, ws):
     """
     Parser especializado para MYL.
     col 0 = CODART (código)
+    col 1 = NOMMAR (fabricante) → solo AP, BAIML, MYL y P01-PORTAFICH
+    col 2 = NOMRUB (rubro)
+    col 3 = NOMSUB (subrubro)
     col 4 = DESCRI (descripción)
     col 5 = PRELIS (precio de lista pesos)
+    col 8 = IVA
     """
     rows = list(ws.iter_rows(values_only=True))
-    if not rows: return []
+    if not rows:
+        return []
 
-    # Encontrar fila de encabezado con CODART/PRELIS
     header_idx = -1
-    col_cod = col_desc = col_precio = None
+    col_cod = col_desc = col_precio = col_marca = col_rubro = col_subrubro = col_iva = None
+
     for i, row in enumerate(rows[:5]):
-        if not row: continue
+        if not row:
+            continue
         vals = [norm(str(c)) if c is not None else '' for c in row]
         if 'codart' in vals and 'prelis' in vals:
             header_idx = i
-            col_cod    = vals.index('codart')
-            col_precio = vals.index('prelis')
-            col_desc   = vals.index('descri') if 'descri' in vals else None
+            col_cod     = vals.index('codart')
+            col_precio  = vals.index('prelis')
+            col_desc    = vals.index('descri') if 'descri' in vals else None
+            col_marca   = vals.index('nommar') if 'nommar' in vals else None
+            col_rubro   = vals.index('nomrub') if 'nomrub' in vals else None
+            col_subrubro= vals.index('nomsub') if 'nomsub' in vals else None
+            col_iva     = vals.index('iva') if 'iva' in vals else None
             break
 
     if header_idx < 0 or col_precio is None:
@@ -656,7 +812,7 @@ def parsear_hoja_myl(sheet_name, ws):
 
     items = []
     for row in rows[header_idx + 1:]:
-        if not row or all(c is None or str(c).strip() == '' for c in row):
+        if not row or es_fila_vacia(row):
             continue
 
         def get(idx):
@@ -670,16 +826,27 @@ def parsear_hoja_myl(sheet_name, ws):
         if not codigo:
             continue
 
-        descripcion = str(get(col_desc) or '').strip()
+        marca = clean_meta(get(col_marca))
+        if not fabricante_myl_permitido(marca):
+            continue
+
+        descripcion = clean_meta(get(col_desc))
+        rubro = clean_meta(get(col_rubro))
+        subrubro = clean_meta(get(col_subrubro))
+        iva = limpiar_precio(get(col_iva))
 
         items.append({
             'codigo':      codigo,
             'precio':      precio,
             'descripcion': _clean_desc(descripcion),
             'hoja':        sheet_name,
+            'rubro':       _clean_desc(rubro),
+            'subrubro':    _clean_desc(subrubro),
+            'marca':       _clean_desc(marca),
+            'origen':      'MYL',
+            'iva':         iva if iva else None,
         })
     return items
-
 
 def _parsear_xls_con_xlrd(file_path):
     """
@@ -777,6 +944,10 @@ def _parsear_xls_con_xlrd(file_path):
                     'precio':      float(precio),
                     'descripcion': _clean_desc(desc),
                     'hoja':        sh_name,
+                    'rubro':       '',
+                    'subrubro':    '',
+                    'marca':       sh_name,
+                    'origen':      'FAL',
                 }
 
     return {
@@ -785,6 +956,110 @@ def _parsear_xls_con_xlrd(file_path):
         'errores': []
     }
 
+
+
+# ─── Detección y parser rápido para DISTRIMAR / ALEMARGROUP ──────────────────
+
+def _detectar_distrimar_xlsx(file_path):
+    """Detecta DISTRIMAR/Alemar por hoja 'Lista abreviada' y headers clave."""
+    try:
+        with zipfile.ZipFile(file_path) as zf:
+            if 'xl/workbook.xml' not in zf.namelist():
+                return False
+            wb_xml = zf.read('xl/workbook.xml').decode('utf-8', errors='replace')
+            if 'Lista abreviada' not in wb_xml:
+                return False
+            if 'xl/sharedStrings.xml' not in zf.namelist():
+                return False
+            chunk = zf.read('xl/sharedStrings.xml')[:250000].decode('utf-8', errors='replace')
+            return 'Codigo unico' in chunk and 'Precio de lista pesos' in chunk
+    except Exception:
+        return False
+
+def _parsear_distrimar_xlsx(file_path):
+    """
+    Parser rápido de DISTRIMAR/Alemar.
+    Usa solo hoja 'Lista abreviada':
+    A=Producto/rubro, C=Codigo correcto, F=Precio de lista pesos.
+    Ignora B=Codigo unico y E=Precio de lista usd.
+    """
+    items = []
+    _row_re = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
+    _cell_re_tpl = r'<c r="{col}(\d+)"([^>]*)>(?:<f[^>]*>[^<]*</f>)?(?:<v[^>]*>([^<]*)</v>|<is><t>([^<]*)</t></is>)'
+    cell_a = re.compile(_cell_re_tpl.format(col='A'))
+    cell_c = re.compile(_cell_re_tpl.format(col='C'))
+    cell_f = re.compile(_cell_re_tpl.format(col='F'))
+
+    def cell_value(match, shared):
+        if not match:
+            return ''
+        attrs = match.group(2) or ''
+        val = match.group(3) if match.group(3) is not None else (match.group(4) or '')
+        if ('t="s"' in attrs or "t='s'" in attrs) and val != '':
+            try:
+                return shared[int(val)].strip()
+            except Exception:
+                return ''
+        return str(val).strip()
+
+    try:
+        with zipfile.ZipFile(file_path) as zf:
+            shared = []
+            if 'xl/sharedStrings.xml' in zf.namelist():
+                ss = zf.read('xl/sharedStrings.xml').decode('utf-8', errors='replace')
+                for block in ss.split('<si>')[1:]:
+                    texts = re.findall(r'<t[^>]*>([^<]*)</t>', block)
+                    shared.append(_html_mod.unescape(''.join(texts)).strip())
+
+            wb_xml = zf.read('xl/workbook.xml').decode('utf-8', errors='replace')
+            sheet_entries = re.findall(r'<sheet[^>]+name="([^"]+)"[^>]+r:id="([^"]+)"', wb_xml)
+            rels_xml = zf.read('xl/_rels/workbook.xml.rels').decode('utf-8', errors='replace')
+            rels = {}
+            for rel_m in re.finditer(r'<Relationship\b([^>]+)>', rels_xml):
+                attrs = rel_m.group(1)
+                id_m = re.search(r'\bId="([^"]+)"', attrs)
+                tgt_m = re.search(r'\bTarget="([^"]+)"', attrs)
+                if id_m and tgt_m:
+                    rels[id_m.group(1)] = tgt_m.group(1)
+
+            sheet_path = None
+            for name, rid in sheet_entries:
+                if norm(name) == 'lista abreviada':
+                    target = rels.get(rid, '').lstrip('/')
+                    sheet_path = target if target.startswith('xl/') else f'xl/{target}'
+                    break
+            if not sheet_path or sheet_path not in zf.namelist():
+                return items
+
+            sheet_xml = zf.read(sheet_path).decode('utf-8', errors='replace')
+
+        for m in _row_re.finditer(sheet_xml):
+            row_num = int(m.group(1))
+            if row_num <= 4:
+                continue
+            row_xml = m.group(2)
+
+            rubro = cell_value(cell_a.search(row_xml), shared)
+            codigo = limpiar_codigo(cell_value(cell_c.search(row_xml), shared))
+            precio = limpiar_precio(cell_value(cell_f.search(row_xml), shared))
+
+            if not codigo or not precio or precio <= 0:
+                continue
+
+            items.append({
+                'codigo':      codigo,
+                'precio':      precio,
+                'descripcion': _clean_desc(rubro),
+                'hoja':        'Lista abreviada',
+                'rubro':       _clean_desc(rubro),
+                'subrubro':    '',
+                'marca':       '',
+                'origen':      'DISTRIMAR',
+            })
+    except Exception:
+        pass
+
+    return items
 
 # ─── Detección y parser especializado para CROMOSOL ──────────────────────────
 # Su lista tiene 60k+ filas con columnas que incluyen strings enormes (col J).
@@ -810,20 +1085,32 @@ def _detectar_cromosol(file_path):
     except Exception:
         return False
 
+
 def _parsear_cromosol_xlsx(file_path):
     """
-    Lee SOLO columnas B (Código) y D (Precio Neto) usando zipfile + regex.
-    Evita cargar el XML completo con openpyxl/ElementTree.
+    Lee columnas B (Código), C (Descripción), D (Precio Neto) y G (Rubro)
+    usando zipfile + regex. Evita cargar todo el Excel con openpyxl.
     """
     items = []
     _cell_b = re.compile(r'<c r="B\d+"([^>]*)><v>([^<]+)</v>')
     _cell_c = re.compile(r'<c r="C\d+"([^>]*)><v[^>]*>([^<]+)</v>')
     _cell_d = re.compile(r'<c r="D\d+"([^>]*)><v>([^<]+)</v>')
-    _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
+    _cell_g = re.compile(r'<c r="G\d+"([^>]*)><v[^>]*>([^<]+)</v>')
+    _row_re = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
+
+    def read_cell(match, shared):
+        if not match:
+            return ''
+        attrs, val = match.group(1), match.group(2)
+        if 't="s"' in attrs or "t='s'" in attrs:
+            try:
+                return shared[int(val)].strip()
+            except Exception:
+                return ''
+        return val.strip()
 
     try:
         with zipfile.ZipFile(file_path) as zf:
-            # 1. Shared strings con regex (0.12s vs 3s con ElementTree)
             shared = []
             if 'xl/sharedStrings.xml' in zf.namelist():
                 with zf.open('xl/sharedStrings.xml') as f:
@@ -832,7 +1119,6 @@ def _parsear_cromosol_xlsx(file_path):
                     texts = re.findall(r'<t[^>]*>([^<]*)</t>', block)
                     shared.append(''.join(texts))
 
-            # 2. Worksheet — leer y parsear con regex
             sheets = [n for n in zf.namelist()
                       if n.startswith('xl/worksheets/sheet') and n.endswith('.xml')]
             if not sheets:
@@ -840,7 +1126,6 @@ def _parsear_cromosol_xlsx(file_path):
             with zf.open(sheets[0]) as f:
                 sheet = f.read().decode('utf-8', errors='replace')
 
-        # 3. Extraer celdas B y D de cada fila (saltar fila 1 = header)
         for m in _row_re.finditer(sheet):
             if int(m.group(1)) == 1:
                 continue
@@ -851,29 +1136,11 @@ def _parsear_cromosol_xlsx(file_path):
             if not mb or not md:
                 continue
 
-            # Código
-            attrs_b, val_b = mb.group(1), mb.group(2)
-            if 't="s"' in attrs_b or "t='s'" in attrs_b:
-                try:
-                    codigo = shared[int(val_b)].strip()
-                except Exception:
-                    continue
-            else:
-                codigo = val_b.strip()
-                if re.match(r'^\d+\.0$', codigo):
-                    codigo = codigo[:-2]
+            codigo = read_cell(mb, shared)
+            if re.match(r'^\d+\.0$', codigo):
+                codigo = codigo[:-2]
 
-            # Precio
-            attrs_d, val_d = md.group(1), md.group(2)
-            if 't="s"' in attrs_d or "t='s'" in attrs_d:
-                try:
-                    ps = shared[int(val_d)].replace(',', '.').strip()
-                except Exception:
-                    continue
-            else:
-                ps = val_d.strip()
-
-            precio = limpiar_precio(ps)
+            precio = limpiar_precio(read_cell(md, shared))
             if not precio or precio <= 0:
                 continue
 
@@ -881,29 +1148,23 @@ def _parsear_cromosol_xlsx(file_path):
             if not codigo_clean:
                 continue
 
-            # Descripción col C
-            mc = _cell_c.search(row_xml)
-            if mc:
-                attrs_c, val_c = mc.group(1), mc.group(2)
-                if 't="s"' in attrs_c or "t='s'" in attrs_c:
-                    try: desc = shared[int(val_c)].strip()
-                    except: desc = ''
-                else:
-                    desc = val_c.strip()
-            else:
-                desc = ''
+            desc = read_cell(_cell_c.search(row_xml), shared)
+            rubro = read_cell(_cell_g.search(row_xml), shared)
 
             items.append({
                 'codigo':      codigo_clean,
                 'precio':      precio,
                 'descripcion': _clean_desc(desc),
                 'hoja':        'lista precios',
+                'rubro':       _clean_desc(rubro),
+                'subrubro':    '',
+                'marca':       '',
+                'origen':      'CROMOSOL',
             })
     except Exception:
-        pass  # Si falla, el caller usará el parser genérico
+        pass
 
     return items
-
 
 # ─── Detección y parser especializado para MYL ───────────────────────────────
 # MYL tiene 34k+ filas. Col A=CODART (código), Col F=PRELIS (precio numérico).
@@ -922,20 +1183,25 @@ def _detectar_myl(file_path):
     except Exception:
         return False
 
+
 def _parsear_myl_xlsx(file_path):
     """
-    Lee solo col A (CODART) y col F (PRELIS) con zipfile+regex.
-    Los precios son numéricos → no requiere lookup en shared strings para ellos.
+    Lee MYL por XML:
+    A=CODART, B=NOMMAR, C=NOMRUB, D=NOMSUB, E=DESCRI, F=PRELIS, I=IVA.
+    Solo procesa fabricantes permitidos: AP, BAIML, MYL y P01-PORTAFICH.
     """
     _cell_a = re.compile(r'<c r="A(\d+)"([^>]*)><v>([^<]+)</v>')
+    _cell_b = re.compile(r'<c r="B(\d+)"([^>]*)><v[^>]*>([^<]+)</v>')
+    _cell_c = re.compile(r'<c r="C(\d+)"([^>]*)><v[^>]*>([^<]+)</v>')
+    _cell_d = re.compile(r'<c r="D(\d+)"([^>]*)><v[^>]*>([^<]+)</v>')
     _cell_e = re.compile(r'<c r="E(\d+)"([^>]*)><v[^>]*>([^<]+)</v>')
     _cell_f = re.compile(r'<c r="F(\d+)"([^>]*)><v>([^<]+)</v>')
-    _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
+    _cell_i = re.compile(r'<c r="I(\d+)"([^>]*)><v[^>]*>([^<]+)</v>')
+    _row_re = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
     items = []
 
     try:
         with zipfile.ZipFile(file_path) as zf:
-            # Shared strings (para los códigos — col A es string)
             shared = []
             if 'xl/sharedStrings.xml' in zf.namelist():
                 with zf.open('xl/sharedStrings.xml') as f:
@@ -951,9 +1217,21 @@ def _parsear_myl_xlsx(file_path):
             with zf.open(sheets[0]) as f:
                 sheet = f.read().decode('utf-8', errors='replace')
 
+        def read_cell_text(regex_obj, row_xml):
+            mcell = regex_obj.search(row_xml)
+            if not mcell:
+                return ''
+            attrs, val = mcell.group(2), mcell.group(3)
+            if 't="s"' in attrs or "t='s'" in attrs:
+                try:
+                    return shared[int(val)].strip()
+                except Exception:
+                    return ''
+            return val.strip()
+
         for m in _row_re.finditer(sheet):
             if int(m.group(1)) <= 2:
-                continue  # saltar título (fila 1) y header (fila 2)
+                continue
             row_xml = m.group(2)
 
             ma = _cell_a.search(row_xml)
@@ -961,7 +1239,6 @@ def _parsear_myl_xlsx(file_path):
             if not ma or not mf:
                 continue
 
-            # Código (string compartido)
             attrs_a, val_a = ma.group(2), ma.group(3)
             if 't="s"' in attrs_a or "t='s'" in attrs_a:
                 try:
@@ -969,10 +1246,10 @@ def _parsear_myl_xlsx(file_path):
                 except Exception:
                     continue
             else:
-                s = val_a.strip()
-                codigo = s[:-2] if re.match(r'^\d+\.0$', s) else s
+                codigo = val_a.strip()
+                if re.match(r'^\d+\.0$', codigo):
+                    codigo = codigo[:-2]
 
-            # Precio (número directo en el XML)
             try:
                 precio = float(mf.group(3))
             except Exception:
@@ -982,29 +1259,30 @@ def _parsear_myl_xlsx(file_path):
             if not codigo_clean or precio <= 0:
                 continue
 
-            # Descripción col E (DESCRI)
-            me_desc = _cell_e.search(row_xml)
-            if me_desc:
-                attrs_e3, val_e3 = me_desc.group(2), me_desc.group(3)
-                if 't="s"' in attrs_e3 or "t='s'" in attrs_e3:
-                    try: desc = shared[int(val_e3)].strip()
-                    except: desc = ''
-                else:
-                    desc = val_e3.strip()
-            else:
-                desc = ''
+            fabricante = read_cell_text(_cell_b, row_xml)
+            if not fabricante_myl_permitido(fabricante):
+                continue
+
+            rubro = read_cell_text(_cell_c, row_xml)
+            subrubro = read_cell_text(_cell_d, row_xml)
+            desc = read_cell_text(_cell_e, row_xml)
+            iva = limpiar_precio(read_cell_text(_cell_i, row_xml))
 
             items.append({
                 'codigo':      codigo_clean,
                 'precio':      precio,
                 'descripcion': _clean_desc(desc),
                 'hoja':        'Page1',
+                'rubro':       _clean_desc(rubro),
+                'subrubro':    _clean_desc(subrubro),
+                'marca':       _clean_desc(fabricante),
+                'origen':      'MYL',
+                'iva':         iva if iva else None,
             })
     except Exception:
         pass
 
     return items
-
 
 # ─── Detección y parser especializado para LIDERCAR ──────────────────────────
 # LIDERCAR tiene ~10k filas. Header en fila 6, datos desde fila 7.
@@ -1023,16 +1301,19 @@ def _detectar_lidercar(file_path):
     except Exception:
         return False
 
+
 def _parsear_lidercar_xlsx(file_path):
     """
-    Lee col A (Cód.Izq), col B (Cód.der) y col I (Precio lista) con zipfile+regex.
+    Lee col A (Cód.Izq), col B (Cód.der), col C (Rubro), col D (Descripción)
+    y col I (Precio lista) con zipfile+regex.
     Ambas columnas de código pueden tener valor para el mismo producto.
     """
     _cell_a = re.compile(r'<c r="A(\d+)"([^>]*)><v>([^<]+)</v>')
     _cell_b = re.compile(r'<c r="B(\d+)"([^>]*)><v>([^<]+)</v>')
+    _cell_c = re.compile(r'<c r="C(\d+)"([^>]*)><v[^>]*>([^<]+)</v>')
     _cell_d = re.compile(r'<c r="D(\d+)"([^>]*)><v[^>]*>([^<]+)</v>')
     _cell_i = re.compile(r'<c r="I(\d+)"([^>]*)><v>([^<]+)</v>')
-    _row_re  = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
+    _row_re = re.compile(r'<row[^>]*r="(\d+)"[^>]*>(.*?)</row>', re.DOTALL)
     items = []
 
     try:
@@ -1052,12 +1333,22 @@ def _parsear_lidercar_xlsx(file_path):
             with zf.open(sheets[0]) as f:
                 sheet = f.read().decode('utf-8', errors='replace')
 
+        def read_cell(match):
+            if not match:
+                return ''
+            attrs, val = match.group(2), match.group(3)
+            if 't="s"' in attrs or "t='s'" in attrs:
+                try:
+                    return shared[int(val)].strip()
+                except Exception:
+                    return ''
+            return val.strip()
+
         for m in _row_re.finditer(sheet):
             if int(m.group(1)) <= 6:
-                continue  # saltar cabeceras (filas 1-6)
+                continue
             row_xml = m.group(2)
 
-            # Precio en col I (siempre numérico)
             mi = _cell_i.search(row_xml)
             if not mi:
                 continue
@@ -1068,34 +1359,16 @@ def _parsear_lidercar_xlsx(file_path):
             if precio <= 0:
                 continue
 
-            # Códigos en col A y/o col B
             codigos = []
             for mc in [_cell_a.search(row_xml), _cell_b.search(row_xml)]:
-                if not mc:
-                    continue
-                attrs, val = mc.group(2), mc.group(3)
-                if 't="s"' in attrs or "t='s'" in attrs:
-                    try:
-                        codigos.append(shared[int(val)].strip())
-                    except Exception:
-                        pass
-                else:
-                    s = val.strip()
-                    if re.match(r'^\d+\.0$', s):
-                        s = s[:-2]
-                    if s:
-                        codigos.append(s)
+                cod = read_cell(mc)
+                if re.match(r'^\d+\.0$', cod):
+                    cod = cod[:-2]
+                if cod:
+                    codigos.append(cod)
 
-            md_desc = _cell_d.search(row_xml)
-            if md_desc:
-                attrs_d2, val_d2 = md_desc.group(2), md_desc.group(3)
-                if 't="s"' in attrs_d2 or "t='s'" in attrs_d2:
-                    try: desc = shared[int(val_d2)].strip()
-                    except: desc = ''
-                else:
-                    desc = val_d2.strip()
-            else:
-                desc = ''
+            desc = read_cell(_cell_d.search(row_xml))
+            rubro = read_cell(_cell_c.search(row_xml))
 
             for cod in codigos:
                 codigo_clean = limpiar_codigo(cod)
@@ -1105,12 +1378,15 @@ def _parsear_lidercar_xlsx(file_path):
                         'precio':      precio,
                         'descripcion': _clean_desc(desc),
                         'hoja':        'Hoja1',
+                        'rubro':       _clean_desc(rubro),
+                        'subrubro':    '',
+                        'marca':       '',
+                        'origen':      'LIDERCAR',
                     })
     except Exception:
         pass
 
     return items
-
 
 # ─── Detección y parser especializado para FAL (xlsx convertido por Node) ─────
 # El .xls de FAL (5MB) es convertido a .xlsx por Node antes de llegar al parser.
@@ -1338,6 +1614,10 @@ def _parsear_fal_xlsx(file_path):
                             'precio':      float(precio),
                             'descripcion': _clean_desc(desc),
                             'hoja':        sheet_name,
+                            'rubro':       '',
+                            'subrubro':    '',
+                            'marca':       sheet_name,
+                            'origen':      'FAL',
                         }
     except Exception:
         pass
@@ -1388,7 +1668,10 @@ def parsear_archivo(file_path):
     # Estos proveedores tienen 30k-60k filas. Usamos zipfile+regex para leer
     # solo las columnas necesarias, sin cargar openpyxl (5x-8x más rápido).
     if not necesita_conversion:
-        if _detectar_cromosol(path_usar):
+        if _detectar_distrimar_xlsx(path_usar):
+            items_raw = _parsear_distrimar_xlsx(path_usar)
+            hoja_nombre = 'Lista abreviada'
+        elif _detectar_cromosol(path_usar):
             items_raw = _parsear_cromosol_xlsx(path_usar)
             hoja_nombre = 'lista precios'
         elif _detectar_myl(path_usar):
@@ -1447,6 +1730,9 @@ def parsear_archivo(file_path):
             elif _es_archivo_faros_ausili(ws):
                 ws2 = wb[sh]
                 todos.extend(parsear_hoja_faros_ausili(sh, ws2))
+            elif _es_archivo_distrimar(ws):
+                ws2 = wb[sh]
+                todos.extend(parsear_hoja_distrimar(sh, ws2))
             elif _es_archivo_myl(ws):
                 ws2 = wb[sh]
                 todos.extend(parsear_hoja_myl(sh, ws2))

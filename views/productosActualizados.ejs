@@ -14,6 +14,7 @@
       const _stats      = (typeof stats !== 'undefined' && stats) ? stats : { total: _prods.length, conAumento: 0, conBaja: 0, cambiaProv: 0, nuevos: 0 };
       const _provNombre = (typeof proveedorNombre !== 'undefined') ? proveedorNombre : '';
       const _cnuevos    = (typeof cantidadNuevos !== 'undefined') ? Number(cantidadNuevos) : 0;
+      const _categorias = (typeof categorias !== 'undefined' && Array.isArray(categorias)) ? categorias : [];
     %>
 
     <!-- ════════════════════════════════
@@ -38,9 +39,9 @@
           <i class="fa-solid fa-arrow-left"></i> Panel de Control
         </a>
         <% if (_cnuevos > 0) { %>
-          <a href="/productos/actualizados/nuevos.pdf" class="pa-btn pa-btn--primary">
+          <button type="button" class="pa-btn pa-btn--primary" id="btnAbrirModalNuevos">
             <i class="fa-solid fa-file-pdf"></i> Nuevos (<%= _cnuevos %>)
-          </a>
+          </button>
         <% } else { %>
           <button class="pa-btn pa-btn--primary" disabled>
             <i class="fa-solid fa-file-pdf"></i> Nuevos (0)
@@ -250,6 +251,55 @@
     </div>
     <% } %>
 
+
+    <% if (_cnuevos > 0) { %>
+    <div class="pa-modal-backdrop" id="modalNuevosBackdrop" hidden>
+      <div class="pa-modal" role="dialog" aria-modal="true" aria-labelledby="modalNuevosTitulo">
+        <div class="pa-modal__header">
+          <div>
+            <span class="pa-modal__eyebrow">PDF de productos nuevos</span>
+            <h2 id="modalNuevosTitulo">Seleccionar categorías</h2>
+          </div>
+          <button type="button" class="pa-modal__close" id="btnCerrarModalNuevos" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <p class="pa-modal__text">
+          Elegí qué categorías querés incluir. El sistema filtra usando rubro, subrubro, fabricante, hoja y descripción según el proveedor.
+        </p>
+
+        <label class="pa-check pa-check--all">
+          <input type="checkbox" id="chkTodasCategoriasNuevos" checked>
+          <span>Todas las categorías detectables</span>
+        </label>
+
+        <div class="pa-modal__categories" id="categoriasNuevosGrid">
+          <% _categorias.forEach(categoria => { %>
+            <label class="pa-check">
+              <input
+                type="checkbox"
+                class="chkCategoriaNuevo"
+                value="<%= categoria.id %>"
+                disabled
+              >
+              <span><%= categoria.nombre %></span>
+            </label>
+          <% }); %>
+        </div>
+
+        <div class="pa-modal__footer">
+          <button type="button" class="pa-btn pa-btn--outline" id="btnCancelarModalNuevos">
+            Cancelar
+          </button>
+          <button type="button" class="pa-btn pa-btn--primary" id="btnGenerarPdfNuevos">
+            <i class="fa-solid fa-file-pdf"></i> Generar PDF
+          </button>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
     <!-- Footer -->
     <div class="pa-footer-actions">
       <a href="/productos/panelControl" class="pa-btn pa-btn--outline">
@@ -261,12 +311,13 @@
 </main>
 
 <script>
-  // Filtro de tabs
   document.querySelectorAll('.pa-filter-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.pa-filter-tab').forEach(b => b.classList.remove('pa-filter-tab--active'));
       btn.classList.add('pa-filter-tab--active');
+
       const filter = btn.dataset.filter;
+
       document.querySelectorAll('#pa-main-table tbody tr').forEach(row => {
         if (filter === 'all') {
           row.style.display = '';
@@ -278,6 +329,75 @@
       });
     });
   });
+
+  const btnAbrirModalNuevos = document.getElementById('btnAbrirModalNuevos');
+  const modalNuevosBackdrop = document.getElementById('modalNuevosBackdrop');
+  const btnCerrarModalNuevos = document.getElementById('btnCerrarModalNuevos');
+  const btnCancelarModalNuevos = document.getElementById('btnCancelarModalNuevos');
+  const btnGenerarPdfNuevos = document.getElementById('btnGenerarPdfNuevos');
+  const chkTodasCategoriasNuevos = document.getElementById('chkTodasCategoriasNuevos');
+  const chksCategoriaNuevo = Array.from(document.querySelectorAll('.chkCategoriaNuevo'));
+
+  function abrirModalNuevos() {
+    if (!modalNuevosBackdrop) return;
+    modalNuevosBackdrop.hidden = false;
+    document.body.classList.add('pa-modal-open');
+  }
+
+  function cerrarModalNuevos() {
+    if (!modalNuevosBackdrop) return;
+    modalNuevosBackdrop.hidden = true;
+    document.body.classList.remove('pa-modal-open');
+  }
+
+  function syncCategoriasNuevos() {
+    const usarTodas = chkTodasCategoriasNuevos && chkTodasCategoriasNuevos.checked;
+
+    chksCategoriaNuevo.forEach(chk => {
+      chk.disabled = usarTodas;
+      if (usarTodas) chk.checked = false;
+    });
+  }
+
+  if (btnAbrirModalNuevos) btnAbrirModalNuevos.addEventListener('click', abrirModalNuevos);
+  if (btnCerrarModalNuevos) btnCerrarModalNuevos.addEventListener('click', cerrarModalNuevos);
+  if (btnCancelarModalNuevos) btnCancelarModalNuevos.addEventListener('click', cerrarModalNuevos);
+
+  if (modalNuevosBackdrop) {
+    modalNuevosBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalNuevosBackdrop) cerrarModalNuevos();
+    });
+  }
+
+  if (chkTodasCategoriasNuevos) {
+    chkTodasCategoriasNuevos.addEventListener('change', syncCategoriasNuevos);
+  }
+
+  if (btnGenerarPdfNuevos) {
+    btnGenerarPdfNuevos.addEventListener('click', () => {
+      const usarTodas = chkTodasCategoriasNuevos && chkTodasCategoriasNuevos.checked;
+
+      if (usarTodas) {
+        window.open('/productos/actualizados/nuevos.pdf', '_blank');
+        cerrarModalNuevos();
+        return;
+      }
+
+      const seleccionadas = chksCategoriaNuevo
+        .filter(chk => chk.checked)
+        .map(chk => chk.value);
+
+      if (seleccionadas.length === 0) {
+        alert('Seleccioná al menos una categoría o marcá "Todas las categorías detectables".');
+        return;
+      }
+
+      window.open('/productos/actualizados/nuevos.pdf?categorias=' + encodeURIComponent(seleccionadas.join(',')), '_blank');
+      cerrarModalNuevos();
+    });
+  }
+
+  syncCategoriasNuevos();
 </script>
 
 <%- include('./layouts/footer.ejs') %>

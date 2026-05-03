@@ -479,3 +479,262 @@
 @media (max-width: 480px) {
   .pa-stats-row { grid-template-columns: 1fr 1fr; }
 }
+.pa-modal-open {
+  overflow: hidden;
+}
+
+.pa-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.pa-modal-backdrop[hidden] {
+  display: none;
+}
+
+.pa-modal {
+  width: min(760px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  padding: 24px;
+}
+
+.pa-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.pa-modal__eyebrow {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.pa-modal__header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.pa-modal__close {
+  border: 0;
+  background: #f1f5f9;
+  color: #0f172a;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.pa-modal__close:hover {
+  background: #e2e8f0;
+}
+
+.pa-modal__text {
+  margin: 0 0 16px;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.pa-modal__tools {
+  margin-bottom: 14px;
+}
+
+.pa-modal__categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.pa-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pa-check:hover {
+  background: #f1f5f9;
+}
+
+.pa-check--all {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  font-weight: 700;
+}
+
+.pa-check input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.pa-check input:disabled {
+  cursor: not-allowed;
+}
+
+.pa-check:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pa-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+.pa-modal-open {
+  overflow: hidden;
+}
+
+.pa-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.pa-modal-backdrop[hidden] {
+  display: none;
+}
+
+.pa-modal {
+  width: min(780px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  padding: 24px;
+}
+
+.pa-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.pa-modal__eyebrow {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.pa-modal__header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.pa-modal__close {
+  border: 0;
+  background: #f1f5f9;
+  color: #0f172a;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.pa-modal__close:hover {
+  background: #e2e8f0;
+}
+
+.pa-modal__text {
+  margin: 0 0 16px;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.pa-modal__categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin: 16px 0 20px;
+}
+
+.pa-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pa-check:hover {
+  background: #f1f5f9;
+}
+
+.pa-check--all {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.pa-check input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.pa-check input:disabled {
+  cursor: not-allowed;
+}
+
+.pa-check:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pa-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
