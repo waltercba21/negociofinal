@@ -1700,9 +1700,9 @@ def parsear_archivo(file_path):
         import openpyxl as _openpyxl
         wb = _openpyxl.load_workbook(path_usar, read_only=True, data_only=True)
     except Exception as e:
+        if tmp_dir:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
         return {'items': [], 'hojas': [], 'errores': [f'No se pudo leer: {e}']}
-    finally:
-        if tmp_dir: shutil.rmtree(tmp_dir, ignore_errors=True)
 
     # Detectar si es archivo FAL a nivel de workbook (tiene hoja maestra)
     es_fal = _es_archivo_fal(wb.sheetnames)
@@ -1741,6 +1741,8 @@ def parsear_archivo(file_path):
         except Exception as e:
             errores.append(f'Hoja "{sh}": {e}')
     wb.close()
+    if tmp_dir:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
     if es_dm:
         # Para DM: deduplicar por (codigo, proveedor_id_override) — precio mayor
