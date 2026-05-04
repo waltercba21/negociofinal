@@ -408,6 +408,210 @@ function normalizarIdFiltro(raw, tokensNull = ['TODOS', 'TODAS', '']) {
   return v;
 }
 
+
+function normalizarTxtPDFNuevo(v = '') {
+  return String(v || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function categoriaPorNombresPDF(categorias, nombres) {
+  const buscadas = new Set(nombres.map(normalizarTxtPDFNuevo));
+
+  return (categorias || []).find(c => {
+    return buscadas.has(normalizarTxtPDFNuevo(c.nombre));
+  }) || null;
+}
+
+function textoItemNuevo(item) {
+  return normalizarTxtPDFNuevo([
+    item.rubro,
+    item.subrubro,
+    item.descripcion,
+    item.hoja,
+    item.marca,
+    item.origen,
+    item.codigo
+  ].filter(Boolean).join(' '));
+}
+
+function esItemNuevoExcluido(item) {
+  const t = textoItemNuevo(item);
+
+  const exclusiones = [
+    'ALTERNADOR',
+    'ARRANQUE',
+    'BOMBA DE AGUA',
+    'BOMBA COMBUSTIBLE',
+    'TERMOSTATO',
+    'RADIADOR',
+    'PARAGOLPE',
+    'GUARDABARRO',
+    'CAPOT',
+    'PUERTA',
+    'MANIJA',
+    'CERRADURA',
+    'AMORTIGUADOR',
+    'BUJE',
+    'CORREA',
+    'INYECTOR',
+    'INYECCION',
+    'TUERCA',
+    'CLIP',
+    'TAPA TANQUE',
+    'LEVANTA CRISTAL',
+    'ALZACRISTAL',
+    'ESCOBILLA LIMPIAPARABRISAS',
+    'ESCOBILLA DELANTERA'
+  ];
+
+  return exclusiones.some(x => t.includes(x));
+}
+
+function inferirCategoriaProductoNuevo(item, categorias, proveedorNombre = '') {
+  const proveedor = normalizarTxtPDFNuevo(proveedorNombre);
+  const t = textoItemNuevo(item);
+  const rubro = normalizarTxtPDFNuevo(item.rubro);
+  const marca = normalizarTxtPDFNuevo(item.marca);
+
+  // MYL: solo los fabricantes que trabaja AUTOFAROS.
+  // El parser ya filtra, esto queda como defensa adicional.
+  if (proveedor.includes('MYL') || normalizarTxtPDFNuevo(item.origen).includes('MYL')) {
+    const permitidosMYL = new Set(['AP', 'BAIML', 'MYL', 'P01-PORTAFICH']);
+    if (marca && !permitidosMYL.has(marca)) return null;
+  }
+
+  if (esItemNuevoExcluido(item)) return null;
+
+  // Rubros fuertes exactos primero
+  if (rubro === 'VIDRIOS DE OPTICA' || rubro === 'VIDRIO DE OPTICA') {
+    return categoriaPorNombresPDF(categorias, ['VIDRIOS DE OPTICAS', 'VIDRIOS DE ÓPTICAS']);
+  }
+
+  if (rubro === 'LAMPARAS' || rubro === 'LAMPARA 12 V.' || rubro === 'LAMPARA 24 V.') {
+    if (/\bLED\b/.test(t)) {
+      return categoriaPorNombresPDF(categorias, ['LAMPARAS LED', 'LÁMPARAS LED']);
+    }
+    return categoriaPorNombresPDF(categorias, ['LAMPARAS', 'LÁMPARAS']);
+  }
+
+  if (rubro === 'OPTICAS' || rubro === 'OPTICA') {
+    if (/\bLED\b/.test(t)) {
+      return categoriaPorNombresPDF(categorias, ['OPTICAS LED', 'ÓPTICAS LED']);
+    }
+    return categoriaPorNombresPDF(categorias, ['OPTICAS', 'ÓPTICAS']);
+  }
+
+  if (rubro === 'FAROS AUXILIARES' || rubro === 'FARO AUXILIAR') {
+    if (/\bLED\b/.test(t)) {
+      return categoriaPorNombresPDF(categorias, ['FAROS AUXILIARES LED']);
+    }
+    return categoriaPorNombresPDF(categorias, ['FAROS AUXILIARES']);
+  }
+
+  const reglas = [
+    {
+      nombres: ['OPTICAS LED', 'ÓPTICAS LED'],
+      ok: () => /\bOPTICA(S)?\b/.test(t) && /\bLED\b/.test(t)
+    },
+    {
+      nombres: ['OPTICAS', 'ÓPTICAS'],
+      ok: () => /\bOPTICA(S)?\b|\bPROYECTOR\b|\bFARO DELANTERO\b/.test(t)
+    },
+    {
+      nombres: ['FAROS AUXILIARES LED'],
+      ok: () => /\bAUXILIAR(ES)?\b/.test(t) && /\bLED\b/.test(t)
+    },
+    {
+      nombres: ['FAROS AUXILIARES'],
+      ok: () => /\bFARO AUXILIAR\b|\bAUXILIAR(ES)?\b|\bANTINIEBLA\b|\bROMPENIEBLA\b/.test(t)
+    },
+    {
+      nombres: ['FAROS TRASEROS LED', 'FAROS TRASERO LED'],
+      ok: () => /\bTRASER[OA]S?\b/.test(t) && /\bLED\b/.test(t)
+    },
+    {
+      nombres: ['FAROS TRASEROS', 'FAROS TRASERO'],
+      ok: () => /\bFARO(S)? TRASER[OA]S?\b|\bTRASER[OA]S?\b|\bLENTE TRASERO\b/.test(t)
+    },
+    {
+      nombres: ['FAROS PATENTE LED'],
+      ok: () => /\bPATENTE\b/.test(t) && /\bLED\b/.test(t)
+    },
+    {
+      nombres: ['FAROS PATENTE'],
+      ok: () => /\bPATENTE\b|\bALUMBRA PATENTE\b/.test(t)
+    },
+    {
+      nombres: ['FAROS LATERALES LED', 'FAROS LATERALES FLEXIBLES LED'],
+      ok: () => /\bLATERAL(ES)?\b/.test(t) && /\bLED\b/.test(t)
+    },
+    {
+      nombres: ['FAROS LATERALES', 'FAROS LATERALES FLEXIBLES'],
+      ok: () => /\bLATERAL(ES)?\b|\bPOSICION REGLAMENTARIOS\b|\bDELIMITADOR\b/.test(t)
+    },
+    {
+      nombres: ['FAROS GIROS ESPEJOS', 'GIROS'],
+      ok: () => /\bGIRO\b|\bGUIÑO\b|\bGUINO\b|\bSEÑALERO\b|\bSENALERO\b|\bINTERMITENTE\b/.test(t)
+    },
+    {
+      nombres: ['VIDRIOS DE OPTICAS', 'VIDRIOS DE ÓPTICAS'],
+      ok: () => /\bVIDRIO(S)? DE OPTICA(S)?\b|\bCRISTAL(ES)? DE OPTICA(S)?\b/.test(t)
+    },
+    {
+      nombres: ['VIDRIOS DE ESPEJOS'],
+      ok: () => /\bVIDRIO(S)? DE ESPEJO(S)?\b|\bCRISTAL(ES)? DE ESPEJO(S)?\b/.test(t)
+    },
+    {
+      nombres: ['LENTES DE OPTICAS', 'LENTES DE ÓPTICAS'],
+      ok: () => /\bLENTE(S)?\b/.test(t) && /\bOPTICA(S)?\b/.test(t)
+    },
+    {
+      nombres: ['LENTES DE FAROS'],
+      ok: () => /\bLENTE(S)?\b|\bACRILICO(S)?\b/.test(t)
+    },
+    {
+      nombres: ['OJOS DE GATO'],
+      ok: () => /\bOJO(S)? DE GATO\b/.test(t)
+    },
+    {
+      nombres: ['CIRCUITOS IMPRESOS'],
+      ok: () => /\bCIRCUITO(S)? IMPRESO(S)?\b/.test(t)
+    },
+    {
+      nombres: ['AROS'],
+      ok: () => /\bARO(S)?\b|\bMARCO(S)?\b|\bEMBELLECEDOR(ES)?\b/.test(t)
+    },
+    {
+      nombres: ['ESPEJOS'],
+      ok: () => /\bESPEJO(S)?\b|\bRETROVISOR(ES)?\b/.test(t)
+    },
+    {
+      nombres: ['LAMPARAS LED', 'LÁMPARAS LED'],
+      ok: () => /\bLAMPARA(S)?\b/.test(t) && /\bLED\b/.test(t)
+    },
+    {
+      nombres: ['LAMPARAS', 'LÁMPARAS'],
+      ok: () => /\bLAMPARA(S)?\b|\bH1\b|\bH3\b|\bH4\b|\bH7\b|\bH11\b|\bHB3\b|\bHB4\b|\bT10\b|\bT20\b|\bXENON\b/.test(t)
+    },
+    {
+      nombres: ['BARRAS LED', 'BARRAS LEDS'],
+      ok: () => /\bBARRA(S)?\b/.test(t) && /\bLED\b/.test(t)
+    }
+  ];
+
+  for (const regla of reglas) {
+    if (!regla.ok()) continue;
+    const cat = categoriaPorNombresPDF(categorias, regla.nombres);
+    if (cat) return cat;
+  }
+
+  return null;
+}
+
 async function obtenerNombresFiltros({ proveedorId, categoriaId }) {
   const [proveedores, categorias] = await Promise.all([
     producto.obtenerProveedores(conexion),
@@ -2439,6 +2643,14 @@ actualizarPreciosExcel: async (req, res) => {
     const norm = (txt = '') => quitarAcentos(String(txt).trim().toLowerCase());
     const str = (x) => (x ?? '').toString().trim();
 
+    // Para matchear códigos de proveedor de forma robusta:
+    // FAL y AUSILI suelen alternar espacios internos: "6445 / M" vs "6445/M",
+    // "FA2056E RO" vs "FA2056ERO". No cambia lo que se guarda, solo la comparación.
+    const normCodigoProveedor = (txt = '') => quitarAcentos(String(txt || ''))
+      .toUpperCase()
+      .replace(/\s+/g, '')
+      .trim();
+
     function limpiarPrecio(valor) {
       if (valor === null || valor === undefined) return 0;
 
@@ -2512,7 +2724,7 @@ actualizarPreciosExcel: async (req, res) => {
 
     const ppInfoMap = new Map();
     (ppInfoRows || []).forEach(r => {
-      const k = norm(r.codigo);
+      const k = normCodigoProveedor(r.codigo);
       ppInfoMap.set(k, {
         precio_lista: Number(r.precio_lista || 0),
         presentacion: (r.presentacion === 'juego') ? 'juego' : 'unidad'
@@ -2537,8 +2749,7 @@ actualizarPreciosExcel: async (req, res) => {
     let tmpXlsxPath    = null;
     let tmpConvertDir  = null;
 
-    // Detectar XLS por magic bytes (D0 CF 11 E0) o por extensión.
-    // FAL llega como .xls y conviene convertirlo en Node porque el módulo xlsx ya está instalado.
+    // Detectar XLS por magic bytes (D0 CF 11 E0) o por extensión
     const _isXls = (() => {
       try {
         const buf = Buffer.alloc(4);
@@ -2550,22 +2761,22 @@ actualizarPreciosExcel: async (req, res) => {
     })() || path_mod.extname(file.originalname || '').toLowerCase() === '.xls';
 
     if (_isXls) {
-      // Convertir .xls → .xlsx en una carpeta temporal propia.
-      // Evita conflictos en /tmp y evita que el parser reciba una ruta inexistente.
+      // Convertir .xls → .xlsx usando carpeta temporal propia.
+      // Esto evita que Python reciba una ruta inexistente o que se pise con otro proceso.
       tmpConvertDir = fs_sync.mkdtempSync(path_mod.join(os_mod.tmpdir(), 'autofaros-xls-'));
       tmpXlsxPath = path_mod.join(tmpConvertDir, `${Date.now()}_${path_mod.basename(file.originalname || 'lista')}.xlsx`);
-
       try {
         const wb = xlsx.readFile(file.path, { type: 'file', cellDates: false, cellNF: false, cellStyles: false });
         xlsx.writeFile(wb, tmpXlsxPath, { bookType: 'xlsx' });
 
-        const st = fs_sync.statSync(tmpXlsxPath);
-        if (!st || st.size <= 0) {
+        const statTmp = fs_sync.statSync(tmpXlsxPath);
+        if (!statTmp || statTmp.size <= 0) {
           throw new Error('la conversión generó un archivo vacío');
         }
 
         fileParaParser = tmpXlsxPath;
       } catch (convErr) {
+        if (tmpXlsxPath) try { fs_sync.unlinkSync(tmpXlsxPath); } catch {}
         if (tmpConvertDir) try { fs_sync.rmSync(tmpConvertDir, { recursive: true, force: true }); } catch {}
         throw new Error('No se pudo convertir el archivo .xls: ' + convErr.message);
       }
@@ -2603,11 +2814,13 @@ actualizarPreciosExcel: async (req, res) => {
     const itemsParser = parserResult.items || [];
 
     if (!Array.isArray(itemsParser) || itemsParser.length === 0) {
-      const detalle = parserResult.errores && parserResult.errores.length
-        ? parserResult.errores.join(' | ')
-        : 'El parser no devolvió productos válidos.';
-      throw new Error(`No se pudo leer ningún producto de la lista de precios. ${detalle}`);
+      throw new Error(
+        `No se pudo leer ningún producto de la lista. Hojas detectadas: ${(parserResult.hojas || []).join(', ') || 'sin hojas'}. ` +
+        `Advertencias: ${(parserResult.errores || []).join(' | ') || 'sin advertencias'}`
+      );
     }
+
+    console.log(`[actualizarPreciosExcel] proveedor=${proveedorNombre || proveedor_id} items_parser=${itemsParser.length} hojas=${(parserResult.hojas || []).join(',')}`);
 
     // ── Separar items DM (tienen proveedor_id_override) del resto ────────────
     // DM necesita procesarse por sub-proveedor separado; el resto va por bulk.
@@ -2622,17 +2835,32 @@ actualizarPreciosExcel: async (req, res) => {
         const codigoRaw   = str(item.codigo);
         const precioBruto = limpiarPrecio(item.precio);
         if (!codigoRaw || !Number.isFinite(precioBruto) || precioBruto <= 0) continue;
-        const key = norm(codigoRaw) + '|' + proveedor_id;
+        const key = normCodigoProveedor(codigoRaw) + '|' + proveedor_id;
         if (codigosProcesados.has(key)) continue;
         codigosProcesados.add(key);
-        itemsValidos.push({ codigo: codigoRaw, precio: precioBruto, descripcion: str(item.descripcion || '') });
+        itemsValidos.push({
+          codigo:      codigoRaw,
+          precio:      precioBruto,
+          descripcion: str(item.descripcion || ''),
+          hoja:        str(item.hoja || ''),
+          rubro:       str(item.rubro || ''),
+          subrubro:    str(item.subrubro || ''),
+          marca:       str(item.marca || ''),
+          origen:      str(item.origen || ''),
+          iva:         item.iva || null
+        });
       }
 
       if (itemsValidos.length > 0) {
+        const itemParserPorCodigo = new Map();
+        itemsValidos.forEach(it => {
+          itemParserPorCodigo.set(normCodigoProveedor(it.codigo), it);
+        });
+
         const bulkResult = await producto.actualizarPreciosBulk(itemsValidos, proveedor_id);
 
         (bulkResult.actualizados || []).forEach(p => {
-          const infoBD = ppInfoMap.get(norm(p.codigo));
+          const infoBD = ppInfoMap.get(normCodigoProveedor(p.codigo));
           const precioAnterior = infoBD?.precio_lista || 0;
           const sinCambio = Math.abs(precioAnterior - p.precio_lista_nuevo) < 0.01;
           // Solo incluir en la vista los que tuvieron cambio de precio
@@ -2659,10 +2887,17 @@ actualizarPreciosExcel: async (req, res) => {
           const key = norm(n.codigo) + '|' + proveedor_id;
           if (!codigosNuevosSet.has(key)) {
             codigosNuevosSet.add(key);
+            const original = itemParserPorCodigo.get(normCodigoProveedor(n.codigo)) || {};
             nuevosProductos.push({
-              codigo:               n.codigo,
-              descripcion:          '(sin descripción)',
-              precio:               n.precio,
+              codigo:                n.codigo,
+              descripcion:           original.descripcion || n.descripcion || '(sin descripción)',
+              precio:                n.precio,
+              hoja:                  original.hoja || '',
+              rubro:                 original.rubro || '',
+              subrubro:              original.subrubro || '',
+              marca:                 original.marca || '',
+              origen:                original.origen || proveedorNombre || '',
+              iva:                   original.iva || null,
               presentacion_sugerida: 'unidad'
             });
           }
@@ -2683,7 +2918,7 @@ actualizarPreciosExcel: async (req, res) => {
       if (codigosProcesados.has(codigoKey)) continue;
       codigosProcesados.add(codigoKey);
 
-      const infoBD = ppInfoMap.get(norm(codigoRaw));
+      const infoBD = ppInfoMap.get(normCodigoProveedor(codigoRaw));
       let presentacionUsada = infoBD?.presentacion;
       if (!presentacionUsada) {
         const det = detectarPresentacionFila({ proveedorNombre, sheetName, codigo: codigoRaw, descripcion: descRaw });
@@ -2715,13 +2950,20 @@ actualizarPreciosExcel: async (req, res) => {
           productosTocados.add(Number(p.producto_id));
         });
       } else {
-        const nuevoKey = norm(codigoRaw) + '|' + provIdEfectivo;
+        const nuevoKey = normCodigoProveedor(codigoRaw) + '|' + provIdEfectivo;
         if (!codigosNuevosSet.has(nuevoKey)) {
           codigosNuevosSet.add(nuevoKey);
           nuevosProductos.push({
             codigo:                codigoRaw,
-            descripcion:           descRaw || '(sin descripción)',
+            descripcion:           descRaw || item.descripcion || '(sin descripción)',
             precio:                precioBruto,
+            hoja:                  item.hoja || '',
+            rubro:                 item.rubro || '',
+            subrubro:              item.subrubro || '',
+            marca:                 item.marca || '',
+            origen:                item.origen || proveedorNombre || '',
+            proveedor_id_override: item.proveedor_id_override || null,
+            iva:                   item.iva || null,
             presentacion_sugerida: presentacionUsada
           });
         }
@@ -2817,7 +3059,7 @@ actualizarPreciosExcel: async (req, res) => {
       ofertasFaltantes = (rows || [])
         .filter(r => {
           const cod = str(r.codigo);
-          return cod && !codigosProcesados.has(norm(cod) + '|' + proveedor_id);
+          return cod && !codigosProcesados.has(normCodigoProveedor(cod));
         })
         .map(r => ({
           producto_id: r.producto_id,
@@ -2849,12 +3091,15 @@ actualizarPreciosExcel: async (req, res) => {
     const conBaja     = productosActualizados.filter(p => p.precio_lista_nuevo < p.precio_lista_antiguo).length;
     const cambiaProv  = productosActualizados.filter(p => p.sera_proveedor_asignado).length;
 
+    const categorias = await producto.obtenerCategorias(conexion);
+
     res.render('productosActualizados', {
       productos:        productosActualizados,
       ofertasFaltantes,
       cantidadNuevos:   nuevosProductos.length,
       proveedorNombre,
       proveedor_id,
+      categorias,
       stats: {
         total:      productosActualizados.length,
         conAumento,
@@ -2871,34 +3116,54 @@ actualizarPreciosExcel: async (req, res) => {
   }
 },
 
+
 descargarPDFNuevos : async (req, res) => {
   try {
     const data = req.session && req.session.nuevosProductos;
-    if (!data || !data.items || data.items.length === 0) {
+
+    if (!data || !Array.isArray(data.items) || data.items.length === 0) {
       return res.status(404).send('No hay productos nuevos detectados en la última importación.');
     }
 
-    // ── Filtrar productos que ya existen en la BD (en cualquier proveedor) ──
-    // Un producto es realmente "nuevo" si su código NO aparece en
-    // producto_proveedor para ningún proveedor, ni tampoco en productos.codigo.
+    const categoriasSeleccionadas = String(req.query.categorias || '')
+      .split(',')
+      .map(v => Number(v))
+      .filter(v => Number.isFinite(v) && v > 0);
+
     const todosLosCodigos = data.items
       .map(it => (it.codigo || '').toString().trim().toUpperCase())
       .filter(Boolean);
 
     let codigosExistentes = new Set();
+
     if (todosLosCodigos.length > 0) {
       const placeholders = todosLosCodigos.map(() => '?').join(',');
-      // Buscar en producto_proveedor (todos los proveedores)
+
       const [ppRows] = await conexion.promise().query(
-        `SELECT UPPER(TRIM(codigo)) AS codigo FROM producto_proveedor
-         WHERE UPPER(TRIM(codigo)) IN (${placeholders})`,
+        `SELECT UPPER(TRIM(codigo)) AS codigo
+           FROM producto_proveedor
+          WHERE UPPER(TRIM(codigo)) IN (${placeholders})`,
         todosLosCodigos
       );
-      (ppRows || []).forEach(r => { if (r.codigo) codigosExistentes.add(r.codigo); });
+
+      (ppRows || []).forEach(r => {
+        if (r.codigo) codigosExistentes.add(r.codigo);
+      });
+
+      const [pRows] = await conexion.promise().query(
+        `SELECT UPPER(TRIM(codigo)) AS codigo
+           FROM productos
+          WHERE codigo IS NOT NULL
+            AND UPPER(TRIM(codigo)) IN (${placeholders})`,
+        todosLosCodigos
+      );
+
+      (pRows || []).forEach(r => {
+        if (r.codigo) codigosExistentes.add(r.codigo);
+      });
     }
 
-    // Filtrar los items que ya están cargados
-    const itemsRealesNuevos = data.items.filter(item => {
+    let itemsRealesNuevos = data.items.filter(item => {
       const cod = (item.codigo || '').toString().trim().toUpperCase();
       return cod && !codigosExistentes.has(cod);
     });
@@ -2907,7 +3172,46 @@ descargarPDFNuevos : async (req, res) => {
       return res.status(404).send('Todos los productos de la lista ya están cargados en el sistema.');
     }
 
+    const categorias = await producto.obtenerCategorias(conexion);
     const proveedor = data.proveedor_nombre || `Proveedor_${data.proveedor_id}`;
+
+    const totalAntesCategoria = itemsRealesNuevos.length;
+    let categoriasTexto = 'Todas las categorías detectables';
+
+    itemsRealesNuevos = itemsRealesNuevos
+      .map(item => {
+        const categoria = inferirCategoriaProductoNuevo(item, categorias, proveedor);
+
+        return {
+          ...item,
+          categoria_inferida_id: categoria ? Number(categoria.id) : null,
+          categoria_inferida_nombre: categoria ? categoria.nombre : 'Sin categoría detectada'
+        };
+      })
+      .filter(item => {
+        // Si no eligió categorías, igual excluimos lo claramente irrelevante.
+        if (categoriasSeleccionadas.length === 0) {
+          return !!item.categoria_inferida_id;
+        }
+
+        return (
+          item.categoria_inferida_id &&
+          categoriasSeleccionadas.includes(Number(item.categoria_inferida_id))
+        );
+      });
+
+    if (categoriasSeleccionadas.length > 0) {
+      const setCats = new Set(categoriasSeleccionadas.map(Number));
+      categoriasTexto = categorias
+        .filter(c => setCats.has(Number(c.id)))
+        .map(c => c.nombre)
+        .join(', ') || 'Categorías seleccionadas';
+    }
+
+    if (itemsRealesNuevos.length === 0) {
+      return res.status(404).send('No hay productos nuevos para las categorías seleccionadas.');
+    }
+
     const fecha = new Date(data.fecha || Date.now());
     const yyyy = fecha.getFullYear();
     const mm = String(fecha.getMonth() + 1).padStart(2, '0');
@@ -2919,45 +3223,80 @@ descargarPDFNuevos : async (req, res) => {
       `attachment; filename="PRODUCTOS_NUEVOS_${proveedor.replace(/\s+/g,'_')}_${yyyy}-${mm}-${dd}.pdf"`
     );
 
-    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    const doc = new PDFDocument({ margin: 35, size: 'A4' });
     doc.pipe(res);
 
-    // Título
     doc.fontSize(16).text('PRODUCTOS NUEVOS', { align: 'center' });
     doc.moveDown(0.3);
-    doc.fontSize(11).text(`Proveedor: ${proveedor}`, { align: 'center' });
+    doc.fontSize(10).text(`Proveedor: ${proveedor}`, { align: 'center' });
     doc.text(`Fecha: ${dd}/${mm}/${yyyy}`, { align: 'center' });
-    doc.text(`(${itemsRealesNuevos.length} productos nuevos, ${data.items.length - itemsRealesNuevos.length} ya cargados omitidos)`, { align: 'center' });
+    doc.text(`Categorías: ${categoriasTexto}`, { align: 'center' });
+    doc.text(
+      `(${itemsRealesNuevos.length} productos en PDF, ${totalAntesCategoria - itemsRealesNuevos.length} omitidos por filtro)`,
+      { align: 'center' }
+    );
     doc.moveDown(1);
 
-    // Encabezados de tabla
-    const colX = { codigo: 40, descrip: 170, precio: 480 };
-    const rowHeight = 20;
+    const colX = {
+      codigo: 35,
+      categoria: 115,
+      rubro: 225,
+      descripcion: 325,
+      precio: 500
+    };
 
-    doc.fontSize(11).text('Código', colX.codigo, doc.y, { width: 120, continued: false });
-    doc.text('Descripción', colX.descrip, doc.y, { width: 290 });
-    doc.text('Precio', colX.precio, doc.y, { width: 100, align: 'right' });
-    doc.moveTo(40, doc.y + 5).lineTo(555, doc.y + 5).stroke();
-    doc.moveDown(0.5);
+    const drawHeader = () => {
+      const y = doc.y;
+      doc.fontSize(8.5).font('Helvetica-Bold').fillColor('#111111');
 
-    // Filas
+      doc.text('Código', colX.codigo, y, { width: 75 });
+      doc.text('Categoría', colX.categoria, y, { width: 105 });
+      doc.text('Rubro', colX.rubro, y, { width: 95 });
+      doc.text('Descripción', colX.descripcion, y, { width: 170 });
+      doc.text('Precio', colX.precio, y, { width: 60, align: 'right' });
+
+      doc.moveTo(35, y + 14).lineTo(560, y + 14).stroke();
+      doc.y = y + 20;
+      doc.font('Helvetica');
+    };
+
+    drawHeader();
+
     itemsRealesNuevos.forEach(item => {
-      const precioFmt = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.precio || 0);
-      const yStart = doc.y;
-      // Código
-      doc.fontSize(10).text(item.codigo || '', colX.codigo, yStart, { width: 120 });
-      // Descripción (ajusta altura)
-      const descHeight = doc.heightOfString(item.descripcion || '', { width: 290 });
-      doc.text(item.descripcion || '', colX.descrip, yStart, { width: 290 });
-      // Precio
-      doc.text(`$ ${precioFmt}`, colX.precio, yStart, { width: 100, align: 'right' });
+      if (doc.y > 760) {
+        doc.addPage();
+        drawHeader();
+      }
 
-      const h = Math.max(rowHeight, descHeight);
-      doc.moveDown(h / 14); // ajuste fino para mantener separación visual
-      if (doc.y > 760) doc.addPage();
+      const precioFmt = new Intl.NumberFormat('es-AR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(Number(item.precio || 0));
+
+      const y = doc.y;
+      const descripcion = item.descripcion || '';
+      const rubro = item.rubro || item.subrubro || item.hoja || '-';
+
+      doc.fontSize(7.5).fillColor('#111111');
+
+      doc.text(item.codigo || '', colX.codigo, y, { width: 75 });
+      doc.text(item.categoria_inferida_nombre || '-', colX.categoria, y, { width: 105 });
+      doc.text(rubro, colX.rubro, y, { width: 95 });
+      doc.text(descripcion, colX.descripcion, y, { width: 170 });
+      doc.text(`$ ${precioFmt}`, colX.precio, y, { width: 60, align: 'right' });
+
+      const h = Math.max(
+        18,
+        doc.heightOfString(descripcion, { width: 170 }),
+        doc.heightOfString(rubro, { width: 95 }),
+        doc.heightOfString(item.categoria_inferida_nombre || '-', { width: 105 })
+      );
+
+      doc.y = y + h + 6;
     });
 
     doc.end();
+
   } catch (err) {
     console.error('❌ Error al generar PDF de nuevos:', err);
     res.status(500).send('Error al generar PDF.');

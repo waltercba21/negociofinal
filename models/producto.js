@@ -559,6 +559,15 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
    */
   if (!items || items.length === 0) return { actualizados: [], nuevos: [] };
 
+  function normalizarCodigoProveedor(v = '') {
+    return String(v || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/\s+/g, '')
+      .trim();
+  }
+
   function redondearAlCentenar(valor) {
     let n = Number(valor) || 0;
     const resto = n % 100;
@@ -590,7 +599,7 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
     // Indexar por codigo upper → ARRAY de rows (mismo código puede tener izq y der)
     const bdMap = new Map();
     for (const row of ppRows) {
-      const key = String(row.codigo || '').trim().toUpperCase();
+      const key = normalizarCodigoProveedor(row.codigo);
       if (!key) continue;
       if (!bdMap.has(key)) bdMap.set(key, []);
       bdMap.get(key).push(row);
@@ -601,7 +610,7 @@ actualizarPreciosBulk: async function (items, proveedor_id) {
     const nuevos      = [];  // { codigo, precio, descripcion }
 
     for (const item of items) {
-      const key = String(item.codigo || '').trim().toUpperCase();
+      const key = normalizarCodigoProveedor(item.codigo);
       if (!key) continue;
       const rows = bdMap.get(key);
       if (rows && rows.length > 0) {
@@ -819,17 +828,21 @@ actualizarPreciosPDF: async function (precio_lista, codigo, proveedor_id) {
       FROM producto_proveedor pp
       JOIN productos p ON pp.producto_id = p.id
       LEFT JOIN descuentos_proveedor dp ON pp.proveedor_id = dp.proveedor_id
-      WHERE pp.codigo = ? AND pp.proveedor_id = ?
+      WHERE pp.proveedor_id = ?
+        AND (
+          pp.codigo = ?
+          OR UPPER(REPLACE(TRIM(pp.codigo), ' ', '')) = UPPER(REPLACE(TRIM(?), ' ', ''))
+        )
     `;
 
     const conn = await conexion.promise().getConnection();
     try {
       // Buscar con el código tal cual, luego probar UPPER y LOWER como fallback
-      let [results] = await conn.query(buscarProductos, [codigo, proveedor_id]);
+      let [results] = await conn.query(buscarProductos, [proveedor_id, codigo, codigo]);
       if (!results || results.length === 0)
-        [results] = await conn.query(buscarProductos, [codigo.toUpperCase(), proveedor_id]);
+        [results] = await conn.query(buscarProductos, [proveedor_id, codigo.toUpperCase(), codigo.toUpperCase()]);
       if (!results || results.length === 0)
-        [results] = await conn.query(buscarProductos, [codigo.toLowerCase(), proveedor_id]);
+        [results] = await conn.query(buscarProductos, [proveedor_id, codigo.toLowerCase(), codigo.toLowerCase()]);
 
       if (!results || results.length === 0) return null;
 
