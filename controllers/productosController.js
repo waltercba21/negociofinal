@@ -3160,31 +3160,9 @@ if (importacionQuery && data?.importacion_id && importacionQuery !== String(data
     let codigosExistentes = new Set();
 
     if (todosLosCodigos.length > 0) {
-      const placeholders = todosLosCodigos.map(() => '?').join(',');
+  const placeholders = todosLosCodigos.map(() => '?').join(',');
 
-      const [ppRows] = await conexion.promise().query(
-        `SELECT UPPER(TRIM(codigo)) AS codigo
-           FROM producto_proveedor
-          WHERE UPPER(TRIM(codigo)) IN (${placeholders})`,
-        todosLosCodigos
-      );
-
-      (ppRows || []).forEach(r => {
-        if (r.codigo) codigosExistentes.add(r.codigo);
-      });
-
-      const [pRows] = await conexion.promise().query(
-        `SELECT UPPER(TRIM(codigo)) AS codigo
-           FROM productos
-          WHERE codigo IS NOT NULL
-            AND UPPER(TRIM(codigo)) IN (${placeholders})`,
-        todosLosCodigos
-      );
-
-      (pRows || []).forEach(r => {
-        if (r.codigo) codigosExistentes.add(r.codigo);
-      });
-    }
+}
 
     let itemsRealesNuevos = data.items.filter(item => {
       const cod = (item.codigo || '').toString().trim().toUpperCase();
