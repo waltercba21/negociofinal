@@ -54,10 +54,43 @@ def clean_meta(v):
         return ''
     return _html_mod.unescape(str(v)).strip()
 
-FABRICANTES_PERMITIDOS_MYL = {'AP', 'BAIML', 'MYL', 'P01-PORTAFICH'}
+# MYL no envía siempre el nombre comercial limpio.
+# En la lista real los fabricantes que trabaja AUTOFAROS llegan así:
+#   AP          -> A02-ACCEPLASTIC
+#   BAIML       -> B02-BAIML
+#   MYL         -> puede venir como MYL o con prefijo que contenga MYL
+#   P01-PORTAFICH -> P01-PORTAFICH
+FABRICANTES_PERMITIDOS_MYL = {
+    'AP',
+    'A02-ACCEPLASTIC',
+    'ACCEPLASTIC',
+    'BAIML',
+    'B02-BAIML',
+    'MYL',
+    'P01-PORTAFICH',
+    'PORTAFICH',
+}
 
 def fabricante_myl_permitido(v):
-    return clean_meta(v).upper() in FABRICANTES_PERMITIDOS_MYL
+    fabricante = clean_meta(v).upper()
+    if not fabricante:
+        return False
+
+    if fabricante in FABRICANTES_PERMITIDOS_MYL:
+        return True
+
+    # Soporta variantes tipo "A02-ACCEPLASTIC", "B02-BAIML" o cualquier texto que contenga MYL.
+    return (
+        fabricante.startswith('A02-')
+        or fabricante.startswith('B02-')
+        or fabricante.startswith('P01-')
+        or 'ACCEPLASTIC' in fabricante
+        or 'BAIML' in fabricante
+        or 'PORTAFICH' in fabricante
+        or fabricante == 'MYL'
+        or '-MYL' in fabricante
+        or ' MYL' in fabricante
+    )
 # ─── Detección de fila encabezado ─────────────────────────────────────────────
 
 _CLAVES_ENC = ['codigo','cod.','precio','articulo','descripcion',
