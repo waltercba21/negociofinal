@@ -3079,12 +3079,24 @@ actualizarPreciosExcel: async (req, res) => {
     }
 
     if (!req.session) req.session = {};
-    req.session.nuevosProductos = {
-      proveedor_id,
-      proveedor_nombre: proveedorNombre,
-      fecha: new Date(),
-      items: nuevosProductos
-    };
+
+const importacionId = `${proveedor_id}_${Date.now()}`;
+
+req.session.nuevosProductos = {
+  importacion_id: importacionId,
+  proveedor_id,
+  proveedor_nombre: proveedorNombre,
+  fecha: new Date(),
+  items: nuevosProductos
+};
+
+// MUY IMPORTANTE: guardar sesión antes de renderizar.
+// Evita que el PDF use la importación anterior.
+if (typeof req.session.save === 'function') {
+  await new Promise((resolve, reject) => {
+    req.session.save(err => err ? reject(err) : resolve());
+  });
+}
 
     // Resumen estadístico para la vista
     const conAumento  = productosActualizados.filter(p => p.precio_lista_nuevo > p.precio_lista_antiguo).length;
@@ -3100,6 +3112,7 @@ actualizarPreciosExcel: async (req, res) => {
       proveedorNombre,
       proveedor_id,
       categorias,
+      importacionId,
       stats: {
         total:      productosActualizados.length,
         conAumento,
@@ -3107,6 +3120,7 @@ actualizarPreciosExcel: async (req, res) => {
         sinCambio:  0,   // ya no enviamos los sin cambio
         cambiaProv,
         nuevos:     nuevosProductos.length,
+        
       }
     });
 
@@ -3121,6 +3135,15 @@ descargarPDFNuevos : async (req, res) => {
   try {
     const data = req.session && req.session.nuevosProductos;
 
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private, max-age=0');
+res.setHeader('Pragma', 'no-cache');
+res.setHeader('Expires', '0');
+
+const importacionQuery = String(req.query.importacion || '');
+
+if (importacionQuery && data?.importacion_id && importacionQuery !== String(data.importacion_id)) {
+  return res.status(409).send('El PDF solicitado pertenece a una importación anterior. Volvé a generar la lista.');
+}
     if (!data || !Array.isArray(data.items) || data.items.length === 0) {
       return res.status(404).send('No hay productos nuevos detectados en la última importación.');
     }
@@ -3216,11 +3239,13 @@ descargarPDFNuevos : async (req, res) => {
     const yyyy = fecha.getFullYear();
     const mm = String(fecha.getMonth() + 1).padStart(2, '0');
     const dd = String(fecha.getDate()).padStart(2, '0');
-
+    const hh = String(fecha.getHours()).padStart(2, '0');
+const mi = String(fecha.getMinutes()).padStart(2, '0');
+const ss = String(fecha.getSeconds()).padStart(2, '0');
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="PRODUCTOS_NUEVOS_${proveedor.replace(/\s+/g,'_')}_${yyyy}-${mm}-${dd}.pdf"`
+      `attachment; filename="PRODUCTOS_NUEVOS_${proveedor.replace(/\s+/g,'_')}_${yyyy}-${mm}-${dd}_${hh}-${mi}-${ss}.pdf"`
     );
 
     const doc = new PDFDocument({ margin: 35, size: 'A4' });

@@ -2,7 +2,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <%- include('./layouts/head.ejs') %>
-<link rel="stylesheet" href="/css/pages/productosActualizados.css?v=2026" />
+<link rel="stylesheet" href="/css/pages/productosActualizados.css?v=2026-05-04-2" />
+
 <body>
 <%- include('./layouts/header.ejs') %>
 
@@ -15,11 +16,10 @@
       const _provNombre = (typeof proveedorNombre !== 'undefined') ? proveedorNombre : '';
       const _cnuevos    = (typeof cantidadNuevos !== 'undefined') ? Number(cantidadNuevos) : 0;
       const _categorias = (typeof categorias !== 'undefined' && Array.isArray(categorias)) ? categorias : [];
+      const _importacionId = (typeof importacionId !== 'undefined') ? importacionId : '';
     %>
 
-    <!-- ════════════════════════════════
-         HEADER
-    ════════════════════════════════ -->
+    <!-- HEADER -->
     <div class="pa-page-header">
       <div class="pa-header-left">
         <span class="pa-eyebrow">
@@ -27,17 +27,17 @@
           Actualización de precios
           <% if (_provNombre) { %> · <strong><%= _provNombre %></strong><% } %>
         </span>
-        <h1 class="pa-title">
-          Informe de Cambios
-        </h1>
+        <h1 class="pa-title">Informe de Cambios</h1>
         <p class="pa-subtitle">
           Solo se muestran los productos cuyo precio de lista cambió
         </p>
       </div>
+
       <div class="pa-header-actions">
         <a href="/productos/panelControl" class="pa-btn pa-btn--outline">
           <i class="fa-solid fa-arrow-left"></i> Panel de Control
         </a>
+
         <% if (_cnuevos > 0) { %>
           <button type="button" class="pa-btn pa-btn--primary" id="btnAbrirModalNuevos">
             <i class="fa-solid fa-file-pdf"></i> Nuevos (<%= _cnuevos %>)
@@ -50,9 +50,7 @@
       </div>
     </div>
 
-    <!-- ════════════════════════════════
-         STAT CARDS
-    ════════════════════════════════ -->
+    <!-- STAT CARDS -->
     <div class="pa-stats-row">
 
       <div class="pa-stat-card pa-stat-card--total">
@@ -97,207 +95,215 @@
 
     </div>
 
-    <!-- ════════════════════════════════
-         TABLA PRINCIPAL
-    ════════════════════════════════ -->
+    <!-- TABLA PRINCIPAL -->
     <% if (_prods.length > 0) { %>
-    <div class="pa-panel">
-      <div class="pa-panel__hd">
-        <i class="fa-solid fa-table-list"></i>
-        <span>Productos con variación de precio</span>
-        <span class="pa-badge"><%= _prods.length %></span>
+      <div class="pa-panel">
+        <div class="pa-panel__hd">
+          <i class="fa-solid fa-table-list"></i>
+          <span>Productos con variación de precio</span>
+          <span class="pa-badge"><%= _prods.length %></span>
 
-        <!-- Filtro rápido -->
-        <div class="pa-filter-tabs" style="margin-left:auto;">
-          <button class="pa-filter-tab pa-filter-tab--active" data-filter="all">Todos</button>
-          <button class="pa-filter-tab" data-filter="sube">↑ Sube</button>
-          <button class="pa-filter-tab" data-filter="baja">↓ Baja</button>
-          <button class="pa-filter-tab" data-filter="prov">Cambia proveedor</button>
-        </div>
-      </div>
-
-      <div class="pa-table-wrap">
-        <table class="pa-table" id="pa-main-table">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nombre del Producto</th>
-              <th>P. Lista Anterior</th>
-              <th>P. Lista Nuevo</th>
-              <th>Variación</th>
-              <th>Precio Venta</th>
-              <th>Proveedor Asignado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% _prods.forEach(p => {
-              const viejo     = parseFloat(p.precio_lista_antiguo || 0);
-              const nuevo     = parseFloat(p.precio_lista_nuevo   || 0);
-              const pv        = parseFloat(p.precio_venta         || 0);
-              const diff      = viejo > 0 ? ((nuevo - viejo) / viejo) * 100 : 0;
-              const diffStr   = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
-              const diffClass = diff > 0 ? 'sube' : (diff < 0 ? 'baja' : 'igual');
-
-              // Determinar estado de proveedor
-              let provTag = '';
-              let provClass = '';
-              let rowAttr = `data-diff="${diffClass}"`;
-
-              if (p.sera_proveedor_asignado) {
-                // Este proveedor SE CONVIERTE en el asignado tras la actualización
-                provTag   = `<span class="pa-prov-tag pa-prov-tag--nuevo"><i class="fa-solid fa-circle-check"></i> Ahora proveedor asignado</span>`;
-                provClass = 'pa-row--prov-nuevo';
-                rowAttr  += ' data-prov="prov"';
-              } else if (p.es_proveedor_manual_asignado) {
-                // Proveedor fijado manualmente por el admin, y es el que se actualizó
-                provTag   = `<span class="pa-prov-tag pa-prov-tag--manual"><i class="fa-solid fa-lock"></i> Asignado manual (PV recalculado)</span>`;
-                provClass = '';
-              } else if (p.es_proveedor_mas_barato === false) {
-                // Hay otro proveedor más barato — indicar cuál sigue siendo el asignado
-                provTag   = `<span class="pa-prov-tag pa-prov-tag--otro"><i class="fa-solid fa-store"></i> Otro sigue asignado</span>`;
-                provClass = '';
-              } else {
-                provTag   = `<span class="pa-prov-tag pa-prov-tag--mismo"><i class="fa-solid fa-circle-check"></i> Proveedor asignado</span>`;
-                provClass = '';
-                rowAttr  += ' data-prov="prov"';
-              }
-            %>
-            <tr class="pa-table__row <%= provClass %>" <%= rowAttr %>>
-              <td class="pa-td pa-td--code">
-                <code><%= p.codigo %></code>
-              </td>
-              <td class="pa-td pa-td--nombre" title="<%= p.nombre %>">
-                <%= p.nombre %>
-              </td>
-              <td class="pa-td pa-td--precio pa-td--old">
-                $<%= viejo.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
-              </td>
-              <td class="pa-td pa-td--precio pa-td--new">
-                $<%= nuevo.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
-              </td>
-              <td class="pa-td">
-                <span class="pa-diff pa-diff--<%= diffClass %>">
-                  <% if (diff > 0) { %><i class="fa-solid fa-arrow-up"></i>
-                  <% } else if (diff < 0) { %><i class="fa-solid fa-arrow-down"></i>
-                  <% } else { %><i class="fa-solid fa-minus"></i><% } %>
-                  <%= diffStr %>
-                </span>
-              </td>
-              <td class="pa-td pa-td--precio">
-                $<%= pv.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0}) %>
-              </td>
-              <td class="pa-td">
-                <%- provTag %>
-              </td>
-            </tr>
-            <% }); %>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <% } else { %>
-    <div class="pa-panel pa-panel--empty">
-      <div class="pa-empty">
-        <i class="fa-solid fa-circle-check pa-empty__icon"></i>
-        <p class="pa-empty__title">Sin variaciones de precio</p>
-        <p class="pa-empty__desc">Todos los precios del proveedor siguen igual que en la lista anterior.</p>
-      </div>
-    </div>
-    <% } %>
-
-    <!-- ════════════════════════════════
-         OFERTAS FALTANTES
-    ════════════════════════════════ -->
-    <% if (ofertasFaltantes && ofertasFaltantes.length) { %>
-    <div class="pa-panel pa-panel--warning">
-      <div class="pa-panel__hd pa-panel__hd--warning">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <span>Productos fuera del Excel de DISTRIMAR OFERTAS</span>
-        <span class="pa-badge pa-badge--warning"><%= ofertasFaltantes.length %></span>
-      </div>
-      <p class="pa-warning-desc">
-        Estos productos <strong>no vinieron en el último Excel de ofertas</strong>.
-        Revisalos: probablemente debas quitarles la bandera de oferta y volver al precio de lista habitual.
-      </p>
-      <div class="pa-table-wrap">
-        <table class="pa-table">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Precio Lista (OFERTA) en DB</th>
-              <th>Precio de Venta Actual</th>
-              <th>En Oferta</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% ofertasFaltantes.forEach(o => { %>
-            <tr class="pa-table__row">
-              <td class="pa-td pa-td--code"><code><%= o.codigo %></code></td>
-              <td class="pa-td pa-td--nombre"><%= o.nombre %></td>
-              <td class="pa-td pa-td--precio">$<%= Number(o.precio_lista_oferta || 0).toLocaleString('es-AR') %></td>
-              <td class="pa-td pa-td--precio">$<%= Number(o.precio_venta || 0).toLocaleString('es-AR') %></td>
-              <td class="pa-td">
-                <span class="pa-prov-tag pa-prov-tag--oferta"><%= o.oferta_flag %></span>
-              </td>
-            </tr>
-            <% }); %>
-          </tbody>
-        </table>
-      </div>
-      <p class="pa-warning-total">
-        Total fuera de la nueva lista: <strong><%= ofertasFaltantes.length %></strong> productos
-      </p>
-    </div>
-    <% } %>
-
-
-    <% if (_cnuevos > 0) { %>
-    <div class="pa-modal-backdrop" id="modalNuevosBackdrop" hidden>
-      <div class="pa-modal" role="dialog" aria-modal="true" aria-labelledby="modalNuevosTitulo">
-        <div class="pa-modal__header">
-          <div>
-            <span class="pa-modal__eyebrow">PDF de productos nuevos</span>
-            <h2 id="modalNuevosTitulo">Seleccionar categorías</h2>
+          <div class="pa-filter-tabs" style="margin-left:auto;">
+            <button class="pa-filter-tab pa-filter-tab--active" data-filter="all">Todos</button>
+            <button class="pa-filter-tab" data-filter="sube">↑ Sube</button>
+            <button class="pa-filter-tab" data-filter="baja">↓ Baja</button>
+            <button class="pa-filter-tab" data-filter="prov">Cambia proveedor</button>
           </div>
-          <button type="button" class="pa-modal__close" id="btnCerrarModalNuevos" aria-label="Cerrar">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
         </div>
 
-        <p class="pa-modal__text">
-          Elegí qué categorías querés incluir. El sistema filtra usando rubro, subrubro, fabricante, hoja y descripción según el proveedor.
+        <div class="pa-table-wrap">
+          <table class="pa-table" id="pa-main-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre del Producto</th>
+                <th>P. Lista Anterior</th>
+                <th>P. Lista Nuevo</th>
+                <th>Variación</th>
+                <th>Precio Venta</th>
+                <th>Proveedor Asignado</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% _prods.forEach(p => {
+                const viejo     = parseFloat(p.precio_lista_antiguo || 0);
+                const nuevo     = parseFloat(p.precio_lista_nuevo   || 0);
+                const pv        = parseFloat(p.precio_venta         || 0);
+                const diff      = viejo > 0 ? ((nuevo - viejo) / viejo) * 100 : 0;
+                const diffStr   = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+                const diffClass = diff > 0 ? 'sube' : (diff < 0 ? 'baja' : 'igual');
+
+                let provTag = '';
+                let provClass = '';
+                let rowAttr = `data-diff="${diffClass}"`;
+
+                if (p.sera_proveedor_asignado) {
+                  provTag   = `<span class="pa-prov-tag pa-prov-tag--nuevo"><i class="fa-solid fa-circle-check"></i> Ahora proveedor asignado</span>`;
+                  provClass = 'pa-row--prov-nuevo';
+                  rowAttr  += ' data-prov="prov"';
+                } else if (p.es_proveedor_manual_asignado) {
+                  provTag   = `<span class="pa-prov-tag pa-prov-tag--manual"><i class="fa-solid fa-lock"></i> Asignado manual (PV recalculado)</span>`;
+                  provClass = '';
+                } else if (p.es_proveedor_mas_barato === false) {
+                  provTag   = `<span class="pa-prov-tag pa-prov-tag--otro"><i class="fa-solid fa-store"></i> Otro sigue asignado</span>`;
+                  provClass = '';
+                } else {
+                  provTag   = `<span class="pa-prov-tag pa-prov-tag--mismo"><i class="fa-solid fa-circle-check"></i> Proveedor asignado</span>`;
+                  provClass = '';
+                  rowAttr  += ' data-prov="prov"';
+                }
+              %>
+                <tr class="pa-table__row <%= provClass %>" <%= rowAttr %>>
+                  <td class="pa-td pa-td--code">
+                    <code><%= p.codigo %></code>
+                  </td>
+
+                  <td class="pa-td pa-td--nombre" title="<%= p.nombre %>">
+                    <%= p.nombre %>
+                  </td>
+
+                  <td class="pa-td pa-td--precio pa-td--old">
+                    $<%= viejo.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
+                  </td>
+
+                  <td class="pa-td pa-td--precio pa-td--new">
+                    $<%= nuevo.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
+                  </td>
+
+                  <td class="pa-td">
+                    <span class="pa-diff pa-diff--<%= diffClass %>">
+                      <% if (diff > 0) { %>
+                        <i class="fa-solid fa-arrow-up"></i>
+                      <% } else if (diff < 0) { %>
+                        <i class="fa-solid fa-arrow-down"></i>
+                      <% } else { %>
+                        <i class="fa-solid fa-minus"></i>
+                      <% } %>
+                      <%= diffStr %>
+                    </span>
+                  </td>
+
+                  <td class="pa-td pa-td--precio">
+                    $<%= pv.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0}) %>
+                  </td>
+
+                  <td class="pa-td">
+                    <%- provTag %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="pa-panel pa-panel--empty">
+        <div class="pa-empty">
+          <i class="fa-solid fa-circle-check pa-empty__icon"></i>
+          <p class="pa-empty__title">Sin variaciones de precio</p>
+          <p class="pa-empty__desc">Todos los precios del proveedor siguen igual que en la lista anterior.</p>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- OFERTAS FALTANTES -->
+    <% if (ofertasFaltantes && ofertasFaltantes.length) { %>
+      <div class="pa-panel pa-panel--warning">
+        <div class="pa-panel__hd pa-panel__hd--warning">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Productos fuera del Excel de DISTRIMAR OFERTAS</span>
+          <span class="pa-badge pa-badge--warning"><%= ofertasFaltantes.length %></span>
+        </div>
+
+        <p class="pa-warning-desc">
+          Estos productos <strong>no vinieron en el último Excel de ofertas</strong>.
+          Revisalos: probablemente debas quitarles la bandera de oferta y volver al precio de lista habitual.
         </p>
 
-        <label class="pa-check pa-check--all">
-          <input type="checkbox" id="chkTodasCategoriasNuevos" checked>
-          <span>Todas las categorías detectables</span>
-        </label>
+        <div class="pa-table-wrap">
+          <table class="pa-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Precio Lista (OFERTA) en DB</th>
+                <th>Precio de Venta Actual</th>
+                <th>En Oferta</th>
+              </tr>
+            </thead>
 
-        <div class="pa-modal__categories" id="categoriasNuevosGrid">
-          <% _categorias.forEach(categoria => { %>
-            <label class="pa-check">
-              <input
-                type="checkbox"
-                class="chkCategoriaNuevo"
-                value="<%= categoria.id %>"
-                disabled
-              >
-              <span><%= categoria.nombre %></span>
-            </label>
-          <% }); %>
+            <tbody>
+              <% ofertasFaltantes.forEach(o => { %>
+                <tr class="pa-table__row">
+                  <td class="pa-td pa-td--code"><code><%= o.codigo %></code></td>
+                  <td class="pa-td pa-td--nombre"><%= o.nombre %></td>
+                  <td class="pa-td pa-td--precio">$<%= Number(o.precio_lista_oferta || 0).toLocaleString('es-AR') %></td>
+                  <td class="pa-td pa-td--precio">$<%= Number(o.precio_venta || 0).toLocaleString('es-AR') %></td>
+                  <td class="pa-td">
+                    <span class="pa-prov-tag pa-prov-tag--oferta"><%= o.oferta_flag %></span>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
         </div>
 
-        <div class="pa-modal__footer">
-          <button type="button" class="pa-btn pa-btn--outline" id="btnCancelarModalNuevos">
-            Cancelar
-          </button>
-          <button type="button" class="pa-btn pa-btn--primary" id="btnGenerarPdfNuevos">
-            <i class="fa-solid fa-file-pdf"></i> Generar PDF
-          </button>
+        <p class="pa-warning-total">
+          Total fuera de la nueva lista: <strong><%= ofertasFaltantes.length %></strong> productos
+        </p>
+      </div>
+    <% } %>
+
+    <!-- MODAL PDF NUEVOS -->
+    <% if (_cnuevos > 0) { %>
+      <div class="pa-modal-backdrop" id="modalNuevosBackdrop" hidden>
+        <div class="pa-modal" role="dialog" aria-modal="true" aria-labelledby="modalNuevosTitulo">
+          <div class="pa-modal__header">
+            <div>
+              <span class="pa-modal__eyebrow">PDF de productos nuevos</span>
+              <h2 id="modalNuevosTitulo">Seleccionar categorías</h2>
+            </div>
+
+            <button type="button" class="pa-modal__close" id="btnCerrarModalNuevos" aria-label="Cerrar">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <p class="pa-modal__text">
+            Elegí qué categorías querés incluir. El sistema filtra usando rubro, subrubro, fabricante, hoja y descripción según el proveedor.
+          </p>
+
+          <label class="pa-check pa-check--all">
+            <input type="checkbox" id="chkTodasCategoriasNuevos" checked>
+            <span>Todas las categorías detectables</span>
+          </label>
+
+          <div class="pa-modal__categories" id="categoriasNuevosGrid">
+            <% _categorias.forEach(categoria => { %>
+              <label class="pa-check">
+                <input
+                  type="checkbox"
+                  class="chkCategoriaNuevo"
+                  value="<%= categoria.id %>"
+                  disabled
+                >
+                <span><%= categoria.nombre %></span>
+              </label>
+            <% }); %>
+          </div>
+
+          <div class="pa-modal__footer">
+            <button type="button" class="pa-btn pa-btn--outline" id="btnCancelarModalNuevos">
+              Cancelar
+            </button>
+
+            <button type="button" class="pa-btn pa-btn--primary" id="btnGenerarPdfNuevos">
+              <i class="fa-solid fa-file-pdf"></i> Generar PDF
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     <% } %>
 
     <!-- Footer -->
@@ -311,6 +317,8 @@
 </main>
 
 <script>
+  const IMPORTACION_NUEVOS_ID = "<%= _importacionId %>";
+
   document.querySelectorAll('.pa-filter-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.pa-filter-tab').forEach(b => b.classList.remove('pa-filter-tab--active'));
@@ -359,9 +367,33 @@
     });
   }
 
-  if (btnAbrirModalNuevos) btnAbrirModalNuevos.addEventListener('click', abrirModalNuevos);
-  if (btnCerrarModalNuevos) btnCerrarModalNuevos.addEventListener('click', cerrarModalNuevos);
-  if (btnCancelarModalNuevos) btnCancelarModalNuevos.addEventListener('click', cerrarModalNuevos);
+  function construirUrlPDFNuevos(categoriasSeleccionadas) {
+    const params = new URLSearchParams();
+
+    if (categoriasSeleccionadas && categoriasSeleccionadas.length > 0) {
+      params.set('categorias', categoriasSeleccionadas.join(','));
+    }
+
+    if (IMPORTACION_NUEVOS_ID) {
+      params.set('importacion', IMPORTACION_NUEVOS_ID);
+    }
+
+    params.set('t', String(Date.now()));
+
+    return '/productos/actualizados/nuevos.pdf?' + params.toString();
+  }
+
+  if (btnAbrirModalNuevos) {
+    btnAbrirModalNuevos.addEventListener('click', abrirModalNuevos);
+  }
+
+  if (btnCerrarModalNuevos) {
+    btnCerrarModalNuevos.addEventListener('click', cerrarModalNuevos);
+  }
+
+  if (btnCancelarModalNuevos) {
+    btnCancelarModalNuevos.addEventListener('click', cerrarModalNuevos);
+  }
 
   if (modalNuevosBackdrop) {
     modalNuevosBackdrop.addEventListener('click', (e) => {
@@ -378,7 +410,7 @@
       const usarTodas = chkTodasCategoriasNuevos && chkTodasCategoriasNuevos.checked;
 
       if (usarTodas) {
-        window.open('/productos/actualizados/nuevos.pdf', '_blank');
+        window.open(construirUrlPDFNuevos([]), '_blank');
         cerrarModalNuevos();
         return;
       }
@@ -392,7 +424,7 @@
         return;
       }
 
-      window.open('/productos/actualizados/nuevos.pdf?categorias=' + encodeURIComponent(seleccionadas.join(',')), '_blank');
+      window.open(construirUrlPDFNuevos(seleccionadas), '_blank');
       cerrarModalNuevos();
     });
   }
