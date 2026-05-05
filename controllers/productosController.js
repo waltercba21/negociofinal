@@ -2250,6 +2250,77 @@ presupuestoMostrador: async function(req, res) {
         res.status(500).send('Error al obtener el siguiente ID de factura.');
     }
 },
+cotizaciones: async function(req, res) {
+  try {
+    res.render('cotizaciones', {
+      idCotizacion: null
+    });
+  } catch (error) {
+    console.error('Error al cargar cotizaciones:', error);
+    res.status(500).send('Error al cargar cotizaciones.');
+  }
+},
+
+procesarCotizacion: async function(req, res) {
+  try {
+    return res.status(501).json({
+      error: 'Funcionalidad procesarCotizacion pendiente de implementar.'
+    });
+  } catch (error) {
+    console.error('Error al procesar cotización:', error);
+    return res.status(500).json({ error: 'Error al procesar cotización: ' + error.message });
+  }
+},
+
+verCotizacion: async function(req, res) {
+  try {
+    return res.status(501).send('Vista de cotización pendiente de implementar.');
+  } catch (error) {
+    console.error('Error al ver cotización:', error);
+    return res.status(500).send('Error interno del servidor.');
+  }
+},
+
+descargarCotizacionPDF: async function(req, res) {
+  try {
+    return res.status(501).send('PDF de cotización pendiente de implementar.');
+  } catch (error) {
+    console.error('Error al generar PDF de cotización:', error);
+    return res.status(500).send('Error al generar PDF de cotización.');
+  }
+},
+
+listadoCotizaciones: function(req, res) {
+  const { fechaInicio, fechaFin } = req.query;
+  const hoy = new Date().toISOString().split('T')[0];
+
+  res.render('listadoCotizaciones', {
+    fechaInicio: fechaInicio || hoy,
+    fechaFin: fechaFin || hoy
+  });
+},
+
+getCotizaciones: async function(req, res) {
+  try {
+    return res.status(501).json({
+      error: 'Listado API de cotizaciones pendiente de implementar.'
+    });
+  } catch (error) {
+    console.error('Error al obtener cotizaciones:', error);
+    return res.status(500).json({ error: 'Error al obtener cotizaciones.' });
+  }
+},
+
+deleteCotizacion: async function(req, res) {
+  try {
+    return res.status(501).json({
+      error: 'Eliminar cotización pendiente de implementar.'
+    });
+  } catch (error) {
+    console.error('Error al eliminar cotización:', error);
+    return res.status(500).json({ error: 'Error al eliminar cotización.' });
+  }
+},
 procesarFormulario: async (req, res) => {
 
   try {

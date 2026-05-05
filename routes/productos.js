@@ -87,6 +87,15 @@ router.get('/api/facturas', ensureAuthenticated, productosController.getFacturas
 router.put('/api/facturas/:id', ensureAuthenticated, productosController.editarFacturas);
 router.delete('/api/facturas/:id', ensureAuthenticated, productosController.deleteFactura);
 
+// ─── COTIZACIONES FORMALES ───────────────────────────────────────────────────
+router.get('/cotizaciones', ensureAuthenticated, productosController.cotizaciones);
+router.post('/procesarCotizacion', ensureAuthenticated, productosController.procesarCotizacion);
+router.get('/cotizacion/:id', ensureAuthenticated, productosController.verCotizacion);
+router.get('/cotizacion/:id/pdf', ensureAuthenticated, productosController.descargarCotizacionPDF);
+router.get('/listadoCotizaciones', ensureAuthenticated, productosController.listadoCotizaciones);
+router.get('/api/cotizaciones', ensureAuthenticated, productosController.getCotizaciones);
+router.delete('/api/cotizaciones/:id', ensureAuthenticated, productosController.deleteCotizacion);
+
 // ─── RUTAS SOLO ADMIN ─────────────────────────────────────────────────────────
 router.get('/panelControl', ensureAuthenticated, soloAdmin, productosController.panelControl);
 router.get('/crear', ensureAuthenticated, soloAdmin, productosController.crear);
