@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Validar formulario
-  function validarFormulario() {
+  window.validarFormulario = function () {
     const nombre = document.querySelector('input[name="nombre"]').value.trim();
     const email = document.querySelector('input[name="email"]').value.trim();
     const password = document.querySelector('input[name="password"]').value;
