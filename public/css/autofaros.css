@@ -884,3 +884,42 @@ body.arca-page .swal2-textarea {
     margin-left: auto;
   }
 }
+/* SELECTS DEL FORMULARIO */
+.auth-form select,
+select#provincia,
+select#localidad {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #ffffff;
+  padding: 0 14px;
+  font-size: 14px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Placeholder visual cuando todavía no eligió nada */
+.auth-form select:invalid,
+select#provincia:invalid,
+select#localidad:invalid {
+  color: rgba(255,255,255,0.55);
+}
+
+/* Opciones del desplegable */
+.auth-form select option,
+select#provincia option,
+select#localidad option {
+  background-color: #0f1b2d;
+  color: #ffffff;
+}
+
+/* Opción placeholder */
+.auth-form select option[value=""],
+select#provincia option[value=""],
+select#localidad option[value=""] {
+  color: #b8c2d6;
+}
