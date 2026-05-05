@@ -2612,102 +2612,197 @@ descargarCotizacionPDF: async function(req, res) {
 
     doc.pipe(res);
 
-    const pageWidth = doc.page.width;
     const margin = 35;
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
     const usableWidth = pageWidth - margin * 2;
+
+    function drawPageDecorations() {
+      const pw = doc.page.width;
+      const ph = doc.page.height;
+
+      // Marca de agua diagonal
+      doc.save();
+      doc.fillColor('#e8e8e8');
+      if (typeof doc.fillOpacity === 'function') doc.fillOpacity(0.45);
+      doc.font('Helvetica-Bold');
+      doc.fontSize(38);
+      doc.rotate(-35, { origin: [pw / 2, ph / 2] });
+      doc.text(
+        'PRESUPUESTO NO VÁLIDO COMO FACTURA',
+        -80,
+        ph / 2 - 25,
+        {
+          width: pw + 160,
+          align: 'center',
+          lineBreak: false
+        }
+      );
+      doc.restore();
+
+      // Pie en cada hoja
+      doc.save();
+      doc.font('Helvetica');
+      doc.fontSize(7);
+      doc.fillColor('#777777');
+      doc.text(
+        'AUTOFAROS de FAWA S.A.S. - Igualdad 88, Centro, Córdoba - Documento comercial no válido como factura.',
+        margin,
+        ph - 24,
+        {
+          width: pw - margin * 2,
+          align: 'center',
+          lineBreak: false
+        }
+      );
+      doc.restore();
+    }
+
+    doc.on('pageAdded', () => {
+      drawPageDecorations();
+    });
+
+    drawPageDecorations();
+
+    function drawSectionBox(x, y, w, title, lines) {
+      const titleH = 20;
+      const lineH = 11;
+      const padding = 8;
+      const contentH = lines.length * lineH + padding * 2;
+      const totalH = titleH + contentH;
+
+      doc.save();
+      doc.rect(x, y, w, totalH).stroke();
+      doc.rect(x, y, w, titleH).fill('#f1f1f1');
+      doc.restore();
+
+      doc.font('Helvetica-Bold').fontSize(9).fillColor('#000000');
+      doc.text(title, x + 8, y + 6, { width: w - 16 });
+
+      let textY = y + titleH + padding;
+      doc.font('Helvetica').fontSize(8.4).fillColor('#000000');
+
+      lines.forEach(line => {
+        doc.text(line, x + 8, textY, {
+          width: w - 16,
+          align: 'left'
+        });
+        textY += lineH;
+      });
+
+      return totalH;
+    }
+
+    function drawTableHeader(y) {
+      const colN = 20;
+      const colCodigo = 70;
+      const colDesc = 215;
+      const colCant = 38;
+      const colPu = 78;
+      const colSub = 84;
+
+      const xN = margin;
+      const xCodigo = xN + colN;
+      const xDesc = xCodigo + colCodigo;
+      const xCant = xDesc + colDesc;
+      const xPu = xCant + colCant;
+      const xSub = xPu + colPu;
+
+      doc.save();
+      doc.rect(margin, y, usableWidth, 22).fill('#eeeeee');
+      doc.restore();
+      doc.rect(margin, y, usableWidth, 22).stroke();
+
+      doc.font('Helvetica-Bold').fontSize(8).fillColor('#000000');
+      doc.text('#', xN + 4, y + 7, { width: colN - 8, align: 'left' });
+      doc.text('Código', xCodigo + 4, y + 7, { width: colCodigo - 8, align: 'left' });
+      doc.text('Descripción', xDesc + 4, y + 7, { width: colDesc - 8, align: 'left' });
+      doc.text('Cant.', xCant + 2, y + 7, { width: colCant - 4, align: 'center' });
+      doc.text('P. Unit.', xPu + 2, y + 7, { width: colPu - 6, align: 'right' });
+      doc.text('Subtotal', xSub + 2, y + 7, { width: colSub - 6, align: 'right' });
+
+      return {
+        nextY: y + 22,
+        cols: { colN, colCodigo, colDesc, colCant, colPu, colSub, xN, xCodigo, xDesc, xCant, xPu, xSub }
+      };
+    }
+
+    let y = 35;
 
     // ─────────────────────────────────────────────
     // ENCABEZADO
     // ─────────────────────────────────────────────
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(22)
-      .text('AUTOFAROS', margin, 35);
+    doc.font('Helvetica-Bold').fontSize(22).fillColor('#000000');
+    doc.text('AUTOFAROS', margin, y);
 
-    doc
-      .font('Helvetica')
-      .fontSize(10)
-      .text('de FAWA S.A.S.', margin, 62);
+    doc.font('Helvetica').fontSize(10);
+    doc.text('de FAWA S.A.S.', margin, y + 27);
 
-    doc
-      .fontSize(8.5)
-      .text('CUIT: 30-71876371-8', margin, 78)
-      .text('Domicilio: Igualdad 88 - Centro - Córdoba', margin, 91)
-      .text('WhatsApp: +54 351 382-0440', margin, 104)
-      .text('Instagram: @autofaros_cordoba', margin, 117);
+    doc.fontSize(8.5);
+    doc.text('CUIT: 30-71876371-8', margin, y + 43);
+    doc.text('Domicilio: Igualdad 88 - Centro - Córdoba', margin, y + 56);
+    doc.text('WhatsApp: +54 351 382-0440', margin, y + 69);
+    doc.text('Instagram: @autofaros_cordoba', margin, y + 82);
 
     // Caja derecha
-    doc
-      .rect(pageWidth - 205, 35, 170, 92)
-      .stroke();
+    const boxX = pageWidth - 205;
+    const boxY = y;
+    const boxW = 170;
+    const boxH = 96;
 
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(28)
-      .text('X', pageWidth - 205, 45, {
-        width: 170,
-        align: 'center'
-      });
+    doc.rect(boxX, boxY, boxW, boxH).stroke();
 
-    doc
-      .fontSize(8)
-      .text('DOCUMENTO NO VÁLIDO COMO FACTURA', pageWidth - 205, 78, {
-        width: 170,
-        align: 'center'
-      });
+    doc.font('Helvetica-Bold').fontSize(28);
+    doc.text('X', boxX, boxY + 10, {
+      width: boxW,
+      align: 'center'
+    });
 
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(11)
-      .text('COTIZACIÓN', pageWidth - 205, 100, {
-        width: 170,
-        align: 'center'
-      });
+    doc.font('Helvetica').fontSize(8);
+    doc.text('DOCUMENTO NO VÁLIDO COMO FACTURA', boxX + 8, boxY + 42, {
+      width: boxW - 16,
+      align: 'center'
+    });
 
-    doc
-      .font('Helvetica')
-      .fontSize(8)
-      .text(`N° ${safe(cotizacion.numero)}`, pageWidth - 205, 115, {
-        width: 170,
-        align: 'center'
-      });
+    doc.font('Helvetica-Bold').fontSize(11);
+    doc.text('COTIZACIÓN', boxX, boxY + 64, {
+      width: boxW,
+      align: 'center'
+    });
 
-    doc.moveTo(margin, 145).lineTo(pageWidth - margin, 145).stroke();
+    doc.font('Helvetica').fontSize(8);
+    doc.text(`N° ${safe(cotizacion.numero)}`, boxX, boxY + 80, {
+      width: boxW,
+      align: 'center'
+    });
+
+    y += 112;
+    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
 
     // ─────────────────────────────────────────────
     // DATOS GENERALES
     // ─────────────────────────────────────────────
-    let y = 160;
+    y += 14;
 
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(11)
-      .text('Datos de la cotización', margin, y);
+    doc.font('Helvetica-Bold').fontSize(11);
+    doc.text('Datos de la cotización', margin, y);
 
-    y += 18;
-
-    doc
-      .font('Helvetica')
-      .fontSize(9)
-      .text(`Fecha de emisión: ${fechaAR(cotizacion.fecha)}`, margin, y)
-      .text(`Válida hasta: ${fechaAR(cotizacion.valido_hasta)}`, margin + 210, y)
-      .text(`Vendedor: ${safe(cotizacion.vendedor)}`, margin + 390, y);
-
-    y += 25;
-
-    // ─────────────────────────────────────────────
-    // CLIENTE
-    // ─────────────────────────────────────────────
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(11)
-      .text('Datos del cliente / solicitante', margin, y);
-
-    y += 17;
+    y += 16;
 
     doc.font('Helvetica').fontSize(9);
+    doc.text(`Fecha de emisión: ${fechaAR(cotizacion.fecha)}`, margin, y);
+    doc.text(`Válida hasta: ${fechaAR(cotizacion.valido_hasta)}`, margin + 180, y);
+    doc.text(`Vendedor: ${safe(cotizacion.vendedor)}`, margin + 355, y);
 
-    const clienteLineas = [
+    y += 22;
+
+    // ─────────────────────────────────────────────
+    // CLIENTE + VEHÍCULO EN DOS COLUMNAS
+    // ─────────────────────────────────────────────
+    const colGap = 12;
+    const colW = (usableWidth - colGap) / 2;
+
+    const clienteLines = [
       `Tipo: ${cotizacion.tipo_destinatario === 'EMPRESA' ? 'Empresa / Entidad' : 'Persona / Seguro'}`,
       `Nombre / Razón social: ${safe(cotizacion.cliente_nombre)}`,
       `Documento: ${safe(cotizacion.cliente_documento)}`,
@@ -2718,95 +2813,108 @@ descargarCotizacionPDF: async function(req, res) {
       `Email: ${safe(cotizacion.cliente_email)}`
     ];
 
-    clienteLineas.forEach(linea => {
-      doc.text(linea, margin, y, { width: usableWidth });
-      y += 12;
-    });
+    const vehiculoNombre = [
+      safe(cotizacion.vehiculo_marca, ''),
+      safe(cotizacion.vehiculo_modelo, ''),
+      safe(cotizacion.vehiculo_anio, '')
+    ].join(' ').replace(/\s+/g, ' ').trim() || '-';
 
-    y += 8;
-
-    // ─────────────────────────────────────────────
-    // SEGURO / VEHÍCULO
-    // ─────────────────────────────────────────────
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(11)
-      .text('Datos de seguro y vehículo', margin, y);
-
-    y += 17;
-
-    doc.font('Helvetica').fontSize(9);
-
-    const vehiculoLineas = [
-      `Compañía de seguro: ${safe(cotizacion.seguro_compania)}`,
-      `N° de siniestro / expediente: ${safe(cotizacion.seguro_siniestro)}`,
+    const vehiculoLines = [
+      `Seguro: ${safe(cotizacion.seguro_compania)}`,
+      `Siniestro / expediente: ${safe(cotizacion.seguro_siniestro)}`,
       `Dominio / patente: ${safe(cotizacion.vehiculo_dominio)}`,
-      `Vehículo: ${safe(cotizacion.vehiculo_marca)} ${safe(cotizacion.vehiculo_modelo)} ${safe(cotizacion.vehiculo_anio, '')}`.trim(),
+      `Vehículo: ${vehiculoNombre}`,
       `Chasis / observación: ${safe(cotizacion.vehiculo_chasis)}`
     ];
 
-    vehiculoLineas.forEach(linea => {
-      doc.text(linea, margin, y, { width: usableWidth });
-      y += 12;
-    });
+    const h1 = drawSectionBox(margin, y, colW, 'Datos del cliente / solicitante', clienteLines);
+    const h2 = drawSectionBox(margin + colW + colGap, y, colW, 'Datos de seguro y vehículo', vehiculoLines);
 
-    y += 10;
+    y += Math.max(h1, h2) + 16;
 
     // ─────────────────────────────────────────────
-    // TABLA ITEMS
+    // TABLA DE PRODUCTOS
     // ─────────────────────────────────────────────
-    function drawTableHeader() {
-      doc
-        .rect(margin, y, usableWidth, 22)
-        .fill('#eeeeee')
-        .stroke();
+    doc.font('Helvetica-Bold').fontSize(11);
+    doc.text('Productos cotizados', margin, y);
 
-      doc
-        .fillColor('#000000')
-        .font('Helvetica-Bold')
-        .fontSize(8);
+    y += 15;
 
-      doc.text('#', margin + 5, y + 7, { width: 20 });
-      doc.text('Código', margin + 28, y + 7, { width: 60 });
-      doc.text('Descripción', margin + 92, y + 7, { width: 245 });
-      doc.text('Cant.', margin + 342, y + 7, { width: 35, align: 'center' });
-      doc.text('P. Unit.', margin + 382, y + 7, { width: 70, align: 'right' });
-      doc.text('Subtotal', margin + 460, y + 7, { width: 70, align: 'right' });
+    doc.font('Helvetica').fontSize(8.5);
+    doc.text('Moneda: Pesos Argentinos (ARS)', margin, y);
 
-      y += 22;
-    }
+    y += 14;
 
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(11)
-      .text('Productos cotizados', margin, y);
+    let headerData = drawTableHeader(y);
+    y = headerData.nextY;
 
-    y += 17;
-
-    drawTableHeader();
+    const {
+      colN, colCodigo, colDesc, colCant, colPu, colSub,
+      xN, xCodigo, xDesc, xCant, xPu, xSub
+    } = headerData.cols;
 
     doc.font('Helvetica').fontSize(8);
 
     items.forEach((item, idx) => {
-      const rowHeight = 28;
+      const descripcion = safe(item.descripcion);
+      const descHeight = Math.max(
+        14,
+        doc.heightOfString(descripcion, {
+          width: colDesc - 8,
+          align: 'left'
+        })
+      );
 
-      if (y + rowHeight > 710) {
+      const rowHeight = Math.max(24, descHeight + 10);
+
+      if (y + rowHeight > pageHeight - 50) {
         doc.addPage();
         y = 45;
-        drawTableHeader();
-        doc.font('Helvetica').fontSize(8);
+
+        doc.font('Helvetica-Bold').fontSize(11);
+        doc.text('Productos cotizados', margin, y);
+        y += 15;
+
+        doc.font('Helvetica').fontSize(8.5);
+        doc.text('Moneda: Pesos Argentinos (ARS)', margin, y);
+        y += 14;
+
+        headerData = drawTableHeader(y);
+        y = headerData.nextY;
       }
 
-      doc
-        .rect(margin, y, usableWidth, rowHeight)
-        .stroke();
+      doc.rect(margin, y, usableWidth, rowHeight).stroke();
 
-      doc.text(String(idx + 1), margin + 5, y + 8, { width: 20 });
-      doc.text(safe(item.codigo, safe(item.producto_id, '-')), margin + 28, y + 8, { width: 60 });
-      doc.text(safe(item.descripcion), margin + 92, y + 6, { width: 245, height: 18 });
-      doc.text(String(item.cantidad), margin + 342, y + 8, { width: 35, align: 'center' });
-      doc.text(money(item.precio_unitario), margin + 382, y + 8, { width: 70, align: 'right' });
-      doc.text(money(item.subtotal), margin + 460, y + 8, { width: 70, align: 'right' });
+      doc.font('Helvetica').fontSize(8);
+      doc.text(String(idx + 1), xN + 4, y + 7, {
+        width: colN - 8,
+        align: 'left'
+      });
+
+      doc.text(safe(item.codigo, safe(item.producto_id, '-')), xCodigo + 4, y + 7, {
+        width: colCodigo - 8,
+        align: 'left'
+      });
+
+      doc.text(descripcion, xDesc + 4, y + 5, {
+        width: colDesc - 8,
+        align: 'left'
+      });
+
+      doc.text(String(item.cantidad), xCant + 2, y + 7, {
+        width: colCant - 4,
+        align: 'center'
+      });
+
+      doc.text(money(item.precio_unitario), xPu + 2, y + 7, {
+        width: colPu - 6,
+        align: 'right'
+      });
+
+      doc.text(money(item.subtotal), xSub + 2, y + 7, {
+        width: colSub - 6,
+        align: 'right'
+      });
 
       y += rowHeight;
     });
@@ -2816,55 +2924,47 @@ descargarCotizacionPDF: async function(req, res) {
     // ─────────────────────────────────────────────
     // TOTAL
     // ─────────────────────────────────────────────
-    if (y > 690) {
+    if (y > pageHeight - 120) {
       doc.addPage();
       y = 45;
     }
 
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(12)
-      .text(`TOTAL COTIZADO: ${money(cotizacion.total)}`, margin, y, {
-        width: usableWidth,
-        align: 'right'
-      });
+    doc.font('Helvetica-Bold').fontSize(12);
+    doc.text(`TOTAL COTIZADO (PESOS ARGENTINOS): ${money(cotizacion.total)}`, margin, y, {
+      width: usableWidth,
+      align: 'right'
+    });
 
-    y += 28;
+    y += 22;
 
     // ─────────────────────────────────────────────
     // OBSERVACIONES
     // ─────────────────────────────────────────────
     if (cotizacion.observaciones) {
-      doc
-        .font('Helvetica-Bold')
-        .fontSize(10)
-        .text('Observaciones:', margin, y);
+      doc.font('Helvetica-Bold').fontSize(10);
+      doc.text('Observaciones:', margin, y);
 
-      y += 13;
+      y += 12;
 
-      doc
-        .font('Helvetica')
-        .fontSize(8.5)
-        .text(safe(cotizacion.observaciones), margin, y, {
-          width: usableWidth,
-          align: 'left'
-        });
+      doc.font('Helvetica').fontSize(8.5);
+      doc.text(safe(cotizacion.observaciones), margin, y, {
+        width: usableWidth,
+        align: 'left'
+      });
 
-      y = doc.y + 15;
+      y = doc.y + 14;
     }
 
     // ─────────────────────────────────────────────
     // CONDICIONES
     // ─────────────────────────────────────────────
-    if (y > 610) {
+    if (y > pageHeight - 190) {
       doc.addPage();
       y = 45;
     }
 
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(10)
-      .text('Condiciones comerciales:', margin, y);
+    doc.font('Helvetica-Bold').fontSize(10);
+    doc.text('Condiciones comerciales:', margin, y);
 
     y += 14;
 
@@ -2884,7 +2984,7 @@ descargarCotizacionPDF: async function(req, res) {
     doc.font('Helvetica').fontSize(8);
 
     condicionesTexto.forEach(linea => {
-      if (y > 750) {
+      if (y > pageHeight - 45) {
         doc.addPage();
         y = 45;
       }
@@ -2896,25 +2996,6 @@ descargarCotizacionPDF: async function(req, res) {
 
       y = doc.y + 4;
     });
-
-    // ─────────────────────────────────────────────
-    // PIE
-    // ─────────────────────────────────────────────
-    const footerY = 805;
-
-    doc
-      .font('Helvetica')
-      .fontSize(7)
-      .fillColor('#666666')
-      .text(
-        'AUTOFAROS de FAWA S.A.S. - Igualdad 88, Centro, Córdoba - Documento comercial no válido como factura.',
-        margin,
-        footerY,
-        {
-          width: usableWidth,
-          align: 'center'
-        }
-      );
 
     doc.end();
 
