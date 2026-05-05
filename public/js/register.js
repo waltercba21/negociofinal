@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     return true;
-  }
+  };
 
   // Mostrar/ocultar contraseña
   const eyeIcon = document.getElementById('eye-icon');
