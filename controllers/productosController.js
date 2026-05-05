@@ -2618,51 +2618,69 @@ descargarCotizacionPDF: async function(req, res) {
     const usableWidth = pageWidth - margin * 2;
 
     function drawPageDecorations() {
-      const pw = doc.page.width;
-      const ph = doc.page.height;
+  const pw = doc.page.width;
+  const ph = doc.page.height;
 
-      // Marca de agua diagonal
-      doc.save();
-      doc.fillColor('#e8e8e8');
-      if (typeof doc.fillOpacity === 'function') doc.fillOpacity(0.45);
-      doc.font('Helvetica-Bold');
-      doc.fontSize(38);
-      doc.rotate(-35, { origin: [pw / 2, ph / 2] });
-      doc.text(
-        'PRESUPUESTO NO VÁLIDO COMO FACTURA',
-        -80,
-        ph / 2 - 25,
-        {
-          width: pw + 160,
-          align: 'center',
-          lineBreak: false
-        }
-      );
-      doc.restore();
+  // Marca de agua diagonal
+  doc.save();
+  doc.fillColor('#eeeeee');
+  doc.font('Helvetica-Bold');
+  doc.fontSize(30);
 
-      // Pie en cada hoja
-      doc.save();
-      doc.font('Helvetica');
-      doc.fontSize(7);
-      doc.fillColor('#777777');
-      doc.text(
-        'AUTOFAROS de FAWA S.A.S. - Igualdad 88, Centro, Córdoba - Documento comercial no válido como factura.',
-        margin,
-        ph - 24,
-        {
-          width: pw - margin * 2,
-          align: 'center',
-          lineBreak: false
-        }
-      );
-      doc.restore();
+  doc.rotate(-35, { origin: [pw / 2, ph / 2] });
+
+  doc.text(
+    'PRESUPUESTO NO VALIDO COMO FACTURA',
+    20,
+    ph / 2,
+    {
+      width: pw - 40,
+      align: 'center',
+      lineBreak: false
     }
+  );
 
-    doc.on('pageAdded', () => {
-      drawPageDecorations();
-    });
+  doc.restore();
 
+  // Pie fijo, sin auto-salto de página
+  doc.save();
+  doc.font('Helvetica');
+  doc.fontSize(7);
+  doc.fillColor('#777777');
+
+  doc.text(
+    'AUTOFAROS de FAWA S.A.S. - Igualdad 88, Centro, Córdoba - Documento comercial no válido como factura.',
+    margin,
+    ph - 28,
+    {
+      width: pw - margin * 2,
+      align: 'center',
+      lineBreak: false,
+      height: 10
+    }
+  );
+
+  doc.restore();
+}
+
+    let dibujandoDecoracion = false;
+
+function dibujarDecoracionSegura() {
+  if (dibujandoDecoracion) return;
+
+  dibujandoDecoracion = true;
+  try {
     drawPageDecorations();
+  } finally {
+    dibujandoDecoracion = false;
+  }
+}
+
+doc.on('pageAdded', () => {
+  dibujarDecoracionSegura();
+});
+
+dibujarDecoracionSegura();
 
     function drawSectionBox(x, y, w, title, lines) {
       const titleH = 20;
