@@ -1,0 +1,279 @@
+<% var pageCss = '/css/pages/facturasMostrador.css' %>
+<!DOCTYPE html>
+<html lang="es">
+<%- include('./layouts/head.ejs') %>
+<link rel="stylesheet" href="/css/pages/facturasMostrador.css" />
+
+<body>
+  <%- include('./layouts/header.ejs') %>
+
+  <main class="facturas-main">
+
+    <!-- HEADER -->
+    <div class="facturas-page-header">
+      <div class="facturas-page-header__left">
+        <span class="facturas-page-header__eyebrow">
+          <i class="fa-solid fa-file-signature"></i> Documento comercial
+        </span>
+        <h1 class="facturas-page-header__title">Nueva Cotización</h1>
+      </div>
+
+      <div class="facturas-page-header__right">
+        <span class="facturas-numero-badge">
+          <span class="facturas-numero-badge__label">N° Cotización</span>
+          <span class="facturas-numero-badge__value">#<%= idCotizacion || '-' %></span>
+        </span>
+
+        <button type="button" class="btn-listado" onclick="window.location.href='/productos/listadoCotizaciones'">
+          <i class="fa-solid fa-list"></i>
+          <span>Listado de Cotizaciones</span>
+        </button>
+      </div>
+    </div>
+
+    <form id="cotizacion-form" action="/productos/procesarCotizacion" method="POST" class="facturas-form">
+
+      <!-- DATOS GENERALES -->
+      <div class="facturas-panel facturas-panel--top">
+
+        <div class="facturas-field">
+          <label class="facturas-label" for="vendedor">
+            <i class="fa-solid fa-user-tie"></i> Vendedor responsable
+          </label>
+          <div class="facturas-select-wrap">
+            <select id="vendedor" name="vendedor" required class="facturas-select">
+              <option value="">Seleccionar vendedor</option>
+              <option value="CHACHO">CHACHO</option>
+              <option value="GERARDO">GERARDO</option>
+              <option value="WALTER">WALTER</option>
+            </select>
+            <i class="fa-solid fa-chevron-down facturas-select-arrow"></i>
+          </div>
+        </div>
+
+        <div class="facturas-field">
+          <label class="facturas-label" for="fecha-cotizacion">
+            <i class="fa-solid fa-calendar-days"></i> Fecha
+          </label>
+          <input type="date" id="fecha-cotizacion" name="fecha" class="facturas-input" required />
+        </div>
+
+        <div class="facturas-field">
+          <label class="facturas-label" for="tipo-destinatario">
+            <i class="fa-solid fa-building-user"></i> Tipo de destinatario
+          </label>
+          <div class="facturas-select-wrap">
+            <select id="tipo-destinatario" name="tipo_destinatario" required class="facturas-select">
+              <option value="PERSONA">Persona / Seguro</option>
+              <option value="EMPRESA">Empresa / Entidad / Gobierno</option>
+            </select>
+            <i class="fa-solid fa-chevron-down facturas-select-arrow"></i>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DATOS CLIENTE -->
+      <div class="facturas-panel">
+        <h2 style="margin:0 0 15px;font-size:1.1rem;">
+          <i class="fa-solid fa-user"></i> Datos del cliente / solicitante
+        </h2>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+          <div class="facturas-field">
+            <label class="facturas-label" for="cliente-nombre">Nombre / Razón social</label>
+            <input type="text" id="cliente-nombre" name="cliente_nombre" class="facturas-input" required />
+          </div>
+
+          <div class="facturas-field">
+            <label class="facturas-label" for="cliente-documento">DNI / Documento</label>
+            <input type="text" id="cliente-documento" name="cliente_documento" class="facturas-input" />
+          </div>
+
+          <div class="facturas-field">
+            <label class="facturas-label" for="cliente-cuit">CUIT / CUIL</label>
+            <input type="text" id="cliente-cuit" name="cliente_cuit" class="facturas-input" />
+          </div>
+
+          <div class="facturas-field">
+            <label class="facturas-label" for="cliente-condicion-iva">Condición IVA</label>
+            <input type="text" id="cliente-condicion-iva" name="cliente_condicion_iva" class="facturas-input" placeholder="Resp. Inscripto, Monotributo, Consumidor Final..." />
+          </div>
+
+          <div class="facturas-field">
+            <label class="facturas-label" for="cliente-telefono">Teléfono</label>
+            <input type="text" id="cliente-telefono" name="cliente_telefono" class="facturas-input" />
+          </div>
+
+          <div class="facturas-field">
+            <label class="facturas-label" for="cliente-email">Email</label>
+            <input type="email" id="cliente-email" name="cliente_email" class="facturas-input" />
+          </div>
+
+          <div class="facturas-field" style="grid-column:1/-1;">
+            <label class="facturas-label" for="cliente-domicilio">Domicilio</label>
+            <input type="text" id="cliente-domicilio" name="cliente_domicilio" class="facturas-input" />
+          </div>
+        </div>
+      </div>
+
+      <!-- DATOS SEGURO Y VEHÍCULO -->
+      <div class="facturas-panel">
+        <h2 style="margin:0 0 15px;font-size:1.1rem;">
+          <i class="fa-solid fa-car"></i> Datos de seguro y vehículo
+        </h2>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+          <div class="facturas-field">
+            <label class="facturas-label" for="seguro-compania">Compañía de seguro</label>
+            <input type="text" id="seguro-compania" name="seguro_compania" class="facturas-input" />
+          </div>
+
+          <div class="facturas-field">
+            <label class="facturas-label" for="seguro-siniestro">N° de siniestro / expediente</label>
+            <input type="text" id="seguro-siniestro" name="seguro_siniestro" class="facturas-input" />
+          </div>
+
+          <div class="facturas-field">
+            <label class="facturas-label" for="vehiculo-dominio">Dominio / patente</label>
+            <input type="text" id="vehiculo-dominio" name="vehiculo_dominio" class="facturas-input" />
+          </div>
+
+          <div class="facturas-field">
+            <label class="facturas-label" for="vehiculo-marca">Marca</label>
+            <input type="text" id="vehiculo-marca" name="vehiculo_marca" class="facturas-input" />
+          </div>
+
+          <div class="facturas-field">
+            <label class="facturas-label" for="vehiculo-modelo">Modelo</label>
+            <input type="text" id="vehiculo-modelo" name="vehiculo_modelo" class="facturas-input" />
+          </div>
+
+          <div class="facturas-field">
+            <label class="facturas-label" for="vehiculo-anio">Año</label>
+            <input type="text" id="vehiculo-anio" name="vehiculo_anio" class="facturas-input" />
+          </div>
+
+          <div class="facturas-field" style="grid-column:1/-1;">
+            <label class="facturas-label" for="vehiculo-chasis">Chasis / observación vehículo</label>
+            <input type="text" id="vehiculo-chasis" name="vehiculo_chasis" class="facturas-input" />
+          </div>
+        </div>
+      </div>
+
+      <!-- BUSCADOR -->
+      <div class="facturas-panel facturas-panel--buscador">
+        <div class="facturas-buscador-wrap">
+          <i class="fa-solid fa-magnifying-glass facturas-buscador-icon"></i>
+          <input
+            type="text"
+            id="entradaBusqueda"
+            name="searchInput"
+            placeholder="Buscar producto... Ej: Escort, Óptica, Faro, Agile"
+            autocomplete="off"
+            class="facturas-buscador-input"
+          />
+        </div>
+        <div id="resultadosBusqueda" class="facturas-resultados"></div>
+      </div>
+
+      <!-- TABLA -->
+      <div class="facturas-panel facturas-panel--tabla">
+        <div class="facturas-tabla-wrap">
+          <table id="tabla-cotizacion" class="facturas-tabla">
+            <thead>
+              <tr>
+                <th>Imagen</th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Precio Unitario</th>
+                <th>Cantidad</th>
+                <th>Stock informado</th>
+                <th>Subtotal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for(let i = 0; i < 15; i++) { %>
+                <tr class="facturas-tabla__row">
+                  <td class="facturas-tabla__img-cell">
+                    <img src="" class="miniatura-tabla" style="display:none;" />
+                  </td>
+                  <td class="facturas-tabla__codigo"></td>
+                  <td class="facturas-tabla__desc"></td>
+                  <td class="facturas-tabla__precio">
+                    <input type="text" class="precio-editable facturas-tabla__input" disabled />
+                  </td>
+                  <td class="facturas-tabla__cant">
+                    <input type="number" min="1" value="0" class="facturas-tabla__input facturas-tabla__input--qty" disabled />
+                  </td>
+                  <td class="facturas-tabla__stock"></td>
+                  <td class="facturas-tabla__subtotal"></td>
+                  <td class="facturas-tabla__delete">
+                    <button type="button" class="boton-eliminar-factura" style="display:none;">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- OBSERVACIONES -->
+      <div class="facturas-panel">
+        <h2 style="margin:0 0 15px;font-size:1.1rem;">
+          <i class="fa-solid fa-circle-info"></i> Observaciones
+        </h2>
+
+        <textarea
+          id="observaciones"
+          name="observaciones"
+          rows="4"
+          class="facturas-input"
+          style="width:100%;resize:vertical;"
+          placeholder="Ej: Cotización solicitada para compañía de seguro, disponibilidad sujeta a stock/proveedor, etc."
+        ></textarea>
+      </div>
+
+      <!-- TOTALES -->
+      <div class="facturas-panel facturas-panel--footer">
+        <div class="facturas-totales">
+          <div class="facturas-total-row facturas-total-row--main">
+            <span class="facturas-total-label facturas-total-label--main">
+              <i class="fa-solid fa-file-signature"></i> Total cotizado
+            </span>
+            <input type="text" id="total-amount" name="total" readonly class="facturas-total-input facturas-total-input--main" />
+          </div>
+
+          <div style="font-size:0.85rem;color:#666;margin-top:8px;line-height:1.4;">
+            <strong>Condiciones:</strong> vigencia 15 días corridos. Documento X no válido como factura.
+            La cotización no reserva mercadería ni descuenta stock.
+          </div>
+        </div>
+
+        <input type="hidden" id="cotizacionItems" name="cotizacionItems" />
+
+        <div class="facturas-acciones">
+          <button type="button" id="limpiar-button" class="btn-imprimir">
+            <i class="fa-solid fa-eraser"></i>
+            <span>Limpiar</span>
+          </button>
+
+          <button type="submit" class="btn-guardar">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Guardar Cotización</span>
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </main>
+
+  <%- include('./layouts/footer.ejs') %>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="/js/pages/cotizaciones.js"></script>
+</body>
+</html>
