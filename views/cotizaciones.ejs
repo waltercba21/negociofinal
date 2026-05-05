@@ -96,10 +96,22 @@
           </div>
 
           <div class="facturas-field">
-            <label class="facturas-label" for="cliente-condicion-iva">Condición IVA</label>
-            <input type="text" id="cliente-condicion-iva" name="cliente_condicion_iva" class="facturas-input" placeholder="Resp. Inscripto, Monotributo, Consumidor Final..." />
-          </div>
-
+  <label class="facturas-label" for="cliente-condicion-iva">Condición IVA</label>
+  <div class="facturas-select-wrap">
+    <select id="cliente-condicion-iva" name="cliente_condicion_iva" class="facturas-select">
+      <option value="">Seleccionar condición IVA</option>
+      <option value="Consumidor Final">Consumidor Final</option>
+      <option value="Responsable Inscripto">Responsable Inscripto</option>
+      <option value="Monotributista">Monotributista</option>
+      <option value="Exento">Exento</option>
+      <option value="No Responsable">No Responsable</option>
+      <option value="Sujeto No Categorizado">Sujeto No Categorizado</option>
+      <option value="IVA Liberado">IVA Liberado</option>
+      <option value="Responsable Monotributo Social">Responsable Monotributo Social</option>
+    </select>
+    <i class="fa-solid fa-chevron-down facturas-select-arrow"></i>
+  </div>
+</div>
           <div class="facturas-field">
             <label class="facturas-label" for="cliente-telefono">Teléfono</label>
             <input type="text" id="cliente-telefono" name="cliente_telefono" class="facturas-input" />

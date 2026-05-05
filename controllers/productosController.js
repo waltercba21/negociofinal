@@ -2252,23 +2252,288 @@ presupuestoMostrador: async function(req, res) {
 },
 cotizaciones: async function(req, res) {
   try {
+    let siguienteID = '-';
+
+    try {
+      const [rows] = await conexion.promise().query(`
+        SELECT AUTO_INCREMENT AS next_id
+        FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'cotizaciones'
+        LIMIT 1
+      `);
+
+      siguienteID = rows && rows[0] && rows[0].next_id
+        ? rows[0].next_id
+        : '-';
+    } catch (e) {
+      console.warn('⚠️ No se pudo obtener siguiente ID de cotización:', e.message);
+    }
+
     res.render('cotizaciones', {
-      idCotizacion: null
+      idCotizacion: siguienteID
     });
   } catch (error) {
     console.error('Error al cargar cotizaciones:', error);
     res.status(500).send('Error al cargar cotizaciones.');
   }
 },
-
 procesarCotizacion: async function(req, res) {
+  let conn;
+
+  function toMoney(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.round((n + Number.EPSILON) * 100) / 100 : 0;
+  }
+
+  function cleanStr(v) {
+    if (v === undefined || v === null) return null;
+    const s = String(v).trim();
+    return s === '' ? null : s;
+  }
+
+  function ymdOrToday(v) {
+    const s = String(v || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+    return new Date()
+      .toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Cordoba' });
+  }
+
+  function addDaysYMD(ymd, days) {
+    const [y, m, d] = ymd.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    dt.setUTCDate(dt.getUTCDate() + days);
+    return dt.toISOString().slice(0, 10);
+  }
+
   try {
-    return res.status(501).json({
-      error: 'Funcionalidad procesarCotizacion pendiente de implementar.'
+    const body = req.body || {};
+
+    const cotizacionItems = Array.isArray(body.cotizacionItems)
+      ? body.cotizacionItems
+      : [];
+
+    if (!cotizacionItems.length) {
+      return res.status(400).json({ error: 'Debe agregar al menos un producto a la cotización.' });
+    }
+
+    const clienteNombre = cleanStr(body.cliente_nombre);
+    if (!clienteNombre) {
+      return res.status(400).json({ error: 'Debe completar el nombre o razón social del cliente.' });
+    }
+
+    const fecha = ymdOrToday(body.fecha);
+    const validoHasta = addDaysYMD(fecha, 15);
+
+    const vendedor = cleanStr(body.vendedor);
+    if (!vendedor) {
+      return res.status(400).json({ error: 'Debe seleccionar un vendedor responsable.' });
+    }
+
+    const tipoDestinatario = String(body.tipo_destinatario || 'PERSONA').toUpperCase() === 'EMPRESA'
+      ? 'EMPRESA'
+      : 'PERSONA';
+
+    const itemsNormalizados = cotizacionItems.map((item, index) => {
+      const cantidad = Number.parseInt(item.cantidad, 10) || 0;
+      const precioUnitario = toMoney(item.precio_unitario);
+      const subtotal = toMoney(precioUnitario * cantidad);
+
+      const descripcion = cleanStr(item.descripcion);
+
+      if (!descripcion) {
+        throw new Error(`El ítem ${index + 1} no tiene descripción.`);
+      }
+
+      if (cantidad <= 0) {
+        throw new Error(`El ítem ${index + 1} tiene cantidad inválida.`);
+      }
+
+      if (precioUnitario <= 0) {
+        throw new Error(`El ítem ${index + 1} tiene precio inválido.`);
+      }
+
+      const productoIdNum = Number(item.producto_id);
+
+      return {
+        producto_id: Number.isInteger(productoIdNum) && productoIdNum > 0 ? productoIdNum : null,
+        codigo: cleanStr(item.codigo),
+        descripcion,
+        cantidad,
+        precio_unitario: precioUnitario,
+        subtotal,
+        stock_informado: Number.parseInt(item.stock_informado, 10) || 0
+      };
     });
+
+    const totalCalculado = toMoney(
+      itemsNormalizados.reduce((acc, item) => acc + Number(item.subtotal || 0), 0)
+    );
+
+    if (totalCalculado <= 0) {
+      return res.status(400).json({ error: 'El total de la cotización debe ser mayor a cero.' });
+    }
+
+    const condiciones = [
+      'Documento X - No válido como factura.',
+      'Cotización válida por 15 días corridos desde la fecha de emisión.',
+      'Vencido el plazo de vigencia, los precios podrán variar sin previo aviso.',
+      'La cotización no implica reserva de mercadería.',
+      'La disponibilidad informada corresponde al momento de emisión.',
+      'Los productos podrán estar disponibles para retiro inmediato o para conseguirse en un plazo estimado máximo de 72 horas hábiles, según disponibilidad de proveedor.',
+      'El precio indicado corresponde a pago mediante QR, débito, transferencia o tarjeta de crédito en 1 pago.',
+      'Tarjeta de crédito en 3 pagos: +15% de recargo.',
+      'Contado efectivo billete: 10% de descuento.',
+      'La operación queda perfeccionada únicamente al momento de la compra y emisión del comprobante correspondiente.'
+    ].join('\n');
+
+    conn = await conexion.promise().getConnection();
+    await conn.beginTransaction();
+
+    const numeroTemporal = `TMP-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+
+    const [insertCabecera] = await conn.query(
+      `
+      INSERT INTO cotizaciones
+      (
+        numero,
+        tipo_destinatario,
+
+        cliente_nombre,
+        cliente_documento,
+        cliente_cuit,
+        cliente_condicion_iva,
+        cliente_domicilio,
+        cliente_telefono,
+        cliente_email,
+
+        seguro_compania,
+        seguro_siniestro,
+
+        vehiculo_marca,
+        vehiculo_modelo,
+        vehiculo_anio,
+        vehiculo_dominio,
+        vehiculo_chasis,
+
+        vendedor,
+        fecha,
+        valido_hasta,
+
+        subtotal,
+        total,
+        estado,
+        observaciones,
+        condiciones
+      )
+      VALUES
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'EMITIDA', ?, ?)
+      `,
+      [
+        numeroTemporal,
+        tipoDestinatario,
+
+        clienteNombre,
+        cleanStr(body.cliente_documento),
+        cleanStr(body.cliente_cuit),
+        cleanStr(body.cliente_condicion_iva),
+        cleanStr(body.cliente_domicilio),
+        cleanStr(body.cliente_telefono),
+        cleanStr(body.cliente_email),
+
+        cleanStr(body.seguro_compania),
+        cleanStr(body.seguro_siniestro),
+
+        cleanStr(body.vehiculo_marca),
+        cleanStr(body.vehiculo_modelo),
+        cleanStr(body.vehiculo_anio),
+        cleanStr(body.vehiculo_dominio),
+        cleanStr(body.vehiculo_chasis),
+
+        vendedor,
+        fecha,
+        validoHasta,
+
+        totalCalculado,
+        totalCalculado,
+        cleanStr(body.observaciones),
+        condiciones
+      ]
+    );
+
+    const cotizacionId = insertCabecera.insertId;
+
+    if (!cotizacionId) {
+      throw new Error('No se pudo obtener el ID de la cotización.');
+    }
+
+    const anio = fecha.slice(0, 4);
+    const numeroFinal = `COT-${anio}-${String(cotizacionId).padStart(6, '0')}`;
+
+    await conn.query(
+      `UPDATE cotizaciones SET numero = ? WHERE id = ?`,
+      [numeroFinal, cotizacionId]
+    );
+
+    const valuesItems = [];
+    const placeholders = [];
+
+    for (const item of itemsNormalizados) {
+      placeholders.push('(?, ?, ?, ?, ?, ?, ?, ?)');
+      valuesItems.push(
+        cotizacionId,
+        item.producto_id,
+        item.codigo,
+        item.descripcion,
+        item.cantidad,
+        item.precio_unitario,
+        item.subtotal,
+        item.stock_informado
+      );
+    }
+
+    await conn.query(
+      `
+      INSERT INTO cotizacion_items
+      (
+        cotizacion_id,
+        producto_id,
+        codigo,
+        descripcion,
+        cantidad,
+        precio_unitario,
+        subtotal,
+        stock_informado
+      )
+      VALUES ${placeholders.join(',')}
+      `,
+      valuesItems
+    );
+
+    await conn.commit();
+
+    return res.status(200).json({
+      message: 'COTIZACIÓN GUARDADA CORRECTAMENTE',
+      cotizacionId,
+      numero: numeroFinal,
+      total: totalCalculado
+    });
+
   } catch (error) {
-    console.error('Error al procesar cotización:', error);
-    return res.status(500).json({ error: 'Error al procesar cotización: ' + error.message });
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (_) {}
+    }
+
+    console.error('Error al guardar cotización:', error);
+
+    return res.status(500).json({
+      error: 'Error al guardar cotización: ' + error.message
+    });
+  } finally {
+    if (conn) conn.release();
   }
 },
 
