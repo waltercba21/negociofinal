@@ -2545,16 +2545,384 @@ verCotizacion: async function(req, res) {
     return res.status(500).send('Error interno del servidor.');
   }
 },
-
 descargarCotizacionPDF: async function(req, res) {
+  function money(v) {
+    const n = Number(v) || 0;
+    return n.toLocaleString('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0
+    });
+  }
+
+  function fechaAR(v) {
+    if (!v) return '-';
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return String(v).slice(0, 10);
+    return d.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Cordoba' });
+  }
+
+  function safe(v, fallback = '-') {
+    const s = String(v ?? '').trim();
+    return s || fallback;
+  }
+
   try {
-    return res.status(501).send('PDF de cotización pendiente de implementar.');
+    const cotizacionId = Number(req.params.id || 0);
+
+    if (!cotizacionId) {
+      return res.status(400).send('ID de cotización inválido.');
+    }
+
+    const [cabRows] = await conexion.promise().query(
+      `
+      SELECT *
+      FROM cotizaciones
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [cotizacionId]
+    );
+
+    if (!cabRows.length) {
+      return res.status(404).send('Cotización no encontrada.');
+    }
+
+    const cotizacion = cabRows[0];
+
+    const [items] = await conexion.promise().query(
+      `
+      SELECT *
+      FROM cotizacion_items
+      WHERE cotizacion_id = ?
+      ORDER BY id ASC
+      `,
+      [cotizacionId]
+    );
+
+    const doc = new PDFDocument({
+      size: 'A4',
+      margin: 35
+    });
+
+    const filename = `${safe(cotizacion.numero, 'cotizacion')}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+    doc.pipe(res);
+
+    const pageWidth = doc.page.width;
+    const margin = 35;
+    const usableWidth = pageWidth - margin * 2;
+
+    // ─────────────────────────────────────────────
+    // ENCABEZADO
+    // ─────────────────────────────────────────────
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(22)
+      .text('AUTOFAROS', margin, 35);
+
+    doc
+      .font('Helvetica')
+      .fontSize(10)
+      .text('de FAWA S.A.S.', margin, 62);
+
+    doc
+      .fontSize(8.5)
+      .text('CUIT: 30-71876371-8', margin, 78)
+      .text('Domicilio: Igualdad 88 - Centro - Córdoba', margin, 91)
+      .text('WhatsApp: +54 351 382-0440', margin, 104)
+      .text('Instagram: @autofaros_cordoba', margin, 117);
+
+    // Caja derecha
+    doc
+      .rect(pageWidth - 205, 35, 170, 92)
+      .stroke();
+
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(28)
+      .text('X', pageWidth - 205, 45, {
+        width: 170,
+        align: 'center'
+      });
+
+    doc
+      .fontSize(8)
+      .text('DOCUMENTO NO VÁLIDO COMO FACTURA', pageWidth - 205, 78, {
+        width: 170,
+        align: 'center'
+      });
+
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(11)
+      .text('COTIZACIÓN', pageWidth - 205, 100, {
+        width: 170,
+        align: 'center'
+      });
+
+    doc
+      .font('Helvetica')
+      .fontSize(8)
+      .text(`N° ${safe(cotizacion.numero)}`, pageWidth - 205, 115, {
+        width: 170,
+        align: 'center'
+      });
+
+    doc.moveTo(margin, 145).lineTo(pageWidth - margin, 145).stroke();
+
+    // ─────────────────────────────────────────────
+    // DATOS GENERALES
+    // ─────────────────────────────────────────────
+    let y = 160;
+
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(11)
+      .text('Datos de la cotización', margin, y);
+
+    y += 18;
+
+    doc
+      .font('Helvetica')
+      .fontSize(9)
+      .text(`Fecha de emisión: ${fechaAR(cotizacion.fecha)}`, margin, y)
+      .text(`Válida hasta: ${fechaAR(cotizacion.valido_hasta)}`, margin + 210, y)
+      .text(`Vendedor: ${safe(cotizacion.vendedor)}`, margin + 390, y);
+
+    y += 25;
+
+    // ─────────────────────────────────────────────
+    // CLIENTE
+    // ─────────────────────────────────────────────
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(11)
+      .text('Datos del cliente / solicitante', margin, y);
+
+    y += 17;
+
+    doc.font('Helvetica').fontSize(9);
+
+    const clienteLineas = [
+      `Tipo: ${cotizacion.tipo_destinatario === 'EMPRESA' ? 'Empresa / Entidad' : 'Persona / Seguro'}`,
+      `Nombre / Razón social: ${safe(cotizacion.cliente_nombre)}`,
+      `Documento: ${safe(cotizacion.cliente_documento)}`,
+      `CUIT / CUIL: ${safe(cotizacion.cliente_cuit)}`,
+      `Condición IVA: ${safe(cotizacion.cliente_condicion_iva)}`,
+      `Domicilio: ${safe(cotizacion.cliente_domicilio)}`,
+      `Teléfono: ${safe(cotizacion.cliente_telefono)}`,
+      `Email: ${safe(cotizacion.cliente_email)}`
+    ];
+
+    clienteLineas.forEach(linea => {
+      doc.text(linea, margin, y, { width: usableWidth });
+      y += 12;
+    });
+
+    y += 8;
+
+    // ─────────────────────────────────────────────
+    // SEGURO / VEHÍCULO
+    // ─────────────────────────────────────────────
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(11)
+      .text('Datos de seguro y vehículo', margin, y);
+
+    y += 17;
+
+    doc.font('Helvetica').fontSize(9);
+
+    const vehiculoLineas = [
+      `Compañía de seguro: ${safe(cotizacion.seguro_compania)}`,
+      `N° de siniestro / expediente: ${safe(cotizacion.seguro_siniestro)}`,
+      `Dominio / patente: ${safe(cotizacion.vehiculo_dominio)}`,
+      `Vehículo: ${safe(cotizacion.vehiculo_marca)} ${safe(cotizacion.vehiculo_modelo)} ${safe(cotizacion.vehiculo_anio, '')}`.trim(),
+      `Chasis / observación: ${safe(cotizacion.vehiculo_chasis)}`
+    ];
+
+    vehiculoLineas.forEach(linea => {
+      doc.text(linea, margin, y, { width: usableWidth });
+      y += 12;
+    });
+
+    y += 10;
+
+    // ─────────────────────────────────────────────
+    // TABLA ITEMS
+    // ─────────────────────────────────────────────
+    function drawTableHeader() {
+      doc
+        .rect(margin, y, usableWidth, 22)
+        .fill('#eeeeee')
+        .stroke();
+
+      doc
+        .fillColor('#000000')
+        .font('Helvetica-Bold')
+        .fontSize(8);
+
+      doc.text('#', margin + 5, y + 7, { width: 20 });
+      doc.text('Código', margin + 28, y + 7, { width: 60 });
+      doc.text('Descripción', margin + 92, y + 7, { width: 245 });
+      doc.text('Cant.', margin + 342, y + 7, { width: 35, align: 'center' });
+      doc.text('P. Unit.', margin + 382, y + 7, { width: 70, align: 'right' });
+      doc.text('Subtotal', margin + 460, y + 7, { width: 70, align: 'right' });
+
+      y += 22;
+    }
+
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(11)
+      .text('Productos cotizados', margin, y);
+
+    y += 17;
+
+    drawTableHeader();
+
+    doc.font('Helvetica').fontSize(8);
+
+    items.forEach((item, idx) => {
+      const rowHeight = 28;
+
+      if (y + rowHeight > 710) {
+        doc.addPage();
+        y = 45;
+        drawTableHeader();
+        doc.font('Helvetica').fontSize(8);
+      }
+
+      doc
+        .rect(margin, y, usableWidth, rowHeight)
+        .stroke();
+
+      doc.text(String(idx + 1), margin + 5, y + 8, { width: 20 });
+      doc.text(safe(item.codigo, safe(item.producto_id, '-')), margin + 28, y + 8, { width: 60 });
+      doc.text(safe(item.descripcion), margin + 92, y + 6, { width: 245, height: 18 });
+      doc.text(String(item.cantidad), margin + 342, y + 8, { width: 35, align: 'center' });
+      doc.text(money(item.precio_unitario), margin + 382, y + 8, { width: 70, align: 'right' });
+      doc.text(money(item.subtotal), margin + 460, y + 8, { width: 70, align: 'right' });
+
+      y += rowHeight;
+    });
+
+    y += 14;
+
+    // ─────────────────────────────────────────────
+    // TOTAL
+    // ─────────────────────────────────────────────
+    if (y > 690) {
+      doc.addPage();
+      y = 45;
+    }
+
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(12)
+      .text(`TOTAL COTIZADO: ${money(cotizacion.total)}`, margin, y, {
+        width: usableWidth,
+        align: 'right'
+      });
+
+    y += 28;
+
+    // ─────────────────────────────────────────────
+    // OBSERVACIONES
+    // ─────────────────────────────────────────────
+    if (cotizacion.observaciones) {
+      doc
+        .font('Helvetica-Bold')
+        .fontSize(10)
+        .text('Observaciones:', margin, y);
+
+      y += 13;
+
+      doc
+        .font('Helvetica')
+        .fontSize(8.5)
+        .text(safe(cotizacion.observaciones), margin, y, {
+          width: usableWidth,
+          align: 'left'
+        });
+
+      y = doc.y + 15;
+    }
+
+    // ─────────────────────────────────────────────
+    // CONDICIONES
+    // ─────────────────────────────────────────────
+    if (y > 610) {
+      doc.addPage();
+      y = 45;
+    }
+
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(10)
+      .text('Condiciones comerciales:', margin, y);
+
+    y += 14;
+
+    const condicionesTexto = [
+      '• Documento X - No válido como factura.',
+      '• Vigencia de la cotización: 15 días corridos desde la fecha de emisión.',
+      '• Vencido el plazo de vigencia, los precios podrán variar sin previo aviso.',
+      '• La cotización no implica reserva de mercadería.',
+      '• La disponibilidad informada corresponde al momento de emisión.',
+      '• Los productos podrán estar disponibles para retiro inmediato o para conseguirse en un plazo estimado máximo de 72 horas hábiles, según disponibilidad de proveedor.',
+      '• El precio indicado corresponde a pago mediante QR, débito, transferencia o tarjeta de crédito en 1 pago.',
+      '• Tarjeta de crédito en 3 pagos: +15% de recargo.',
+      '• Contado efectivo billete: 10% de descuento.',
+      '• La operación queda perfeccionada únicamente al momento de la compra y emisión del comprobante correspondiente.'
+    ];
+
+    doc.font('Helvetica').fontSize(8);
+
+    condicionesTexto.forEach(linea => {
+      if (y > 750) {
+        doc.addPage();
+        y = 45;
+      }
+
+      doc.text(linea, margin, y, {
+        width: usableWidth,
+        align: 'left'
+      });
+
+      y = doc.y + 4;
+    });
+
+    // ─────────────────────────────────────────────
+    // PIE
+    // ─────────────────────────────────────────────
+    const footerY = 805;
+
+    doc
+      .font('Helvetica')
+      .fontSize(7)
+      .fillColor('#666666')
+      .text(
+        'AUTOFAROS de FAWA S.A.S. - Igualdad 88, Centro, Córdoba - Documento comercial no válido como factura.',
+        margin,
+        footerY,
+        {
+          width: usableWidth,
+          align: 'center'
+        }
+      );
+
+    doc.end();
+
   } catch (error) {
     console.error('Error al generar PDF de cotización:', error);
-    return res.status(500).send('Error al generar PDF de cotización.');
+    return res.status(500).send('Error al generar PDF de cotización: ' + error.message);
   }
 },
-
 listadoCotizaciones: function(req, res) {
   const { fechaInicio, fechaFin } = req.query;
   const hoy = new Date().toISOString().split('T')[0];
