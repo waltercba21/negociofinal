@@ -4120,6 +4120,86 @@ const ss = String(fecha.getSeconds()).padStart(2, '0');
       throw error;
     }
   },
+  pedidoInteligente: async (req, res) => {
+  try {
+    res.render('pedidoInteligente', {
+      analisis: null,
+      pedidoInteligenteId: null
+    });
+  } catch (error) {
+    console.error('❌ Error en pedidoInteligente:', error);
+    res.status(500).send('Error al cargar Pedido Inteligente: ' + error.message);
+  }
+},
+
+analizarPedidoInteligente: async (req, res) => {
+  try {
+    const items = Array.isArray(req.body.items) ? req.body.items : [];
+
+    if (!items.length) {
+      return res.status(400).json({
+        ok: false,
+        message: 'Debe agregar al menos un producto.'
+      });
+    }
+
+    const analisis = await producto.analizarPedidoInteligente(conexion, items);
+
+    const usuarioId =
+      req.session?.usuario?.id ||
+      req.session?.user?.id ||
+      null;
+
+    const pedidoInteligenteId = await producto.guardarPedidoInteligente(
+      conexion,
+      analisis,
+      usuarioId
+    );
+
+    return res.json({
+      ok: true,
+      pedidoInteligenteId,
+      analisis
+    });
+
+  } catch (error) {
+    console.error('❌ analizarPedidoInteligente:', error);
+    return res.status(500).json({
+      ok: false,
+      message: error.message
+    });
+  }
+},
+
+confirmarPedidoInteligente: async (req, res) => {
+  try {
+    const pedidoInteligenteId = Number(req.body.pedidoInteligenteId || 0);
+
+    if (!pedidoInteligenteId) {
+      return res.status(400).json({
+        ok: false,
+        message: 'pedidoInteligenteId inválido.'
+      });
+    }
+
+    const pedidosCreados = await producto.confirmarPedidoInteligente(
+      conexion,
+      pedidoInteligenteId
+    );
+
+    return res.json({
+      ok: true,
+      pedidosCreados
+    });
+
+  } catch (error) {
+    console.error('❌ confirmarPedidoInteligente:', error);
+    return res.status(500).json({
+      ok: false,
+      message: error.message
+    });
+  }
+},
 generarPedidoManual: async (req, res) => {
   try {
     const proveedores = await producto.obtenerProveedores(conexion);

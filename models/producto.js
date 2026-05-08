@@ -2403,7 +2403,430 @@ upsertPedido: function (conexion, pedido, items) {
     });
   });
 },
+// ─────────────────────────────────────────────────────────────────────────────
+// PEDIDO INTELIGENTE
+// ─────────────────────────────────────────────────────────────────────────────
 
+analizarPedidoInteligente: async function (conexion, items = []) {
+  const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+  const normalizados = (Array.isArray(items) ? items : [])
+    .map(it => ({
+      producto_id: Number(it.producto_id ?? it.id ?? 0),
+      cantidad: parseInt(it.cantidad, 10) > 0 ? parseInt(it.cantidad, 10) : 1
+    }))
+    .filter(it => it.producto_id > 0);
+
+  if (!normalizados.length) {
+    throw new Error('No se recibieron productos válidos para analizar.');
+  }
+
+  const productoIds = [...new Set(normalizados.map(i => i.producto_id))];
+
+  const [rows] = await conexion.promise().query(
+    `
+    SELECT
+      p.id AS producto_id,
+      p.nombre AS producto_nombre,
+
+      pr.id AS proveedor_id,
+      pr.nombre AS proveedor_nombre,
+
+      pp.codigo AS codigo_proveedor,
+      pp.precio_lista,
+      LOWER(COALESCE(pp.presentacion, 'unidad')) AS presentacion,
+      COALESCE(pp.factor_unidad, CASE WHEN LOWER(COALESCE(pp.presentacion,'unidad')) = 'juego' THEN 0.5 ELSE 1 END) AS factor_unidad,
+      COALESCE(pp.iva, p.IVA, 21) AS iva,
+
+      COALESCE(dp.descuento, 0) AS descuento,
+
+      COALESCE(pcc.paga_flete, 0) AS paga_flete,
+      COALESCE(pcc.flete_tipo, 'gratis') AS flete_tipo,
+      COALESCE(pcc.flete_monto_estimado, 0) AS flete_monto_estimado,
+      COALESCE(pcc.monto_minimo_flete_gratis, 0) AS monto_minimo_flete_gratis,
+      COALESCE(pcc.pedido_minimo, 0) AS pedido_minimo,
+      COALESCE(pcc.tolerancia_precio_pct, 5) AS tolerancia_precio_pct
+
+    FROM producto_proveedor pp
+    JOIN productos p ON p.id = pp.producto_id
+    JOIN proveedores pr ON pr.id = pp.proveedor_id
+    LEFT JOIN descuentos_proveedor dp ON dp.proveedor_id = pp.proveedor_id
+    LEFT JOIN proveedor_config_compra pcc ON pcc.proveedor_id = pp.proveedor_id
+    WHERE pp.producto_id IN (${productoIds.map(() => '?').join(',')})
+      AND pp.precio_lista > 0
+      AND COALESCE(pcc.activo_pedido_inteligente, 1) = 1
+    ORDER BY p.nombre ASC, pr.nombre ASC
+    `,
+    productoIds
+  );
+
+  const candidatosPorProducto = new Map();
+
+  for (const r of rows || []) {
+    const precioLista = Number(r.precio_lista || 0);
+    const descuento = Number(r.descuento || 0);
+    const iva = Number(r.iva || 21);
+    const factor = Number(r.factor_unidad || 1);
+
+    const costoNeto = precioLista * (1 - descuento / 100);
+    const costoUnitario = round2(costoNeto * factor * (1 + iva / 100));
+
+    const candidato = {
+      producto_id: Number(r.producto_id),
+      producto_nombre: r.producto_nombre,
+      proveedor_id: Number(r.proveedor_id),
+      proveedor_nombre: r.proveedor_nombre,
+      codigo_proveedor: r.codigo_proveedor || '',
+      costo_unitario: costoUnitario,
+      paga_flete: Number(r.paga_flete) === 1 ? 1 : 0,
+      flete_tipo: r.flete_tipo || 'gratis',
+      flete_monto_estimado: round2(r.flete_monto_estimado),
+      monto_minimo_flete_gratis: round2(r.monto_minimo_flete_gratis),
+      pedido_minimo: round2(r.pedido_minimo),
+      tolerancia_precio_pct: Number(r.tolerancia_precio_pct || 5)
+    };
+
+    if (!candidatosPorProducto.has(candidato.producto_id)) {
+      candidatosPorProducto.set(candidato.producto_id, []);
+    }
+
+    candidatosPorProducto.get(candidato.producto_id).push(candidato);
+  }
+
+  const elegidos = [];
+  const sinProveedor = [];
+
+  for (const item of normalizados) {
+    const candidatos = candidatosPorProducto.get(item.producto_id) || [];
+
+    if (!candidatos.length) {
+      sinProveedor.push({
+        producto_id: item.producto_id,
+        cantidad: item.cantidad,
+        motivo: 'No tiene proveedores activos para Pedido Inteligente.'
+      });
+      continue;
+    }
+
+    candidatos.sort((a, b) => a.costo_unitario - b.costo_unitario);
+
+    const masBarato = candidatos[0];
+
+    // Regla: si hay un proveedor sin flete dentro de la tolerancia, elegirlo.
+    const candidatosSinFlete = candidatos.filter(c => c.paga_flete === 0);
+    let elegido = masBarato;
+    let motivo = 'Proveedor más barato por costo unitario.';
+
+    for (const c of candidatosSinFlete) {
+      const diffPct = masBarato.costo_unitario > 0
+        ? ((c.costo_unitario - masBarato.costo_unitario) / masBarato.costo_unitario) * 100
+        : 0;
+
+      const tolerancia = Number(c.tolerancia_precio_pct || 5);
+
+      if (diffPct >= 0 && diffPct <= tolerancia) {
+        elegido = c;
+        motivo = `Elegido por no pagar flete. Diferencia ${round2(diffPct)}% dentro de tolerancia ${tolerancia}%.`;
+        break;
+      }
+    }
+
+    const diferenciaPct = masBarato.costo_unitario > 0
+      ? round2(((elegido.costo_unitario - masBarato.costo_unitario) / masBarato.costo_unitario) * 100)
+      : 0;
+
+    elegidos.push({
+      producto_id: item.producto_id,
+      producto_nombre: elegido.producto_nombre,
+      cantidad: item.cantidad,
+      proveedor_id: elegido.proveedor_id,
+      proveedor_nombre: elegido.proveedor_nombre,
+      codigo_proveedor: elegido.codigo_proveedor,
+      costo_unitario: elegido.costo_unitario,
+      subtotal_producto: round2(elegido.costo_unitario * item.cantidad),
+
+      proveedor_mas_barato_id: masBarato.proveedor_id,
+      proveedor_mas_barato_nombre: masBarato.proveedor_nombre,
+      costo_mas_barato_unitario: masBarato.costo_unitario,
+      diferencia_pct: diferenciaPct,
+
+      paga_flete: elegido.paga_flete,
+      flete_tipo: elegido.flete_tipo,
+      flete_monto_estimado: elegido.flete_monto_estimado,
+      monto_minimo_flete_gratis: elegido.monto_minimo_flete_gratis,
+
+      motivo
+    });
+  }
+
+  const gruposMap = new Map();
+
+  for (const item of elegidos) {
+    if (!gruposMap.has(item.proveedor_id)) {
+      gruposMap.set(item.proveedor_id, {
+        proveedor_id: item.proveedor_id,
+        proveedor_nombre: item.proveedor_nombre,
+        paga_flete: item.paga_flete,
+        flete_tipo: item.flete_tipo,
+        flete_estimado: 0,
+        total_productos: 0,
+        total_final: 0,
+        cantidad_items: 0,
+        items: []
+      });
+    }
+
+    const g = gruposMap.get(item.proveedor_id);
+    g.items.push(item);
+    g.total_productos = round2(g.total_productos + item.subtotal_producto);
+    g.cantidad_items += 1;
+  }
+
+  const proveedores = [];
+
+  for (const g of gruposMap.values()) {
+    let flete = 0;
+
+    const primerItem = g.items[0];
+
+    if (g.paga_flete === 1) {
+      if (primerItem.flete_tipo === 'gratis_desde_monto') {
+        const minimo = Number(primerItem.monto_minimo_flete_gratis || 0);
+        flete = minimo > 0 && g.total_productos >= minimo
+          ? 0
+          : Number(primerItem.flete_monto_estimado || 0);
+      } else if (primerItem.flete_tipo === 'fijo' || primerItem.flete_tipo === 'estimado' || primerItem.flete_tipo === 'por_cotizar') {
+        flete = Number(primerItem.flete_monto_estimado || 0);
+      }
+    }
+
+    g.flete_estimado = round2(flete);
+    g.total_final = round2(g.total_productos + g.flete_estimado);
+
+    // Distribuir impacto de flete proporcionalmente entre ítems del proveedor
+    for (const it of g.items) {
+      const pesoSubtotal = g.total_productos > 0 ? it.subtotal_producto / g.total_productos : 0;
+      const impactoFleteSubtotal = round2(g.flete_estimado * pesoSubtotal);
+      const impactoFleteUnitario = it.cantidad > 0 ? round2(impactoFleteSubtotal / it.cantidad) : 0;
+
+      it.impacto_flete_unitario = impactoFleteUnitario;
+      it.costo_unitario_con_flete = round2(it.costo_unitario + impactoFleteUnitario);
+      it.subtotal_con_flete = round2(it.costo_unitario_con_flete * it.cantidad);
+    }
+
+    proveedores.push(g);
+  }
+
+  const totalProductos = round2(proveedores.reduce((acc, g) => acc + g.total_productos, 0));
+  const totalFletes = round2(proveedores.reduce((acc, g) => acc + g.flete_estimado, 0));
+  const totalFinal = round2(totalProductos + totalFletes);
+
+  return {
+    proveedores,
+    items: elegidos,
+    sinProveedor,
+    total_productos: totalProductos,
+    total_fletes: totalFletes,
+    total_final: totalFinal
+  };
+},
+
+guardarPedidoInteligente: async function (conexion, analisis, usuarioId = null) {
+  const conn = await conexion.promise().getConnection();
+
+  try {
+    await conn.beginTransaction();
+
+    const [cab] = await conn.query(
+      `
+      INSERT INTO pedidos_inteligentes
+      (estado, total_productos, total_fletes, total_final, ahorro_estimado, observaciones, creado_por)
+      VALUES ('ANALIZADO', ?, ?, ?, 0, ?, ?)
+      `,
+      [
+        Number(analisis.total_productos || 0),
+        Number(analisis.total_fletes || 0),
+        Number(analisis.total_final || 0),
+        analisis.sinProveedor && analisis.sinProveedor.length
+          ? `Productos sin proveedor: ${analisis.sinProveedor.length}`
+          : null,
+        usuarioId || null
+      ]
+    );
+
+    const pedidoInteligenteId = cab.insertId;
+
+    for (const g of analisis.proveedores || []) {
+      await conn.query(
+        `
+        INSERT INTO pedido_inteligente_proveedores
+        (
+          pedido_inteligente_id,
+          proveedor_id,
+          cantidad_items,
+          total_productos,
+          paga_flete,
+          flete_tipo,
+          flete_estimado,
+          total_final,
+          observaciones
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          pedidoInteligenteId,
+          g.proveedor_id,
+          g.cantidad_items,
+          g.total_productos,
+          g.paga_flete,
+          g.flete_tipo,
+          g.flete_estimado,
+          g.total_final,
+          null
+        ]
+      );
+    }
+
+    for (const it of analisis.items || []) {
+      await conn.query(
+        `
+        INSERT INTO pedido_inteligente_items
+        (
+          pedido_inteligente_id,
+          proveedor_id,
+          producto_id,
+          cantidad,
+          codigo_proveedor,
+          costo_unitario,
+          subtotal_producto,
+          impacto_flete_unitario,
+          costo_unitario_con_flete,
+          subtotal_con_flete,
+          proveedor_mas_barato_id,
+          costo_mas_barato_unitario,
+          diferencia_pct,
+          motivo
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          pedidoInteligenteId,
+          it.proveedor_id,
+          it.producto_id,
+          it.cantidad,
+          it.codigo_proveedor,
+          it.costo_unitario,
+          it.subtotal_producto,
+          it.impacto_flete_unitario || 0,
+          it.costo_unitario_con_flete || it.costo_unitario,
+          it.subtotal_con_flete || it.subtotal_producto,
+          it.proveedor_mas_barato_id || null,
+          it.costo_mas_barato_unitario || 0,
+          it.diferencia_pct || 0,
+          it.motivo || null
+        ]
+      );
+    }
+
+    await conn.commit();
+
+    return pedidoInteligenteId;
+
+  } catch (error) {
+    await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
+  }
+},
+
+confirmarPedidoInteligente: async function (conexion, pedidoInteligenteId) {
+  const [pedidoRows] = await conexion.promise().query(
+    `SELECT id, estado FROM pedidos_inteligentes WHERE id = ? LIMIT 1`,
+    [pedidoInteligenteId]
+  );
+
+  if (!pedidoRows.length) {
+    throw new Error('Pedido inteligente no encontrado.');
+  }
+
+  if (pedidoRows[0].estado === 'CONFIRMADO') {
+    throw new Error('Este pedido inteligente ya fue confirmado.');
+  }
+
+  const [rows] = await conexion.promise().query(
+    `
+    SELECT
+      pii.proveedor_id,
+      pr.nombre AS proveedor_nombre,
+      pii.producto_id,
+      p.nombre AS producto_nombre,
+      pii.cantidad,
+      pii.costo_unitario AS precio_unitario,
+      pii.subtotal_producto AS subtotal
+    FROM pedido_inteligente_items pii
+    JOIN proveedores pr ON pr.id = pii.proveedor_id
+    JOIN productos p ON p.id = pii.producto_id
+    WHERE pii.pedido_inteligente_id = ?
+    ORDER BY pr.nombre ASC, p.nombre ASC
+    `,
+    [pedidoInteligenteId]
+  );
+
+  if (!rows.length) {
+    throw new Error('El pedido inteligente no tiene ítems para confirmar.');
+  }
+
+  const grupos = new Map();
+
+  for (const r of rows) {
+    const proveedorId = Number(r.proveedor_id);
+
+    if (!grupos.has(proveedorId)) {
+      grupos.set(proveedorId, {
+        proveedor_id: proveedorId,
+        proveedor_nombre: r.proveedor_nombre,
+        productos: []
+      });
+    }
+
+    grupos.get(proveedorId).productos.push({
+      id: Number(r.producto_id),
+      producto_id: Number(r.producto_id),
+      nombre: r.producto_nombre,
+      cantidad: Number(r.cantidad),
+      precio_unitario: Number(r.precio_unitario || 0),
+      costo_neto: Number(r.precio_unitario || 0),
+      subtotal: Number(r.subtotal || 0)
+    });
+  }
+
+  const pedidosCreados = [];
+
+  for (const g of grupos.values()) {
+    const total = g.productos.reduce((acc, it) => acc + Number(it.subtotal || 0), 0);
+
+    const resultado = await module.exports.upsertPedido(conexion, {
+      proveedor_id: g.proveedor_id,
+      total,
+      productos: g.productos
+    });
+
+    pedidosCreados.push({
+      proveedor_id: g.proveedor_id,
+      proveedor_nombre: g.proveedor_nombre,
+      pedido_id: resultado.pedido_id,
+      total
+    });
+  }
+
+  await conexion.promise().query(
+    `UPDATE pedidos_inteligentes SET estado = 'CONFIRMADO' WHERE id = ?`,
+    [pedidoInteligenteId]
+  );
+
+  return pedidosCreados;
+},
   obtenerDetallePedido: (pedidoId) => {
     return new Promise((resolve, reject) => {
       const sql = `

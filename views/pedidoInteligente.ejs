@@ -1,0 +1,616 @@
+<% var pageCss = '/css/pages/pedidoInteligente.css' %>
+<!DOCTYPE html>
+<html lang="es">
+<%- include('./layouts/head.ejs') %>
+
+<style>
+  .pi-main {
+    padding: 24px;
+    background: #f4f6f8;
+    min-height: 100vh;
+  }
+
+  .pi-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .pi-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .pi-title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .pi-subtitle {
+    margin-top: 4px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .pi-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
+    margin-bottom: 18px;
+  }
+
+  .pi-grid {
+    display: grid;
+    grid-template-columns: 1.4fr .4fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+
+  .pi-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+
+  .pi-input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .pi-btn {
+    border: 0;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pi-btn-primary {
+    background: #111827;
+    color: #fff;
+  }
+
+  .pi-btn-secondary {
+    background: #e5e7eb;
+    color: #111827;
+  }
+
+  .pi-btn-danger {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .pi-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .pi-table th,
+  .pi-table td {
+    padding: 10px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+    text-align: left;
+  }
+
+  .pi-table th {
+    background: #f9fafb;
+    font-weight: 800;
+    color: #374151;
+  }
+
+  .pi-results {
+    display: none;
+  }
+
+  .pi-provider {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+    background: #fff;
+  }
+
+  .pi-provider-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .pi-provider-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .pi-kpis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0 12px;
+  }
+
+  .pi-kpi {
+    background: #f3f4f6;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+
+  .pi-alert {
+    padding: 12px;
+    border-radius: 12px;
+    background: #fff7ed;
+    color: #9a3412;
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  .pi-ok {
+    padding: 12px;
+    border-radius: 12px;
+    background: #ecfdf5;
+    color: #065f46;
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  .pi-search-results {
+    margin-top: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .pi-search-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    cursor: pointer;
+    background: #fff;
+  }
+
+  .pi-search-item:hover {
+    background: #f9fafb;
+  }
+
+  .pi-muted {
+    color: #6b7280;
+    font-size: 12px;
+  }
+
+  @media (max-width: 800px) {
+    .pi-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .pi-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+
+<body>
+<%- include('./layouts/header.ejs') %>
+
+<main class="pi-main">
+  <div class="pi-wrap">
+
+    <div class="pi-header">
+      <div>
+        <h1 class="pi-title">Pedido Inteligente</h1>
+        <div class="pi-subtitle">Analiza proveedores, precios y flete estimado para recomendar a quién pedir cada producto.</div>
+      </div>
+
+      <a href="/productos/panelControl" class="pi-btn pi-btn-secondary">
+        Volver al panel
+      </a>
+    </div>
+
+    <div id="msgError" class="pi-alert"></div>
+    <div id="msgOk" class="pi-ok"></div>
+
+    <section class="pi-card">
+      <div class="pi-grid">
+        <div>
+          <label class="pi-label">Buscar producto</label>
+          <input type="text" id="buscarProducto" class="pi-input" placeholder="Buscar por nombre o código...">
+          <div id="resultadosBusqueda" class="pi-search-results"></div>
+        </div>
+
+        <div>
+          <label class="pi-label">Cantidad</label>
+          <input type="number" id="cantidadProducto" class="pi-input" min="1" value="1">
+        </div>
+
+        <button type="button" id="btnAgregar" class="pi-btn pi-btn-primary">
+          Agregar
+        </button>
+      </div>
+
+      <input type="hidden" id="productoSeleccionadoId">
+      <input type="hidden" id="productoSeleccionadoNombre">
+    </section>
+
+    <section class="pi-card">
+      <h2 style="margin-top:0;">Productos a reponer</h2>
+
+      <table class="pi-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th style="width:120px;">Cantidad</th>
+            <th style="width:100px;">Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tablaItems">
+          <tr>
+            <td colspan="3" class="pi-muted">Todavía no agregaste productos.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" id="btnAnalizar" class="pi-btn pi-btn-primary">
+          Analizar pedido inteligente
+        </button>
+        <button type="button" id="btnLimpiar" class="pi-btn pi-btn-secondary">
+          Limpiar
+        </button>
+      </div>
+    </section>
+
+    <section id="bloqueResultados" class="pi-card pi-results">
+      <h2 style="margin-top:0;">Resultado del análisis</h2>
+
+      <div class="pi-kpis">
+        <div class="pi-kpi"><strong>Total productos:</strong> <span id="totalProductos">$ 0</span></div>
+        <div class="pi-kpi"><strong>Total fletes:</strong> <span id="totalFletes">$ 0</span></div>
+        <div class="pi-kpi"><strong>Total final:</strong> <span id="totalFinal">$ 0</span></div>
+      </div>
+
+      <div id="proveedoresResultado"></div>
+
+      <div id="sinProveedorBox" class="pi-alert"></div>
+
+      <button type="button" id="btnConfirmar" class="pi-btn pi-btn-primary">
+        Confirmar y generar pedidos reales
+      </button>
+    </section>
+
+  </div>
+</main>
+
+<script>
+  const fmt = new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    maximumFractionDigits: 0
+  });
+
+  let items = [];
+  let ultimoAnalisisId = null;
+  let searchTimer = null;
+
+  const $ = (id) => document.getElementById(id);
+
+  function showError(msg) {
+    $('msgError').textContent = msg;
+    $('msgError').style.display = 'block';
+    $('msgOk').style.display = 'none';
+  }
+
+  function showOk(msg) {
+    $('msgOk').textContent = msg;
+    $('msgOk').style.display = 'block';
+    $('msgError').style.display = 'none';
+  }
+
+  function clearMessages() {
+    $('msgError').style.display = 'none';
+    $('msgOk').style.display = 'none';
+  }
+
+  function renderItems() {
+    const tbody = $('tablaItems');
+
+    if (!items.length) {
+      tbody.innerHTML = '<tr><td colspan="3" class="pi-muted">Todavía no agregaste productos.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = items.map((it, idx) => `
+      <tr>
+        <td>${escapeHtml(it.nombre)}</td>
+        <td>
+          <input type="number" min="1" value="${it.cantidad}" class="pi-input" style="padding:6px 8px;"
+            onchange="cambiarCantidad(${idx}, this.value)">
+        </td>
+        <td>
+          <button type="button" class="pi-btn pi-btn-danger" style="padding:7px 10px;" onclick="eliminarItem(${idx})">
+            Quitar
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function cambiarCantidad(idx, value) {
+    const cantidad = parseInt(value, 10);
+    items[idx].cantidad = cantidad > 0 ? cantidad : 1;
+    renderItems();
+  }
+
+  function eliminarItem(idx) {
+    items.splice(idx, 1);
+    renderItems();
+  }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  $('buscarProducto').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+
+    const q = $('buscarProducto').value.trim();
+    const box = $('resultadosBusqueda');
+
+    $('productoSeleccionadoId').value = '';
+    $('productoSeleccionadoNombre').value = '';
+
+    if (q.length < 2) {
+      box.style.display = 'none';
+      box.innerHTML = '';
+      return;
+    }
+
+    searchTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/productos/api/buscar?simple=1&limite=20&q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        if (!Array.isArray(data) || !data.length) {
+          box.innerHTML = '<div class="pi-search-item pi-muted">Sin resultados</div>';
+          box.style.display = 'block';
+          return;
+        }
+
+        box.innerHTML = data.map(p => `
+          <div class="pi-search-item" onclick="seleccionarProducto(${p.id}, '${escapeJs(p.nombre)}')">
+            <strong>${escapeHtml(p.nombre)}</strong>
+            <div class="pi-muted">ID: ${p.id}${p.categoria ? ' · ' + escapeHtml(p.categoria) : ''}</div>
+          </div>
+        `).join('');
+
+        box.style.display = 'block';
+      } catch (e) {
+        showError('Error al buscar productos: ' + e.message);
+      }
+    }, 300);
+  });
+
+  function escapeJs(str) {
+    return String(str || '')
+      .replaceAll('\\', '\\\\')
+      .replaceAll("'", "\\'")
+      .replaceAll('"', '\\"');
+  }
+
+  window.seleccionarProducto = function(id, nombre) {
+    $('productoSeleccionadoId').value = id;
+    $('productoSeleccionadoNombre').value = nombre;
+    $('buscarProducto').value = nombre;
+    $('resultadosBusqueda').style.display = 'none';
+  };
+
+  $('btnAgregar').addEventListener('click', () => {
+    clearMessages();
+
+    const id = Number($('productoSeleccionadoId').value || 0);
+    const nombre = $('productoSeleccionadoNombre').value || $('buscarProducto').value.trim();
+    const cantidad = parseInt($('cantidadProducto').value, 10) || 1;
+
+    if (!id) {
+      showError('Primero seleccioná un producto de la búsqueda.');
+      return;
+    }
+
+    const existente = items.find(i => Number(i.producto_id) === id);
+
+    if (existente) {
+      existente.cantidad += cantidad;
+    } else {
+      items.push({
+        producto_id: id,
+        nombre,
+        cantidad
+      });
+    }
+
+    $('buscarProducto').value = '';
+    $('productoSeleccionadoId').value = '';
+    $('productoSeleccionadoNombre').value = '';
+    $('cantidadProducto').value = 1;
+
+    renderItems();
+  });
+
+  $('btnLimpiar').addEventListener('click', () => {
+    items = [];
+    ultimoAnalisisId = null;
+    $('bloqueResultados').style.display = 'none';
+    renderItems();
+    clearMessages();
+  });
+
+  $('btnAnalizar').addEventListener('click', async () => {
+    clearMessages();
+
+    if (!items.length) {
+      showError('Agregá al menos un producto para analizar.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/productos/pedidoInteligente/analizar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items })
+      });
+
+      const data = await res.json();
+
+      if (!data.ok) {
+        showError(data.message || 'No se pudo analizar el pedido.');
+        return;
+      }
+
+      ultimoAnalisisId = data.pedidoInteligenteId;
+      renderAnalisis(data.analisis);
+      showOk('Análisis generado correctamente.');
+    } catch (e) {
+      showError('Error al analizar: ' + e.message);
+    }
+  });
+
+  function renderAnalisis(analisis) {
+    $('bloqueResultados').style.display = 'block';
+
+    $('totalProductos').textContent = fmt.format(Number(analisis.total_productos || 0));
+    $('totalFletes').textContent = fmt.format(Number(analisis.total_fletes || 0));
+    $('totalFinal').textContent = fmt.format(Number(analisis.total_final || 0));
+
+    const cont = $('proveedoresResultado');
+
+    cont.innerHTML = (analisis.proveedores || []).map(g => `
+      <div class="pi-provider">
+        <div class="pi-provider-head">
+          <div>
+            <h3 class="pi-provider-title">${escapeHtml(g.proveedor_nombre)}</h3>
+            <div class="pi-muted">${g.paga_flete ? 'Flete pago/estimado' : 'Sin flete'} · ${escapeHtml(g.flete_tipo || '')}</div>
+          </div>
+          <div style="text-align:right;">
+            <strong>${fmt.format(Number(g.total_final || 0))}</strong>
+            <div class="pi-muted">Total final</div>
+          </div>
+        </div>
+
+        <div class="pi-kpis">
+          <div class="pi-kpi"><strong>Productos:</strong> ${fmt.format(Number(g.total_productos || 0))}</div>
+          <div class="pi-kpi"><strong>Flete:</strong> ${fmt.format(Number(g.flete_estimado || 0))}</div>
+          <div class="pi-kpi"><strong>Ítems:</strong> ${g.cantidad_items}</div>
+        </div>
+
+        <table class="pi-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Código</th>
+              <th>Cant.</th>
+              <th>Costo unit.</th>
+              <th>Flete unit.</th>
+              <th>Subtotal</th>
+              <th>Motivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(g.items || []).map(it => `
+              <tr>
+                <td>${escapeHtml(it.producto_nombre)}</td>
+                <td>${escapeHtml(it.codigo_proveedor || '-')}</td>
+                <td>${it.cantidad}</td>
+                <td>${fmt.format(Number(it.costo_unitario || 0))}</td>
+                <td>${fmt.format(Number(it.impacto_flete_unitario || 0))}</td>
+                <td>${fmt.format(Number(it.subtotal_con_flete || it.subtotal_producto || 0))}</td>
+                <td>${escapeHtml(it.motivo || '')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `).join('');
+
+    const sinProv = analisis.sinProveedor || [];
+
+    if (sinProv.length) {
+      $('sinProveedorBox').style.display = 'block';
+      $('sinProveedorBox').innerHTML = `
+        <strong>Productos sin proveedor activo:</strong><br>
+        ${sinProv.map(x => `ID ${x.producto_id}: ${escapeHtml(x.motivo)}`).join('<br>')}
+      `;
+    } else {
+      $('sinProveedorBox').style.display = 'none';
+      $('sinProveedorBox').innerHTML = '';
+    }
+  }
+
+  $('btnConfirmar').addEventListener('click', async () => {
+    clearMessages();
+
+    if (!ultimoAnalisisId) {
+      showError('Primero generá un análisis.');
+      return;
+    }
+
+    if (!confirm('¿Confirmar y generar pedidos reales por proveedor?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/productos/pedidoInteligente/confirmar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pedidoInteligenteId: ultimoAnalisisId })
+      });
+
+      const data = await res.json();
+
+      if (!data.ok) {
+        showError(data.message || 'No se pudo confirmar el pedido.');
+        return;
+      }
+
+      const links = (data.pedidosCreados || []).map(p =>
+        `<a href="/productos/verPedido/${p.pedido_id}" target="_blank">Pedido #${p.pedido_id} - ${escapeHtml(p.proveedor_nombre)}</a>`
+      ).join('<br>');
+
+      $('msgOk').innerHTML = `Pedidos generados correctamente:<br>${links}`;
+      $('msgOk').style.display = 'block';
+      $('msgError').style.display = 'none';
+
+    } catch (e) {
+      showError('Error al confirmar: ' + e.message);
+    }
+  });
+
+  renderItems();
+</script>
+
+</body>
+</html>

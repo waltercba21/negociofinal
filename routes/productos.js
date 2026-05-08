@@ -129,5 +129,11 @@ router.get('/actualizados/nuevos.pdf', ensureAuthenticated, soloAdmin, productos
 router.get('/api/proveedores/:productoId', ensureAuthenticated, soloAdmin, productosController.apiProveedoresDeProducto);
 router.get('/api/proveedor-siguiente', ensureAuthenticated, soloAdmin, productosController.apiProveedorSiguiente);
 
+// ─── PEDIDO INTELIGENTE ──────────────────────────────────────────────────────
+router.get('/pedidoInteligente', ensureAuthenticated, soloAdmin, productosController.pedidoInteligente);
+
+router.post('/pedidoInteligente/analizar', ensureAuthenticated, soloAdmin, productosController.analizarPedidoInteligente);
+
+router.post('/pedidoInteligente/confirmar', ensureAuthenticated, soloAdmin, productosController.confirmarPedidoInteligente);
 router.get('/:id', productosController.detalle);
 module.exports = router;
