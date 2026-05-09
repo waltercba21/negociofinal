@@ -574,6 +574,9 @@ function mostrarProductos(productos) {
         ${badgeHTML}
         <div class="pcard__carousel" id="carousel-${index}">${imagenesHTML}</div>
         ${botonesCarousel}
+        <button type="button" class="pcard__zoom-btn" aria-label="Ampliar imagen" title="Ampliar imagen">
+          <i class="fa-solid fa-magnifying-glass-plus"></i>
+        </button>
       </div>
       <div class="pcard__body">
         <span class="pcard__categoria">${producto.categoria_nombre || 'Sin categoría'}</span>
@@ -603,6 +606,7 @@ function mostrarProductos(productos) {
 
   // ── FIX: insertar todas las tarjetas de una sola vez (1 reflow en vez de N) ──
   contenedorProductos.appendChild(fragment);
+  initProductImageZoom();
 
   // Inicializar botones proveedor después de insertar (el DOM ya existe)
   productos.forEach(producto => _initProveedorButton(producto.id));
@@ -838,3 +842,130 @@ if (CAN_INIT) contenedorProductos.addEventListener('click', (ev) => {
   const qActual = (entradaBusqueda?.value || '').trim();
   logBusquedaProducto(productoId, qActual);
 }, { passive: true });
+
+/* ==========================================
+   Lightbox de imágenes de productos
+========================================== */
+function _getVisibleProductImage(media) {
+  if (!media) return null;
+  return media.querySelector('.pcard__img:not(.hidden)') || media.querySelector('.pcard__img');
+}
+
+function _getImagesFromCard(card) {
+  return [...(card?.querySelectorAll('.pcard__img') || [])]
+    .map(img => ({ src: img.currentSrc || img.src, alt: img.alt || '' }))
+    .filter(item => item.src && !item.src.includes('undefined'));
+}
+
+function _ensureLightbox() {
+  let lb = document.getElementById('afImgLightbox');
+  if (lb) return lb;
+
+  lb = document.createElement('div');
+  lb.id = 'afImgLightbox';
+  lb.className = 'af-img-lightbox';
+  lb.setAttribute('aria-hidden', 'true');
+  lb.innerHTML = `
+    <div class="af-img-lightbox__dialog" role="dialog" aria-modal="true" aria-label="Imagen ampliada de producto">
+      <button type="button" class="af-img-lightbox__close" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+      <button type="button" class="af-img-lightbox__nav af-img-lightbox__nav--prev" aria-label="Imagen anterior"><i class="fa-solid fa-chevron-left"></i></button>
+      <img class="af-img-lightbox__img" src="" alt="">
+      <button type="button" class="af-img-lightbox__nav af-img-lightbox__nav--next" aria-label="Imagen siguiente"><i class="fa-solid fa-chevron-right"></i></button>
+      <div class="af-img-lightbox__caption"></div>
+    </div>`;
+  document.body.appendChild(lb);
+  return lb;
+}
+
+let _afLightboxImages = [];
+let _afLightboxIndex = 0;
+
+function _renderLightboxImage() {
+  const lb = _ensureLightbox();
+  const img = lb.querySelector('.af-img-lightbox__img');
+  const caption = lb.querySelector('.af-img-lightbox__caption');
+  const prev = lb.querySelector('.af-img-lightbox__nav--prev');
+  const next = lb.querySelector('.af-img-lightbox__nav--next');
+  const item = _afLightboxImages[_afLightboxIndex];
+  if (!item) return;
+  img.src = item.src;
+  img.alt = item.alt || 'Imagen de producto';
+  caption.textContent = item.alt || '';
+  const multiple = _afLightboxImages.length > 1;
+  if (prev) prev.style.display = multiple ? 'inline-flex' : 'none';
+  if (next) next.style.display = multiple ? 'inline-flex' : 'none';
+}
+
+function openProductImageLightbox(card, startSrc) {
+  _afLightboxImages = _getImagesFromCard(card);
+  if (!_afLightboxImages.length) return;
+  const found = _afLightboxImages.findIndex(item => item.src === startSrc);
+  _afLightboxIndex = found >= 0 ? found : 0;
+
+  const lb = _ensureLightbox();
+  _renderLightboxImage();
+  lb.classList.add('is-open');
+  lb.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProductImageLightbox() {
+  const lb = document.getElementById('afImgLightbox');
+  if (!lb) return;
+  lb.classList.remove('is-open');
+  lb.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+function moveProductLightbox(direction) {
+  if (!_afLightboxImages.length) return;
+  _afLightboxIndex = (_afLightboxIndex + direction + _afLightboxImages.length) % _afLightboxImages.length;
+  _renderLightboxImage();
+}
+
+function initProductImageZoom() {
+  if (!contenedorProductos) return;
+  contenedorProductos.querySelectorAll('.pcard__media').forEach(media => {
+    if (!media.querySelector('.pcard__zoom-btn')) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pcard__zoom-btn';
+      btn.setAttribute('aria-label', 'Ampliar imagen');
+      btn.title = 'Ampliar imagen';
+      btn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
+      media.appendChild(btn);
+    }
+  });
+}
+
+if (CAN_INIT) {
+  window.addEventListener('DOMContentLoaded', initProductImageZoom);
+
+  contenedorProductos.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.pcard__zoom-btn');
+    if (!btn) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const card = btn.closest('.pcard');
+    const media = btn.closest('.pcard__media');
+    const visible = _getVisibleProductImage(media);
+    openProductImageLightbox(card, visible?.currentSrc || visible?.src || '');
+  });
+
+  document.addEventListener('click', (ev) => {
+    const lb = document.getElementById('afImgLightbox');
+    if (!lb || !lb.classList.contains('is-open')) return;
+    if (ev.target.closest('.af-img-lightbox__close')) return closeProductImageLightbox();
+    if (ev.target.closest('.af-img-lightbox__nav--prev')) return moveProductLightbox(-1);
+    if (ev.target.closest('.af-img-lightbox__nav--next')) return moveProductLightbox(1);
+    if (ev.target === lb) return closeProductImageLightbox();
+  });
+
+  document.addEventListener('keydown', (ev) => {
+    const lb = document.getElementById('afImgLightbox');
+    if (!lb || !lb.classList.contains('is-open')) return;
+    if (ev.key === 'Escape') closeProductImageLightbox();
+    if (ev.key === 'ArrowLeft') moveProductLightbox(-1);
+    if (ev.key === 'ArrowRight') moveProductLightbox(1);
+  });
+}
