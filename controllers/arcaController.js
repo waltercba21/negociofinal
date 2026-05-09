@@ -297,7 +297,7 @@ async function emitirDesdeFacturaMostrador(req, res) {
     }
 
     let receptor_nombre = String(req.body.receptor_nombre || "").trim() || null;
-    let receptor_domicilio = null;
+    let receptor_domicilio = String(req.body.receptor_domicilio || "").trim() || null;
 
     // Validación doc_nro según doc_tipo
     if (doc_tipo === 99) {
