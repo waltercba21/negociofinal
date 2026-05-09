@@ -214,61 +214,90 @@ guardarFactura: (factura) => {
             });
         });
     },    
-   obtenerProductoIdPorCodigo: (codigo, nombre = null) => {
-    return new Promise((resolve, reject) => {
-        // 1° intento: buscar por producto_proveedor.codigo (como antes)
-        let query = `
-            SELECT p.id 
-            FROM productos p
-            INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
-            WHERE pp.codigo = ?
-        `;
-        const params = [codigo];
 
-        if (nombre) {
-            query += " AND p.nombre LIKE ?";
-            params.push(`%${nombre}%`);
+obtenerProductoIdPorCodigo: (codigo, nombre = null) => {
+    return new Promise((resolve, reject) => {
+        const codigoRaw = String(codigo ?? '').trim();
+        const nombreRaw = nombre ? String(nombre).trim() : null;
+
+        if (!codigoRaw) {
+            return reject(new Error('Producto sin identificador'));
         }
 
-        conexion.query(query, params, (error, resultados) => {
-            if (error) return reject(error);
+        const idDirecto = Number(codigoRaw);
 
-            if (resultados.length > 0) return resolve(resultados[0].id);
+        // ✅ 1° intento: si el front manda el ID real de productos.id, usarlo directo.
+        // Esto es lo correcto para factura_items.producto_id y evita depender de códigos de proveedor.
+        if (Number.isInteger(idDirecto) && idDirecto > 0) {
+            conexion.query(
+                'SELECT id FROM productos WHERE id = ? LIMIT 1',
+                [idDirecto],
+                (errorId, rowsId) => {
+                    if (errorId) return reject(errorId);
+                    if (rowsId && rowsId.length > 0) return resolve(rowsId[0].id);
 
-            // ✅ 2° intento: buscar por productos.codigo directamente
-            let query2 = `SELECT id FROM productos WHERE codigo = ?`;
-            const params2 = [codigo];
+                    buscarPorCodigoProveedor();
+                }
+            );
+        } else {
+            buscarPorCodigoProveedor();
+        }
 
-            if (nombre) {
-                query2 += " AND nombre LIKE ?";
-                params2.push(`%${nombre}%`);
+        function buscarPorCodigoProveedor() {
+            // ✅ 2° intento: código del proveedor. En esta BD el código está en producto_proveedor.codigo,
+            // no en productos.codigo.
+            let query = `
+                SELECT p.id
+                FROM productos p
+                INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+                WHERE pp.codigo = ?
+            `;
+            const params = [codigoRaw];
+
+            if (nombreRaw) {
+                query += ' AND p.nombre LIKE ?';
+                params.push(`%${nombreRaw}%`);
             }
 
-            conexion.query(query2, params2, (error2, resultados2) => {
-                if (error2) return reject(error2);
+            query += ' LIMIT 1';
 
-                if (resultados2.length > 0) return resolve(resultados2[0].id);
+            conexion.query(query, params, (error, resultados) => {
+                if (error) return reject(error);
+                if (resultados && resultados.length > 0) return resolve(resultados[0].id);
 
-                // ✅ 3° intento: buscar SOLO por nombre si el código no existe en ninguna tabla
-                if (nombre) {
-                    conexion.query(
-                        `SELECT id FROM productos WHERE nombre LIKE ? LIMIT 1`,
-                        [`%${nombre}%`],
-                        (error3, resultados3) => {
-                            if (error3) return reject(error3);
-                            if (resultados3.length > 0) return resolve(resultados3[0].id);
-                            console.warn(`⚠️ Producto no encontrado: código="${codigo}", nombre="${nombre}"`);
-                            reject(new Error(`Producto no encontrado: código="${codigo}", nombre="${nombre}"`));
+                // ✅ 3° intento: código proveedor sin filtro de nombre.
+                // Sirve cuando el nombre fue editado en PRODUCTO PRUEBA o hay pequeñas diferencias de texto.
+                conexion.query(
+                    `SELECT p.id
+                     FROM productos p
+                     INNER JOIN producto_proveedor pp ON p.id = pp.producto_id
+                     WHERE pp.codigo = ?
+                     LIMIT 1`,
+                    [codigoRaw],
+                    (error2, resultados2) => {
+                        if (error2) return reject(error2);
+                        if (resultados2 && resultados2.length > 0) return resolve(resultados2[0].id);
+
+                        // ✅ 4° intento: solo por nombre, sin usar productos.codigo porque esa columna NO existe.
+                        if (nombreRaw) {
+                            conexion.query(
+                                `SELECT id FROM productos WHERE nombre LIKE ? LIMIT 1`,
+                                [`%${nombreRaw}%`],
+                                (error3, resultados3) => {
+                                    if (error3) return reject(error3);
+                                    if (resultados3 && resultados3.length > 0) return resolve(resultados3[0].id);
+                                    return reject(new Error(`Producto no encontrado: identificador="${codigoRaw}", nombre="${nombreRaw}"`));
+                                }
+                            );
+                        } else {
+                            return reject(new Error(`Producto no encontrado: identificador="${codigoRaw}"`));
                         }
-                    );
-                } else {
-                    console.warn(`⚠️ Producto no encontrado: código="${codigo}"`);
-                    reject(new Error(`Producto no encontrado: código="${codigo}"`));
-                }
+                    }
+                );
             });
-        });
+        }
     });
-},    
+},
      obtenerItemsPresupuesto : (presupuestoId) => {
         return new Promise((resolve, reject) => {
           const query = `

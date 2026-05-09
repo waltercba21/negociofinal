@@ -3201,13 +3201,22 @@ const vendedor = vendedorForm
 
     const items = await Promise.all(
       itemsNormalizados.map(async (item) => {
-        // Para PRODUCTO PRUEBA la descripción es el nombre editado por el vendedor,
-        // NO debe usarse como filtro de nombre en la DB (el producto se busca solo por código).
+        // El frontend corregido envía producto_id como ID real de productos.id.
+        // Si por caché vieja llegara un código de proveedor, el modelo hace fallback por producto_proveedor.codigo.
+        const identificadorProducto = item.producto_id || item.codigo;
+
+        // Para PRODUCTO PRUEBA la descripción es editada por el vendedor,
+        // por eso no se usa como filtro de nombre en la búsqueda.
         const nombreParaBusqueda = item.es_producto_prueba ? null : item.descripcion;
-        const producto_id = await producto.obtenerProductoIdPorCodigo(item.producto_id, nombreParaBusqueda);
+
+        const producto_id = await producto.obtenerProductoIdPorCodigo(
+          identificadorProducto,
+          nombreParaBusqueda
+        );
+
         if (!producto_id) {
           throw new Error(
-            `Producto con ID ${item.producto_id} y descripción ${item.descripcion} no encontrado.`
+            `Producto no encontrado: identificador=${identificadorProducto}, descripción=${item.descripcion || ''}`
           );
         }
 
