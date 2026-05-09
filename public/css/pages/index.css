@@ -1,18 +1,19 @@
 /* ════════════════════════════════════════════════
-   AUTOFAROS — Home / Index Light UX v4
+   AUTOFAROS — Home / Index Light UX v5
    public/css/pages/index.css
 
    REEMPLAZA COMPLETO el index.css actual.
    Objetivo:
-   - Mantener el home sin modo dark.
-   - Evitar carruseles rotos o contenedores gigantes.
-   - Rediseñar Últimos Agregados y Ofertas de forma prolija.
+   - Home claro, prolijo y moderno.
+   - Categorías estables.
+   - Últimos agregados y Ofertas con contenedores balanceados.
+   - Sin cards cortadas ni paneles desparejos.
    ════════════════════════════════════════════════ */
 
 body.body-index {
   background:
     radial-gradient(circle at 8% 0%, rgba(31,72,126,.10), transparent 32rem),
-    linear-gradient(180deg, #d6dee9 0%, #ccd6e2 45%, #c3cedb 100%) !important;
+    linear-gradient(180deg, #d8e0ea 0%, #ccd6e2 48%, #c2cedc 100%) !important;
   color: var(--color-text-primary) !important;
 }
 
@@ -37,8 +38,8 @@ body.body-index {
   margin-top: 0 !important;
   padding: 28px;
   border-radius: 28px;
-  background: rgba(255,255,255,.82) !important;
-  border: 1px solid rgba(255,255,255,.82) !important;
+  background: rgba(255,255,255,.84) !important;
+  border: 1px solid rgba(255,255,255,.86) !important;
   box-shadow: 0 20px 54px rgba(15,23,42,.12);
   overflow: hidden;
 }
@@ -49,7 +50,7 @@ body.body-index {
   inset: 0 0 auto 0;
   height: 4px;
   background: linear-gradient(90deg, var(--color-brand), var(--color-brand-light), var(--color-accent));
-  opacity: .9;
+  opacity: .92;
 }
 
 .cat-section__header {
@@ -242,19 +243,22 @@ body.body-index {
    ══════════════════════════════════════════════ */
 .products-grid-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(360px, .82fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(410px, .95fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
   margin-top: 26px;
 }
 
 .products-panel {
   position: relative;
   min-width: 0;
-  background: rgba(255,255,255,.88) !important;
+  min-height: 386px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,.90) !important;
   color: var(--color-text-primary) !important;
-  border: 1px solid rgba(255,255,255,.82) !important;
-  border-radius: 26px;
+  border: 1px solid rgba(255,255,255,.86) !important;
+  border-radius: 28px;
   padding: 22px;
   box-shadow: 0 18px 46px rgba(15,23,42,.12) !important;
   overflow: hidden;
@@ -271,8 +275,8 @@ body.body-index {
 }
 
 .products-panel--ofertas {
-  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,246,248,.92)) !important;
-  border-color: rgba(217,4,41,.13) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,247,249,.94)) !important;
+  border-color: rgba(217,4,41,.14) !important;
 }
 
 .products-panel--ofertas::before {
@@ -285,7 +289,8 @@ body.body-index {
   align-items: center;
   gap: 12px;
   min-height: 44px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  flex: 0 0 auto;
 }
 
 .products-panel__badge {
@@ -312,7 +317,7 @@ body.body-index {
   min-width: 0;
   margin: 0;
   color: var(--color-text-primary) !important;
-  font-size: clamp(1.18rem, 1.9vw, 1.55rem);
+  font-size: clamp(1.2rem, 1.9vw, 1.6rem);
   font-weight: 900;
   letter-spacing: -.03em;
   line-height: 1.1;
@@ -326,14 +331,18 @@ body.body-index {
   gap: 12px;
 }
 
+#ultimosList {
+  flex: 1 1 auto;
+}
+
 .product-card {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr);
   align-items: center;
   gap: 14px;
-  min-height: 112px;
+  min-height: 100px;
   border-radius: 18px;
-  padding: 11px;
+  padding: 10px;
   overflow: hidden;
   background: #ffffff !important;
   color: var(--color-text-primary) !important;
@@ -354,7 +363,7 @@ body.body-index {
 .product-card__img-wrap {
   position: relative;
   width: 96px;
-  height: 90px;
+  height: 78px;
   border-radius: 15px;
   overflow: hidden;
   border: 1px solid #e8eef5;
@@ -424,25 +433,29 @@ body.body-index {
 }
 
 /* ══════════════════════════════════════════════
-   OFERTAS — una card limpia visible por vez
+   OFERTAS — contenedor premium balanceado
    ══════════════════════════════════════════════ */
 .ofertas-carousel {
   position: relative;
   min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
 }
 
 .ofertas-carousel__viewport {
   overflow: hidden;
   width: 100%;
+  min-width: 0;
   padding: 4px 2px 8px;
 }
 
 .product-list--ofertas {
   display: flex !important;
-  gap: 14px;
   align-items: stretch;
+  gap: 14px;
+  height: 100%;
   min-height: 0 !important;
-  height: auto !important;
   transition: transform var(--transition-base);
 }
 
@@ -450,49 +463,77 @@ body.body-index {
   flex: 0 0 100%;
   min-width: 100%;
   max-width: 100%;
-  grid-template-columns: 112px minmax(0, 1fr);
-  min-height: 132px;
-  padding: 12px;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 170px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 22px;
   border-color: rgba(217,4,41,.16) !important;
-  box-shadow: 0 10px 24px rgba(217,4,41,.08) !important;
+  background: #ffffff !important;
+  box-shadow: 0 12px 28px rgba(217,4,41,.085) !important;
 }
 
 .product-card--oferta .product-card__img-wrap {
-  width: 112px;
-  height: 108px;
+  width: 100%;
+  height: 170px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fffafb 0%, #f3f6fb 100%) !important;
+}
+
+.product-card--oferta .product-card__img {
+  padding: 18px;
+}
+
+.product-card--oferta .product-card__body {
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 7px;
+  padding: 0 2px 2px;
+}
+
+.product-card--oferta .product-card__categoria {
+  color: #7f1d1d !important;
+  max-width: 100%;
 }
 
 .product-card--oferta .product-card__nombre {
-  font-size: .96rem;
+  font-size: 1.02rem;
+  line-height: 1.25;
+  -webkit-line-clamp: 3;
 }
 
 .product-card--oferta .product-card__precio {
-  font-size: 1.08rem;
+  font-size: 1.22rem;
+  color: var(--color-accent) !important;
 }
 
 .product-card__oferta-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 10px;
+  left: 10px;
   z-index: 2;
-  padding: 4px 8px;
+  padding: 5px 9px;
   border-radius: var(--radius-full);
   background: var(--color-accent) !important;
   color: #ffffff !important;
-  font-size: .62rem;
+  font-size: .64rem;
   font-weight: 900;
   letter-spacing: .05em;
   box-shadow: 0 6px 14px rgba(217,4,41,.25);
 }
 
 .ofertas-carousel__arrow--prev {
-  left: -10px;
+  left: -12px;
   top: 50%;
   transform: translateY(-50%);
 }
 
 .ofertas-carousel__arrow--next {
-  right: -10px;
+  right: -12px;
   top: 50%;
   transform: translateY(-50%);
 }
@@ -532,10 +573,28 @@ body.body-index {
     grid-template-columns: 1fr;
   }
 
+  .products-panel {
+    min-height: auto;
+  }
+
+  .products-panel--ofertas {
+    min-height: 360px;
+  }
+
   .product-card--oferta {
-    flex-basis: 360px;
-    min-width: 360px;
-    max-width: 360px;
+    grid-template-columns: 150px minmax(0, 1fr);
+    grid-template-rows: auto;
+    height: auto;
+    min-height: 180px;
+  }
+
+  .product-card--oferta .product-card__img-wrap {
+    width: 150px;
+    height: 150px;
+  }
+
+  .product-card--oferta .product-card__body {
+    justify-content: center;
   }
 }
 
@@ -568,14 +627,14 @@ body.body-index {
     border-radius: 22px;
   }
 
-  .cat-section__header,
-  .products-panel__head {
-    gap: var(--space-3);
-  }
-
   .cat-section__header {
     align-items: flex-start;
     flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .products-panel__head {
+    gap: var(--space-3);
   }
 
   .cat-card {
@@ -601,26 +660,28 @@ body.body-index {
 
   .product-card {
     grid-template-columns: 86px minmax(0, 1fr);
-    min-height: 102px;
+    min-height: 96px;
     padding: 10px;
     gap: 12px;
   }
 
   .product-card__img-wrap {
     width: 86px;
-    height: 82px;
+    height: 76px;
+  }
+
+  .products-panel--ofertas {
+    min-height: auto;
   }
 
   .product-card--oferta {
-    flex-basis: 310px;
-    min-width: 310px;
-    max-width: 310px;
-    grid-template-columns: 96px minmax(0, 1fr);
+    grid-template-columns: 116px minmax(0, 1fr);
+    min-height: 150px;
   }
 
   .product-card--oferta .product-card__img-wrap {
-    width: 96px;
-    height: 92px;
+    width: 116px;
+    height: 116px;
   }
 }
 
@@ -660,20 +721,24 @@ body.body-index {
   .product-card__img-wrap,
   .product-card--oferta .product-card__img-wrap {
     width: 78px;
-    height: 76px;
+    height: 74px;
   }
 
   .product-card--oferta {
-    flex-basis: 270px;
-    min-width: 270px;
-    max-width: 270px;
+    min-height: 120px;
+  }
+
+  .product-card--oferta .product-card__nombre {
+    font-size: .9rem;
+    -webkit-line-clamp: 2;
   }
 
   .product-card__nombre {
     font-size: .88rem;
   }
 
-  .product-card__precio {
+  .product-card__precio,
+  .product-card--oferta .product-card__precio {
     font-size: .98rem;
   }
 }
