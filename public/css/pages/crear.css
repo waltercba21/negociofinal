@@ -670,3 +670,278 @@
     grid-template-columns: 1fr !important;
   }
 }
+/* ============================================================
+   CREAR / EDITAR — FIX FINO UX
+   Pegar al final de public/css/pages/crear.css
+   - Reduce tamaño de textos.
+   - Compacta inputs y botones.
+   - Separa botones de acción.
+   - Quita sticky del último contenedor.
+   ============================================================ */
+
+/* Quitar sticky del panel Precio y stock */
+.cr-grid > .cr-panel:nth-of-type(3) {
+  position: relative !important;
+  top: auto !important;
+  align-self: start !important;
+}
+
+/* Compactar paneles */
+.cr-panel {
+  border-radius: 18px !important;
+}
+
+.cr-panel__hd {
+  padding: 13px 16px !important;
+  font-size: 12px !important;
+  letter-spacing: .8px !important;
+}
+
+.cr-panel__hd i,
+.cr-panel__icon {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 9px !important;
+  font-size: 12px !important;
+}
+
+.cr-panel__bd {
+  padding: 16px !important;
+  gap: 12px !important;
+}
+
+/* Textos más chicos y proporcionados */
+.cr-label {
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+  letter-spacing: .2px !important;
+}
+
+.cr-hint,
+.cr-hint-inline {
+  font-size: 10.5px !important;
+  line-height: 1.35 !important;
+}
+
+.cr-title {
+  font-size: clamp(28px, 3.4vw, 42px) !important;
+}
+
+.cr-eyebrow {
+  font-size: 10px !important;
+  letter-spacing: 2px !important;
+}
+
+/* Inputs más compactos */
+.cr-input,
+.cr-select,
+.cr-textarea {
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 12px !important;
+  font-size: 12.5px !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+}
+
+.cr-textarea {
+  height: auto !important;
+  min-height: 86px !important;
+  padding: 10px 12px !important;
+}
+
+.cr-select {
+  padding-right: 36px !important;
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 12px) 50% !important;
+  background-size: 5px 5px, 5px 5px !important;
+}
+
+/* Precio y utilidad no tan grandes */
+#precio_venta {
+  height: 42px !important;
+  min-height: 42px !important;
+  font-size: 17px !important;
+}
+
+#utilidad {
+  height: 38px !important;
+  min-height: 38px !important;
+  font-size: 14px !important;
+}
+
+/* Campos inline más compactos */
+.cr-field {
+  gap: 5px !important;
+}
+
+.cr-field--inline {
+  padding: 8px 10px !important;
+  border-radius: 10px !important;
+}
+
+/* Grupo calidades */
+.cr-calidades-group {
+  padding: 12px !important;
+  border-radius: 13px !important;
+  gap: 3px !important;
+}
+
+.cr-calidades-group__title {
+  font-size: 9.5px !important;
+  margin-bottom: 5px !important;
+}
+
+/* Toggles más chicos */
+.cr-toggle__slider {
+  width: 38px !important;
+  height: 21px !important;
+}
+
+.cr-toggle__slider::after {
+  width: 13px !important;
+  height: 13px !important;
+  top: 3px !important;
+  left: 3px !important;
+}
+
+.cr-toggle__input:checked + .cr-toggle__slider::after {
+  transform: translateX(17px) !important;
+}
+
+/* Proveedores más compactos */
+.cr-prov-card {
+  padding: 12px !important;
+  border-radius: 13px !important;
+  gap: 9px !important;
+  margin-bottom: 10px !important;
+}
+
+.cr-prov-grid {
+  gap: 8px !important;
+}
+
+.cr-prov-card .cr-prov-grid:last-of-type {
+  padding: 8px !important;
+}
+
+/* Zona imagen más compacta */
+.cr-file-zone {
+  padding: 18px 16px !important;
+  border-radius: 13px !important;
+}
+
+.cr-file-zone__icon {
+  font-size: 24px !important;
+}
+
+.cr-file-zone__text {
+  font-size: 12px !important;
+}
+
+.thumb {
+  width: 68px !important;
+  height: 68px !important;
+}
+
+/* Escobillas */
+.cr-escobillas {
+  border-radius: 13px !important;
+}
+
+.cr-escobillas__hd {
+  padding: 8px 12px !important;
+  font-size: 11px !important;
+}
+
+/* Botones más chicos y separados */
+.cr-btn {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  gap: 6px !important;
+}
+
+.cr-btn i {
+  font-size: 11px !important;
+}
+
+.cr-btn--save {
+  height: 40px !important;
+  min-height: 40px !important;
+  font-size: 12.5px !important;
+  border-radius: 11px !important;
+}
+
+.cr-btn--sm {
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 10px !important;
+  font-size: 11px !important;
+}
+
+/* Acciones del último panel: que no queden pegadas */
+.cr-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  margin-top: 6px !important;
+}
+
+.cr-actions .cr-btn {
+  width: 100% !important;
+}
+
+/* Botón cancelar con menos peso */
+.cr-actions .cr-btn--outline {
+  background: #fff !important;
+  box-shadow: 0 4px 10px rgba(15,23,42,.05) !important;
+}
+
+/* Separadores */
+.cr-sep {
+  margin: 2px 0 !important;
+}
+
+.cr-sep-labeled {
+  margin: 4px 0 !important;
+}
+
+.cr-sep-labeled span {
+  font-size: 9.5px !important;
+}
+
+/* Columna derecha un poco más angosta y estable */
+.cr-grid {
+  grid-template-columns:
+    minmax(320px, 1fr)
+    minmax(420px, 1.2fr)
+    minmax(280px, 320px) !important;
+  align-items: start !important;
+}
+
+/* En pantallas medianas no dejar sticky ni deformar */
+@media (max-width: 1180px) {
+  .cr-grid > .cr-panel:nth-of-type(3) {
+    position: relative !important;
+    top: auto !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 820px) {
+  .cr-title {
+    font-size: 30px !important;
+  }
+
+  .cr-panel__bd {
+    padding: 14px !important;
+  }
+
+  .cr-btn {
+    width: 100% !important;
+  }
+}
