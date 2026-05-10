@@ -561,3 +561,112 @@
     padding: 18px 16px;
   }
 }
+/* ============================================================
+   CREAR / EDITAR — FIX ESTRUCTURA 3 COLUMNAS
+   Pegar al final de public/css/pages/crear.css
+   Corrige que las secciones queden apiladas y fuerza 3 columnas
+   en escritorio.
+   ============================================================ */
+
+/* El formulario debe comportarse como contenedor normal */
+.cr-form {
+  width: 100% !important;
+  display: block !important;
+}
+
+/* Contenedor padre del formulario */
+.cr-wrap {
+  width: min(100% - 32px, 1480px) !important;
+  max-width: 1480px !important;
+  margin: 0 auto !important;
+}
+
+/* Grid principal: 3 columnas reales */
+.cr-grid {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns:
+    minmax(320px, 1fr)
+    minmax(420px, 1.25fr)
+    minmax(300px, 360px) !important;
+  grid-template-areas: "caracteristicas proveedores precio" !important;
+  gap: 24px !important;
+  align-items: start !important;
+}
+
+/* Asignación explícita por orden de panel */
+.cr-grid > .cr-panel:nth-of-type(1) {
+  grid-area: caracteristicas !important;
+}
+
+.cr-grid > .cr-panel:nth-of-type(2) {
+  grid-area: proveedores !important;
+}
+
+.cr-grid > .cr-panel:nth-of-type(3) {
+  grid-area: precio !important;
+  position: sticky;
+  top: calc(var(--header-height, 64px) + 24px);
+}
+
+/* Altura y lectura más prolija */
+.cr-panel {
+  min-width: 0 !important;
+}
+
+.cr-panel__bd {
+  min-width: 0 !important;
+}
+
+/* Proveedores: mantener sus campos en 2 columnas internas */
+.cr-prov-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+/* Los campos internos no deben romper el ancho */
+.cr-field,
+.form-group-crear {
+  min-width: 0 !important;
+}
+
+/* Inputs siempre dentro de su columna */
+.cr-input,
+.cr-select,
+.cr-textarea {
+  max-width: 100% !important;
+}
+
+/* Responsive correcto: recién baja a 2 columnas en notebook/tablet */
+@media (max-width: 1180px) {
+  .cr-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px) !important;
+    grid-template-areas:
+      "caracteristicas precio"
+      "proveedores proveedores" !important;
+  }
+
+  .cr-grid > .cr-panel:nth-of-type(3) {
+    position: static !important;
+  }
+}
+
+/* Mobile: una columna */
+@media (max-width: 820px) {
+  .cr-wrap {
+    width: min(100% - 20px, 1480px) !important;
+  }
+
+  .cr-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "caracteristicas"
+      "proveedores"
+      "precio" !important;
+  }
+
+  .cr-prov-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
