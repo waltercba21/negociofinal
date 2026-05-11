@@ -1130,3 +1130,811 @@ body.arca-page .swal2-html-container a {
     width: 100%;
   }
 }
+/* ============================================================
+   administracion.css — Autofaros · Panel de Administración
+   LIGHT UX COMPLETO
+   Reemplaza completo public/css/pages/administracion.css
+   ============================================================ */
+
+:root {
+  --adm-bg: #cbd5e1;
+  --adm-surface: #ffffff;
+  --adm-surface-soft: #f8fafc;
+  --adm-surface-blue: #eaf3ff;
+  --adm-border: #d8e2ee;
+  --adm-border-strong: #b8c8dc;
+  --adm-text: #0f172a;
+  --adm-muted: #64748b;
+  --adm-brand: #1F487E;
+  --adm-brand-2: #2860a8;
+  --adm-brand-dark: #163459;
+  --adm-red: #d90429;
+  --adm-green: #047857;
+  --adm-yellow: #d97706;
+  --adm-purple: #6d4edc;
+  --adm-shadow-sm: 0 6px 14px rgba(15,23,42,.06);
+  --adm-shadow-md: 0 14px 34px rgba(15,23,42,.11);
+  --adm-shadow-lg: 0 22px 60px rgba(15,23,42,.15);
+}
+
+/* ============================================================
+   1. BASE
+   ============================================================ */
+
+.adm-main {
+  min-height: 100vh;
+  padding: 96px 24px 64px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(31,72,126,.11), transparent 34rem),
+    radial-gradient(circle at 95% 12%, rgba(217,4,41,.055), transparent 28rem),
+    linear-gradient(180deg, #d8e0ea 0%, #cfd9e5 48%, #c3cfdd 100%) !important;
+  color: var(--adm-text) !important;
+}
+
+.adm-wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ============================================================
+   2. PAGE HEADER
+   ============================================================ */
+
+.adm-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+}
+
+.adm-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--adm-brand) !important;
+  margin-bottom: 6px;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(255,255,255,.84);
+  border-radius: 999px;
+  padding: 7px 12px;
+  box-shadow: var(--adm-shadow-sm);
+}
+
+.adm-eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--adm-red);
+  box-shadow: 0 0 0 5px rgba(217,4,41,.10);
+}
+
+.adm-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 900;
+  color: var(--adm-text) !important;
+  margin: 0;
+  letter-spacing: -.7px;
+  line-height: 1;
+}
+
+/* ============================================================
+   3. BOTONES GENERALES
+   ============================================================ */
+
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 18px;
+  height: 40px;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all .18s ease;
+  text-decoration: none !important;
+  white-space: nowrap;
+  user-select: none;
+  box-shadow: var(--adm-shadow-sm);
+}
+
+.adm-btn--outline {
+  background: #fff !important;
+  color: var(--adm-brand) !important;
+  border-color: var(--adm-border-strong) !important;
+}
+
+.adm-btn--outline:hover {
+  background: var(--adm-surface-blue) !important;
+  border-color: var(--adm-brand) !important;
+  color: var(--adm-brand-dark) !important;
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   4. DASHBOARD GRID
+   ============================================================ */
+
+.adm-dash {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .adm-dash {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .adm-dash {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   5. TILE
+   ============================================================ */
+
+.adm-tile {
+  position: relative;
+  background: rgba(255,255,255,.92) !important;
+  border: 1px solid rgba(255,255,255,.86) !important;
+  border-radius: 22px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 150px;
+  color: var(--adm-text) !important;
+  box-shadow: var(--adm-shadow-md) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color .2s, box-shadow .2s, transform .2s;
+  overflow: hidden;
+}
+
+.adm-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--adm-brand), var(--adm-brand-2), var(--adm-red));
+  opacity: .92;
+  pointer-events: none;
+}
+
+.adm-tile:hover {
+  border-color: rgba(31,72,126,.30) !important;
+  box-shadow: var(--adm-shadow-lg) !important;
+  transform: translateY(-2px);
+}
+
+.adm-tile__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: var(--adm-surface-blue) !important;
+  border: 1px solid #bfd4ec !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: var(--adm-brand) !important;
+  flex-shrink: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.75),
+    0 8px 18px rgba(31,72,126,.10);
+}
+
+.adm-tile__icon--red {
+  background: #fff0f3 !important;
+  border-color: #ffd0d8 !important;
+  color: var(--adm-red) !important;
+}
+
+.adm-tile__icon--green {
+  background: #e8f8f2 !important;
+  border-color: #bcebd7 !important;
+  color: var(--adm-green) !important;
+}
+
+.adm-tile__icon--yellow {
+  background: #fff7e6 !important;
+  border-color: #f7d894 !important;
+  color: var(--adm-yellow) !important;
+}
+
+.adm-tile__icon--purple {
+  background: #f1efff !important;
+  border-color: #ded8ff !important;
+  color: var(--adm-purple) !important;
+}
+
+.adm-tile__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 21px;
+  font-weight: 900;
+  color: var(--adm-text) !important;
+  margin: 0;
+  letter-spacing: .1px;
+}
+
+.adm-tile__desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--adm-muted) !important;
+  line-height: 1.45;
+  margin: 0;
+  flex: 1;
+  font-weight: 600;
+}
+
+.adm-tile__action {
+  margin-top: auto;
+}
+
+.adm-tile__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--adm-brand), var(--adm-brand-2)) !important;
+  border: 1px solid var(--adm-brand) !important;
+  color: #fff !important;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all .15s;
+  box-shadow: 0 12px 26px rgba(31,72,126,.20);
+}
+
+.adm-tile__btn:hover {
+  background: linear-gradient(135deg, var(--adm-brand-dark), var(--adm-brand)) !important;
+  box-shadow: 0 16px 32px rgba(31,72,126,.28);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   6. MODALES BOOTSTRAP LIGHT
+   ============================================================ */
+
+.modal-backdrop.show {
+  opacity: .45 !important;
+}
+
+.modal-content {
+  background: #ffffff !important;
+  border: 1px solid rgba(255,255,255,.86) !important;
+  border-radius: 22px !important;
+  box-shadow: var(--adm-shadow-lg) !important;
+  overflow: hidden;
+  color: var(--adm-text) !important;
+}
+
+.modal-header {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-bottom: 1px solid var(--adm-border) !important;
+  padding: 17px 20px;
+}
+
+.modal-title {
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
+  letter-spacing: .2px;
+  color: var(--adm-text) !important;
+  margin: 0;
+}
+
+.modal .btn-close {
+  filter: none !important;
+  opacity: .7 !important;
+}
+
+.modal .btn-close:hover {
+  opacity: 1 !important;
+}
+
+.modal-body {
+  background: #ffffff !important;
+  color: var(--adm-text) !important;
+  padding: 20px !important;
+}
+
+.modal-footer {
+  background: #f8fafc !important;
+  border-top: 1px solid var(--adm-border) !important;
+  padding: 14px 20px !important;
+  gap: 10px;
+}
+
+/* ============================================================
+   7. FORMULARIOS DENTRO DE MODALES
+   ============================================================ */
+
+.modal .form-label {
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #334155 !important;
+  margin-bottom: 6px !important;
+  display: block;
+}
+
+.modal .form-control,
+.modal .form-select,
+.modal input,
+.modal select,
+.modal textarea {
+  background: #ffffff !important;
+  border: 1.5px solid var(--adm-border-strong) !important;
+  border-radius: 12px !important;
+  color: var(--adm-text) !important;
+  -webkit-text-fill-color: var(--adm-text) !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 800;
+  padding: 10px 12px !important;
+  color-scheme: light !important;
+  transition: border-color .15s, box-shadow .15s;
+  box-shadow:
+    inset 0 1px 2px rgba(15,23,42,.045),
+    0 5px 12px rgba(15,23,42,.04) !important;
+}
+
+.modal .form-control::placeholder,
+.modal textarea::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+}
+
+.modal .form-control:focus,
+.modal .form-select:focus,
+.modal input:focus,
+.modal select:focus,
+.modal textarea:focus {
+  border-color: var(--adm-brand) !important;
+  box-shadow:
+    0 0 0 4px rgba(31,72,126,.12),
+    inset 0 1px 2px rgba(15,23,42,.045) !important;
+  background: #fff !important;
+  outline: none !important;
+}
+
+.modal .form-select option,
+.modal select option {
+  background: #fff !important;
+  color: var(--adm-text) !important;
+}
+
+/* Paneles internos de catálogos */
+.modal-body [style*="border-radius:18px"],
+.modal-body [style*="border-radius: 18px"],
+.modal-body [style*="background"] {
+  color: var(--adm-text) !important;
+}
+
+.modal-body [style*="border-radius:18px"],
+.modal-body [style*="border-radius: 18px"] {
+  background: #f8fafc !important;
+  border: 1px solid var(--adm-border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--adm-shadow-sm) !important;
+}
+
+#detalleProveedor {
+  background: #f8fafc !important;
+  border: 1px dashed var(--adm-border-strong) !important;
+  border-radius: 14px !important;
+  color: #334155 !important;
+  padding: 12px !important;
+}
+
+/* ============================================================
+   8. DROPDOWNS DE BÚSQUEDA
+   ============================================================ */
+
+#resultadosBusqueda,
+#resultadosBusquedaPresupuesto {
+  background: #ffffff !important;
+  border: 1px solid var(--adm-border) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--adm-shadow-lg) !important;
+  max-height: 300px;
+  overflow-y: auto;
+  color: var(--adm-text) !important;
+  z-index: 9999;
+}
+
+#resultadosBusqueda .list-group-item,
+#resultadosBusquedaPresupuesto .list-group-item {
+  background: #fff !important;
+  color: var(--adm-text) !important;
+  border: none !important;
+  border-bottom: 1px solid #edf2f7 !important;
+  padding: 10px 14px !important;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background .1s;
+}
+
+#resultadosBusqueda .list-group-item:hover,
+#resultadosBusquedaPresupuesto .list-group-item:hover {
+  background: #dbeafe !important;
+  color: var(--adm-brand-dark) !important;
+  box-shadow: inset 4px 0 0 var(--adm-brand);
+}
+
+/* ============================================================
+   9. TABLAS EN MODALES
+   ============================================================ */
+
+.modal .table {
+  background: #fff !important;
+  color: var(--adm-text) !important;
+  border-color: var(--adm-border) !important;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.modal .table thead th {
+  background: #eef4fb !important;
+  color: var(--adm-brand-dark) !important;
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-color: var(--adm-border) !important;
+  padding: 10px 12px !important;
+}
+
+.modal .table td {
+  background: #fff !important;
+  color: var(--adm-text) !important;
+  border-color: #edf2f7 !important;
+  vertical-align: middle;
+  padding: 10px 12px !important;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+}
+
+.modal .table tbody tr:nth-child(even) td {
+  background: #f9fbfd !important;
+}
+
+.modal .table tbody tr:hover td {
+  background: #dbeafe !important;
+}
+
+.modal .table-light {
+  background: #eef4fb !important;
+  color: var(--adm-brand-dark) !important;
+}
+
+/* ============================================================
+   10. BOTONES EN MODALES
+   ============================================================ */
+
+.modal .btn {
+  border-radius: 11px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  height: 38px !important;
+  padding: 0 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all .15s !important;
+  min-height: unset !important;
+  letter-spacing: normal !important;
+  border-width: 1.5px !important;
+}
+
+.modal .btn:hover {
+  transform: translateY(-1px) !important;
+}
+
+.modal .btn:active {
+  transform: none !important;
+}
+
+.modal .btn-primary,
+.modal .btn-success {
+  background: linear-gradient(135deg, var(--adm-brand), var(--adm-brand-2)) !important;
+  border-color: var(--adm-brand) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 18px rgba(31,72,126,.18) !important;
+}
+
+.modal .btn-primary:hover,
+.modal .btn-success:hover {
+  background: linear-gradient(135deg, var(--adm-brand-dark), var(--adm-brand)) !important;
+  color: #fff !important;
+}
+
+.modal .btn-outline-secondary,
+.modal .btn-secondary {
+  background: #fff !important;
+  border-color: var(--adm-border-strong) !important;
+  color: #334155 !important;
+}
+
+.modal .btn-outline-secondary:hover,
+.modal .btn-secondary:hover {
+  background: #eaf3ff !important;
+  border-color: var(--adm-brand) !important;
+  color: var(--adm-brand-dark) !important;
+}
+
+.modal .btn-warning {
+  background: #fff7e6 !important;
+  border-color: #f7d894 !important;
+  color: var(--adm-yellow) !important;
+}
+
+.modal .btn-warning:hover {
+  background: var(--adm-yellow) !important;
+  border-color: var(--adm-yellow) !important;
+  color: #fff !important;
+}
+
+.modal .btn-danger {
+  background: #fff0f3 !important;
+  border-color: #ffd0d8 !important;
+  color: var(--adm-red) !important;
+}
+
+.modal .btn-danger:hover {
+  background: var(--adm-red) !important;
+  border-color: var(--adm-red) !important;
+  color: #fff !important;
+}
+
+.modal .btn-sm {
+  height: 32px !important;
+  padding: 0 12px !important;
+  font-size: 12px !important;
+}
+
+.modal .btn:disabled {
+  opacity: .45 !important;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   11. BUSCADOR PRODUCTOS EN MODALES
+   ============================================================ */
+
+.resultado-busqueda {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #edf2f7 !important;
+  transition: background .12s;
+  background: #fff !important;
+  color: var(--adm-text) !important;
+}
+
+.resultado-busqueda:last-child {
+  border-bottom: none;
+}
+
+.resultado-busqueda:hover,
+.resultado-busqueda.hover-activo {
+  background: #dbeafe !important;
+  box-shadow:
+    inset 4px 0 0 var(--adm-brand),
+    inset 0 0 0 1px rgba(31,72,126,.16);
+}
+
+.resultado-contenedor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--adm-text) !important;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.resultado-contenedor span {
+  color: var(--adm-text) !important;
+}
+
+.miniatura,
+.miniatura-tabla {
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1.5px solid var(--adm-border) !important;
+  flex-shrink: 0;
+  background: #fff !important;
+  box-shadow: 0 4px 10px rgba(15,23,42,.05);
+}
+
+.miniatura {
+  width: 36px;
+  height: 36px;
+}
+
+.miniatura-tabla {
+  width: 44px;
+  height: 44px;
+}
+
+/* ============================================================
+   12. RESULTADOS LISTADOS — CARDS DOCUMENTOS
+   ============================================================ */
+
+.resultado-doc,
+#modalResultadosListados .resultado-doc {
+  background: #ffffff !important;
+  border: 1px solid var(--adm-border) !important;
+  border-radius: 18px !important;
+  box-shadow: var(--adm-shadow-sm) !important;
+  transition: border-color .2s, box-shadow .2s, transform .18s;
+  height: 100%;
+  color: var(--adm-text) !important;
+}
+
+.resultado-doc:hover,
+#modalResultadosListados .resultado-doc:hover {
+  border-color: rgba(31,72,126,.30) !important;
+  box-shadow: var(--adm-shadow-md) !important;
+  transform: translateY(-2px);
+}
+
+.resultado-doc .card-body,
+#modalResultadosListados .resultado-doc .card-body {
+  background: #fff !important;
+  color: var(--adm-text) !important;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resultado-doc .card-body h6,
+#modalResultadosListados .resultado-doc .card-body h6 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--adm-brand) !important;
+  margin: 0 0 8px 0;
+}
+
+.resultado-doc .card-body p,
+#modalResultadosListados .resultado-doc .card-body p {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--adm-muted) !important;
+  margin: 0 0 4px 0;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.resultado-doc .card-body p strong,
+#modalResultadosListados .resultado-doc .card-body p strong {
+  color: var(--adm-text) !important;
+  font-weight: 900;
+}
+
+.resultado-doc .card-body hr,
+#modalResultadosListados .resultado-doc .card-body hr {
+  border-color: var(--adm-border) !important;
+  opacity: 1;
+  margin: 8px 0;
+}
+
+.resultado-doc .ver-mas-documento,
+#modalResultadosListados .resultado-doc .ver-mas-documento {
+  margin-top: 10px;
+  align-self: flex-start;
+  height: 34px;
+  padding: 0 14px !important;
+  border-radius: 11px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  background: #eaf3ff !important;
+  border: 1.5px solid #bfd4ec !important;
+  color: var(--adm-brand) !important;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.resultado-doc .ver-mas-documento:hover,
+#modalResultadosListados .resultado-doc .ver-mas-documento:hover {
+  background: var(--adm-brand) !important;
+  border-color: var(--adm-brand) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(31,72,126,.24) !important;
+}
+
+#contenedorResultadosListados > p.text-muted,
+.modal .text-muted {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--adm-muted) !important;
+  text-align: center;
+  padding: 32px 0;
+  width: 100%;
+  font-weight: 700;
+}
+
+/* ============================================================
+   13. SWEETALERT
+   ============================================================ */
+
+.swal2-popup {
+  background: #fff !important;
+  color: var(--adm-text) !important;
+  border-radius: 22px !important;
+  box-shadow: var(--adm-shadow-lg) !important;
+}
+
+.swal2-title {
+  color: var(--adm-text) !important;
+  font-weight: 900 !important;
+}
+
+.swal2-html-container {
+  color: #334155 !important;
+}
+
+.swal2-confirm {
+  background: linear-gradient(135deg, var(--adm-brand), var(--adm-brand-2)) !important;
+  color: #fff !important;
+  border-radius: 11px !important;
+}
+
+.swal2-cancel,
+.swal2-deny {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border-radius: 11px !important;
+}
+
+/* ============================================================
+   14. RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .adm-main {
+    padding: 88px 12px 48px;
+  }
+
+  .adm-tile {
+    border-radius: 18px;
+  }
+
+  .modal-content {
+    border-radius: 18px !important;
+  }
+}
