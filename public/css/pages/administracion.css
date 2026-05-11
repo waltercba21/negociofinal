@@ -655,3 +655,478 @@
   padding: 32px 0;
   width: 100%;
 }
+/* ============================================================
+   ARCA — LIGHT UX PATCH
+   Pegar al final de public/css/pages/arca.css
+   No cambia clases ni IDs.
+   ============================================================ */
+
+:root {
+  --arca-bg: #cbd5e1;
+  --arca-surface: #ffffff;
+  --arca-surface-soft: #f8fafc;
+  --arca-surface-blue: #eaf3ff;
+  --arca-border: #d8e2ee;
+  --arca-border-strong: #b8c8dc;
+  --arca-text: #0f172a;
+  --arca-muted: #64748b;
+  --arca-brand: #1F487E;
+  --arca-brand-2: #2860a8;
+  --arca-brand-dark: #163459;
+  --arca-red: #d90429;
+  --arca-green: #047857;
+  --arca-yellow: #d97706;
+  --arca-purple: #6d4edc;
+  --arca-shadow-sm: 0 6px 14px rgba(15,23,42,.06);
+  --arca-shadow-md: 0 14px 34px rgba(15,23,42,.11);
+  --arca-shadow-lg: 0 22px 60px rgba(15,23,42,.15);
+}
+
+/* BASE */
+.arca-page body,
+body.arca-page {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(31,72,126,.11), transparent 34rem),
+    radial-gradient(circle at 95% 12%, rgba(217,4,41,.055), transparent 28rem),
+    linear-gradient(180deg, #d8e0ea 0%, #cfd9e5 48%, #c3cfdd 100%) !important;
+  color: var(--arca-text) !important;
+}
+
+.arca-main {
+  min-height: 100vh;
+  padding: 96px 24px 64px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(31,72,126,.11), transparent 34rem),
+    radial-gradient(circle at 95% 12%, rgba(217,4,41,.055), transparent 28rem),
+    linear-gradient(180deg, #d8e0ea 0%, #cfd9e5 48%, #c3cfdd 100%) !important;
+  color: var(--arca-text) !important;
+}
+
+/* HEADER */
+.arca-page-header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+}
+
+.arca-page-header__eyebrow,
+.arca-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--arca-brand) !important;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(255,255,255,.84);
+  border-radius: 999px;
+  padding: 7px 12px;
+  box-shadow: var(--arca-shadow-sm);
+  font-weight: 900;
+}
+
+.arca-page-header__eyebrow::before,
+.arca-eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--arca-red);
+  box-shadow: 0 0 0 5px rgba(217,4,41,.10);
+}
+
+.arca-page-header__title {
+  color: var(--arca-text) !important;
+  font-weight: 900;
+  letter-spacing: -.7px;
+}
+
+.arca-page-header__sub,
+.arca-muted {
+  color: var(--arca-muted) !important;
+  font-weight: 700;
+}
+
+/* BOTONES */
+.arca-btn {
+  border-radius: 12px !important;
+  font-weight: 900 !important;
+  border: 1.5px solid transparent !important;
+  box-shadow: var(--arca-shadow-sm);
+}
+
+.arca-btn--primary {
+  background: linear-gradient(135deg, var(--arca-brand), var(--arca-brand-2)) !important;
+  color: #fff !important;
+  border-color: var(--arca-brand) !important;
+  box-shadow: 0 12px 28px rgba(31,72,126,.25) !important;
+}
+
+.arca-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--arca-brand-dark), var(--arca-brand)) !important;
+  color: #fff !important;
+  box-shadow: 0 16px 34px rgba(31,72,126,.32) !important;
+}
+
+.arca-btn--outline,
+.arca-btn--icon {
+  background: #fff !important;
+  color: var(--arca-brand) !important;
+  border-color: var(--arca-border-strong) !important;
+}
+
+.arca-btn--outline:hover:not(:disabled),
+.arca-btn--icon:hover:not(:disabled) {
+  background: var(--arca-surface-blue) !important;
+  color: var(--arca-brand-dark) !important;
+  border-color: var(--arca-brand) !important;
+}
+
+.arca-btn--danger {
+  background: #fff0f3 !important;
+  color: var(--arca-red) !important;
+  border-color: #ffd0d8 !important;
+  box-shadow: 0 6px 14px rgba(217,4,41,.08) !important;
+}
+
+.arca-btn--danger:hover:not(:disabled) {
+  background: var(--arca-red) !important;
+  color: #fff !important;
+  border-color: var(--arca-red) !important;
+}
+
+/* INPUTS / SELECTS */
+.arca-input,
+body.arca-page .swal2-input,
+body.arca-page .swal2-select,
+body.arca-page .swal2-textarea {
+  background: #ffffff !important;
+  color: var(--arca-text) !important;
+  -webkit-text-fill-color: var(--arca-text) !important;
+  border: 1.5px solid var(--arca-border-strong) !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  color-scheme: light !important;
+  box-shadow:
+    inset 0 1px 2px rgba(15,23,42,.045),
+    0 5px 12px rgba(15,23,42,.04) !important;
+}
+
+.arca-input:focus,
+body.arca-page .swal2-input:focus,
+body.arca-page .swal2-select:focus,
+body.arca-page .swal2-textarea:focus {
+  background: #fff !important;
+  border-color: var(--arca-brand) !important;
+  box-shadow:
+    0 0 0 4px rgba(31,72,126,.12),
+    inset 0 1px 2px rgba(15,23,42,.045) !important;
+  outline: none !important;
+}
+
+.arca-input::placeholder,
+body.arca-page .swal2-input::placeholder,
+body.arca-page .swal2-textarea::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+}
+
+.arca-input option,
+select.arca-input option,
+body.arca-page .swal2-select option,
+body.arca-page #sw_cbte option,
+body.arca-page #sw_doc_tipo option,
+body.arca-page #sw_cond option {
+  background: #ffffff !important;
+  color: var(--arca-text) !important;
+}
+
+.arca-input:-webkit-autofill,
+.arca-input:-webkit-autofill:hover,
+.arca-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 40px #ffffff inset !important;
+  -webkit-text-fill-color: var(--arca-text) !important;
+  caret-color: var(--arca-text) !important;
+}
+
+/* PANELES */
+.arca-panel {
+  position: relative;
+  background: rgba(255,255,255,.90) !important;
+  color: var(--arca-text) !important;
+  border: 1px solid rgba(255,255,255,.82) !important;
+  border-radius: 22px;
+  box-shadow: var(--arca-shadow-md) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.arca-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(90deg, var(--arca-brand), var(--arca-brand-2), var(--arca-red));
+  opacity: .92;
+  pointer-events: none;
+}
+
+.arca-panel__hd {
+  color: var(--arca-text) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-bottom: 1px solid var(--arca-border) !important;
+  font-weight: 900;
+}
+
+.arca-panel__bd {
+  background: transparent !important;
+}
+
+/* TABLA */
+.arca-table-wrap {
+  border-radius: 0 0 20px 20px;
+}
+
+.arca-table-wrap::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.arca-table-wrap::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 999px;
+}
+
+.arca-table-wrap::-webkit-scrollbar-thumb {
+  background: #b8c8dc;
+  border-radius: 999px;
+}
+
+.arca-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--arca-brand);
+}
+
+.arca-tabla {
+  background: #fff !important;
+  color: var(--arca-text) !important;
+}
+
+.arca-tabla thead tr {
+  background: #eef4fb !important;
+  border-bottom: 1px solid var(--arca-border) !important;
+}
+
+.arca-tabla th {
+  background: #eef4fb !important;
+  color: var(--arca-brand-dark) !important;
+  font-weight: 900;
+}
+
+.arca-tabla td {
+  background: #fff !important;
+  color: var(--arca-text) !important;
+  border-bottom: 1px solid #edf2f7 !important;
+}
+
+.arca-tabla tbody tr.arca-row:nth-child(even) td {
+  background: #f9fbfd !important;
+}
+
+.arca-tabla tbody tr.arca-row:hover td {
+  background: #dbeafe !important;
+}
+
+.arca-tabla tbody tr.arca-row.is-selected td {
+  background: #cfe2ff !important;
+  box-shadow: inset 0 0 0 1px rgba(31,72,126,.16);
+}
+
+.arca-tabla tbody tr.arca-row.is-selected td:first-child {
+  box-shadow:
+    inset 5px 0 0 var(--arca-brand),
+    inset 0 0 0 1px rgba(31,72,126,.16);
+}
+
+.arca-tabla--items th,
+.arca-tabla--items td {
+  font-size: 12px;
+}
+
+/* BADGES */
+.arca-badge {
+  font-weight: 900;
+  box-shadow: 0 4px 10px rgba(15,23,42,.04);
+}
+
+.arca-badge--ok,
+.b-ok {
+  background: #e8f8f2 !important;
+  color: var(--arca-green) !important;
+  border-color: #bcebd7 !important;
+}
+
+.arca-badge--bad,
+.b-bad {
+  background: #fff0f3 !important;
+  color: var(--arca-red) !important;
+  border-color: #ffd0d8 !important;
+}
+
+.arca-badge--pend,
+.b-pend {
+  background: #fff7e6 !important;
+  color: var(--arca-yellow) !important;
+  border-color: #f7d894 !important;
+}
+
+.arca-badge--none,
+.b-none {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: #d8e2ee !important;
+}
+
+/* DETALLE / KEY VALUE */
+.arca-k {
+  color: #475569 !important;
+  font-weight: 900;
+}
+
+.arca-v {
+  color: var(--arca-text) !important;
+  font-weight: 800;
+}
+
+.arca-hr {
+  background: var(--arca-border) !important;
+}
+
+.arca-section-label {
+  color: var(--arca-brand-dark) !important;
+  font-weight: 900;
+}
+
+/* HISTORIAL */
+.arca-hist-item {
+  background: #ffffff !important;
+  border: 1px solid var(--arca-border) !important;
+  border-radius: 14px;
+  box-shadow: var(--arca-shadow-sm);
+}
+
+.arca-hist-meta {
+  color: var(--arca-muted) !important;
+  font-weight: 700;
+}
+
+.arca-hist-obs {
+  color: #334155 !important;
+  font-weight: 600;
+}
+
+/* REPORTES */
+.arca-rep-row {
+  background: transparent !important;
+}
+
+.arca-rep-row--danger {
+  border-top: 1px solid #ffd0d8 !important;
+  background: #fff0f3 !important;
+}
+
+.arca-label,
+body.arca-page .arca-swal-form label {
+  color: #334155 !important;
+  font-weight: 900 !important;
+}
+
+.arca-hint,
+body.arca-page #sw_cache_status,
+body.arca-page #sw_hint {
+  color: var(--arca-muted) !important;
+  font-weight: 700 !important;
+}
+
+.arca-gtable {
+  background: transparent !important;
+}
+
+/* EMPTY */
+.arca-empty {
+  background: #fff !important;
+}
+
+.arca-empty__icon {
+  color: rgba(31,72,126,.35) !important;
+}
+
+.arca-empty p {
+  color: var(--arca-muted) !important;
+  font-weight: 700;
+}
+
+/* SWEETALERT ARCA LIGHT */
+body.arca-page .swal2-popup {
+  background: #ffffff !important;
+  color: var(--arca-text) !important;
+  border: 1px solid rgba(255,255,255,.82) !important;
+  border-radius: 22px !important;
+  box-shadow: var(--arca-shadow-lg) !important;
+}
+
+body.arca-page .swal2-title {
+  color: var(--arca-text) !important;
+  font-weight: 900 !important;
+}
+
+body.arca-page .swal2-html-container {
+  color: #334155 !important;
+}
+
+body.arca-page .swal2-confirm {
+  background: linear-gradient(135deg, var(--arca-brand), var(--arca-brand-2)) !important;
+  color: #fff !important;
+}
+
+body.arca-page .swal2-confirm:hover {
+  background: linear-gradient(135deg, var(--arca-brand-dark), var(--arca-brand)) !important;
+}
+
+body.arca-page .swal2-deny,
+body.arca-page .swal2-cancel {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid var(--arca-border) !important;
+}
+
+body.arca-page .arca-swal-form {
+  color: var(--arca-text) !important;
+}
+
+body.arca-page .arca-swal-form .f {
+  min-width: 0;
+}
+
+/* Ajuste visual de links dentro de modal */
+body.arca-page .swal2-html-container a {
+  color: var(--arca-brand) !important;
+  font-weight: 900;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .arca-main {
+    padding: 88px 12px 48px;
+  }
+
+  .arca-panel {
+    border-radius: 18px;
+  }
+
+  .arca-controls {
+    width: 100%;
+  }
+
+  .arca-controls .arca-btn,
+  .arca-controls .arca-input {
+    width: 100%;
+  }
+}

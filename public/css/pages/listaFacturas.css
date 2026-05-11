@@ -366,3 +366,377 @@
   .lf-tabla th, .lf-tabla td { padding: 10px 12px; }
   .lf-page-header { flex-direction: column; align-items: flex-start; }
 }
+/* ============================================================
+   LISTADO FACTURAS — LIGHT UX PATCH
+   Pegar al final de public/css/pages/listaFacturas.css
+   No cambia clases ni IDs.
+   ============================================================ */
+
+:root {
+  --lf-bg: #cbd5e1;
+  --lf-surface: #ffffff;
+  --lf-surface-soft: #f8fafc;
+  --lf-surface-blue: #eaf3ff;
+  --lf-border: #d8e2ee;
+  --lf-border-strong: #b8c8dc;
+  --lf-text: #0f172a;
+  --lf-muted: #64748b;
+  --lf-brand: #1F487E;
+  --lf-brand-2: #2860a8;
+  --lf-brand-dark: #163459;
+  --lf-red: #d90429;
+  --lf-green: #047857;
+  --lf-yellow: #d97706;
+  --lf-purple: #6d4edc;
+  --lf-shadow-sm: 0 6px 14px rgba(15,23,42,.06);
+  --lf-shadow-md: 0 14px 34px rgba(15,23,42,.11);
+  --lf-shadow-lg: 0 22px 60px rgba(15,23,42,.15);
+}
+
+/* BASE */
+.lf-main {
+  min-height: 100vh;
+  padding: 96px 24px 64px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(31,72,126,.11), transparent 34rem),
+    radial-gradient(circle at 95% 12%, rgba(217,4,41,.055), transparent 28rem),
+    linear-gradient(180deg, #d8e0ea 0%, #cfd9e5 48%, #c3cfdd 100%) !important;
+  color: var(--lf-text) !important;
+}
+
+/* HEADER */
+.lf-page-header {
+  max-width: 1200px;
+  margin: 0 auto 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+}
+
+.lf-page-header__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--lf-brand) !important;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(255,255,255,.84);
+  border-radius: 999px;
+  padding: 7px 12px;
+  box-shadow: var(--lf-shadow-sm);
+  font-weight: 900;
+}
+
+.lf-page-header__eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--lf-red);
+  box-shadow: 0 0 0 5px rgba(217,4,41,.10);
+}
+
+.lf-page-header__title {
+  color: var(--lf-text) !important;
+  font-weight: 900;
+  letter-spacing: -.7px;
+}
+
+/* BOTONES */
+.lf-btn {
+  border-radius: 12px;
+  font-weight: 900;
+  border: 1.5px solid transparent;
+  box-shadow: var(--lf-shadow-sm);
+}
+
+.lf-btn--primary {
+  background: linear-gradient(135deg, var(--lf-brand), var(--lf-brand-2)) !important;
+  color: #fff !important;
+  border-color: var(--lf-brand) !important;
+  box-shadow: 0 12px 28px rgba(31,72,126,.25);
+}
+
+.lf-btn--primary:hover {
+  background: linear-gradient(135deg, var(--lf-brand-dark), var(--lf-brand)) !important;
+  color: #fff !important;
+  box-shadow: 0 16px 34px rgba(31,72,126,.32);
+}
+
+.lf-btn--outline {
+  background: #fff !important;
+  color: var(--lf-brand) !important;
+  border-color: var(--lf-border-strong) !important;
+}
+
+.lf-btn--outline:hover {
+  background: var(--lf-surface-blue) !important;
+  color: var(--lf-brand-dark) !important;
+  border-color: var(--lf-brand) !important;
+}
+
+.lf-btn--danger {
+  background: #fff0f3 !important;
+  color: var(--lf-red) !important;
+  border-color: #ffd0d8 !important;
+  box-shadow: 0 6px 14px rgba(217,4,41,.08);
+}
+
+.lf-btn--danger:hover {
+  background: var(--lf-red) !important;
+  color: #fff !important;
+  border-color: var(--lf-red) !important;
+}
+
+.lf-btn--sm {
+  border-radius: 10px;
+}
+
+/* PANELES */
+.lf-panel {
+  max-width: 1200px;
+  position: relative;
+  background: rgba(255,255,255,.90) !important;
+  color: var(--lf-text) !important;
+  border: 1px solid rgba(255,255,255,.82) !important;
+  border-radius: 22px;
+  box-shadow: var(--lf-shadow-md) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.lf-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(90deg, var(--lf-brand), var(--lf-brand-2), var(--lf-red));
+  opacity: .92;
+  pointer-events: none;
+}
+
+.lf-panel--filtros {
+  padding: 24px;
+}
+
+.lf-panel--tabla {
+  padding: 0;
+  overflow: hidden;
+}
+
+.lf-panel--tabla::before {
+  background: linear-gradient(90deg, var(--lf-green), #10b981);
+}
+
+/* FILTROS */
+.lf-label {
+  color: #334155 !important;
+  font-weight: 900;
+}
+
+.lf-input,
+.lf-tabla td input[type="text"],
+.lf-tabla td input[type="date"] {
+  background: #ffffff !important;
+  color: var(--lf-text) !important;
+  -webkit-text-fill-color: var(--lf-text) !important;
+  border: 1.5px solid var(--lf-border-strong) !important;
+  border-radius: 12px;
+  font-weight: 800;
+  color-scheme: light;
+  box-shadow:
+    inset 0 1px 2px rgba(15,23,42,.045),
+    0 5px 12px rgba(15,23,42,.04) !important;
+}
+
+.lf-input:focus,
+.lf-tabla td input[type="text"]:focus,
+.lf-tabla td input[type="date"]:focus {
+  background: #fff !important;
+  border-color: var(--lf-brand) !important;
+  box-shadow:
+    0 0 0 4px rgba(31,72,126,.12),
+    inset 0 1px 2px rgba(15,23,42,.045) !important;
+  outline: none !important;
+}
+
+/* TABLA */
+.lf-panel--tabla {
+  overflow-x: auto;
+}
+
+.lf-tabla {
+  width: 100%;
+  min-width: 980px;
+  background: #fff !important;
+  color: var(--lf-text) !important;
+}
+
+.lf-tabla thead tr {
+  background: #eef4fb !important;
+  border-bottom: 1px solid var(--lf-border) !important;
+}
+
+.lf-tabla th {
+  color: var(--lf-brand-dark) !important;
+  font-weight: 900;
+}
+
+.lf-tabla tbody tr {
+  background: #fff !important;
+  border-bottom: 1px solid #edf2f7 !important;
+}
+
+.lf-tabla tbody tr:nth-child(even) {
+  background: #f9fbfd !important;
+}
+
+.lf-tabla tbody tr:hover {
+  background: #dbeafe !important;
+  box-shadow:
+    inset 4px 0 0 var(--lf-brand),
+    inset 0 0 0 1px rgba(31,72,126,.16);
+}
+
+.lf-tabla td {
+  color: var(--lf-text) !important;
+}
+
+.lf-tabla td.id {
+  color: var(--lf-brand) !important;
+  font-weight: 900;
+}
+
+.lf-tabla td.fecha,
+.lf-tabla td.hora {
+  color: #475569 !important;
+  font-weight: 800;
+}
+
+.lf-tabla td.cliente {
+  color: var(--lf-text) !important;
+  font-weight: 900;
+}
+
+.lf-tabla td.total {
+  color: var(--lf-green) !important;
+  font-weight: 900;
+  font-size: 18px;
+}
+
+/* MÉTODOS DE PAGO */
+.lf-metodo-badge {
+  border-radius: 999px;
+  font-weight: 900;
+  padding: 5px 11px;
+  box-shadow: 0 4px 10px rgba(15,23,42,.04);
+}
+
+.lf-metodo-badge--efectivo {
+  background: #e8f8f2 !important;
+  color: var(--lf-green) !important;
+  border: 1px solid #bcebd7 !important;
+}
+
+.lf-metodo-badge--credito {
+  background: #fff0f3 !important;
+  color: var(--lf-red) !important;
+  border: 1px solid #ffd0d8 !important;
+}
+
+.lf-metodo-badge--debito {
+  background: #eaf3ff !important;
+  color: var(--lf-brand) !important;
+  border: 1px solid #bfd4ec !important;
+}
+
+.lf-metodo-badge--transferencia {
+  background: #fff7e6 !important;
+  color: var(--lf-yellow) !important;
+  border: 1px solid #f7d894 !important;
+}
+
+.lf-metodo-badge--qr {
+  background: #f1efff !important;
+  color: var(--lf-purple) !important;
+  border: 1px solid #ded8ff !important;
+}
+
+.lf-metodo-badge--otro {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #d8e2ee !important;
+}
+
+/* ACCIONES */
+.lf-tabla td .lf-acciones {
+  gap: 8px;
+}
+
+/* FOOTER TOTAL */
+.lf-tabla tfoot tr {
+  background: linear-gradient(135deg, var(--lf-brand), var(--lf-brand-2)) !important;
+  border-top: none !important;
+}
+
+.lf-tabla__tfoot-label {
+  color: #fff !important;
+  font-weight: 900 !important;
+}
+
+.lf-tabla__tfoot-total {
+  color: #fff !important;
+  font-weight: 900 !important;
+  font-size: 22px !important;
+}
+
+/* EMPTY STATE */
+.lf-empty {
+  background: #fff !important;
+}
+
+.lf-empty__icon {
+  color: rgba(31,72,126,.35) !important;
+}
+
+.lf-empty p {
+  color: var(--lf-muted) !important;
+  font-weight: 700;
+}
+
+/* SCROLL TABLA */
+.lf-panel--tabla::-webkit-scrollbar {
+  height: 9px;
+}
+
+.lf-panel--tabla::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 999px;
+}
+
+.lf-panel--tabla::-webkit-scrollbar-thumb {
+  background: #b8c8dc;
+  border-radius: 999px;
+}
+
+.lf-panel--tabla::-webkit-scrollbar-thumb:hover {
+  background: var(--lf-brand);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .lf-main {
+    padding: 88px 12px 48px;
+  }
+
+  .lf-panel {
+    border-radius: 18px;
+  }
+
+  .lf-panel--filtros {
+    padding: 18px;
+  }
+
+  .lf-filtros__acciones .lf-btn {
+    width: 100%;
+  }
+}
