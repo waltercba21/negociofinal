@@ -294,6 +294,54 @@ document.addEventListener('DOMContentLoaded', function () {
   let _searchController = null;
   let _keepOpen         = false;
 
+  function abrirImagenProducto(src, nombre) {
+    if (!src) return;
+
+    let modal = document.getElementById('pmImageLightbox');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'pmImageLightbox';
+      modal.className = 'pm-img-lightbox';
+      modal.innerHTML = `
+        <div class="pm-img-lightbox__backdrop" data-close="1"></div>
+        <div class="pm-img-lightbox__dialog" role="dialog" aria-modal="true">
+          <button type="button" class="pm-img-lightbox__close" aria-label="Cerrar imagen">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="pm-img-lightbox__image-wrap">
+            <img class="pm-img-lightbox__img" src="" alt="">
+          </div>
+          <div class="pm-img-lightbox__caption"></div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.addEventListener('mousedown', e => {
+        if (e.target.dataset.close || e.target.closest('.pm-img-lightbox__close')) {
+          modal.classList.remove('is-open');
+          document.body.classList.remove('pm-lightbox-open');
+        }
+      });
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+          modal.classList.remove('is-open');
+          document.body.classList.remove('pm-lightbox-open');
+        }
+      });
+    }
+
+    const img = modal.querySelector('.pm-img-lightbox__img');
+    const caption = modal.querySelector('.pm-img-lightbox__caption');
+    img.src = src;
+    img.alt = nombre || 'Imagen del producto';
+    caption.textContent = nombre || 'Imagen del producto';
+
+    modal.classList.add('is-open');
+    document.body.classList.add('pm-lightbox-open');
+  }
+
+
   function crearElementoResultado(producto, enTabla) {
     const id       = String(producto.id);
     const cod      = String(producto.codigo ?? '').trim();
@@ -315,6 +363,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Imagen
     const imgWrap = document.createElement('div');
     imgWrap.classList.add('srb-img-wrap');
+    imgWrap.title = 'Ver imagen ampliada';
     if (producto.imagenes && producto.imagenes.length > 0) {
       const img = document.createElement('img');
       img.src = '/uploads/productos/' + producto.imagenes[0].imagen;
@@ -324,6 +373,26 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       imgWrap.innerHTML = '<span class="srb-img-placeholder"><i class="fa-solid fa-image"></i></span>';
     }
+
+    if (resultado.dataset.imagen) {
+      const zoomIcon = document.createElement('span');
+      zoomIcon.className = 'srb-img-zoom';
+      zoomIcon.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
+      imgWrap.appendChild(zoomIcon);
+
+      imgWrap.addEventListener('mousedown', e => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        _keepOpen = true;
+      });
+
+      imgWrap.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        abrirImagenProducto(resultado.dataset.imagen, producto.nombre);
+      });
+    }
+
     resultado.appendChild(imgWrap);
 
     // Nombre + precio
