@@ -206,17 +206,32 @@ function _actualizarContadoresEnResultados() {
 
 document.addEventListener('DOMContentLoaded', function () {
 
+  const invoiceForm = document.getElementById('invoice-form');
+  const tablaFactura = document.getElementById('tabla-factura');
+  const entradaBusquedaNode = document.getElementById('entradaBusqueda');
+  const resultadosBusquedaNode = document.getElementById('resultadosBusqueda');
+
+  if (!invoiceForm || !tablaFactura || !entradaBusquedaNode || !resultadosBusquedaNode) {
+    console.error('[BuscadorFacturasMostrador] Faltan elementos requeridos:', {
+      invoiceForm: !!invoiceForm,
+      tablaFactura: !!tablaFactura,
+      entradaBusqueda: !!entradaBusquedaNode,
+      resultadosBusqueda: !!resultadosBusquedaNode
+    });
+    return;
+  }
+
   const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
   if (fechaPresupuestoInput && !fechaPresupuestoInput.value) {
     fechaPresupuestoInput.value = fechaHoyYYYYMMDD();
   }
 
-  document.getElementById('invoice-form').addEventListener('keydown', function (e) {
+  invoiceForm.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); return false; }
   });
 
   // ── Submit ──────────────────────────────────────────────────────────────────
-  document.getElementById('invoice-form').addEventListener('submit', async function (e) {
+  invoiceForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const metodosPagoSeleccionados = document.querySelector('input[name="metodosPago"]:checked');
@@ -356,12 +371,88 @@ document.addEventListener('DOMContentLoaded', function () {
   // BUSCADOR — controles SIEMPRE visibles, botón Agregar confirma la acción
   // ══════════════════════════════════════════════════════════════════════════
 
-  const entradaBusqueda    = document.getElementById('entradaBusqueda');
-  const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+  const entradaBusqueda    = entradaBusquedaNode;
+  const resultadosBusqueda = resultadosBusquedaNode;
   let timeoutId;
   let _searchTimer      = null;
   let _searchController = null;
   let _keepOpen         = false;
+  let _productoPreviewId = null;
+  let _lastSearchValue = '';
+
+  function abrirImagenProducto(src, nombre, productoId) {
+    if (!src) return;
+
+    _productoPreviewId = productoId ? String(productoId) : null;
+    _lastSearchValue = entradaBusqueda.value.trim();
+
+    let modal = document.getElementById('pmImageLightbox');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'pmImageLightbox';
+      modal.className = 'pm-img-lightbox';
+      modal.innerHTML = `
+        <div class="pm-img-lightbox__backdrop" data-close="1"></div>
+        <div class="pm-img-lightbox__dialog" role="dialog" aria-modal="true">
+          <button type="button" class="pm-img-lightbox__close" aria-label="Cerrar imagen">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="pm-img-lightbox__image-wrap">
+            <img class="pm-img-lightbox__img" src="" alt="">
+          </div>
+          <div class="pm-img-lightbox__caption"></div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      function cerrarLightboxYVolverAlBuscador() {
+        modal.classList.remove('is-open');
+        document.body.classList.remove('pm-lightbox-open');
+
+        if (_lastSearchValue && !entradaBusqueda.value.trim()) {
+          entradaBusqueda.value = _lastSearchValue;
+        }
+
+        if (_productosEnBusqueda.length > 0) {
+          renderResultadosMostrador(_productosEnBusqueda);
+        }
+
+        requestAnimationFrame(() => {
+          entradaBusqueda.focus();
+
+          if (_productoPreviewId) {
+            const seleccionado = resultadosBusqueda.querySelector(`.resultado-busqueda[data-id="${CSS.escape(_productoPreviewId)}"]`);
+            if (seleccionado) {
+              resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(r => r.classList.remove('hover-activo', 'preview-selected'));
+              seleccionado.classList.add('hover-activo', 'preview-selected');
+              seleccionado.scrollIntoView({ block: 'nearest' });
+            }
+          }
+        });
+      }
+
+      modal.addEventListener('mousedown', e => {
+        if (e.target.dataset.close || e.target.closest('.pm-img-lightbox__close')) {
+          cerrarLightboxYVolverAlBuscador();
+        }
+      });
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+          cerrarLightboxYVolverAlBuscador();
+        }
+      });
+    }
+
+    const img = modal.querySelector('.pm-img-lightbox__img');
+    const caption = modal.querySelector('.pm-img-lightbox__caption');
+    img.src = src;
+    img.alt = nombre || 'Imagen del producto';
+    caption.textContent = nombre || 'Imagen del producto';
+
+    modal.classList.add('is-open');
+    document.body.classList.add('pm-lightbox-open');
+  }
 
   /**
    * Layout de cada resultado:
@@ -395,6 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Imagen ───────────────────────────────────────────────────────────────
     const imgWrap = document.createElement('div');
     imgWrap.classList.add('srb-img-wrap');
+    imgWrap.title = 'Ver imagen ampliada';
     if (producto.imagenes && producto.imagenes.length > 0) {
       const img = document.createElement('img');
       img.src      = '/uploads/productos/' + producto.imagenes[0].imagen;
@@ -405,6 +497,30 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       imgWrap.innerHTML = '<span class="srb-img-placeholder"><i class="fa-solid fa-image"></i></span>';
     }
+
+    if (resultado.dataset.imagen) {
+      const zoomIcon = document.createElement('span');
+      zoomIcon.className = 'srb-img-zoom';
+      zoomIcon.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
+      imgWrap.appendChild(zoomIcon);
+
+      imgWrap.addEventListener('mousedown', e => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        _keepOpen = true;
+      });
+
+      imgWrap.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(r => r.classList.remove('hover-activo', 'preview-selected'));
+        resultado.classList.add('hover-activo', 'preview-selected');
+
+        abrirImagenProducto(resultado.dataset.imagen, producto.nombre, id);
+      });
+    }
+
     resultado.appendChild(imgWrap);
 
     // ── Nombre + precio ──────────────────────────────────────────────────────
@@ -596,16 +712,37 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderResultadosMostrador(productos) {
-    _productosEnBusqueda = productos;
+    _productosEnBusqueda = Array.isArray(productos) ? productos : [];
     resultadosBusqueda.innerHTML = '';
-    if (!productos.length) { resultadosBusqueda.style.display = 'none'; return; }
+
+    if (!_productosEnBusqueda.length) {
+      resultadosBusqueda.style.display = 'none';
+      return;
+    }
+
     const enTabla = _obtenerIdsEnTabla();
-    productos.forEach(p => resultadosBusqueda.appendChild(crearElementoResultado(p, enTabla)));
+    _productosEnBusqueda.forEach(p => {
+      const item = crearElementoResultado(p, enTabla);
+      if (_productoPreviewId && String(p.id) === String(_productoPreviewId)) {
+        item.classList.add('hover-activo', 'preview-selected');
+      }
+      resultadosBusqueda.appendChild(item);
+    });
+
     resultadosBusqueda.style.display = 'block';
+
+    if (_productoPreviewId) {
+      const seleccionado = resultadosBusqueda.querySelector(`.resultado-busqueda[data-id="${CSS.escape(String(_productoPreviewId))}"]`);
+      if (seleccionado) seleccionado.scrollIntoView({ block: 'nearest' });
+    }
   }
+
+  window.renderResultadosMostrador = renderResultadosMostrador;
 
   entradaBusqueda.addEventListener('input', e => {
     const busqueda = e.target.value.trim();
+    _lastSearchValue = busqueda;
+    _productoPreviewId = null;
     resultadosBusqueda.innerHTML = '';
     resultadosBusqueda.style.display = 'none';
     if (_searchController) { _searchController.abort(); _searchController = null; }
@@ -625,19 +762,41 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 300);
   });
 
+  // Mantener el desplegable abierto mientras el usuario trabaja con el mouse.
+  // Se cierra solamente con Escape, búsqueda vacía o click real fuera del buscador.
   entradaBusqueda.addEventListener('blur', () => {
-    if (_keepOpen) return;
-    timeoutId = setTimeout(() => { resultadosBusqueda.style.display = 'none'; }, 200);
+    // No cerrar por blur: al hacer click en +, -, Agregar, Quitar o imagen el input pierde foco.
   });
+
   entradaBusqueda.addEventListener('focus', () => {
     clearTimeout(timeoutId);
-    if (_productosEnBusqueda.length > 0 && entradaBusqueda.value.trim()) renderResultadosMostrador(_productosEnBusqueda);
+    if (_productosEnBusqueda.length > 0 && entradaBusqueda.value.trim()) {
+      renderResultadosMostrador(_productosEnBusqueda);
+    }
   });
+
+  resultadosBusqueda.addEventListener('mouseenter', () => {
+    clearTimeout(timeoutId);
+    _keepOpen = true;
+  });
+
   resultadosBusqueda.addEventListener('mouseleave', () => {
-    if (_keepOpen) return;
-    timeoutId = setTimeout(() => { resultadosBusqueda.style.display = 'none'; }, 300);
+    _keepOpen = false;
+    // No cerrar al salir con el mouse. El usuario puede moverse entre input, lista e imagen.
   });
-  resultadosBusqueda.addEventListener('mouseenter', () => { clearTimeout(timeoutId); resultadosBusqueda.style.display = 'block'; });
+
+  document.addEventListener('mousedown', e => {
+    const clickDentroBuscador =
+      entradaBusqueda.contains(e.target) ||
+      resultadosBusqueda.contains(e.target) ||
+      e.target.closest('.facturas-panel--buscador') ||
+      e.target.closest('.pm-img-lightbox');
+
+    if (!clickDentroBuscador) {
+      resultadosBusqueda.style.display = 'none';
+      _keepOpen = false;
+    }
+  });
 
   // Navegación teclado
   entradaBusqueda.addEventListener('keydown', e => {
