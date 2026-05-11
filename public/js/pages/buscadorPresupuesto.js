@@ -144,7 +144,9 @@ function agregarProductoATabla(productoId, codigoProducto, nombreProducto, preci
       if (imgElement) imgElement.style.display = "none";
       botonEliminar.style.display = "none";
       calcularTotal();
-      renderResultados(_productosEnBusqueda);
+      if (typeof window.renderResultadosPresupuesto === 'function') {
+        window.renderResultadosPresupuesto(_productosEnBusqueda);
+      }
     });
   }
 
@@ -198,15 +200,30 @@ function _actualizarContadoresEnResultados() {
 
 document.addEventListener('DOMContentLoaded', function () {
 
+  const invoiceForm = document.getElementById('invoice-form');
+  const tablaFactura = document.getElementById('tabla-factura');
+  const entradaBusquedaNode = document.getElementById('entradaBusqueda');
+  const resultadosBusquedaNode = document.getElementById('resultadosBusqueda');
+
+  if (!invoiceForm || !tablaFactura || !entradaBusquedaNode || !resultadosBusquedaNode) {
+    console.error('[BuscadorPresupuesto] Faltan elementos requeridos:', {
+      invoiceForm: !!invoiceForm,
+      tablaFactura: !!tablaFactura,
+      entradaBusqueda: !!entradaBusquedaNode,
+      resultadosBusqueda: !!resultadosBusquedaNode
+    });
+    return;
+  }
+
   const fechaPresupuestoInput = document.getElementById('fecha-presupuesto');
   if (fechaPresupuestoInput && !fechaPresupuestoInput.value) {
     fechaPresupuestoInput.value = fechaHoyYYYYMMDD();
   }
 
-  document.getElementById('invoice-form').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); return false; } });
+  invoiceForm.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); return false; } });
 
   // ── Submit ────────────────────────────────────────────────────────────────
-  document.getElementById('invoice-form').addEventListener('submit', async function (e) {
+  invoiceForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const filas = document.getElementById('tabla-factura').getElementsByTagName('tbody')[0].rows;
@@ -270,8 +287,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // BUSCADOR — controles SIEMPRE visibles, botón Agregar confirma la acción
   // ══════════════════════════════════════════════════════════════════════════
 
-  const entradaBusqueda    = document.getElementById('entradaBusqueda');
-  const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+  const entradaBusqueda    = entradaBusquedaNode;
+  const resultadosBusqueda = resultadosBusquedaNode;
   let timeoutId;
   let _searchTimer      = null;
   let _searchController = null;
@@ -399,7 +416,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (resultado.classList.contains('en-tabla')) {
         if (v <= 1) { _quitarDeTabla(_id); }
         else        { qtyInput.value = v - 1; _setQtyEnTabla(_id, v - 1); }
-        renderResultados(_productosEnBusqueda);
+        if (typeof window.renderResultadosPresupuesto === 'function') {
+        window.renderResultadosPresupuesto(_productosEnBusqueda);
+      }
       } else {
         if (v > 1) qtyInput.value = v - 1;
       }
@@ -421,14 +440,18 @@ document.addEventListener('DOMContentLoaded', function () {
       e.stopImmediatePropagation();
       const qty = parseInt(qtyInput.value) || 1;
       agregarProductoATabla(_id, _cod, _nombre, _precio, _stock, _imagen, qty);
-      renderResultados(_productosEnBusqueda);
+      if (typeof window.renderResultadosPresupuesto === 'function') {
+        window.renderResultadosPresupuesto(_productosEnBusqueda);
+      }
       entradaBusqueda.focus(); _keepOpen = false;
     });
 
     btnQuitar.addEventListener('click', e => {
       e.stopImmediatePropagation();
       _quitarDeTabla(_id);
-      renderResultados(_productosEnBusqueda);
+      if (typeof window.renderResultadosPresupuesto === 'function') {
+        window.renderResultadosPresupuesto(_productosEnBusqueda);
+      }
       entradaBusqueda.focus(); _keepOpen = false;
     });
 
@@ -461,13 +484,21 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderResultados(productos) {
-    _productosEnBusqueda = productos;
+    _productosEnBusqueda = Array.isArray(productos) ? productos : [];
     resultadosBusqueda.innerHTML = '';
-    if (!productos.length) { resultadosBusqueda.style.display = 'none'; return; }
+
+    if (!_productosEnBusqueda.length) {
+      resultadosBusqueda.style.display = 'none';
+      return;
+    }
+
     const enTabla = _obtenerIdsEnTabla();
-    productos.forEach(p => resultadosBusqueda.appendChild(crearElementoResultado(p, enTabla)));
+    _productosEnBusqueda.forEach(p => resultadosBusqueda.appendChild(crearElementoResultado(p, enTabla)));
     resultadosBusqueda.style.display = 'block';
   }
+
+  // Disponible para callbacks creados fuera de este scope, por ejemplo eliminar fila desde la tabla.
+  window.renderResultadosPresupuesto = renderResultados;
 
   entradaBusqueda.addEventListener('input', e => {
     const busqueda = e.target.value.trim();
@@ -488,19 +519,41 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 280);
   });
 
+  // Mantener el desplegable abierto mientras el usuario trabaja con el mouse.
+  // Antes se cerraba con mouseleave/blur, por eso desaparecía apenas se movía el mouse.
   entradaBusqueda.addEventListener('blur', () => {
-    if (_keepOpen) return;
-    timeoutId = setTimeout(() => { resultadosBusqueda.style.display = 'none'; }, 200);
+    // No cerrar por blur: al hacer click en +, -, Agregar o Quitar el input pierde foco.
+    // Se cierra solamente con Escape, limpiar búsqueda o click real fuera del buscador.
   });
+
   entradaBusqueda.addEventListener('focus', () => {
     clearTimeout(timeoutId);
-    if (_productosEnBusqueda.length > 0 && entradaBusqueda.value.trim()) renderResultados(_productosEnBusqueda);
+    if (_productosEnBusqueda.length > 0 && entradaBusqueda.value.trim()) {
+      renderResultados(_productosEnBusqueda);
+    }
   });
+
+  resultadosBusqueda.addEventListener('mouseenter', () => {
+    clearTimeout(timeoutId);
+    _keepOpen = true;
+  });
+
   resultadosBusqueda.addEventListener('mouseleave', () => {
-    if (_keepOpen) return;
-    timeoutId = setTimeout(() => { resultadosBusqueda.style.display = 'none'; }, 300);
+    _keepOpen = false;
+    // No cerrar al salir con el mouse. El usuario puede moverse entre input y lista.
   });
-  resultadosBusqueda.addEventListener('mouseenter', () => { clearTimeout(timeoutId); resultadosBusqueda.style.display = 'block'; });
+
+  document.addEventListener('mousedown', e => {
+    const clickDentroBuscador =
+      entradaBusqueda.contains(e.target) ||
+      resultadosBusqueda.contains(e.target) ||
+      e.target.closest('.presupuesto-panel--buscador');
+
+    if (!clickDentroBuscador) {
+      resultadosBusqueda.style.display = 'none';
+      _keepOpen = false;
+    }
+  });
 
   // Navegación teclado
   entradaBusqueda.addEventListener('keydown', e => {
