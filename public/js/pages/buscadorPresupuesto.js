@@ -293,9 +293,14 @@ document.addEventListener('DOMContentLoaded', function () {
   let _searchTimer      = null;
   let _searchController = null;
   let _keepOpen         = false;
+  let _productoPreviewId = null;
+  let _lastSearchValue = '';
 
-  function abrirImagenProducto(src, nombre) {
+  function abrirImagenProducto(src, nombre, productoId) {
     if (!src) return;
+
+    _productoPreviewId = productoId ? String(productoId) : null;
+    _lastSearchValue = entradaBusqueda.value.trim();
 
     let modal = document.getElementById('pmImageLightbox');
     if (!modal) {
@@ -316,17 +321,41 @@ document.addEventListener('DOMContentLoaded', function () {
       `;
       document.body.appendChild(modal);
 
+      function cerrarLightboxYVolverAlBuscador() {
+        modal.classList.remove('is-open');
+        document.body.classList.remove('pm-lightbox-open');
+
+        if (_lastSearchValue && !entradaBusqueda.value.trim()) {
+          entradaBusqueda.value = _lastSearchValue;
+        }
+
+        if (_productosEnBusqueda.length > 0) {
+          renderResultados(_productosEnBusqueda);
+        }
+
+        requestAnimationFrame(() => {
+          entradaBusqueda.focus();
+
+          if (_productoPreviewId) {
+            const seleccionado = resultadosBusqueda.querySelector(`.resultado-busqueda[data-id="${CSS.escape(_productoPreviewId)}"]`);
+            if (seleccionado) {
+              resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(r => r.classList.remove('hover-activo', 'preview-selected'));
+              seleccionado.classList.add('hover-activo', 'preview-selected');
+              seleccionado.scrollIntoView({ block: 'nearest' });
+            }
+          }
+        });
+      }
+
       modal.addEventListener('mousedown', e => {
         if (e.target.dataset.close || e.target.closest('.pm-img-lightbox__close')) {
-          modal.classList.remove('is-open');
-          document.body.classList.remove('pm-lightbox-open');
+          cerrarLightboxYVolverAlBuscador();
         }
       });
 
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && modal.classList.contains('is-open')) {
-          modal.classList.remove('is-open');
-          document.body.classList.remove('pm-lightbox-open');
+          cerrarLightboxYVolverAlBuscador();
         }
       });
     }
@@ -389,7 +418,11 @@ document.addEventListener('DOMContentLoaded', function () {
       imgWrap.addEventListener('click', e => {
         e.preventDefault();
         e.stopImmediatePropagation();
-        abrirImagenProducto(resultado.dataset.imagen, producto.nombre);
+
+        resultadosBusqueda.querySelectorAll('.resultado-busqueda').forEach(r => r.classList.remove('hover-activo', 'preview-selected'));
+        resultado.classList.add('hover-activo', 'preview-selected');
+
+        abrirImagenProducto(resultado.dataset.imagen, producto.nombre, id);
       });
     }
 
@@ -562,8 +595,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const enTabla = _obtenerIdsEnTabla();
-    _productosEnBusqueda.forEach(p => resultadosBusqueda.appendChild(crearElementoResultado(p, enTabla)));
+    _productosEnBusqueda.forEach(p => {
+      const item = crearElementoResultado(p, enTabla);
+      if (_productoPreviewId && String(p.id) === String(_productoPreviewId)) {
+        item.classList.add('hover-activo', 'preview-selected');
+      }
+      resultadosBusqueda.appendChild(item);
+    });
     resultadosBusqueda.style.display = 'block';
+
+    if (_productoPreviewId) {
+      const seleccionado = resultadosBusqueda.querySelector(`.resultado-busqueda[data-id="${CSS.escape(String(_productoPreviewId))}"]`);
+      if (seleccionado) seleccionado.scrollIntoView({ block: 'nearest' });
+    }
   }
 
   // Disponible para callbacks creados fuera de este scope, por ejemplo eliminar fila desde la tabla.
@@ -571,6 +615,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   entradaBusqueda.addEventListener('input', e => {
     const busqueda = e.target.value.trim();
+    _lastSearchValue = busqueda;
+    _productoPreviewId = null;
     resultadosBusqueda.innerHTML = ''; resultadosBusqueda.style.display = 'none';
     if (_searchController) { _searchController.abort(); _searchController = null; }
     clearTimeout(_searchTimer);

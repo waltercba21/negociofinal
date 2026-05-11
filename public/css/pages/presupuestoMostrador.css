@@ -1810,3 +1810,32 @@
     height: 38px;
   }
 }
+/* ============================================================
+   PRESUPUESTO MOSTRADOR — RESULTADO SELECCIONADO TRAS LIGHTBOX
+   Pegar al final de public/css/pages/presupuestoMostrador.css
+   ============================================================ */
+
+#resultadosBusqueda .resultado-busqueda.preview-selected {
+  background: #b9d7ff !important;
+  box-shadow:
+    inset 5px 0 0 #1F487E,
+    inset 0 0 0 2px rgba(31,72,126,.28),
+    0 8px 18px rgba(31,72,126,.13) !important;
+}
+
+#resultadosBusqueda .resultado-busqueda.preview-selected .srb-nombre {
+  color: #0f2f57 !important;
+  font-weight: 950 !important;
+}
+
+#resultadosBusqueda .resultado-busqueda.preview-selected .srb-precio {
+  color: #163459 !important;
+  font-weight: 900 !important;
+}
+
+#resultadosBusqueda .resultado-busqueda.preview-selected .srb-img-wrap {
+  border-color: #1F487E !important;
+  box-shadow:
+    0 0 0 4px rgba(31,72,126,.14),
+    0 10px 20px rgba(15,23,42,.16) !important;
+}
