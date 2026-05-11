@@ -1548,3 +1548,60 @@
     display: none !important;
   }
 }
+/* ============================================================
+   PRESUPUESTO MOSTRADOR — FIX BUSCADOR REAL
+   Pegar al final de public/css/pages/presupuestoMostrador.css
+   ============================================================ */
+
+.presupuesto-form {
+  position: relative !important;
+}
+
+.presupuesto-panel--buscador {
+  position: relative !important;
+  z-index: 5000 !important;
+  overflow: visible !important;
+}
+
+.presupuesto-buscador-wrap {
+  position: relative !important;
+  z-index: 5001 !important;
+}
+
+#entradaBusqueda.presupuesto-buscador-input,
+.presupuesto-buscador-input {
+  position: relative !important;
+  z-index: 5002 !important;
+  pointer-events: auto !important;
+}
+
+#resultadosBusqueda.presupuesto-resultados,
+.presupuesto-resultados {
+  position: absolute !important;
+  display: none;
+  top: calc(100% + 8px) !important;
+  left: 24px !important;
+  right: 24px !important;
+  z-index: 99999 !important;
+  max-height: 360px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  pointer-events: auto !important;
+}
+
+#resultadosBusqueda .resultado-busqueda,
+#resultadosBusqueda .resultado-busqueda *,
+#resultadosBusqueda .srb-btn,
+#resultadosBusqueda .srb-qty-input {
+  pointer-events: auto !important;
+}
+
+.presupuesto-panel--tabla,
+.presupuesto-panel--footer {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.presupuesto-panel::before {
+  pointer-events: none !important;
+}
