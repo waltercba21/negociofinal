@@ -2017,3 +2017,310 @@
     height: 38px;
   }
 }
+/* ============================================================
+   FACTURAS MOSTRADOR — FIX MODAL CONFIRMACIÓN / ARCA LIGHT
+   Pegar al final de public/css/pages/facturasMostrador.css
+   Corrige el modal que aparece al confirmar factura y elegir A/B.
+   ============================================================ */
+
+/* Contenedor SweetAlert principal */
+.swal2-container {
+  z-index: 999999 !important;
+}
+
+.swal2-popup {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(255,255,255,.86) !important;
+  border-radius: 24px !important;
+  box-shadow:
+    0 30px 90px rgba(15,23,42,.32),
+    0 0 0 1px rgba(15,23,42,.04) !important;
+  padding: 22px 24px 20px !important;
+}
+
+/* Título */
+.swal2-title {
+  color: #0f172a !important;
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-size: 28px !important;
+  font-weight: 900 !important;
+  letter-spacing: -.4px !important;
+  padding: 0 !important;
+  margin: 0 0 12px !important;
+}
+
+/* Cuerpo */
+.swal2-html-container {
+  color: #334155 !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+/* Resumen previo de factura */
+.swal2-popup .resumen-factura-modal {
+  background: #f8fafc !important;
+  border: 1px solid #d8e2ee !important;
+  border-radius: 18px !important;
+  padding: 16px !important;
+  color: #0f172a !important;
+  text-align: left !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+}
+
+.swal2-popup .resumen-factura-modal p,
+.swal2-popup .resumen-factura-modal span,
+.swal2-popup .resumen-factura-modal div,
+.swal2-popup .resumen-factura-modal li {
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+
+.swal2-popup .resumen-factura-modal strong,
+.swal2-popup .resumen-factura-modal b {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+
+.swal2-popup .resumen-factura-modal hr {
+  border: 0 !important;
+  border-top: 1px solid #d8e2ee !important;
+  margin: 12px 0 !important;
+}
+
+/* Tabla dentro del resumen */
+.swal2-popup .resumen-factura-modal table {
+  width: 100% !important;
+  color: #0f172a !important;
+  border-collapse: collapse !important;
+  background: #ffffff !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.swal2-popup .resumen-factura-modal th {
+  background: #eef4fb !important;
+  color: #163459 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  border-bottom: 1px solid #d8e2ee !important;
+  padding: 9px 10px !important;
+  text-align: left !important;
+}
+
+.swal2-popup .resumen-factura-modal td {
+  color: #0f172a !important;
+  border-bottom: 1px solid #edf2f7 !important;
+  padding: 9px 10px !important;
+  text-align: left !important;
+  font-weight: 700 !important;
+}
+
+.swal2-popup .resumen-factura-modal tr:nth-child(even) td {
+  background: #f9fbfd !important;
+}
+
+/* Campos del modal de factura A/B / ARCA */
+.swal2-popup label,
+.swal2-popup .swal2-label,
+.swal2-popup .form-label {
+  display: block !important;
+  color: #334155 !important;
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1.3px !important;
+  text-transform: uppercase !important;
+  margin: 10px 0 6px !important;
+  text-align: left !important;
+}
+
+.swal2-popup .swal2-input,
+.swal2-popup .swal2-select,
+.swal2-popup .swal2-textarea,
+.swal2-popup input,
+.swal2-popup select,
+.swal2-popup textarea {
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 0 0 10px !important;
+  padding: 0 13px !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border: 1.5px solid #b8c8dc !important;
+  border-radius: 12px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color-scheme: light !important;
+  box-shadow:
+    inset 0 1px 2px rgba(15,23,42,.045),
+    0 5px 12px rgba(15,23,42,.04) !important;
+  box-sizing: border-box !important;
+}
+
+.swal2-popup .swal2-textarea,
+.swal2-popup textarea {
+  height: auto !important;
+  min-height: 86px !important;
+  padding: 10px 13px !important;
+}
+
+.swal2-popup .swal2-input::placeholder,
+.swal2-popup .swal2-textarea::placeholder,
+.swal2-popup input::placeholder,
+.swal2-popup textarea::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+}
+
+.swal2-popup .swal2-input:focus,
+.swal2-popup .swal2-select:focus,
+.swal2-popup .swal2-textarea:focus,
+.swal2-popup input:focus,
+.swal2-popup select:focus,
+.swal2-popup textarea:focus {
+  background: #ffffff !important;
+  border-color: #1F487E !important;
+  box-shadow:
+    0 0 0 4px rgba(31,72,126,.13),
+    inset 0 1px 2px rgba(15,23,42,.045) !important;
+  outline: none !important;
+}
+
+/* Select factura A/B */
+.swal2-popup .swal2-select,
+.swal2-popup select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  padding-right: 42px !important;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #1F487E 50%),
+    linear-gradient(135deg, #1F487E 50%, transparent 50%) !important;
+  background-position:
+    calc(100% - 20px) 50%,
+    calc(100% - 14px) 50% !important;
+  background-size: 6px 6px, 6px 6px !important;
+  background-repeat: no-repeat !important;
+}
+
+.swal2-popup .swal2-select option,
+.swal2-popup select option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+/* Si el JS arma un formulario tipo grilla */
+.swal2-popup .arca-swal-form,
+.swal2-popup .factura-swal-form,
+.swal2-popup .swal-form {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px 16px !important;
+  text-align: left !important;
+}
+
+.swal2-popup .arca-swal-form .full,
+.swal2-popup .factura-swal-form .full,
+.swal2-popup .swal-form .full {
+  grid-column: 1 / -1 !important;
+}
+
+.swal2-popup .arca-swal-form .f,
+.swal2-popup .factura-swal-form .f,
+.swal2-popup .swal-form .f {
+  min-width: 0 !important;
+}
+
+/* Hints / estados de consulta ARCA */
+.swal2-popup #sw_cache_status,
+.swal2-popup #sw_hint,
+.swal2-popup .swal-hint,
+.swal2-popup .text-muted {
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+/* Botones SweetAlert */
+.swal2-actions {
+  gap: 10px !important;
+  margin-top: 20px !important;
+}
+
+.swal2-styled {
+  height: 42px !important;
+  min-height: 42px !important;
+  border-radius: 12px !important;
+  padding: 0 20px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  box-shadow: none !important;
+}
+
+.swal2-confirm {
+  background: linear-gradient(135deg, #1F487E, #2860a8) !important;
+  color: #ffffff !important;
+  border: 1px solid #1F487E !important;
+  box-shadow: 0 12px 26px rgba(31,72,126,.24) !important;
+}
+
+.swal2-confirm:hover {
+  background: linear-gradient(135deg, #163459, #1F487E) !important;
+  color: #ffffff !important;
+}
+
+.swal2-cancel,
+.swal2-deny {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1.5px solid #d8e2ee !important;
+}
+
+.swal2-cancel:hover,
+.swal2-deny:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Iconos SweetAlert */
+.swal2-icon.swal2-warning {
+  border-color: #d97706 !important;
+  color: #d97706 !important;
+}
+
+.swal2-icon.swal2-success {
+  border-color: #047857 !important;
+  color: #047857 !important;
+}
+
+.swal2-icon.swal2-error {
+  border-color: #d90429 !important;
+  color: #d90429 !important;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .swal2-popup {
+    width: 94vw !important;
+    padding: 18px 16px !important;
+  }
+
+  .swal2-popup .arca-swal-form,
+  .swal2-popup .factura-swal-form,
+  .swal2-popup .swal-form {
+    grid-template-columns: 1fr !important;
+  }
+
+  .swal2-title {
+    font-size: 24px !important;
+  }
+}
