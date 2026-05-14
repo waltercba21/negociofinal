@@ -2324,3 +2324,328 @@
     font-size: 24px !important;
   }
 }
+/* ============================================================
+   FACTURAS MOSTRADOR — FIX DEFINITIVO MODAL ARCA A/B
+   Pegar al final de public/css/pages/facturasMostrador.css
+   Este modal viene armado por JS con estilos inline, por eso se
+   pisan muchos estilos generales. Acá se corrigen por ID.
+   ============================================================ */
+
+/* Base del modal ARCA / selección A-B */
+.swal2-container .swal2-popup {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(255,255,255,.88) !important;
+  box-shadow:
+    0 30px 90px rgba(15,23,42,.34),
+    0 0 0 1px rgba(15,23,42,.05) !important;
+}
+
+/* Título, incluyendo spans con color inline */
+.swal2-container .swal2-title,
+.swal2-container .swal2-title *,
+.swal2-container .swal2-title span {
+  color: #1F487E !important;
+  opacity: 1 !important;
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-weight: 900 !important;
+  letter-spacing: .8px !important;
+}
+
+/* Contenedor HTML del modal */
+.swal2-container .swal2-html-container {
+  color: #0f172a !important;
+  opacity: 1 !important;
+}
+
+/* Evita que textos inline queden lavados */
+.swal2-container .swal2-html-container div,
+.swal2-container .swal2-html-container span,
+.swal2-container .swal2-html-container p,
+.swal2-container .swal2-html-container label {
+  opacity: 1 !important;
+}
+
+/* Botón Factura B — Consumidor Final */
+#arca-btn-cf {
+  background: linear-gradient(135deg, #eaf3ff 0%, #d9eaff 100%) !important;
+  border: 1.8px solid #8db6e6 !important;
+  color: #0f172a !important;
+  box-shadow:
+    0 10px 22px rgba(31,72,126,.14),
+    inset 0 1px 0 rgba(255,255,255,.75) !important;
+}
+
+#arca-btn-cf:hover {
+  background: linear-gradient(135deg, #d9eaff 0%, #c4dcfa 100%) !important;
+  border-color: #1F487E !important;
+  transform: translateY(-1px);
+}
+
+#arca-btn-cf,
+#arca-btn-cf *,
+#arca-btn-cf div,
+#arca-btn-cf span {
+  color: #0f172a !important;
+  opacity: 1 !important;
+}
+
+#arca-btn-cf i {
+  color: #1F487E !important;
+}
+
+/* Subtítulo dentro de Factura B */
+#arca-btn-cf div div:last-child {
+  color: #475569 !important;
+  font-weight: 800 !important;
+}
+
+/* Botón Factura B/A — Con CUIT */
+#arca-btn-cuit {
+  background: linear-gradient(135deg, #f1efff 0%, #e2ddff 100%) !important;
+  border: 1.8px solid #a99cf2 !important;
+  color: #0f172a !important;
+  box-shadow:
+    0 10px 22px rgba(91,67,199,.14),
+    inset 0 1px 0 rgba(255,255,255,.75) !important;
+}
+
+#arca-btn-cuit:hover {
+  background: linear-gradient(135deg, #e2ddff 0%, #d2caff 100%) !important;
+  border-color: #5b43c7 !important;
+  transform: translateY(-1px);
+}
+
+#arca-btn-cuit,
+#arca-btn-cuit *,
+#arca-btn-cuit div,
+#arca-btn-cuit span {
+  color: #0f172a !important;
+  opacity: 1 !important;
+}
+
+#arca-btn-cuit i {
+  color: #5b43c7 !important;
+}
+
+/* Subtítulo dentro de Factura con CUIT */
+#arca-btn-cuit div div:last-child {
+  color: #475569 !important;
+  font-weight: 800 !important;
+}
+
+/* Botón Solo guardar */
+#arca-btn-saltar {
+  background: #ffffff !important;
+  border: 1.8px solid #cbd8ea !important;
+  color: #334155 !important;
+  box-shadow:
+    0 8px 18px rgba(15,23,42,.08),
+    inset 0 1px 0 rgba(255,255,255,.75) !important;
+}
+
+#arca-btn-saltar:hover {
+  background: #f1f5f9 !important;
+  border-color: #1F487E !important;
+  color: #0f172a !important;
+  transform: translateY(-1px);
+}
+
+#arca-btn-saltar,
+#arca-btn-saltar *,
+#arca-btn-saltar span {
+  color: #334155 !important;
+  opacity: 1 !important;
+}
+
+#arca-btn-saltar i {
+  color: #1F487E !important;
+}
+
+/* Inputs y select del segundo paso: Datos del receptor */
+#af-cuit,
+#af-nombre,
+#af-dom,
+#af-cond {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  border: 1.6px solid #b8c8dc !important;
+  border-radius: 12px !important;
+  height: 44px !important;
+  padding: 0 13px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color-scheme: light !important;
+  box-shadow:
+    inset 0 1px 2px rgba(15,23,42,.045),
+    0 5px 12px rgba(15,23,42,.04) !important;
+}
+
+#af-cuit::placeholder,
+#af-nombre::placeholder,
+#af-dom::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+}
+
+#af-cuit:focus,
+#af-nombre:focus,
+#af-dom:focus,
+#af-cond:focus {
+  background: #ffffff !important;
+  border-color: #1F487E !important;
+  outline: none !important;
+  box-shadow:
+    0 0 0 4px rgba(31,72,126,.13),
+    inset 0 1px 2px rgba(15,23,42,.045) !important;
+}
+
+#af-cond {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  padding-right: 42px !important;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #1F487E 50%),
+    linear-gradient(135deg, #1F487E 50%, transparent 50%) !important;
+  background-position:
+    calc(100% - 20px) 50%,
+    calc(100% - 14px) 50% !important;
+  background-size: 6px 6px, 6px 6px !important;
+  background-repeat: no-repeat !important;
+}
+
+#af-cond option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Labels del segundo paso, vienen inline */
+.swal2-container label[style*="color"],
+.swal2-container label {
+  color: #334155 !important;
+  opacity: 1 !important;
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1.2px !important;
+  text-transform: uppercase !important;
+}
+
+/* Radios Factura B / Factura A */
+.swal2-container input[type="radio"][name="af-cbte"] {
+  width: 17px !important;
+  height: 17px !important;
+  accent-color: #1F487E !important;
+  margin: 0 !important;
+}
+
+/* Botón Buscar CUIT */
+#af-buscar-cuit {
+  min-width: 92px !important;
+  height: 44px !important;
+  padding: 0 15px !important;
+  background: linear-gradient(135deg, #1F487E, #2860a8) !important;
+  color: #ffffff !important;
+  border: 1px solid #1F487E !important;
+  border-radius: 12px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  box-shadow: 0 8px 18px rgba(31,72,126,.22) !important;
+}
+
+#af-buscar-cuit:hover {
+  background: linear-gradient(135deg, #163459, #1F487E) !important;
+}
+
+/* Estado búsqueda CUIT */
+#af-buscar-status {
+  color: #475569 !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+}
+
+/* Error ARCA */
+#af-err {
+  color: #9f1239 !important;
+  background: #fff0f3 !important;
+  border: 1px solid #ffd0d8 !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+}
+
+/* Acciones SweetAlert */
+.swal2-container .swal2-actions {
+  gap: 10px !important;
+  margin-top: 20px !important;
+}
+
+.swal2-container .swal2-styled {
+  height: 42px !important;
+  min-height: 42px !important;
+  border-radius: 12px !important;
+  padding: 0 20px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+.swal2-container .swal2-confirm {
+  background: linear-gradient(135deg, #1F487E, #2860a8) !important;
+  color: #ffffff !important;
+  border: 1px solid #1F487E !important;
+  box-shadow: 0 12px 26px rgba(31,72,126,.24) !important;
+}
+
+.swal2-container .swal2-confirm:hover {
+  background: linear-gradient(135deg, #163459, #1F487E) !important;
+}
+
+.swal2-container .swal2-cancel,
+.swal2-container .swal2-deny {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1.5px solid #d8e2ee !important;
+}
+
+.swal2-container .swal2-cancel:hover,
+.swal2-container .swal2-deny:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Eliminar caja/foco blanco extraño debajo de las opciones */
+.swal2-container .swal2-input[type="text"]:empty,
+.swal2-container .swal2-validation-message:empty {
+  display: none !important;
+}
+
+.swal2-container .swal2-validation-message {
+  background: #fff0f3 !important;
+  color: #9f1239 !important;
+  border: 1px solid #ffd0d8 !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .swal2-container .swal2-popup {
+    width: 94vw !important;
+    padding: 18px 16px !important;
+  }
+
+  #arca-btn-cf,
+  #arca-btn-cuit,
+  #arca-btn-saltar {
+    padding: 13px 14px !important;
+  }
+
+  #af-buscar-cuit {
+    min-width: 78px !important;
+    padding: 0 12px !important;
+  }
+}
