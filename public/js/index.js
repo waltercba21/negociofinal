@@ -1,18 +1,11 @@
 /**
- * AUTOFAROS — Home / Index v7
+ * AUTOFAROS — Home / Index v8.1
  * public/js/pages/index.js
- *
- * Módulos:
- *   1. Carrusel de Categorías — scroll snap + drag + flechas + autoplay + tilt 3D
- *   2. Carrusel de Ofertas   — páginas de 1/2 items + flechas + autoplay
- *   3. Header scroll effect
- *   4. Animaciones de entrada (IntersectionObserver)
  */
 
 (() => {
   'use strict';
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
   const $ = (sel, root = document) => root.querySelector(sel);
 
   const prefersReducedMotion = () =>
@@ -27,18 +20,16 @@
     };
   };
 
-  // ── Global requerido por header ──────────────────────────────────────────
   window.abrirMapa = function () {
     window.open('https://maps.app.goo.gl/c6bik6TL7uBQP3KZ8', '_blank');
   };
 
   // ════════════════════════════════════════════════════════════════════════
-  // 1. HEADER — efecto scroll
+  // 1. HEADER SCROLL
   // ════════════════════════════════════════════════════════════════════════
   function setupHeaderScroll() {
     const header = $('.site-header');
     if (!header) return;
-
     let ticking = false;
     window.addEventListener('scroll', () => {
       if (ticking) return;
@@ -51,30 +42,7 @@
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  // 2. TILT 3D EN CARDS
-  // ════════════════════════════════════════════════════════════════════════
-  function setupCardTilt() {
-    if (prefersReducedMotion()) return;
-    if (window.matchMedia('(hover: none)').matches) return; // no tilt en touch
-
-    document.querySelectorAll('.cat-card__link').forEach(card => {
-      card.addEventListener('mousemove', (e) => {
-        const rect = card.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width  - 0.5;  // -0.5 a 0.5
-        const y = (e.clientY - rect.top)  / rect.height - 0.5;
-        const rotX = -(y * 10).toFixed(2);
-        const rotY =  (x * 10).toFixed(2);
-        card.style.transform = `perspective(600px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-6px) scale(1.03)`;
-      });
-
-      card.addEventListener('mouseleave', () => {
-        card.style.transform = '';
-      });
-    });
-  }
-
-  // ════════════════════════════════════════════════════════════════════════
-  // 3. CARRUSEL CATEGORÍAS
+  // 2. CARRUSEL CATEGORÍAS (scroll horizontal)
   // ════════════════════════════════════════════════════════════════════════
   function setupCatCarousel() {
     const track   = $('#catTrack');
@@ -92,11 +60,9 @@
     let startScroll = 0;
     const guard     = makeDragGuard();
 
-    // ── Scroll utilities ────────────────────────────────────────────────
     const cardStep = () => {
-      const card = cards[0];
-      const gap = parseInt(getComputedStyle(track).gap) || 16;
-      return (card.offsetWidth + gap) * 2;
+      const gap = parseInt(getComputedStyle(track).gap) || 14;
+      return (cards[0].offsetWidth + gap) * 2;
     };
 
     const scrollPrev = () => track.scrollBy({ left: -cardStep(), behavior: 'smooth' });
@@ -108,36 +74,27 @@
       btnNext.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
     };
 
-    // ── Autoplay ────────────────────────────────────────────────────────
     const stopAuto  = () => { clearInterval(autoId); autoId = null; };
     const startAuto = () => {
-      if (prefersReducedMotion() || cards.length < 4) return;
-      if (autoId) return;
+      if (prefersReducedMotion() || cards.length < 4 || autoId) return;
       autoId = setInterval(() => {
         const atEnd = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
-        if (atEnd) {
-          track.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          scrollNext();
-        }
+        atEnd ? track.scrollTo({ left: 0, behavior: 'smooth' }) : scrollNext();
       }, 3800);
     };
-
     const pauseThenResume = () => {
       stopAuto();
       clearTimeout(resumeTimer);
       resumeTimer = setTimeout(startAuto, 2500);
     };
 
-    // ── Flechas ─────────────────────────────────────────────────────────
     btnPrev?.addEventListener('click', () => { pauseThenResume(); scrollPrev(); });
     btnNext?.addEventListener('click', () => { pauseThenResume(); scrollNext(); });
 
-    // ── Drag ────────────────────────────────────────────────────────────
     track.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      isDragging  = true;
-      startX      = e.clientX;
+      isDragging = true;
+      startX = e.clientX;
       startScroll = track.scrollLeft;
       guard.reset();
       track.setPointerCapture(e.pointerId);
@@ -159,7 +116,6 @@
       track.classList.remove('is-dragging');
       pauseThenResume();
     };
-
     track.addEventListener('pointerup',         endDrag);
     track.addEventListener('pointercancel',      endDrag);
     track.addEventListener('lostpointercapture', endDrag);
@@ -170,144 +126,171 @@
       e.stopPropagation();
     }, true);
 
-    // ── Scroll listener ──────────────────────────────────────────────────
     let rafId = 0;
     track.addEventListener('scroll', () => {
       if (rafId) return;
       rafId = requestAnimationFrame(() => { rafId = 0; updateArrows(); });
     }, { passive: true });
 
-    // ── Pausa hover / focus ──────────────────────────────────────────────
     track.addEventListener('mouseenter', stopAuto);
     track.addEventListener('mouseleave', startAuto);
     track.addEventListener('touchstart',  stopAuto, { passive: true });
     track.addEventListener('focusin',     stopAuto);
     track.addEventListener('focusout',    pauseThenResume);
 
-    // Init
     updateArrows();
     startAuto();
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  // 4. CARRUSEL OFERTAS
+  // 3. CARRUSEL OFERTAS — translateX slide (1 card a la vez)
   // ════════════════════════════════════════════════════════════════════════
   function setupOfertasCarousel() {
-    const list     = $('#ofertasList');
-    const viewport = $('#ofertasViewport');
+    const track    = $('#ofertasList');       // el flex-row de cards
+    const viewport = $('#ofertasViewport');   // overflow:hidden container
     const btnPrev  = $('#ofertaArrowPrev');
     const btnNext  = $('#ofertaArrowNext');
-    if (!list || !viewport) return;
+    const dotsWrap = $('.ofertas-dots');
 
-    const cards = Array.from(list.querySelectorAll('.product-card'));
+    if (!track || !viewport) return;
+
+    // Selecciona solo las cards de oferta (no empty states)
+    const cards = Array.from(track.querySelectorAll('.product-card--oferta'));
     if (!cards.length) return;
 
-    let page        = 0;
-    let perPage     = 1;
-    let autoId      = null;
+    // Asegurar que el track es flex-row y NO tiene display:none en ninguna card
+    track.style.display        = 'flex';
+    track.style.flexDirection  = 'row';
+    track.style.flexWrap       = 'nowrap';
+    track.style.height         = '100%';
+    cards.forEach(c => {
+      c.style.display    = '';   // limpiar cualquier display:none residual
+      c.style.flex       = '0 0 100%';
+      c.style.width      = '100%';
+      c.style.minWidth   = '100%';
+      c.style.maxWidth   = '100%';
+      c.style.height     = '100%';
+    });
+
+    let current    = 0;
+    let autoId     = null;
     let resumeTimer = null;
+    const total    = cards.length;
 
-    const calcPerPage = () => window.innerWidth <= 1100 ? 1 : 1;
-    const totalPages  = () => Math.ceil(cards.length / perPage);
-
-    const render = () => {
-      perPage = calcPerPage();
-      const start = page * perPage;
-      const end   = start + perPage;
-
-      cards.forEach((card, i) => {
-        card.style.display = (i >= start && i < end) ? '' : 'none';
+    // ── Dots ────────────────────────────────────────────────────────────
+    const buildDots = () => {
+      if (!dotsWrap) return;
+      dotsWrap.innerHTML = '';
+      cards.forEach((_, i) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ofertas-dot' + (i === 0 ? ' is-active' : '');
+        btn.setAttribute('aria-label', `Oferta ${i + 1}`);
+        btn.addEventListener('click', () => { pauseThenResume(); goTo(i); });
+        dotsWrap.appendChild(btn);
       });
-
-      const tp = totalPages();
-      if (btnPrev) btnPrev.disabled = page === 0;
-      if (btnNext) btnNext.disabled = page >= tp - 1;
-
-      const showNav = tp > 1;
-      if (btnPrev) btnPrev.style.visibility = showNav ? '' : 'hidden';
-      if (btnNext) btnNext.style.visibility = showNav ? '' : 'hidden';
     };
 
-    const next = () => {
-      page = (page + 1) >= totalPages() ? 0 : page + 1;
-      render();
-    };
-    const prev = () => {
-      page = (page - 1) < 0 ? totalPages() - 1 : page - 1;
-      render();
+    const updateDots = () => {
+      if (!dotsWrap) return;
+      dotsWrap.querySelectorAll('.ofertas-dot').forEach((d, i) => {
+        d.classList.toggle('is-active', i === current);
+      });
     };
 
+    // ── Render — mueve el track con translateX ───────────────────────────
+    const goTo = (idx) => {
+      current = ((idx % total) + total) % total;   // wrap
+      track.style.transform = `translateX(-${current * 100}%)`;
+      if (btnPrev) btnPrev.disabled = false;  // siempre habilitados (loop)
+      if (btnNext) btnNext.disabled = false;
+      updateDots();
+    };
+
+    const next = () => goTo(current + 1);
+    const prev = () => goTo(current - 1);
+
+    // ── Autoplay ────────────────────────────────────────────────────────
     const stopAuto  = () => { clearInterval(autoId); autoId = null; };
     const startAuto = () => {
-      if (prefersReducedMotion()) return;
-      if (cards.length <= perPage) return;
-      if (autoId) return;
-      autoId = setInterval(next, 5000);
+      if (prefersReducedMotion() || total <= 1 || autoId) return;
+      autoId = setInterval(next, 4500);
     };
     const pauseThenResume = () => {
       stopAuto();
       clearTimeout(resumeTimer);
-      resumeTimer = setTimeout(startAuto, 2500);
+      resumeTimer = setTimeout(startAuto, 3000);
     };
 
     btnPrev?.addEventListener('click', () => { pauseThenResume(); prev(); });
     btnNext?.addEventListener('click', () => { pauseThenResume(); next(); });
 
-    list.addEventListener('mouseenter', stopAuto);
-    list.addEventListener('mouseleave', startAuto);
-    list.addEventListener('touchstart',  stopAuto, { passive: true });
+    // Pausa al hacer hover sobre el panel de ofertas
+    const panel = viewport.closest('.products-panel--ofertas');
+    if (panel) {
+      panel.addEventListener('mouseenter', stopAuto);
+      panel.addEventListener('mouseleave', startAuto);
+      panel.addEventListener('touchstart', stopAuto, { passive: true });
+    }
 
-    let resizeTimer = 0;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => { page = 0; render(); startAuto(); }, 150);
-    });
+    // ── Swipe touch en el viewport ───────────────────────────────────────
+    let touchStartX = 0;
+    viewport.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    viewport.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 40) {
+        pauseThenResume();
+        dx < 0 ? next() : prev();
+      }
+    }, { passive: true });
 
-    render();
+    // ── Ocultar nav si hay 1 sola card ──────────────────────────────────
+    if (total <= 1) {
+      if (btnPrev) btnPrev.style.visibility = 'hidden';
+      if (btnNext) btnNext.style.visibility = 'hidden';
+    }
+
+    // Init
+    buildDots();
+    goTo(0);
     startAuto();
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  // 5. ANIMACIONES DE ENTRADA
+  // 4. ANIMACIONES DE ENTRADA
   // ════════════════════════════════════════════════════════════════════════
   function setupEntranceAnimations() {
-    if (prefersReducedMotion()) return;
-    if (!('IntersectionObserver' in window)) return;
+    if (prefersReducedMotion() || !('IntersectionObserver' in window)) return;
 
-    // Inyectar keyframe si no existe
     if (!document.getElementById('af-fadeup-style')) {
-      const style = document.createElement('style');
-      style.id = 'af-fadeup-style';
-      style.textContent = `
+      const s = document.createElement('style');
+      s.id = 'af-fadeup-style';
+      s.textContent = `
         @keyframes afFadeUp {
-          from { opacity: 0; transform: translateY(24px); }
+          from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .af-anim-hidden { opacity: 0; }
-        .af-anim-visible {
-          animation: afFadeUp 0.55s cubic-bezier(0.16,1,0.3,1) both;
-        }
+        .af-anim-hidden  { opacity: 0; }
+        .af-anim-visible { animation: afFadeUp .5s cubic-bezier(0.16,1,0.3,1) both; }
       `;
-      document.head.appendChild(style);
+      document.head.appendChild(s);
     }
 
-    const targets = document.querySelectorAll('.hero-band, .cat-section, .products-panel');
-    const observer = new IntersectionObserver((entries) => {
+    const obs = new IntersectionObserver((entries) => {
       entries.forEach((entry, i) => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          el.classList.remove('af-anim-hidden');
-          el.classList.add('af-anim-visible');
-          el.style.animationDelay = `${i * 80}ms`;
-          observer.unobserve(el);
-        }
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        el.classList.remove('af-anim-hidden');
+        el.classList.add('af-anim-visible');
+        el.style.animationDelay = `${i * 70}ms`;
+        obs.unobserve(el);
       });
-    }, { threshold: 0.08 });
+    }, { threshold: 0.07 });
 
-    targets.forEach(el => {
-      el.classList.add('af-anim-hidden');
-      observer.observe(el);
-    });
+    document.querySelectorAll('.hero-band, .cat-section, .products-panel')
+      .forEach(el => { el.classList.add('af-anim-hidden'); obs.observe(el); });
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -317,7 +300,6 @@
     setupHeaderScroll();
     setupCatCarousel();
     setupOfertasCarousel();
-    setupCardTilt();
     setupEntranceAnimations();
   }
 
