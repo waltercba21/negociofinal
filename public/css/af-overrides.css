@@ -1,128 +1,131 @@
-/* ═══════════════════════════════════════════════════
-   AUTOFAROS — Overrides v9.3
+/* ═══════════════════════════════════════════════════════
+   AUTOFAROS — Overrides v10
    public/css/af-overrides.css
 
-   Cargado AL FINAL en head.ejs.
-   Pisa exactamente los selectores del autofaros.css
-   que vuelven al fondo oscuro en usuarios logueados.
-   ═══════════════════════════════════════════════════ */
+   El autofaros.css del servidor es la versión v7 Dark con
+   variables oscuras en :root. Este archivo las sobreescribe
+   en :root para que TODOS los componentes hereden el tema
+   claro sin necesidad de tocar cada selector individualmente.
+   ═══════════════════════════════════════════════════════ */
 
-/* ══════════════════════════════════════════
-   HEADER — blanco en todos los estados normales
-   ══════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   1. VARIABLES — cambiar dark → light en :root
+   Esto arregla TODOS los componentes a la vez
+   ══════════════════════════════════════════════ */
+:root {
+  /* Fondos: de negro a blanco/gris claro */
+  --color-bg-base:       #EEF2F7;
+  --color-bg-raised:     #FFFFFF;
+  --color-bg-surface:    #F5F8FC;
+  --color-bg-card:       #FFFFFF;
+  --color-bg-hover:      #EEF2F7;
+  --color-bg-selected:   #E8F0FA;
+  --color-bg-glass:      rgba(255,255,255,.85);
 
-/* El selector más específico posible para ganar la cascada */
-header.site-header,
-header.site-header.is-guest,
-header.site-header.is-logged {
-  background: #FFFFFF !important;
-  border-bottom: 1px solid #D0DCEA !important;
-  box-shadow: 0 2px 12px rgba(10,22,40,.08) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  /* Texto: de blanco a negro */
+  --color-text-primary:   #111827;
+  --color-text-secondary: #4A5C70;
+  --color-text-muted:     #8899AA;
+  --color-text-disabled:  #B8CCDE;
+  --color-text-inverse:   #FFFFFF;
+
+  /* Bordes: de transparentes oscuros a grises claros */
+  --color-border:        #D0DCEA;
+  --color-border-light:  #E4ECF4;
+  --color-border-strong: #B0C0D0;
+  --color-border-brand:  rgba(27,61,114,.35);
+  --color-border-accent: rgba(232,39,26,.3);
+
+  /* Sombras: más suaves para tema claro */
+  --shadow-sm:  0 1px 3px rgba(10,22,40,.08), 0 1px 2px rgba(10,22,40,.05);
+  --shadow-md:  0 4px 14px rgba(10,22,40,.10), 0 2px 6px rgba(10,22,40,.05);
+  --shadow-lg:  0 12px 32px rgba(10,22,40,.12), 0 4px 10px rgba(10,22,40,.06);
+  --shadow-xl:  0 24px 60px rgba(10,22,40,.14), 0 8px 20px rgba(10,22,40,.07);
+}
+
+/* ══════════════════════════════════════════════
+   2. BODY — fondo gris claro
+   ══════════════════════════════════════════════ */
+html,
+body {
+  background: #EEF2F7 !important;
   color: #111827 !important;
 }
 
-/* Admin sigue oscuro */
-header.site-header.is-admin {
-  background: #0A1628 !important;
-  border-bottom-color: rgba(27,61,114,.4) !important;
+/* ══════════════════════════════════════════════
+   3. HEADER — blanco para usuarios normales
+   El autofaros.css ya lo define con #FFFFFF hardcodeado
+   pero el is-logged/is-guest no tiene regla propia
+   ══════════════════════════════════════════════ */
+.site-header.is-guest,
+.site-header.is-logged {
+  background: #FFFFFF !important;
+  border-bottom-color: #D0DCEA !important;
+  box-shadow: 0 2px 12px rgba(10,22,40,.08) !important;
+}
+
+/* El admin ya tiene su propio bloque en autofaros.css */
+
+/* Nav links — texto oscuro sobre blanco */
+.site-header.is-guest .nav-link,
+.site-header.is-logged .nav-link {
+  color: #4A5C70 !important;
+}
+.site-header.is-guest .nav-link:hover,
+.site-header.is-logged .nav-link:hover {
+  color: #0A1628 !important;
+  background: #EEF2F7 !important;
+}
+.site-header.is-guest .nav-link--ofertas,
+.site-header.is-logged .nav-link--ofertas {
+  color: #C01F15 !important;
+}
+
+/* ══════════════════════════════════════════════
+   4. FOOTER — marino oscuro ya está en autofaros.css
+   Solo necesitamos que los textos que usan variables
+   sean legibles (--color-text-muted ahora es #8899AA
+   sobre fondo marino — se ve bien)
+   ══════════════════════════════════════════════ */
+
+/* El footer usa var(--color-text-muted) y var(--color-text-primary)
+   en los links. Con las variables cambiadas arriba, los textos del
+   footer quedarían oscuros sobre marino. Lo corregimos: */
+.site-footer .footer-nav__link {
+  color: #8899AA !important;
+}
+.site-footer .footer-nav__link:hover {
   color: #F0F4F8 !important;
 }
-
-/* Línea inferior — todos los estados normales */
-header.site-header:not(.is-admin)::after {
-  background: linear-gradient(90deg, #1B3D72 0%, #2452A0 40%, #E8271A 80%, #FF3D30 100%) !important;
-  opacity: 1 !important;
-  height: 3px !important;
+.site-footer .site-footer__copy,
+.site-footer .site-footer__dev {
+  color: #8899AA !important;
+}
+.site-footer .site-footer__dev a {
+  color: #2A62C8 !important;
+}
+.site-footer .site-footer__dev a:hover {
+  color: #F0F4F8 !important;
+}
+.site-footer .site-footer__heading {
+  color: #B0C0D4 !important;
+}
+.site-footer .site-footer__tagline {
+  color: #8899AA !important;
+}
+.site-footer .site-footer__inner {
+  border-bottom-color: rgba(255,255,255,.1) !important;
 }
 
-/* Admin line */
-header.site-header.is-admin::after {
-  background: linear-gradient(90deg, #1B3D72, #2452A0 60%, transparent) !important;
-}
-
-/* Nav links sobre fondo blanco */
-header.site-header:not(.is-admin) .nav-link {
-  color: #4A5C70 !important;
-  background: none !important;
-}
-header.site-header:not(.is-admin) .nav-link:hover {
-  color: #0A1628 !important;
-  background-color: #EEF2F7 !important;
-}
-header.site-header:not(.is-admin) .nav-link--ofertas { color: #C01F15 !important; }
-header.site-header:not(.is-admin) .nav-link--whatsapp:hover { color: #15803D !important; background-color: rgba(21,128,61,.1) !important; }
-
-/* Buscador sobre fondo blanco */
-header.site-header:not(.is-admin) .search-wrapper__input {
-  background: #F0F4F9 !important;
-  border: 1.5px solid #C8D6E8 !important;
-  color: #111827 !important;
-  -webkit-text-fill-color: #111827 !important;
-}
-header.site-header:not(.is-admin) .search-wrapper__input:focus {
-  background: #FFFFFF !important;
-  border-color: #1B3D72 !important;
-  box-shadow: 0 0 0 3px rgba(27,61,114,.15) !important;
-}
-header.site-header:not(.is-admin) .search-wrapper__icon { color: #8899AA !important; }
-
-/* Acciones usuario sobre fondo blanco */
-header.site-header:not(.is-admin) .action-btn  { color: #4A5C70 !important; }
-header.site-header:not(.is-admin) .action-btn:hover { color: #0A1628 !important; background: #EEF2F7 !important; }
-header.site-header:not(.is-admin) .user-greeting__name { color: #4A5C70 !important; }
-header.site-header:not(.is-admin) .user-greeting__name strong { color: #0A1628 !important; }
-header.site-header:not(.is-admin) .user-greeting:hover { background: #EEF2F7 !important; }
-header.site-header:not(.is-admin) .btn-auth--login { color: #1B3D72 !important; background: transparent !important; }
-header.site-header:not(.is-admin) .site-header__hamburger { color: #4A5C70 !important; }
-header.site-header:not(.is-admin) .site-header__hamburger:hover { background: #EEF2F7 !important; color: #0A1628 !important; }
-
-/* ══════════════════════════════════════════
-   DRAWER MOBILE — blanco para usuarios normales
-   ══════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   5. DRAWER MOBILE — blanco para usuarios normales
+   ══════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  header.site-header:not(.is-admin) .site-header__nav {
+  /* El autofaros.css ya define background: #FFFFFF en el drawer
+     pero si alguna versión vieja lo pisa con dark: */
+  .site-header.is-guest  .site-header__nav,
+  .site-header.is-logged .site-header__nav {
     background: #FFFFFF !important;
     border-left-color: #D0DCEA !important;
   }
-
-  /* Bottom nav blanco */
-  .m-bottom-nav {
-    background: rgba(255,255,255,.97) !important;
-    border-top-color: #D0DCEA !important;
-  }
-  .m-bottom-nav__item { color: #8899AA !important; }
-  .m-bottom-nav__item--active { color: #1B3D72 !important; }
-  .m-bottom-nav__item--ofertas { color: #C01F15 !important; }
 }
-
-/* ══════════════════════════════════════════
-   FOOTER — marino oscuro forzado
-   El autofaros.css ya lo define como #0A1628,
-   pero por si algún otro CSS lo pisa:
-   ══════════════════════════════════════════ */
-footer.site-footer {
-  background: #0A1628 !important;
-  border-top: 3px solid #1B3D72 !important;
-  color: #F0F4F8 !important;
-}
-footer.site-footer .site-footer__tagline  { color: #8899AA !important; }
-footer.site-footer .site-footer__heading  { color: #B0C0D4 !important; }
-footer.site-footer .site-footer__inner    { border-bottom-color: rgba(255,255,255,.1) !important; }
-footer.site-footer .footer-nav__link      { color: #8899AA !important; }
-footer.site-footer .footer-nav__link:hover { color: #F0F4F8 !important; }
-footer.site-footer .site-footer__copy    { color: #8899AA !important; }
-footer.site-footer .site-footer__dev     { color: #8899AA !important; }
-footer.site-footer .site-footer__dev a   { color: #2452A0 !important; }
-footer.site-footer .site-footer__dev a:hover { color: #F0F4F8 !important; }
-footer.site-footer .social-icons__link   {
-  color: #8899AA !important;
-  background: rgba(255,255,255,.05) !important;
-  border-color: rgba(255,255,255,.12) !important;
-}
-
-/* ══════════════════════════════════════════
-   FONDO GENERAL
-   ══════════════════════════════════════════ */
-html, body { background: #EEF2F7 !important; }
