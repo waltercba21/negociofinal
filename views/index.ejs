@@ -1,18 +1,19 @@
-<% var pageCss = '/css/pages/index.css' %>
-<% var pageJs  = '/js/pages/index.js' %>
+<%
+  var pageCss = '/css/pages/index.css';
+  var pageJs  = '/js/pages/index.js';
+%>
 <!DOCTYPE html>
 <html lang="es">
 <%- include('./layouts/head.ejs') %>
-<link rel="stylesheet" href="/css/pages/index.css" />
 
 <body class="body-index">
   <%- include('./layouts/header.ejs') %>
 
   <main class="index-main" id="main-content">
 
-    <!-- ═══════════════════════════════
-         1. HERO
-    ════════════════════════════════ -->
+    <!-- ══════════════════════════
+         HERO
+    ══════════════════════════ -->
     <section class="hero-band">
       <div class="hero-band__grid">
         <div>
@@ -34,16 +35,15 @@
       </div>
     </section>
 
-    <!-- ═══════════════════════════════
-         2. CATEGORÍAS — va PRIMERO
-    ════════════════════════════════ -->
+    <!-- ══════════════════════════
+         CATEGORÍAS
+    ══════════════════════════ -->
     <section class="cat-section">
       <div class="cat-section__header">
         <h2 class="cat-section__title"><span class="cat-section__title-accent">Explorá</span> nuestras categorías</h2>
         <a href="/productos" class="cat-section__ver-todo">Ver todo <i class="fa-solid fa-arrow-right"></i></a>
       </div>
 
-      <!-- Wrapper relativo para que las flechas absolutas queden DENTRO -->
       <div class="cat-carousel-wrap">
         <button class="af-arrow af-arrow--prev" id="catArrowPrev" type="button" aria-label="Anterior">
           <i class="fa-solid fa-chevron-left"></i>
@@ -51,7 +51,6 @@
 
         <div class="cat-track-outer">
           <div class="cat-track" id="catTrack">
-
             <a class="cat-card" href="/productos?categoria=31">
               <div class="cat-card__img-wrap"><img src="/uploads/productos/faros-led1.webp" alt="Faros Aux LED" loading="lazy"></div>
               <div class="cat-card__label">Faros Aux LED</div>
@@ -104,7 +103,6 @@
               <div class="cat-card__img-wrap"><img src="/uploads/productos/4.webp" alt="Vidrios Ópticas" loading="lazy"></div>
               <div class="cat-card__label">Vidrios Ópticas</div>
             </a>
-
           </div>
         </div>
 
@@ -114,9 +112,9 @@
       </div>
     </section>
 
-    <!-- ═══════════════════════════════
-         3. GRID: ÚLTIMOS + OFERTAS
-    ════════════════════════════════ -->
+    <!-- ══════════════════════════
+         GRID: ÚLTIMOS + OFERTAS
+    ══════════════════════════ -->
     <div class="products-grid-layout">
 
       <!-- Últimos Agregados -->
@@ -158,13 +156,7 @@
           <a href="/productos/ofertas" class="products-panel__link">Ver todas <i class="fa-solid fa-arrow-right"></i></a>
         </div>
 
-        <%
-          /* Solo mostrar el slider si hay ofertas */
-          const hayOfertas = productosOferta && productosOferta.length > 0;
-        %>
-
-        <% if (hayOfertas) { %>
-          <!-- Slider: viewport fijo + track que se traslada -->
+        <% if (productosOferta && productosOferta.length > 0) { %>
           <div class="oferta-viewport" id="ofertasViewport">
             <div class="oferta-track" id="ofertasList">
               <% productosOferta.forEach(function(o) { %>
@@ -186,7 +178,6 @@
               <% }) %>
             </div>
           </div>
-          <!-- Controles: flechas + dots en línea horizontal -->
           <div class="oferta-nav">
             <button class="af-arrow af-arrow--sm" id="ofertaArrowPrev" type="button" aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></button>
             <div class="oferta-dots" id="ofertasDots"></div>
