@@ -1,17 +1,14 @@
 /**
- * AUTOFAROS — Home v9.1
+ * AUTOFAROS — Home v9.2
  * public/js/pages/index.js
- *
- * FIX: rAF declarado antes de usarse.
- * FIX: syncArrows se llama en scroll con RAF correcto.
  */
 (() => {
   'use strict';
 
-  /* ── Helpers ─────────────────────────────── */
+  /* ── Helpers — declarados PRIMERO ─────────── */
   const qs       = (s, r = document) => r.querySelector(s);
   const qsa      = (s, r = document) => [...r.querySelectorAll(s)];
-  const rAF      = fn => requestAnimationFrame(fn);   // declarado PRIMERO
+  const raf      = fn => requestAnimationFrame(fn);   /* ← DEBE ir antes de usarse */
   const noMotion = () => window.matchMedia?.('(prefers-reduced-motion:reduce)').matches ?? false;
 
   window.abrirMapa = () => window.open('https://maps.app.goo.gl/c6bik6TL7uBQP3KZ8', '_blank');
@@ -26,15 +23,15 @@
     window.addEventListener('scroll', () => {
       if (busy) return;
       busy = true;
-      rAF(() => { h.classList.toggle('scrolled', scrollY > 20); busy = false; });
+      raf(() => { h.classList.toggle('scrolled', scrollY > 20); busy = false; });
     }, { passive: true });
   }
 
   /* ─────────────────────────────────────────
-     2. CARRUSEL CATEGORÍAS
+     2. CARRUSEL CATEGORÍAS — scroll horizontal
   ───────────────────────────────────────── */
   function initCatCarousel() {
-    const track = qs('#catTrack');
+    const track   = qs('#catTrack');
     const btnPrev = qs('#catArrowPrev');
     const btnNext = qs('#catArrowNext');
     if (!track) return;
@@ -45,6 +42,7 @@
     let autoId = null, resumeId = null;
     let dragging = false, ox = 0, os = 0, maxD = 0;
 
+    /* Paso = 2 cards */
     const step = () => {
       const gap = parseInt(getComputedStyle(track).gap) || 14;
       return (cards[0].offsetWidth + gap) * 2;
@@ -53,13 +51,15 @@
     const doPrev = () => track.scrollBy({ left: -step(), behavior: 'smooth' });
     const doNext = () => track.scrollBy({ left:  step(), behavior: 'smooth' });
 
+    /* Sincronizar estado disabled de flechas */
     const syncArrows = () => {
       if (!btnPrev || !btnNext) return;
       btnPrev.disabled = track.scrollLeft <= 4;
       btnNext.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
     };
 
-    const stop = () => { clearInterval(autoId); autoId = null; };
+    /* Autoplay */
+    const stop  = () => { clearInterval(autoId); autoId = null; };
     const start = () => {
       if (noMotion() || cards.length < 4 || autoId) return;
       autoId = setInterval(() => {
@@ -76,14 +76,17 @@
       resumeId = setTimeout(start, 2500);
     };
 
-    /* Flechas */
+    /* Clic en flechas */
     btnPrev?.addEventListener('click', () => { pause(); doPrev(); });
     btnNext?.addEventListener('click', () => { pause(); doNext(); });
 
-    /* Drag */
+    /* Drag con pointer events */
     track.addEventListener('pointerdown', e => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      dragging = true; ox = e.clientX; os = track.scrollLeft; maxD = 0;
+      dragging = true;
+      ox = e.clientX;
+      os = track.scrollLeft;
+      maxD = 0;
       track.setPointerCapture(e.pointerId);
       track.classList.add('is-dragging');
       stop();
@@ -108,7 +111,7 @@
       if (maxD > 8) { e.preventDefault(); e.stopPropagation(); }
     }, true);
 
-    /* Scroll → sync flechas */
+    /* Scroll → sync flechas (con RAF para no bloquear) */
     let rafId = 0;
     track.addEventListener('scroll', () => {
       if (rafId) return;
@@ -141,14 +144,14 @@
     const total = cards.length;
     let cur = 0, autoId = null, resumeId = null;
 
-    /* Forzar layout correcto (Bootstrap puede pisarlo) */
+    /* Forzar layout por JS — Bootstrap puede pisar flexbox */
     Object.assign(track.style, {
-      display:        'flex',
-      flexDirection:  'row',
-      flexWrap:       'nowrap',
-      height:         '100%',
-      transition:     'transform 380ms cubic-bezier(0.4,0,0.2,1)',
-      willChange:     'transform',
+      display:       'flex',
+      flexDirection: 'row',
+      flexWrap:      'nowrap',
+      height:        '100%',
+      transition:    'transform 380ms cubic-bezier(0.4,0,0.2,1)',
+      willChange:    'transform',
     });
     cards.forEach(c => {
       Object.assign(c.style, {
@@ -159,7 +162,7 @@
       });
     });
 
-    /* Dots */
+    /* Construir dots */
     const buildDots = () => {
       if (!dotsWrap || total <= 1) return;
       dotsWrap.innerHTML = '';
@@ -177,7 +180,7 @@
       qsa('.oferta-dot', dotsWrap).forEach((d, i) => d.classList.toggle('is-active', i === cur));
     };
 
-    /* Ir a slide N */
+    /* Ir a slide N (con wrap) */
     const goTo = idx => {
       cur = ((idx % total) + total) % total;
       track.style.transform = `translateX(-${cur * 100}%)`;
@@ -190,7 +193,7 @@
     const goNext = () => goTo(cur + 1);
 
     /* Autoplay */
-    const stop = () => { clearInterval(autoId); autoId = null; };
+    const stop  = () => { clearInterval(autoId); autoId = null; };
     const start = () => {
       if (noMotion() || total <= 1 || autoId) return;
       autoId = setInterval(goNext, 4500);
@@ -204,7 +207,7 @@
     btnPrev?.addEventListener('click', () => { pause(); goPrev(); });
     btnNext?.addEventListener('click', () => { pause(); goNext(); });
 
-    /* Pausa hover sobre el panel */
+    /* Pausa hover */
     const panel = viewport.closest('.products-panel');
     if (panel) {
       panel.addEventListener('mouseenter', stop);
@@ -214,15 +217,15 @@
     /* Swipe touch */
     let tx = 0;
     viewport.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
-    viewport.addEventListener('touchend', e => {
+    viewport.addEventListener('touchend',   e => {
       const dx = e.changedTouches[0].clientX - tx;
       if (Math.abs(dx) > 40) { pause(); dx < 0 ? goNext() : goPrev(); }
     }, { passive: true });
 
-    /* Ocultar nav si hay 1 sola card */
+    /* Ocultar nav si hay 1 sola oferta */
     if (total <= 1) {
-      if (btnPrev) btnPrev.style.display = 'none';
-      if (btnNext) btnNext.style.display = 'none';
+      if (btnPrev)  btnPrev.style.display  = 'none';
+      if (btnNext)  btnNext.style.display  = 'none';
       if (dotsWrap) dotsWrap.style.display = 'none';
     }
 
