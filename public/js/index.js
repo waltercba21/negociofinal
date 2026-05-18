@@ -1,10 +1,12 @@
 /**
- * AUTOFAROS — Home / Index
+ * AUTOFAROS — Home / Index v7
  * public/js/pages/index.js
  *
  * Módulos:
- *   1. Carrusel de Categorías — scroll horizontal + flechas + drag + autoplay
- *   2. Carrusel de Ofertas    — páginas de 2 items + flechas + autoplay
+ *   1. Carrusel de Categorías — scroll snap + drag + flechas + autoplay + tilt 3D
+ *   2. Carrusel de Ofertas   — páginas de 1/2 items + flechas + autoplay
+ *   3. Header scroll effect
+ *   4. Animaciones de entrada (IntersectionObserver)
  */
 
 (() => {
@@ -13,12 +15,9 @@
   // ── Helpers ──────────────────────────────────────────────────────────────
   const $ = (sel, root = document) => root.querySelector(sel);
 
-  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
-
   const prefersReducedMotion = () =>
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-  /** Devuelve true si el pointer se movió más de `threshold` px durante el drag */
   const makeDragGuard = (threshold = 8) => {
     let maxDelta = 0;
     return {
@@ -28,46 +27,81 @@
     };
   };
 
-  // ── Función global requerida por header y otros módulos ──────────────────
+  // ── Global requerido por header ──────────────────────────────────────────
   window.abrirMapa = function () {
     window.open('https://maps.app.goo.gl/c6bik6TL7uBQP3KZ8', '_blank');
   };
 
   // ════════════════════════════════════════════════════════════════════════
-  // 1. CARRUSEL CATEGORÍAS
+  // 1. HEADER — efecto scroll
+  // ════════════════════════════════════════════════════════════════════════
+  function setupHeaderScroll() {
+    const header = $('.site-header');
+    if (!header) return;
+
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        header.classList.toggle('scrolled', window.scrollY > 20);
+        ticking = false;
+      });
+    }, { passive: true });
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // 2. TILT 3D EN CARDS
+  // ════════════════════════════════════════════════════════════════════════
+  function setupCardTilt() {
+    if (prefersReducedMotion()) return;
+    if (window.matchMedia('(hover: none)').matches) return; // no tilt en touch
+
+    document.querySelectorAll('.cat-card__link').forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width  - 0.5;  // -0.5 a 0.5
+        const y = (e.clientY - rect.top)  / rect.height - 0.5;
+        const rotX = -(y * 10).toFixed(2);
+        const rotY =  (x * 10).toFixed(2);
+        card.style.transform = `perspective(600px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-6px) scale(1.03)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // 3. CARRUSEL CATEGORÍAS
   // ════════════════════════════════════════════════════════════════════════
   function setupCatCarousel() {
-    const track   = document.getElementById('catTrack');
-    const btnPrev = document.getElementById('catArrowPrev');
-    const btnNext = document.getElementById('catArrowNext');
+    const track   = $('#catTrack');
+    const btnPrev = $('#catArrowPrev');
+    const btnNext = $('#catArrowNext');
     if (!track) return;
 
     const cards = Array.from(track.querySelectorAll('.cat-card'));
     if (!cards.length) return;
 
-    let autoId       = null;
-    let resumeTimer  = null;
-    let isDragging   = false;
-    let startX       = 0;
-    let startScroll  = 0;
-    const guard      = makeDragGuard();
+    let autoId      = null;
+    let resumeTimer = null;
+    let isDragging  = false;
+    let startX      = 0;
+    let startScroll = 0;
+    const guard     = makeDragGuard();
 
-    // ── Utilidades de scroll ────────────────────────────────────────────
-    const scrollBy = (px, behavior = 'smooth') => {
-      track.scrollBy({ left: px, behavior });
-    };
-
-    /** Ancho de una card + gap */
+    // ── Scroll utilities ────────────────────────────────────────────────
     const cardStep = () => {
       const card = cards[0];
       const gap = parseInt(getComputedStyle(track).gap) || 16;
-      return card.offsetWidth + gap;
+      return (card.offsetWidth + gap) * 2;
     };
 
-    const scrollPrev = () => scrollBy(-cardStep() * 2);
-    const scrollNext = () => scrollBy(cardStep() * 2);
+    const scrollPrev = () => track.scrollBy({ left: -cardStep(), behavior: 'smooth' });
+    const scrollNext = () => track.scrollBy({ left:  cardStep(), behavior: 'smooth' });
 
-    // ── Actualizar estado de flechas ────────────────────────────────────
     const updateArrows = () => {
       if (!btnPrev || !btnNext) return;
       btnPrev.disabled = track.scrollLeft <= 4;
@@ -75,36 +109,31 @@
     };
 
     // ── Autoplay ────────────────────────────────────────────────────────
-    const stopAuto = () => {
-      clearInterval(autoId);
-      autoId = null;
-    };
-
+    const stopAuto  = () => { clearInterval(autoId); autoId = null; };
     const startAuto = () => {
-      if (prefersReducedMotion() || cards.length < 3) return;
+      if (prefersReducedMotion() || cards.length < 4) return;
       if (autoId) return;
       autoId = setInterval(() => {
-        // Si llegó al final, vuelve al inicio
         const atEnd = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
         if (atEnd) {
           track.scrollTo({ left: 0, behavior: 'smooth' });
         } else {
           scrollNext();
         }
-      }, 3500);
+      }, 3800);
     };
 
     const pauseThenResume = () => {
       stopAuto();
       clearTimeout(resumeTimer);
-      resumeTimer = setTimeout(startAuto, 2000);
+      resumeTimer = setTimeout(startAuto, 2500);
     };
 
     // ── Flechas ─────────────────────────────────────────────────────────
     btnPrev?.addEventListener('click', () => { pauseThenResume(); scrollPrev(); });
     btnNext?.addEventListener('click', () => { pauseThenResume(); scrollNext(); });
 
-    // ── Drag con pointer events ──────────────────────────────────────────
+    // ── Drag ────────────────────────────────────────────────────────────
     track.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       isDragging  = true;
@@ -112,6 +141,7 @@
       startScroll = track.scrollLeft;
       guard.reset();
       track.setPointerCapture(e.pointerId);
+      track.classList.add('is-dragging');
       stopAuto();
     });
 
@@ -126,6 +156,7 @@
     const endDrag = () => {
       if (!isDragging) return;
       isDragging = false;
+      track.classList.remove('is-dragging');
       pauseThenResume();
     };
 
@@ -133,26 +164,25 @@
     track.addEventListener('pointercancel',      endDrag);
     track.addEventListener('lostpointercapture', endDrag);
 
-    // ── Prevenir navegación en click si fue drag ─────────────────────────
     track.addEventListener('click', (e) => {
       if (!guard.wasDrag()) return;
       e.preventDefault();
       e.stopPropagation();
     }, true);
 
-    // ── Scroll listener → actualizar flechas ────────────────────────────
-    let rafScroll = 0;
+    // ── Scroll listener ──────────────────────────────────────────────────
+    let rafId = 0;
     track.addEventListener('scroll', () => {
-      if (rafScroll) return;
-      rafScroll = requestAnimationFrame(() => { rafScroll = 0; updateArrows(); });
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => { rafId = 0; updateArrows(); });
     }, { passive: true });
 
-    // ── Pausa hover ─────────────────────────────────────────────────────
+    // ── Pausa hover / focus ──────────────────────────────────────────────
     track.addEventListener('mouseenter', stopAuto);
     track.addEventListener('mouseleave', startAuto);
-    track.addEventListener('touchstart', stopAuto, { passive: true });
-    track.addEventListener('focusin',    stopAuto);
-    track.addEventListener('focusout',   pauseThenResume);
+    track.addEventListener('touchstart',  stopAuto, { passive: true });
+    track.addEventListener('focusin',     stopAuto);
+    track.addEventListener('focusout',    pauseThenResume);
 
     // Init
     updateArrows();
@@ -160,28 +190,25 @@
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  // 2. CARRUSEL OFERTAS
+  // 4. CARRUSEL OFERTAS
   // ════════════════════════════════════════════════════════════════════════
   function setupOfertasCarousel() {
-    const list     = document.getElementById('ofertasList');
-    const viewport = document.getElementById('ofertasViewport');
-    const btnPrev  = document.getElementById('ofertaArrowPrev');
-    const btnNext  = document.getElementById('ofertaArrowNext');
+    const list     = $('#ofertasList');
+    const viewport = $('#ofertasViewport');
+    const btnPrev  = $('#ofertaArrowPrev');
+    const btnNext  = $('#ofertaArrowNext');
     if (!list || !viewport) return;
 
     const cards = Array.from(list.querySelectorAll('.product-card'));
     if (!cards.length) return;
 
     let page        = 0;
-    let perPage     = 2;
+    let perPage     = 1;
     let autoId      = null;
     let resumeTimer = null;
 
-    const calcPerPage = () => {
-      return window.innerWidth <= 480 ? 1 : 2;
-    };
-
-    const totalPages = () => Math.ceil(cards.length / perPage);
+    const calcPerPage = () => window.innerWidth <= 1100 ? 1 : 1;
+    const totalPages  = () => Math.ceil(cards.length / perPage);
 
     const render = () => {
       perPage = calcPerPage();
@@ -189,14 +216,13 @@
       const end   = start + perPage;
 
       cards.forEach((card, i) => {
-        card.style.display = (i >= start && i < end) ? 'flex' : 'none';
+        card.style.display = (i >= start && i < end) ? '' : 'none';
       });
 
       const tp = totalPages();
       if (btnPrev) btnPrev.disabled = page === 0;
       if (btnNext) btnNext.disabled = page >= tp - 1;
 
-      // Ocultar nav si no es necesaria
       const showNav = tp > 1;
       if (btnPrev) btnPrev.style.visibility = showNav ? '' : 'hidden';
       if (btnNext) btnNext.style.visibility = showNav ? '' : 'hidden';
@@ -206,25 +232,22 @@
       page = (page + 1) >= totalPages() ? 0 : page + 1;
       render();
     };
-
     const prev = () => {
       page = (page - 1) < 0 ? totalPages() - 1 : page - 1;
       render();
     };
 
-    const stopAuto = () => { clearInterval(autoId); autoId = null; };
-
+    const stopAuto  = () => { clearInterval(autoId); autoId = null; };
     const startAuto = () => {
       if (prefersReducedMotion()) return;
       if (cards.length <= perPage) return;
       if (autoId) return;
-      autoId = setInterval(next, 5500);
+      autoId = setInterval(next, 5000);
     };
-
     const pauseThenResume = () => {
       stopAuto();
       clearTimeout(resumeTimer);
-      resumeTimer = setTimeout(startAuto, 2000);
+      resumeTimer = setTimeout(startAuto, 2500);
     };
 
     btnPrev?.addEventListener('click', () => { pauseThenResume(); prev(); });
@@ -232,7 +255,7 @@
 
     list.addEventListener('mouseenter', stopAuto);
     list.addEventListener('mouseleave', startAuto);
-    list.addEventListener('touchstart', stopAuto, { passive: true });
+    list.addEventListener('touchstart',  stopAuto, { passive: true });
 
     let resizeTimer = 0;
     window.addEventListener('resize', () => {
@@ -245,11 +268,57 @@
   }
 
   // ════════════════════════════════════════════════════════════════════════
+  // 5. ANIMACIONES DE ENTRADA
+  // ════════════════════════════════════════════════════════════════════════
+  function setupEntranceAnimations() {
+    if (prefersReducedMotion()) return;
+    if (!('IntersectionObserver' in window)) return;
+
+    // Inyectar keyframe si no existe
+    if (!document.getElementById('af-fadeup-style')) {
+      const style = document.createElement('style');
+      style.id = 'af-fadeup-style';
+      style.textContent = `
+        @keyframes afFadeUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .af-anim-hidden { opacity: 0; }
+        .af-anim-visible {
+          animation: afFadeUp 0.55s cubic-bezier(0.16,1,0.3,1) both;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    const targets = document.querySelectorAll('.hero-band, .cat-section, .products-panel');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          el.classList.remove('af-anim-hidden');
+          el.classList.add('af-anim-visible');
+          el.style.animationDelay = `${i * 80}ms`;
+          observer.unobserve(el);
+        }
+      });
+    }, { threshold: 0.08 });
+
+    targets.forEach(el => {
+      el.classList.add('af-anim-hidden');
+      observer.observe(el);
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
   // INIT
   // ════════════════════════════════════════════════════════════════════════
   function init() {
+    setupHeaderScroll();
     setupCatCarousel();
     setupOfertasCarousel();
+    setupCardTilt();
+    setupEntranceAnimations();
   }
 
   if (document.readyState === 'loading') {

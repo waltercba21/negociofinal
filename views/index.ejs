@@ -12,7 +12,53 @@
   <main class="index-main" id="main-content">
 
     <!-- ══════════════════════════════════════════════
-         HERO CARRUSEL — CATEGORÍAS
+         HERO BAND
+    ═══════════════════════════════════════════════ -->
+    <section class="hero-band" aria-label="Bienvenida">
+      <div class="hero-band__grid">
+        <div class="hero-band__copy">
+          <div class="hero-band__badge">
+            <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+            Iluminación Automotriz Premium
+          </div>
+          <h1 class="hero-band__title">
+            Faros y Ópticas<br>
+            <em>para tu vehículo</em>
+          </h1>
+          <p class="hero-band__sub">
+            El mayor catálogo de iluminación automotriz en Córdoba.<br>
+            LED, Xenón, Halógenas y más — con stock inmediato.
+          </p>
+          <div class="hero-band__actions">
+            <a href="/productos" class="hero-btn hero-btn--primary">
+              <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+              Ver Productos
+            </a>
+            <a href="/productos/ofertas" class="hero-btn hero-btn--ghost">
+              <i class="fa-solid fa-tag" aria-hidden="true"></i>
+              Ofertas del día
+            </a>
+          </div>
+        </div>
+        <div class="hero-stats" aria-label="Datos de la tienda">
+          <div class="hero-stat">
+            <span class="hero-stat__num">500<em>+</em></span>
+            <span class="hero-stat__label">Productos</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat__num">10<em>+</em></span>
+            <span class="hero-stat__label">Años</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat__num">CBA</span>
+            <span class="hero-stat__label">Argentina</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════
+         CATEGORÍAS
     ═══════════════════════════════════════════════ -->
     <section class="cat-section" aria-label="Categorías de productos">
 
@@ -42,7 +88,7 @@
                 <div class="cat-card__img-wrap">
                   <img class="cat-card__img" src="/uploads/productos/faros-led1.webp" alt="Faros Auxiliares LED" loading="lazy">
                 </div>
-                <div class="cat-card__label"><span>Faros Auxiliares LED</span></div>
+                <div class="cat-card__label"><span>Faros Aux LED</span></div>
               </a>
             </div>
 
@@ -78,7 +124,7 @@
                 <div class="cat-card__img-wrap">
                   <img class="cat-card__img" src="/uploads/productos/lamparas1.webp" alt="Lámparas Halógenas" loading="lazy">
                 </div>
-                <div class="cat-card__label"><span>Lámparas Halógenas</span></div>
+                <div class="cat-card__label"><span>Halógenas</span></div>
               </a>
             </div>
 
@@ -132,7 +178,7 @@
                 <div class="cat-card__img-wrap">
                   <img class="cat-card__img" src="/uploads/productos/5.webp" alt="Espejos Universales" loading="lazy">
                 </div>
-                <div class="cat-card__label"><span>Espejos Universales</span></div>
+                <div class="cat-card__label"><span>Espejos Univ.</span></div>
               </a>
             </div>
 
@@ -141,7 +187,7 @@
                 <div class="cat-card__img-wrap">
                   <img class="cat-card__img" src="/uploads/productos/6.webp" alt="Vidrios de Espejos" loading="lazy">
                 </div>
-                <div class="cat-card__label"><span>Vidrios de Espejos</span></div>
+                <div class="cat-card__label"><span>Vidrios Espejos</span></div>
               </a>
             </div>
 
@@ -150,7 +196,7 @@
                 <div class="cat-card__img-wrap">
                   <img class="cat-card__img" src="/uploads/productos/4.webp" alt="Vidrios de Ópticas" loading="lazy">
                 </div>
-                <div class="cat-card__label"><span>Vidrios de Ópticas</span></div>
+                <div class="cat-card__label"><span>Vidrios Ópticas</span></div>
               </a>
             </div>
 
@@ -169,11 +215,11 @@
     </section>
 
     <!-- ══════════════════════════════════════════════
-         PRODUCTOS — ÚLTIMOS + OFERTAS
+         GRID: ÚLTIMOS AGREGADOS + OFERTAS
     ═══════════════════════════════════════════════ -->
     <div class="products-grid-layout">
 
-      <!-- ── ÚLTIMOS AGREGADOS ────────────────────── -->
+      <!-- Últimos Agregados -->
       <section class="products-panel" aria-label="Últimos productos agregados">
 
         <div class="products-panel__head">
@@ -223,7 +269,7 @@
 
       </section>
 
-      <!-- ── OFERTAS ───────────────────────────────── -->
+      <!-- Ofertas -->
       <section class="products-panel products-panel--ofertas" aria-label="Productos en oferta">
 
         <div class="products-panel__head">
@@ -237,13 +283,6 @@
         </div>
 
         <div class="ofertas-carousel">
-          <button class="ofertas-carousel__arrow ofertas-carousel__arrow--prev"
-                  id="ofertaArrowPrev"
-                  type="button"
-                  aria-label="Oferta anterior">
-            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-          </button>
-
           <div class="ofertas-carousel__viewport" id="ofertasViewport">
             <div class="product-list product-list--ofertas" id="ofertasList">
               <% if (productosOferta && productosOferta.length > 0) { %>
@@ -281,11 +320,22 @@
               <% } %>
             </div>
           </div>
+        </div>
 
-          <button class="ofertas-carousel__arrow ofertas-carousel__arrow--next"
+        <!-- Nav flechas ofertas (se posicionan abajo del panel) -->
+        <div class="ofertas-nav">
+          <button class="cat-carousel__arrow ofertas-carousel__arrow ofertas-carousel__arrow--prev"
+                  id="ofertaArrowPrev"
+                  type="button"
+                  aria-label="Oferta anterior"
+                  style="position:static;transform:none;">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </button>
+          <button class="cat-carousel__arrow ofertas-carousel__arrow ofertas-carousel__arrow--next"
                   id="ofertaArrowNext"
                   type="button"
-                  aria-label="Siguiente oferta">
+                  aria-label="Siguiente oferta"
+                  style="position:static;transform:none;">
             <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
           </button>
         </div>
@@ -295,6 +345,7 @@
     </div><!-- /.products-grid-layout -->
 
   </main>
+
   <script src="/js/pages/index.js" defer></script>
   <%- include('./layouts/footer.ejs') %>
 
