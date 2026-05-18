@@ -1049,3 +1049,276 @@ body.body-index {
   .hero-band__title { font-size: 1.65rem; }
   .hero-btn { height: 42px; padding: 0 18px; font-size: .82rem; }
 }
+/* ════════════════════════════════════════════════
+   AUTOFAROS — Home fixes v7.1
+   public/css/pages/index-fixes.css
+
+   Correcciones puntuales de contraste:
+   1. Hero band — texto invisible sobre fondo similar
+   2. Panel Ofertas — demasiado oscuro
+   3. Panel Últimos Agregados — demasiado oscuro
+   4. Flechas del carrusel — invisibles
+   ════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════
+   1. HERO BAND — contraste de texto
+   Problema: fondo azul oscuro + texto gris claro
+   → casi sin diferencia de luminosidad
+   ══════════════════════════════════════════════ */
+.hero-band {
+  background: linear-gradient(
+    135deg,
+    rgba(27,61,114,.75) 0%,
+    rgba(20,45,90,.80) 50%,
+    rgba(10,22,40,.60) 100%
+  ) !important;
+  border: 1px solid rgba(27,61,114,.65) !important;
+}
+
+/* Título principal — blanco puro con sombra para lectura */
+.hero-band__title {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,.6), 0 0 40px rgba(0,0,0,.4);
+}
+
+.hero-band__title em {
+  color: #FF5C52 !important;
+  text-shadow: 0 0 28px rgba(232,39,26,.55), 0 2px 8px rgba(0,0,0,.5);
+}
+
+/* Subtítulo — gris claro legible */
+.hero-band__sub {
+  color: #C8D8E8 !important;
+}
+
+/* Badge rojo — más visible */
+.hero-band__badge {
+  background: rgba(232,39,26,.25) !important;
+  border-color: rgba(232,39,26,.6) !important;
+  color: #FF8C84 !important;
+}
+
+/* Stats — fondo con más contraste */
+.hero-stat {
+  background: rgba(10,22,40,.55) !important;
+  border: 1px solid rgba(27,61,114,.6) !important;
+}
+
+.hero-stat__num {
+  color: #FFFFFF !important;
+  text-shadow: 0 0 20px rgba(27,61,114,.5);
+}
+
+.hero-stat__num em {
+  color: #FF5C52 !important;
+}
+
+.hero-stat__label {
+  color: #8899AA !important;
+}
+
+/* Botón "Ofertas del día" ghost — más visible */
+.hero-btn--ghost {
+  background: rgba(255,255,255,.1) !important;
+  border: 1.5px solid rgba(255,255,255,.3) !important;
+  color: #E0EAF4 !important;
+}
+.hero-btn--ghost:hover {
+  background: rgba(255,255,255,.18) !important;
+  border-color: rgba(255,255,255,.5) !important;
+  color: #FFFFFF !important;
+}
+
+/* ══════════════════════════════════════════════
+   2. PANEL OFERTAS — más contraste con el fondo
+   Problema: fondo casi negro sin diferenciación
+   ══════════════════════════════════════════════ */
+.products-panel--ofertas {
+  background: rgba(30,10,12,.82) !important;
+  border: 1px solid rgba(232,39,26,.35) !important;
+  box-shadow:
+    0 0 0 1px rgba(232,39,26,.08),
+    0 20px 50px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,100,80,.06) !important;
+}
+
+/* Título del panel Ofertas */
+.products-panel--ofertas .products-panel__title {
+  color: #F0F4F8 !important;
+}
+
+/* Card de oferta individual */
+.product-card--oferta {
+  background: rgba(35,12,14,.75) !important;
+  border: 1px solid rgba(232,39,26,.28) !important;
+}
+
+/* Imagen de oferta — fondo más claro para que se vea el producto */
+.product-card--oferta .product-card__img-wrap {
+  background: linear-gradient(180deg, #1A0A0A 0%, #120808 100%) !important;
+  border-bottom: 1px solid rgba(232,39,26,.18) !important;
+}
+
+/* Nombre del producto oferta */
+.product-card--oferta .product-card__nombre {
+  color: #F0F4F8 !important;
+  font-size: 1rem !important;
+}
+
+/* Categoría oferta */
+.product-card--oferta .product-card__categoria {
+  color: #E87070 !important;
+}
+
+/* Precio oferta */
+.product-card--oferta .product-card__precio {
+  color: #FF6B62 !important;
+  font-size: 1.3rem !important;
+}
+
+/* ══════════════════════════════════════════════
+   3. PANEL ÚLTIMOS AGREGADOS — más contraste
+   Problema: fondo azul muy oscuro, texto ilegible
+   ══════════════════════════════════════════════ */
+.products-panel:not(.products-panel--ofertas) {
+  background: rgba(13,28,55,.80) !important;
+  border: 1px solid rgba(27,61,114,.35) !important;
+  box-shadow:
+    0 0 0 1px rgba(27,61,114,.08),
+    0 20px 50px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(100,150,255,.05) !important;
+}
+
+/* Título */
+.products-panel:not(.products-panel--ofertas) .products-panel__title {
+  color: #F0F4F8 !important;
+}
+
+/* Filas de producto */
+.product-card {
+  background: rgba(20,40,80,.60) !important;
+  border: 1px solid rgba(27,61,114,.30) !important;
+}
+
+.product-card:hover {
+  background: rgba(27,55,110,.55) !important;
+  border-color: rgba(42,98,200,.55) !important;
+}
+
+/* Imagen del producto */
+.product-card__img-wrap {
+  background: linear-gradient(180deg, #0D1E3F 0%, #091628 100%) !important;
+  border: 1px solid rgba(27,61,114,.25) !important;
+}
+
+/* Nombre del producto */
+.product-card__nombre {
+  color: #E8F0F8 !important;
+}
+
+/* Categoría */
+.product-card__categoria {
+  color: #7AAAD8 !important;
+}
+
+/* Precio */
+.product-card__precio {
+  color: #5BADF0 !important;
+}
+
+/* ══════════════════════════════════════════════
+   4. FLECHAS DEL CARRUSEL — completamente visibles
+   Problema: fondo oscuro + ícono oscuro = invisible
+   ══════════════════════════════════════════════ */
+.cat-carousel__arrow,
+.ofertas-carousel__arrow {
+  /* Fondo con alto contraste */
+  background: rgba(27,61,114,.85) !important;
+  border: 1.5px solid rgba(42,98,200,.8) !important;
+  color: #FFFFFF !important;
+
+  /* Sombra para que "flote" sobre el carrusel */
+  box-shadow:
+    0 0 0 3px rgba(10,22,40,.6),
+    0 8px 24px rgba(0,0,0,.6),
+    0 0 20px rgba(27,61,114,.4) !important;
+}
+
+/* Ícono explícitamente blanco */
+.cat-carousel__arrow i,
+.ofertas-carousel__arrow i {
+  color: #FFFFFF !important;
+  font-size: 1rem !important;
+  opacity: 1 !important;
+}
+
+/* Hover — rojo acción para mayor impacto */
+.cat-carousel__arrow:hover,
+.ofertas-carousel__arrow:hover {
+  background: var(--af-rojo, #E8271A) !important;
+  border-color: #FF4438 !important;
+  color: #FFFFFF !important;
+  box-shadow:
+    0 0 0 3px rgba(10,22,40,.6),
+    0 8px 28px rgba(0,0,0,.5),
+    0 0 24px rgba(232,39,26,.5) !important;
+}
+
+.cat-carousel__arrow:hover i,
+.ofertas-carousel__arrow:hover i {
+  color: #FFFFFF !important;
+}
+
+/* Disabled */
+.cat-carousel__arrow:disabled,
+.ofertas-carousel__arrow:disabled {
+  background: rgba(15,30,55,.5) !important;
+  border-color: rgba(27,61,114,.2) !important;
+  color: rgba(255,255,255,.25) !important;
+  box-shadow: none !important;
+  opacity: .45 !important;
+}
+
+/* ══════════════════════════════════════════════
+   5. SECCIÓN CATEGORÍAS — separación del fondo
+   ══════════════════════════════════════════════ */
+.cat-section {
+  background: rgba(13,26,52,.78) !important;
+  border: 1px solid rgba(27,61,114,.30) !important;
+}
+
+/* Título "Explorá" */
+.cat-section__title {
+  color: #F0F4F8 !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+
+/* Cards de categoría — fondo diferenciado del panel */
+.cat-card__link {
+  background: rgba(10,25,55,.90) !important;
+  border: 1px solid rgba(27,61,114,.40) !important;
+}
+
+.cat-card__link:hover {
+  border-color: rgba(42,98,200,.7) !important;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,.06) inset,
+    0 20px 50px rgba(0,0,0,.6),
+    0 0 30px rgba(27,61,114,.4) !important;
+}
+
+/* Área de imagen de la card */
+.cat-card__img-wrap {
+  background: linear-gradient(180deg, #0D1E3F 60%, #091628 100%) !important;
+}
+
+/* Label de la card */
+.cat-card__label {
+  background: linear-gradient(135deg, #0D1E3F 0%, #091628 100%) !important;
+  color: #C0D4EC !important;
+  border-top: 1px solid rgba(27,61,114,.4) !important;
+}
+
+.cat-card__link:hover .cat-card__label {
+  color: #FFFFFF !important;
+}
