@@ -3,8 +3,11 @@
         data-is-admin="<%= isAdminUser ? 'true' : 'false' %>"
         role="banner">
 
- <a href="<%= isAdminUser ? '/administracion' : '/' %>" class="site-header__logo" aria-label="AUTOFAROS — Inicio">
-  <img src="/uploads/productos/logo.png?v=<%= Date.now() %>" alt="AUTOFAROS" width="500" height="auto" loading="eager" />
+<a href="<%= isAdminUser ? '/administracion' : '/' %>" class="site-header__logo" aria-label="AUTOFAROS — Inicio">
+  <img src="/uploads/productos/logo.png?v=<%= Date.now() %>" 
+       alt="AUTOFAROS" 
+       style="height: 48px; width: auto;" 
+       loading="eager" />
 </a>
   <!-- ── BUSCADOR (solo usuarios comunes) ── -->
   <% if (!isAdminUser) { %>
