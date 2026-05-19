@@ -209,15 +209,7 @@
                     <span>Ver aplicaciones</span>
                   </button>
                 <% } %>
-                  <% if (descAplicSSR && !tieneAplicSSR) { %>
-  <button type="button"
-    class="btn-descripcion"
-    data-titulo="<%= producto.nombre %>"
-    data-descripcion='<%- JSON.stringify(descAplicSSR) %>'>
-    <i class="fa-solid fa-align-left"></i>
-    <span>Ver descripción</span>
-  </button>
-<% } %>
+
                 <!-- Admin: Proveedor -->
                 <% if (isAdminUser) { %>
                   <div class="pcard__admin">

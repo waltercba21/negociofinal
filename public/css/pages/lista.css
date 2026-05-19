@@ -467,16 +467,16 @@
 
 .pcard__nombre {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--lista-text) !important;
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 46px;
+  min-height: 62px;
 }
 
 .pcard__precio-row {
@@ -992,13 +992,12 @@
 
 /* Nombre: mejor bloque visual */
 .pcard__nombre {
-  min-height: 52px;
+  min-height: 62px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
 /* =========================
    PRECIO
    ========================= */
@@ -1413,38 +1412,4 @@
     min-height: 42px;
     font-size: 13px;
   }
-}
-.btn-descripcion {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 9px 14px;
-  border-radius: 12px;
-  border: 1px solid #cbd8ea !important;
-  background: #f8fafc !important;
-  color: var(--lista-brand) !important;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 900;
-  cursor: pointer;
-  transition: background .2s, color .2s, border-color .2s, transform .15s;
-  width: 100%;
-}
-
-.btn-descripcion:hover {
-  border-color: var(--lista-brand) !important;
-  background: #eef6ff !important;
-  color: var(--lista-brand) !important;
-  transform: translateY(-1px);
-}
-
-.af-descripcion-text {
-  margin: 0;
-  white-space: pre-line;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  line-height: 1.55;
-  color: var(--lista-text-2) !important;
 }
