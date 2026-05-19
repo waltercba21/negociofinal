@@ -1,6 +1,6 @@
 /**
- * AUTOFAROS — Home / Index compatible con index.ejs actual
- * public/js/pages/index.js
+ * AUTOFAROS — Home / Index
+ * Carruseles robustos por transform, sin depender de scrollWidth.
  */
 (() => {
   'use strict';
@@ -12,55 +12,67 @@
     window.open('https://maps.app.goo.gl/c6bik6TL7uBQP3KZ8', '_blank');
   };
 
+  function getPerView(container, cardWidth) {
+    const width = container.clientWidth || 1;
+    return Math.max(1, Math.floor(width / cardWidth));
+  }
+
   function setupCatCarousel() {
     const track = document.getElementById('catTrack');
     const btnPrev = document.getElementById('catArrowPrev');
     const btnNext = document.getElementById('catArrowNext');
 
-    if (!track) return;
+    if (!track || !btnPrev || !btnNext) return;
 
     const cards = Array.from(track.querySelectorAll('.cat-card'));
-    if (!cards.length) return;
+    if (cards.length <= 1) return;
 
+    const viewport = track.closest('.cat-track-outer') || track.parentElement;
+
+    let index = 0;
     let autoId = null;
     let resumeTimer = null;
-    let isDragging = false;
     let startX = 0;
-    let startScroll = 0;
-    let dragDistance = 0;
+    let dragX = 0;
+    let isDragging = false;
 
     const getGap = () => parseInt(getComputedStyle(track).gap, 10) || 18;
-    const getStep = () => {
-      const firstCard = cards[0];
-      return firstCard ? firstCard.offsetWidth + getGap() : 220;
+
+    const getCardStep = () => {
+      const card = cards[0];
+      return (card?.getBoundingClientRect().width || 184) + getGap();
     };
 
-    const canScroll = () => track.scrollWidth > track.clientWidth + 4;
-
-    const updateArrows = () => {
-      if (!btnPrev || !btnNext) return;
-
-      if (!canScroll()) {
-        btnPrev.disabled = true;
-        btnNext.disabled = true;
-        return;
-      }
-
-      btnPrev.disabled = track.scrollLeft <= 4;
-      btnNext.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
+    const getMaxIndex = () => {
+      const perView = getPerView(viewport, getCardStep());
+      return Math.max(0, cards.length - perView);
     };
 
-    const scrollToLeft = (left) => {
-      track.scrollTo({ left, behavior: 'smooth' });
-      setTimeout(updateArrows, 280);
+    const render = (withTransition = true) => {
+      const max = getMaxIndex();
+      index = Math.max(0, Math.min(index, max));
+
+      track.style.transition = withTransition ? 'transform 280ms cubic-bezier(.16,1,.3,1)' : 'none';
+      track.style.transform = `translateX(${-index * getCardStep()}px)`;
+
+      btnPrev.disabled = index <= 0;
+      btnNext.disabled = index >= max;
+
+      const show = max > 0;
+      btnPrev.style.visibility = show ? 'visible' : 'hidden';
+      btnNext.style.visibility = show ? 'visible' : 'hidden';
     };
 
-    const scrollPrev = () => {
-      scrollToLeft(track.scrollLeft - getStep() * 2);
+    const next = () => {
+      const max = getMaxIndex();
+      index = index >= max ? 0 : index + 1;
+      render();
     };
 
-    const scrollNext = () => {
-      scrollToLeft(track.scrollLeft + getStep() * 2);
+    const prev = () => {
+      const max = getMaxIndex();
+      index = index <= 0 ? max : index - 1;
+      render();
     };
 
     const stopAuto = () => {
@@ -70,59 +82,62 @@
 
     const startAuto = () => {
       if (prefersReducedMotion()) return;
-      if (!canScroll()) return;
+      if (getMaxIndex() <= 0) return;
       if (autoId) return;
-
-      autoId = setInterval(() => {
-        const atEnd = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
-        if (atEnd) {
-          scrollToLeft(0);
-        } else {
-          scrollNext();
-        }
-      }, 3500);
+      autoId = setInterval(next, 3500);
     };
 
     const pauseThenResume = () => {
       stopAuto();
       clearTimeout(resumeTimer);
-      resumeTimer = setTimeout(startAuto, 2200);
+      resumeTimer = setTimeout(startAuto, 2300);
     };
 
-    btnPrev?.addEventListener('click', (e) => {
+    btnPrev.addEventListener('click', (e) => {
       e.preventDefault();
       pauseThenResume();
-      scrollPrev();
+      prev();
     });
 
-    btnNext?.addEventListener('click', (e) => {
+    btnNext.addEventListener('click', (e) => {
       e.preventDefault();
       pauseThenResume();
-      scrollNext();
+      next();
     });
 
     track.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+
       isDragging = true;
       startX = e.clientX;
-      startScroll = track.scrollLeft;
-      dragDistance = 0;
+      dragX = 0;
       stopAuto();
+
+      track.style.transition = 'none';
       track.setPointerCapture?.(e.pointerId);
     });
 
     track.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
-      const dx = e.clientX - startX;
-      dragDistance = Math.max(dragDistance, Math.abs(dx));
-      track.scrollLeft = startScroll - dx;
-      updateArrows();
+
+      dragX = e.clientX - startX;
+      track.style.transform = `translateX(${(-index * getCardStep()) + dragX}px)`;
+
       if (e.pointerType !== 'mouse') e.preventDefault();
     }, { passive: false });
 
     const endDrag = () => {
       if (!isDragging) return;
+
       isDragging = false;
+
+      if (Math.abs(dragX) > 45) {
+        if (dragX < 0) next();
+        else prev();
+      } else {
+        render();
+      }
+
       pauseThenResume();
     };
 
@@ -131,22 +146,20 @@
     track.addEventListener('lostpointercapture', endDrag);
 
     track.addEventListener('click', (e) => {
-      if (dragDistance <= 8) return;
+      if (Math.abs(dragX) <= 8) return;
       e.preventDefault();
       e.stopPropagation();
     }, true);
 
-    track.addEventListener('scroll', updateArrows, { passive: true });
     track.addEventListener('mouseenter', stopAuto);
     track.addEventListener('mouseleave', startAuto);
-    track.addEventListener('touchstart', stopAuto, { passive: true });
 
     window.addEventListener('resize', () => {
-      updateArrows();
+      render(false);
       startAuto();
     });
 
-    updateArrows();
+    render(false);
     startAuto();
   }
 
@@ -155,9 +168,11 @@
     const viewport = document.getElementById('ofertasViewport');
     const btnPrev = document.getElementById('ofertaArrowPrev');
     const btnNext = document.getElementById('ofertaArrowNext');
-    const dotsWrap = document.getElementById('ofertaDots');
 
-    if (!track) return;
+    // OJO: en el EJS está en plural: ofertasDots
+    const dotsWrap = document.getElementById('ofertasDots');
+
+    if (!track || !viewport || !btnPrev || !btnNext) return;
 
     const cards = Array.from(track.querySelectorAll('.oferta-card'));
     if (!cards.length) return;
@@ -174,18 +189,21 @@
       if (!dotsWrap) return;
 
       dotsWrap.innerHTML = '';
+
       if (totalPages() <= 1) return;
 
       for (let i = 0; i < totalPages(); i++) {
         const dot = document.createElement('button');
         dot.type = 'button';
         dot.className = 'oferta-dot' + (i === page ? ' is-active' : '');
-        dot.setAttribute('aria-label', `Ver ofertas ${i + 1}`);
+        dot.setAttribute('aria-label', `Ver grupo de ofertas ${i + 1}`);
+
         dot.addEventListener('click', () => {
           page = i;
           pauseThenResume();
           render();
         });
+
         dotsWrap.appendChild(dot);
       }
     };
@@ -198,21 +216,16 @@
       const start = page * perPage;
       const end = start + perPage;
 
-      cards.forEach((card, index) => {
-        card.style.display = index >= start && index < end ? 'flex' : 'none';
+      cards.forEach((card, i) => {
+        card.style.display = i >= start && i < end ? 'flex' : 'none';
       });
 
       const hasPages = totalPages() > 1;
 
-      if (btnPrev) {
-        btnPrev.disabled = !hasPages;
-        btnPrev.style.visibility = hasPages ? 'visible' : 'hidden';
-      }
-
-      if (btnNext) {
-        btnNext.disabled = !hasPages;
-        btnNext.style.visibility = hasPages ? 'visible' : 'hidden';
-      }
+      btnPrev.disabled = !hasPages;
+      btnNext.disabled = !hasPages;
+      btnPrev.style.visibility = hasPages ? 'visible' : 'hidden';
+      btnNext.style.visibility = hasPages ? 'visible' : 'hidden';
 
       renderDots();
     };
@@ -242,16 +255,16 @@
     const pauseThenResume = () => {
       stopAuto();
       clearTimeout(resumeTimer);
-      resumeTimer = setTimeout(startAuto, 2200);
+      resumeTimer = setTimeout(startAuto, 2300);
     };
 
-    btnPrev?.addEventListener('click', (e) => {
+    btnPrev.addEventListener('click', (e) => {
       e.preventDefault();
       pauseThenResume();
       prev();
     });
 
-    btnNext?.addEventListener('click', (e) => {
+    btnNext.addEventListener('click', (e) => {
       e.preventDefault();
       pauseThenResume();
       next();
@@ -259,7 +272,7 @@
 
     track.addEventListener('mouseenter', stopAuto);
     track.addEventListener('mouseleave', startAuto);
-    viewport?.addEventListener('touchstart', stopAuto, { passive: true });
+    viewport.addEventListener('touchstart', stopAuto, { passive: true });
 
     window.addEventListener('resize', () => {
       page = 0;
@@ -271,14 +284,14 @@
     startAuto();
   }
 
-  function init() {
+  function initIndexPage() {
     setupCatCarousel();
     setupOfertasCarousel();
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', initIndexPage);
   } else {
-    init();
+    initIndexPage();
   }
 })();

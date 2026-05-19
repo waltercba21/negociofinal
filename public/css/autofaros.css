@@ -1947,3 +1947,199 @@ textarea, textarea.form-control { min-height: 110px; padding-top: 12px; padding-
   width: 22px;
   background: #E8271A !important;
 }
+/* ════════════════════════════════════════════════
+   PATCH HEADER LOGUEADO — botones modernos light / 3D
+   Pegar AL FINAL de public/css/autofaros.css
+   ════════════════════════════════════════════════ */
+
+/* Contenedor de acciones */
+.site-header__actions {
+  gap: 10px !important;
+}
+
+/* Saludo usuario */
+.user-greeting {
+  min-height: 42px !important;
+  padding: 5px 12px 5px 6px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #eef4fb 100%) !important;
+  border: 1px solid #cfdbea !important;
+  color: #0A1628 !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.95) inset,
+    0 -2px 0 rgba(10,22,40,.06) inset,
+    0 8px 20px rgba(10,22,40,.10) !important;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease !important;
+}
+
+.user-greeting:hover {
+  transform: translateY(-2px) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e7f0fb 100%) !important;
+  border-color: #1B3D72 !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,1) inset,
+    0 -2px 0 rgba(10,22,40,.08) inset,
+    0 12px 26px rgba(27,61,114,.18) !important;
+}
+
+.user-greeting__avatar {
+  width: 32px !important;
+  height: 32px !important;
+  background: linear-gradient(135deg, #1B3D72 0%, #2452A0 100%) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.25) inset,
+    0 5px 12px rgba(27,61,114,.30) !important;
+}
+
+.user-greeting__name {
+  color: #4A5C70 !important;
+  font-weight: 600 !important;
+}
+
+.user-greeting__name strong {
+  color: #0A1628 !important;
+  font-weight: 800 !important;
+}
+
+/* Botones ícono: carrito, perfil, etc. */
+.action-btn {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 14px !important;
+  color: #1B3D72 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #edf3fa 100%) !important;
+  border: 1px solid #cfdbea !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.95) inset,
+    0 -2px 0 rgba(10,22,40,.06) inset,
+    0 8px 18px rgba(10,22,40,.10) !important;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease !important;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px) !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #2452A0 0%, #1B3D72 100%) !important;
+  border-color: #1B3D72 !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.18) inset,
+    0 -2px 0 rgba(0,0,0,.16) inset,
+    0 12px 28px rgba(27,61,114,.30) !important;
+}
+
+/* Badge del carrito */
+.action-btn__badge {
+  top: -4px !important;
+  right: -4px !important;
+  min-width: 19px !important;
+  height: 19px !important;
+  background: linear-gradient(135deg, #FF3D30 0%, #E8271A 100%) !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 5px 12px rgba(232,39,26,.35) !important;
+}
+
+/* Botón cerrar sesión diferenciado */
+.action-btn--logout {
+  width: auto !important;
+  min-width: 42px !important;
+  padding: 0 14px !important;
+  gap: 8px !important;
+  color: #C01F15 !important;
+  background: linear-gradient(180deg, #fff7f7 0%, #ffecec 100%) !important;
+  border-color: rgba(232,39,26,.25) !important;
+}
+
+.action-btn--logout:hover {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #E8271A 0%, #C01F15 100%) !important;
+  border-color: #E8271A !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.18) inset,
+    0 -2px 0 rgba(0,0,0,.16) inset,
+    0 12px 28px rgba(232,39,26,.32) !important;
+}
+
+/* Texto del logout visible si existe */
+.action-btn--logout .action-btn__label {
+  display: inline !important;
+  font-size: .82rem !important;
+  font-weight: 800 !important;
+  letter-spacing: .02em !important;
+}
+
+/* Botones login/register cuando NO está logueado */
+.btn-auth {
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.85) inset,
+    0 -2px 0 rgba(10,22,40,.07) inset,
+    0 8px 18px rgba(10,22,40,.10) !important;
+}
+
+.btn-auth--login {
+  color: #1B3D72 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #eef4fb 100%) !important;
+  border: 1px solid #c8d6e8 !important;
+}
+
+.btn-auth--login:hover {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #2452A0 0%, #1B3D72 100%) !important;
+  border-color: #1B3D72 !important;
+  transform: translateY(-2px) !important;
+}
+
+.btn-auth--register {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #E8271A 0%, #C01F15 100%) !important;
+  border: 1px solid #E8271A !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.18) inset,
+    0 -2px 0 rgba(0,0,0,.16) inset,
+    0 8px 20px rgba(232,39,26,.28) !important;
+}
+
+.btn-auth--register:hover {
+  background: linear-gradient(135deg, #FF3D30 0%, #E8271A 100%) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.22) inset,
+    0 -2px 0 rgba(0,0,0,.16) inset,
+    0 12px 30px rgba(232,39,26,.36) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .user-greeting {
+    padding: 5px !important;
+  }
+
+  .action-btn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 13px !important;
+  }
+
+  .action-btn--logout .action-btn__label {
+    display: none !important;
+  }
+
+  .action-btn--logout {
+    width: 40px !important;
+    padding: 0 !important;
+  }
+}
