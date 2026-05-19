@@ -1,7 +1,6 @@
 /**
  * AUTOFAROS — index.js
- * - Carrusel categorías: autoplay + seguir mouse izquierda/derecha
- * - Carrusel ofertas: autoplay con dots
+ * Carruseles index robustos
  */
 (() => {
   'use strict';
@@ -13,205 +12,304 @@
   const prefersReducedMotion = () =>
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-  /* ════════════════════════════════
-     1. CARRUSEL CATEGORÍAS
-  ════════════════════════════════ */
   function setupCatCarousel() {
-    const track   = document.getElementById('catTrack');
-    const wrapper = document.querySelector('.cat-carousel__track-wrapper');
-    if (!track || !wrapper) return;
+    const track = document.getElementById('catTrack');
+    const btnPrev = document.getElementById('catArrowPrev');
+    const btnNext = document.getElementById('catArrowNext');
+
+    if (!track || !btnPrev || !btnNext) {
+      console.warn('[index.js] Carrusel categorías: faltan elementos');
+      return;
+    }
 
     const cards = Array.from(track.querySelectorAll('.cat-card'));
-    if (cards.length < 2) return;
 
-    // Forzar que el track se expanda
-    track.style.width    = 'max-content';
-    track.style.minWidth = '100%';
-    wrapper.style.overflow = 'hidden';
+    if (cards.length <= 1) {
+      console.warn('[index.js] Carrusel categorías: no hay suficientes cards');
+      return;
+    }
 
-    let isHovering = false;
-    let mouseDir   = 0;
-    let autoRaf    = null;
-    let mouseRaf   = null;
+    const viewport = track.parentElement;
 
-    const SCROLL_SPEED = 1.2;
-    const MOUSE_SPEED  = 3.0;
+    let index = 0;
+    let autoId = null;
+    let resumeTimer = null;
+    let isDragging = false;
+    let startX = 0;
+    let dragX = 0;
 
-    /* ── Autoplay ── */
-    const autoStep = () => {
-      if (!isHovering) {
-        const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
-        if (wrapper.scrollLeft >= maxScroll - 2) {
-          wrapper.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          wrapper.scrollLeft += SCROLL_SPEED;
-        }
-      }
-      autoRaf = requestAnimationFrame(autoStep);
+    track.style.display = 'flex';
+    track.style.willChange = 'transform';
+    track.style.transition = 'transform 280ms cubic-bezier(.16,1,.3,1)';
+
+    if (viewport) {
+      viewport.style.overflow = 'hidden';
+    }
+
+    const getGap = () => parseInt(getComputedStyle(track).gap, 10) || 18;
+
+    const getStep = () => {
+      const card = cards[0];
+      return (card?.getBoundingClientRect().width || 184) + getGap();
     };
 
-    const startAuto = () => {
-      if (prefersReducedMotion() || autoRaf) return;
-      autoRaf = requestAnimationFrame(autoStep);
+    const getVisibleCount = () => {
+      const viewportWidth = viewport?.clientWidth || track.parentElement?.clientWidth || window.innerWidth;
+      return Math.max(1, Math.floor(viewportWidth / getStep()));
+    };
+
+    const getMaxIndex = () => Math.max(0, cards.length - getVisibleCount());
+
+    const render = (animate = true) => {
+      const max = getMaxIndex();
+
+      if (index < 0) index = 0;
+      if (index > max) index = max;
+
+      track.style.transition = animate ? 'transform 280ms cubic-bezier(.16,1,.3,1)' : 'none';
+      track.style.transform = `translateX(${-index * getStep()}px)`;
+
+      const hasMove = max > 0;
+
+      btnPrev.disabled = !hasMove;
+      btnNext.disabled = !hasMove;
+
+      btnPrev.style.visibility = hasMove ? 'visible' : 'hidden';
+      btnNext.style.visibility = hasMove ? 'visible' : 'hidden';
+    };
+
+    const next = () => {
+      const max = getMaxIndex();
+      index = index >= max ? 0 : index + 1;
+      render(true);
+    };
+
+    const prev = () => {
+      const max = getMaxIndex();
+      index = index <= 0 ? max : index - 1;
+      render(true);
     };
 
     const stopAuto = () => {
-      if (autoRaf) cancelAnimationFrame(autoRaf);
-      autoRaf = null;
+      if (autoId) clearInterval(autoId);
+      autoId = null;
     };
 
-    /* ── Mouse scroll por zona ── */
-    const mouseStep = () => {
-      if (!isHovering || mouseDir === 0) { mouseRaf = null; return; }
-      wrapper.scrollLeft += mouseDir * MOUSE_SPEED;
-      mouseRaf = requestAnimationFrame(mouseStep);
+    const startAuto = () => {
+      if (prefersReducedMotion()) return;
+      if (getMaxIndex() <= 0) return;
+      if (autoId) return;
+
+      autoId = setInterval(next, 3500);
     };
 
-    wrapper.addEventListener('mouseenter', () => { isHovering = true; });
-    wrapper.addEventListener('mouseleave', () => {
-      isHovering = false;
-      mouseDir = 0;
-      if (mouseRaf) { cancelAnimationFrame(mouseRaf); mouseRaf = null; }
+    const pauseThenResume = () => {
+      stopAuto();
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(startAuto, 2300);
+    };
+
+    btnPrev.addEventListener('click', (e) => {
+      e.preventDefault();
+      pauseThenResume();
+      prev();
     });
 
-    wrapper.addEventListener('mousemove', (e) => {
-      const rect  = wrapper.getBoundingClientRect();
-      const ratio = (e.clientX - rect.left) / rect.width;
-
-      if (ratio < 0.3)       mouseDir = -1;
-      else if (ratio > 0.7)  mouseDir =  1;
-      else                   mouseDir =  0;
-
-      if (mouseDir !== 0 && !mouseRaf) {
-        mouseRaf = requestAnimationFrame(mouseStep);
-      }
+    btnNext.addEventListener('click', (e) => {
+      e.preventDefault();
+      pauseThenResume();
+      next();
     });
 
-    /* ── Touch swipe ── */
-    let touchStartX = 0;
-    wrapper.addEventListener('touchstart', (e) => {
-      touchStartX = e.touches[0].clientX;
-    }, { passive: true });
-
-    wrapper.addEventListener('touchmove', (e) => {
-      const dx = touchStartX - e.touches[0].clientX;
-      wrapper.scrollLeft += dx * 0.5;
-    }, { passive: true });
-
-    /* ── Drag con pointer ── */
-    let isDragging    = false;
-    let dragStartX    = 0;
-    let dragStartScroll = 0;
-    let maxMovement   = 0;
-
-    wrapper.addEventListener('pointerdown', (e) => {
+    track.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      isDragging      = true;
-      dragStartX      = e.clientX;
-      dragStartScroll = wrapper.scrollLeft;
-      maxMovement     = 0;
-      wrapper.setPointerCapture(e.pointerId);
+
+      isDragging = true;
+      startX = e.clientX;
+      dragX = 0;
+      stopAuto();
+
+      track.style.transition = 'none';
+      track.setPointerCapture?.(e.pointerId);
     });
 
-    wrapper.addEventListener('pointermove', (e) => {
+    track.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
-      const dx = e.clientX - dragStartX;
-      maxMovement = Math.max(maxMovement, Math.abs(dx));
-      wrapper.scrollLeft = dragStartScroll - dx;
-    });
 
-    const endDrag = () => { isDragging = false; };
-    wrapper.addEventListener('pointerup',          endDrag);
-    wrapper.addEventListener('pointercancel',      endDrag);
-    wrapper.addEventListener('lostpointercapture', endDrag);
+      dragX = e.clientX - startX;
+      track.style.transform = `translateX(${(-index * getStep()) + dragX}px)`;
 
-    wrapper.addEventListener('click', (e) => {
-      if (maxMovement > 8) { e.preventDefault(); e.stopPropagation(); }
+      if (e.pointerType !== 'mouse') e.preventDefault();
+    }, { passive: false });
+
+    const endDrag = () => {
+      if (!isDragging) return;
+
+      isDragging = false;
+
+      if (Math.abs(dragX) > 45) {
+        if (dragX < 0) next();
+        else prev();
+      } else {
+        render(true);
+      }
+
+      pauseThenResume();
+    };
+
+    track.addEventListener('pointerup', endDrag);
+    track.addEventListener('pointercancel', endDrag);
+    track.addEventListener('lostpointercapture', endDrag);
+
+    track.addEventListener('click', (e) => {
+      if (Math.abs(dragX) <= 8) return;
+      e.preventDefault();
+      e.stopPropagation();
     }, true);
 
+    track.addEventListener('mouseenter', stopAuto);
+    track.addEventListener('mouseleave', startAuto);
+
+    window.addEventListener('resize', () => {
+      index = 0;
+      render(false);
+      startAuto();
+    });
+
+    render(false);
     startAuto();
+
+    console.log('[index.js] Carrusel categorías inicializado:', cards.length);
   }
 
-  /* ════════════════════════════════
-     2. CARRUSEL OFERTAS
-  ════════════════════════════════ */
   function setupOfertasCarousel() {
-    const list    = document.getElementById('ofertasList');
+    const track = document.getElementById('ofertasList');
+    const viewport = document.getElementById('ofertasViewport');
     const btnPrev = document.getElementById('ofertaArrowPrev');
     const btnNext = document.getElementById('ofertaArrowNext');
-    if (!list) return;
+    const dotsWrap = document.getElementById('ofertasDots') || document.getElementById('ofertaDots');
 
-    const cards = Array.from(list.querySelectorAll('.product-card'));
-    if (!cards.length) return;
-
-    const perPage     = () => window.innerWidth <= 480 ? 1 : 2;
-    let page          = 0;
-    let autoId        = null;
-
-    // Dots
-    let dotsEl = null;
-    const viewport = document.getElementById('ofertasViewport');
-    if (viewport) {
-      dotsEl = document.createElement('div');
-      dotsEl.className = 'ofertas-dots';
-      viewport.parentNode.insertBefore(dotsEl, viewport.nextSibling);
+    if (!track || !btnPrev || !btnNext) {
+      console.warn('[index.js] Carrusel ofertas: faltan elementos');
+      return;
     }
 
-    const totalPages = () => Math.ceil(cards.length / perPage());
+    const cards = Array.from(track.querySelectorAll('.oferta-card, .product-card'));
 
-    const render = () => {
-      const pp    = perPage();
-      const start = page * pp;
-      const end   = start + pp;
+    if (!cards.length) {
+      console.warn('[index.js] Carrusel ofertas: no hay cards');
+      return;
+    }
 
-      cards.forEach((c, i) => {
-        c.classList.toggle('oferta-visible', i >= start && i < end);
-      });
+    let page = 0;
+    let perPage = 2;
+    let autoId = null;
+    let resumeTimer = null;
 
-      if (btnPrev) btnPrev.disabled = page === 0;
-      if (btnNext) btnNext.disabled = page >= totalPages() - 1;
+    const calcPerPage = () => window.innerWidth <= 768 ? 1 : 2;
+    const totalPages = () => Math.max(1, Math.ceil(cards.length / perPage));
 
-      if (dotsEl) {
-        dotsEl.innerHTML = '';
-        const tp = totalPages();
-        if (tp > 1) {
-          for (let i = 0; i < tp; i++) {
-            const dot = document.createElement('button');
-            dot.className = 'ofertas-dot' + (i === page ? ' active' : '');
-            dot.setAttribute('aria-label', `Página ${i + 1}`);
-            dot.addEventListener('click', () => { page = i; render(); resetAuto(); });
-            dotsEl.appendChild(dot);
-          }
-        }
+    const renderDots = () => {
+      if (!dotsWrap) return;
+
+      dotsWrap.innerHTML = '';
+
+      if (totalPages() <= 1) return;
+
+      for (let i = 0; i < totalPages(); i++) {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'oferta-dot' + (i === page ? ' is-active' : '');
+        dot.setAttribute('aria-label', `Ver grupo de ofertas ${i + 1}`);
+
+        dot.addEventListener('click', () => {
+          page = i;
+          pauseThenResume();
+          render();
+        });
+
+        dotsWrap.appendChild(dot);
       }
     };
 
-    const next = () => { page = (page + 1) >= totalPages() ? 0 : page + 1; render(); };
-    const prev = () => { page = (page - 1) < 0 ? totalPages() - 1 : page - 1; render(); };
+    const render = () => {
+      perPage = calcPerPage();
 
-    const stopAuto  = () => { clearInterval(autoId); autoId = null; };
-    const startAuto = () => {
-      if (prefersReducedMotion() || cards.length <= perPage()) return;
-      if (autoId) return;
-      autoId = setInterval(next, 5000);
+      if (page >= totalPages()) page = 0;
+
+      const start = page * perPage;
+      const end = start + perPage;
+
+      cards.forEach((card, i) => {
+        card.style.display = i >= start && i < end ? 'flex' : 'none';
+      });
+
+      const hasPages = totalPages() > 1;
+
+      btnPrev.disabled = !hasPages;
+      btnNext.disabled = !hasPages;
+
+      btnPrev.style.visibility = hasPages ? 'visible' : 'hidden';
+      btnNext.style.visibility = hasPages ? 'visible' : 'hidden';
+
+      renderDots();
     };
-    const resetAuto = () => { stopAuto(); startAuto(); };
 
-    btnPrev?.addEventListener('click', () => { prev(); resetAuto(); });
-    btnNext?.addEventListener('click', () => { next(); resetAuto(); });
+    const next = () => {
+      page = page + 1 >= totalPages() ? 0 : page + 1;
+      render();
+    };
 
-    list.addEventListener('mouseenter', stopAuto);
-    list.addEventListener('mouseleave', startAuto);
-    list.addEventListener('touchstart',  stopAuto, { passive: true });
+    const prev = () => {
+      page = page - 1 < 0 ? totalPages() - 1 : page - 1;
+      render();
+    };
 
-    let resizeT = 0;
+    const stopAuto = () => {
+      if (autoId) clearInterval(autoId);
+      autoId = null;
+    };
+
+    const startAuto = () => {
+      if (prefersReducedMotion()) return;
+      if (cards.length <= perPage) return;
+      if (autoId) return;
+
+      autoId = setInterval(next, 5200);
+    };
+
+    const pauseThenResume = () => {
+      stopAuto();
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(startAuto, 2300);
+    };
+
+    btnPrev.addEventListener('click', (e) => {
+      e.preventDefault();
+      pauseThenResume();
+      prev();
+    });
+
+    btnNext.addEventListener('click', (e) => {
+      e.preventDefault();
+      pauseThenResume();
+      next();
+    });
+
+    track.addEventListener('mouseenter', stopAuto);
+    track.addEventListener('mouseleave', startAuto);
+    viewport?.addEventListener('touchstart', stopAuto, { passive: true });
+
     window.addEventListener('resize', () => {
-      clearTimeout(resizeT);
-      resizeT = setTimeout(() => { page = 0; render(); startAuto(); }, 150);
+      page = 0;
+      render();
+      startAuto();
     });
 
     render();
     startAuto();
+
+    console.log('[index.js] Carrusel ofertas inicializado:', cards.length);
   }
 
   function init() {
