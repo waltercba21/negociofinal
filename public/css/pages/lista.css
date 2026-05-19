@@ -1482,3 +1482,74 @@
     font-size: 31px !important;
   }
 }
+/* ============================================================
+   FIX FINAL CARD PRODUCTO — nombre, separador y precio
+   ============================================================ */
+
+/* Nombre del producto */
+.pcard__nombre {
+  font-size: 14px !important;
+  line-height: 1.18 !important;
+  color: var(--lista-brand) !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+  margin: 0 !important;
+  padding: 0 0 10px 0 !important;
+
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+
+  text-align: left !important;
+  letter-spacing: .2px !important;
+}
+
+/* Línea divisoria entre nombre y precio */
+.pcard__precio-row {
+  border-top: 1px solid #dbe4ef !important;
+  padding-top: 10px !important;
+  margin-top: 0 !important;
+  margin-bottom: 2px !important;
+
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: auto !important;
+  width: 100% !important;
+}
+
+/* Precio más chico, rojo y centrado */
+.pcard__precio {
+  color: var(--lista-red) !important;
+  font-size: 29px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.5px !important;
+  text-align: center !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+/* Espaciado general más prolijo */
+.pcard__body {
+  gap: 9px !important;
+}
+
+/* Responsive móvil */
+@media (max-width: 480px) {
+  .pcard__nombre {
+    font-size: 13.5px !important;
+    line-height: 1.18 !important;
+    min-height: 49px !important;
+    max-height: 49px !important;
+  }
+
+  .pcard__precio {
+    font-size: 27px !important;
+  }
+
+  .pcard__precio-row {
+    padding-top: 9px !important;
+  }
+}
