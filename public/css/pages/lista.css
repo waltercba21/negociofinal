@@ -1553,3 +1553,67 @@
     padding-top: 9px !important;
   }
 }
+/* ============================================================
+   FIX DEFINITIVO — Separador y precio centrado
+   ============================================================ */
+
+.pcard__precio-row {
+  width: 100% !important;
+  border-top: 2px solid #c6d3e3 !important;
+  padding-top: 11px !important;
+  margin-top: 2px !important;
+  margin-bottom: 4px !important;
+
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+.pcard__precio {
+  width: 100% !important;
+  flex: 0 0 100% !important;
+
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+
+  color: var(--lista-red) !important;
+  font-size: 25px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.3px !important;
+  margin: 0 auto !important;
+  text-align: center !important;
+}
+
+/* Nombre más compacto y prolijo */
+.pcard__nombre {
+  font-size: 13.5px !important;
+  line-height: 1.18 !important;
+  color: var(--lista-brand) !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  margin: 0 !important;
+
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+
+  text-align: left !important;
+  letter-spacing: .15px !important;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .pcard__precio {
+    font-size: 24px !important;
+  }
+
+  .pcard__nombre {
+    font-size: 13px !important;
+    min-height: 47px !important;
+    max-height: 47px !important;
+  }
+}
