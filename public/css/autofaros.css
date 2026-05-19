@@ -1767,3 +1767,183 @@ textarea, textarea.form-control { min-height: 110px; padding-top: 12px; padding-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+/* ════════════════════════════════════════════════
+   AUTOFAROS — PATCH LIGHT HEADER + FOOTER + CAROUSEL
+   Pegar AL FINAL de public/css/autofaros.css
+   o, mejor, al final de header.css/footer.css/index.css según sección.
+   ════════════════════════════════════════════════ */
+
+/* HEADER: fuerza versión clara también cuando el usuario está logueado */
+.site-header,
+.site-header.is-guest,
+.site-header.is-logged,
+.site-header:not(.is-admin) {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  border-bottom: 1px solid #D0DCEA !important;
+  box-shadow: 0 2px 12px rgba(10,22,40,.08) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.site-header::after,
+.site-header.is-guest::after,
+.site-header.is-logged::after,
+.site-header:not(.is-admin)::after {
+  height: 3px !important;
+  background: linear-gradient(90deg, #1B3D72 0%, #2452A0 35%, #E8271A 70%, #FF3D30 100%) !important;
+  opacity: 1 !important;
+}
+
+.site-header:not(.is-admin) .nav-link,
+.site-header.is-logged:not(.is-admin) .nav-link,
+.site-header.is-guest .nav-link,
+.site-header:not(.is-admin) .action-btn,
+.site-header.is-logged:not(.is-admin) .action-btn,
+.site-header:not(.is-admin) .user-greeting__name {
+  color: #4A5C70 !important;
+}
+
+.site-header:not(.is-admin) .nav-link:hover,
+.site-header.is-logged:not(.is-admin) .nav-link:hover,
+.site-header:not(.is-admin) .action-btn:hover {
+  color: #0A1628 !important;
+  background: #EEF2F7 !important;
+  border-color: #C0CEDE !important;
+}
+
+.site-header:not(.is-admin) .nav-link--ofertas,
+.site-header.is-logged:not(.is-admin) .nav-link--ofertas {
+  color: #C01F15 !important;
+}
+
+.site-header:not(.is-admin) .user-greeting:hover {
+  background: rgba(27,61,114,.08) !important;
+  border-color: rgba(27,61,114,.18) !important;
+}
+
+.site-header:not(.is-admin) .user-greeting__name strong {
+  color: #0A1628 !important;
+}
+
+.site-header:not(.is-admin) .search-wrapper__input {
+  background: #F0F4F9 !important;
+  border: 1.5px solid #C8D6E8 !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+.site-header:not(.is-admin) .search-wrapper__input::placeholder {
+  color: #8899AA !important;
+  -webkit-text-fill-color: #8899AA !important;
+}
+
+.site-header:not(.is-admin) .search-wrapper__icon,
+.site-header:not(.is-admin) .search-wrapper__clear {
+  color: #8899AA !important;
+}
+
+.site-header:not(.is-admin) .site-header__hamburger {
+  color: #4A5C70 !important;
+}
+
+.site-header:not(.is-admin) .site-header__hamburger:hover {
+  background: #EEF2F7 !important;
+  color: #0A1628 !important;
+}
+
+/* FOOTER: versión clara institucional */
+.site-footer {
+  margin-top: 80px !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(27,61,114,.08), transparent 28rem),
+    linear-gradient(180deg, #F8FAFC 0%, #EEF2F7 100%) !important;
+  border-top: 1px solid #D0DCEA !important;
+  color: #0A1628 !important;
+  box-shadow: 0 -12px 34px rgba(10,22,40,.06) !important;
+}
+
+.site-footer::before {
+  background: linear-gradient(90deg, #1B3D72, #2452A0, #E8271A) !important;
+  height: 3px !important;
+  width: 100% !important;
+  inset: 0 0 auto 0 !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+.site-footer__inner {
+  border-bottom: 1px solid #D0DCEA !important;
+}
+
+.site-footer__heading {
+  color: #0A1628 !important;
+}
+
+.site-footer__tagline,
+.site-footer__copy,
+.site-footer__dev,
+.footer-nav__link {
+  color: #5E6F83 !important;
+}
+
+.footer-nav__link:hover,
+.site-footer__dev a:hover {
+  color: #1B3D72 !important;
+}
+
+.site-footer__dev a {
+  color: #2452A0 !important;
+}
+
+.social-icons__link {
+  background: #FFFFFF !important;
+  color: #4A5C70 !important;
+  border: 1px solid #D0DCEA !important;
+  box-shadow: 0 6px 16px rgba(10,22,40,.06) !important;
+}
+
+.social-icons__link--instagram:hover,
+.social-icons__link--facebook:hover,
+.social-icons__link--whatsapp:hover,
+.social-icons__link--mapa:hover {
+  color: #FFFFFF !important;
+  border-color: transparent !important;
+}
+
+/* CARRUSEL INDEX: asegura que el track realmente pueda scrollear */
+.cat-track {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-behavior: smooth !important;
+  scrollbar-width: none !important;
+  cursor: grab;
+}
+
+.cat-track.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.cat-track::-webkit-scrollbar {
+  display: none !important;
+}
+
+.cat-card {
+  flex-shrink: 0 !important;
+}
+
+.oferta-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #CBD5E1 !important;
+  border: none;
+  padding: 0;
+  transition: width 140ms ease, background 140ms ease;
+}
+
+.oferta-dot.is-active {
+  width: 22px;
+  background: #E8271A !important;
+}
