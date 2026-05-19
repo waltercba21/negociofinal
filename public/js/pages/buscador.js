@@ -554,6 +554,12 @@ function mostrarProductos(productos) {
         data-aplicaciones='${JSON.stringify(descAplic).replace(/'/g, "&#39;")}'>
         <i class="fa-solid fa-car"></i> <span>Ver aplicaciones</span>
       </button>` : '';
+      const descripcionHTML = (!esEscobilla && descAplic) ? `
+  <button type="button" class="btn-descripcion"
+    data-titulo="${_escapeHtml(producto.nombre)}"
+    data-descripcion='${JSON.stringify(descAplic).replace(/'/g, "&#39;")}'>
+    <i class="fa-solid fa-align-left"></i> <span>Ver descripción</span>
+  </button>` : '';
 
     const card = document.createElement('article');
     card.className = [
@@ -586,7 +592,8 @@ function mostrarProductos(productos) {
           ${esOferta ? '<span class="pcard__precio-tag"><i class="fa-solid fa-bolt"></i> Oferta</span>' : ''}
         </div>
         ${aplicacionesHTML}
-        ${adminHTML}
+${descripcionHTML}
+${adminHTML}
         ${stockHTML}
         <div class="pcard__actions">
           ${accionesHTML}
@@ -656,6 +663,34 @@ function mostrarAplicacionesModal(titulo, texto) {
       title: titulo || 'Aplicaciones',
       html,
       width: 'min(980px, 94vw)',
+      showCloseButton: true,
+      confirmButtonText: 'Cerrar',
+      customClass: {
+        popup: 'af-apps-modal',
+        title: 'af-apps-title',
+        htmlContainer: 'af-apps-body',
+        confirmButton: 'af-apps-confirm'
+      }
+    });
+  } else {
+    alert(contenido);
+  }
+}
+function mostrarDescripcionModal(titulo, texto) {
+  const contenido = String(texto ?? '').trim();
+  if (!contenido) return;
+
+  const html = `
+    <div class="af-apps-wrap">
+      <p class="af-descripcion-text">${_escapeHtml(contenido)}</p>
+    </div>
+  `;
+
+  if (typeof Swal !== 'undefined' && Swal.fire) {
+    Swal.fire({
+      title: titulo || 'Descripción',
+      html,
+      width: 'min(760px, 94vw)',
       showCloseButton: true,
       confirmButtonText: 'Cerrar',
       customClass: {
@@ -808,7 +843,17 @@ if (CAN_INIT) contenedorProductos.addEventListener('click', async (ev) => {
   });
 }, { passive: true });
 
+if (CAN_INIT) contenedorProductos.addEventListener('click', (ev) => {
+  const btnDesc = ev.target.closest('.btn-descripcion');
+  if (!btnDesc) return;
 
+  const titulo = btnDesc.dataset.titulo || 'Descripción';
+  let texto = btnDesc.dataset.descripcion || '';
+
+  try { texto = JSON.parse(texto); } catch(_) {}
+
+  mostrarDescripcionModal(titulo, String(texto));
+}, { passive: true });
 /* ==========================================
    Delegado de clicks — modal aplicaciones
 ========================================== */

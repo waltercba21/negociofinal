@@ -1414,3 +1414,37 @@
     font-size: 13px;
   }
 }
+.btn-descripcion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px solid #cbd8ea !important;
+  background: #f8fafc !important;
+  color: var(--lista-brand) !important;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s, transform .15s;
+  width: 100%;
+}
+
+.btn-descripcion:hover {
+  border-color: var(--lista-brand) !important;
+  background: #eef6ff !important;
+  color: var(--lista-brand) !important;
+  transform: translateY(-1px);
+}
+
+.af-descripcion-text {
+  margin: 0;
+  white-space: pre-line;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--lista-text-2) !important;
+}
