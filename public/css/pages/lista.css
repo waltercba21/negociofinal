@@ -1440,3 +1440,45 @@
     -webkit-line-clamp: 3 !important;
   }
 }
+/* ============================================================
+   FIX FINAL — Nombre y precio en cards de productos
+   ============================================================ */
+
+/* Nombre del producto más chico y azul */
+.pcard__nombre {
+  font-size: 14.5px !important;
+  line-height: 1.12 !important;
+  color: var(--lista-brand) !important;
+  min-height: 49px !important;
+  max-height: 49px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  letter-spacing: .1px !important;
+}
+
+/* Precio en rojo marca */
+.pcard__precio {
+  color: var(--lista-red) !important;
+  font-size: 34px !important;
+}
+
+/* Ajuste fino de separación */
+.pcard__body {
+  gap: 8px !important;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .pcard__nombre {
+    font-size: 14px !important;
+    line-height: 1.12 !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+  }
+
+  .pcard__precio {
+    font-size: 31px !important;
+  }
+}
